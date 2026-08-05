@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Restic: Backup mã hoá, đa nền tảng — Linux Daily #004</title>
+<meta name="description" content="Giới thiệu restic — công cụ backup mã hoá, tăng dần và khử trùng lặp, dùng chung một bộ lệnh trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD; chỉ khác nhau ở cách cài đặt.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF2F0; --surface:#FFFFFF; --ink:#14201D; --muted:#566661;
+    --accent:#0C6E61; --accent-deep:#084E45; --freebsd:#B23A2E;
+    --line:#D5DEDA; --code-bg:#13211E; --code-text:#E7ECEA; --code-muted:#8AA39B;
+    --maxw:760px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:"Noto Serif",Georgia,serif; font-size:18px; line-height:1.72;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px}
+
+  /* --- Masthead --- */
+  .masthead{border-bottom:2px solid var(--ink); margin-top:34px}
+  .brand{
+    display:flex; align-items:baseline; justify-content:space-between;
+    gap:12px; flex-wrap:wrap; padding-bottom:10px;
+  }
+  .brand .name{
+    font-family:"JetBrains Mono",monospace; font-weight:700;
+    letter-spacing:.22em; text-transform:uppercase; font-size:13px; color:var(--accent-deep);
+  }
+  .brand .issue{
+    font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--muted);
+    letter-spacing:.06em;
+  }
+
+  /* --- Title block --- */
+  header.post{padding:30px 0 12px}
+  .eyebrow{
+    font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.18em;
+    text-transform:uppercase; color:var(--accent); margin:0 0 14px;
+  }
+  h1{
+    font-family:"Be Vietnam Pro",system-ui,sans-serif; font-weight:800;
+    font-size:clamp(30px,6vw,46px); line-height:1.08; letter-spacing:-.015em;
+    margin:0 0 18px;
+  }
+  .lede{font-size:19px; color:var(--muted); margin:0 0 22px; max-width:60ch}
+  .meta{
+    display:flex; flex-wrap:wrap; gap:8px; font-family:"JetBrains Mono",monospace;
+    font-size:12px; letter-spacing:.04em; padding:14px 0 4px; border-top:1px solid var(--line);
+  }
+  .tag{
+    border:1px solid var(--line); border-radius:2px; padding:4px 9px;
+    color:var(--muted); background:var(--surface); white-space:nowrap;
+  }
+  .tag.axis{color:var(--accent-deep); border-color:var(--accent); font-weight:500}
+
+  /* --- Hero illustration --- */
+  figure{margin:26px 0 8px}
+  figure svg{display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:var(--surface)}
+  figcaption{
+    font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted);
+    margin-top:9px; letter-spacing:.02em;
+  }
+
+  /* --- Sections --- */
+  section{padding:26px 0; border-top:1px solid var(--line)}
+  section:first-of-type{border-top:none}
+  h2{
+    font-family:"Be Vietnam Pro",sans-serif; font-weight:700;
+    font-size:24px; line-height:1.2; margin:0 0 14px; letter-spacing:-.01em;
+    display:flex; align-items:baseline; gap:12px;
+  }
+  h2 .num{
+    font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:700;
+    color:var(--accent); background:rgba(12,110,97,.08); border:1px solid rgba(12,110,97,.25);
+    border-radius:3px; padding:3px 7px; letter-spacing:.05em; flex:none; transform:translateY(-2px);
+  }
+  p{margin:0 0 16px}
+  strong{font-weight:600}
+  a{color:var(--accent-deep)}
+
+  /* --- Code --- */
+  .code-label{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:"Be Vietnam Pro",sans-serif; font-weight:600; font-size:12px;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--accent-deep);
+    margin:18px 0 0; padding:5px 10px; background:rgba(12,110,97,.08);
+    border:1px solid rgba(12,110,97,.22); border-bottom:none; border-radius:5px 5px 0 0;
+  }
+  .code-label.bsd{color:var(--freebsd); background:rgba(178,58,46,.08); border-color:rgba(178,58,46,.28)}
+  .code-label .dot{width:7px; height:7px; border-radius:50%; background:var(--accent)}
+  .code-label.bsd .dot{background:var(--freebsd)}
+  pre{
+    margin:0 0 16px; background:var(--code-bg); color:var(--code-text);
+    border-radius:0 6px 6px 6px; border-left:4px solid var(--accent);
+    padding:16px 18px; overflow-x:auto; font-size:14.5px; line-height:1.6;
+    font-family:"JetBrains Mono",monospace;
+  }
+  pre.bsd{border-left-color:var(--freebsd)}
+  pre + .code-label{margin-top:6px}
+  code{font-family:"JetBrains Mono",monospace; font-size:.9em}
+  p code, li code{
+    background:rgba(20,32,29,.06); padding:1px 6px; border-radius:4px;
+    font-size:.86em; color:var(--accent-deep);
+  }
+  .cmt{color:var(--code-muted)}
+
+  ul.clean{margin:0 0 16px; padding-left:0; list-style:none}
+  ul.clean li{position:relative; padding-left:22px; margin-bottom:10px}
+  ul.clean li::before{
+    content:"›"; position:absolute; left:2px; top:-1px;
+    color:var(--accent); font-family:"JetBrains Mono",monospace; font-weight:700;
+  }
+
+  .callout{
+    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--freebsd);
+    border-radius:0 6px 6px 0; padding:16px 18px; margin:0 0 16px;
+    font-size:16px;
+  }
+  .callout .k{
+    font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.14em;
+    text-transform:uppercase; color:var(--freebsd); display:block; margin-bottom:6px; font-weight:700;
+  }
+  .callout.tip{border-left-color:var(--accent)}
+  .callout.tip .k{color:var(--accent-deep)}
+
+  .exercise{
+    background:var(--ink); color:#EAF0EE; border-radius:8px; padding:22px 22px; margin-top:4px;
+  }
+  .exercise h2{color:#fff; margin-bottom:12px}
+  .exercise h2 .num{color:#7FE0D2; background:rgba(127,224,210,.12); border-color:rgba(127,224,210,.3)}
+  .exercise p{color:#C6D3CF; font-size:16px}
+  .exercise code{color:#9FE9DC}
+
+  /* --- Footer --- */
+  footer{border-top:2px solid var(--ink); margin:36px 0 60px; padding-top:16px}
+  .foot-row{
+    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
+    font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted);
+    letter-spacing:.04em;
+  }
+  .hashtags{color:var(--accent-deep)}
+
+  /* motion */
+  @media (prefers-reduced-motion:no-preference){
+    header.post,figure:first-of-type{animation:rise .6s ease both}
+    @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
+  }
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
+  @media (max-width:520px){
+    body{font-size:17px}
+    h2{font-size:21px}
+    pre{font-size:13px}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <span class="name">Linux Daily</span>
+      <span class="issue">#004 · 05·08·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Công cụ mới · Backup</p>
+    <h1>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h1>
+    <p class="lede">Sao lưu bằng <code>cp</code> hay <code>rsync</code> thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. <strong>restic</strong> gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · CÔNG CỤ MỚI</span>
+      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
+      <span class="tag">~9 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: luồng backup restic — nguồn -> xử lý (mã hoá + dedup) -> kho lưu nhiều snapshot -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ luồng restic: dữ liệu nguồn đi qua bước mã hoá AES-256 và băm để khử trùng lặp, rồi lưu thành các snapshot tăng dần trong một repository có thể là local, sftp, rest-server hoặc S3">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <!-- NGUỒN -->
+      <g>
+        <rect x="34" y="112" width="140" height="76" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+        <text x="104" y="145" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">NGUỒN</text>
+        <text x="104" y="166" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11.5">/var/data, /etc…</text>
+        <line x1="174" y1="150" x2="262" y2="150" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
+      </g>
+
+      <!-- RESTIC xử lý -->
+      <g>
+        <rect x="266" y="86" width="228" height="128" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+        <text x="380" y="112" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="700">restic backup</text>
+        <line x1="290" y1="126" x2="470" y2="126" stroke="#D5DEDA" stroke-width="1"/>
+        <text x="380" y="150" text-anchor="middle" fill="#14201D" font-family="JetBrains Mono, monospace" font-size="12">mã hoá AES-256</text>
+        <text x="380" y="172" text-anchor="middle" fill="#14201D" font-family="JetBrains Mono, monospace" font-size="12">băm nội dung → khử trùng lặp</text>
+        <text x="380" y="197" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">chỉ gửi phần khối đã đổi</text>
+        <line x1="494" y1="150" x2="562" y2="150" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
+      </g>
+
+      <!-- REPOSITORY -->
+      <g>
+        <rect x="566" y="52" width="160" height="198" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+        <text x="646" y="76" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">REPOSITORY</text>
+        <rect x="582" y="90" width="128" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
+        <text x="646" y="107" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">snapshot @mon</text>
+        <rect x="582" y="124" width="128" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
+        <text x="646" y="141" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">snapshot @tue</text>
+        <rect x="582" y="158" width="128" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
+        <text x="646" y="175" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">snapshot @wed</text>
+        <text x="646" y="204" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10">local / sftp / rest-server</text>
+        <text x="646" y="220" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10">/ S3-compatible…</text>
+        <text x="646" y="240" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing=".5">password ≠ lưu trong repo</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">MỘT BINARY · MỘT BỘ LỆNH · NHIỀU BACKEND</text>
+    </svg>
+    <figcaption>Hình 1 — restic mã hoá và khử trùng lặp ngay trên máy nguồn trước khi gửi đi; mỗi lần chạy chỉ tạo thêm một snapshot tăng dần.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Rất nhiều hệ thống "backup" thực chất chỉ là một dòng <code>rsync -a</code> chạy tay hoặc trong cron, không mã hoá, không có lịch sử phiên bản rõ ràng, và khi ổ đích cũng chết thì mất luôn cả gốc lẫn bản sao. Câu hỏi thường bị bỏ qua: <em>bản sao lưu này có đọc lại được không, và ai khác ngoài bạn có đọc được nó không</em>? <strong>restic</strong> trả lời cả hai: mọi thứ mã hoá phía client trước khi rời máy, và mỗi lần chạy chỉ là một <em>snapshot</em> tăng dần, khôi phục lại bất kỳ mốc nào cũng chỉ một lệnh.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p><strong>restic</strong> là công cụ backup mã nguồn mở viết bằng Go, phân phối dưới dạng một binary tĩnh — không phụ thuộc thư viện hệ thống, nên hành vi giống hệt nhau dù chạy trên Linux hay FreeBSD. Vài khái niệm cần nắm trước khi dùng:</p>
+    <ul class="clean">
+      <li><strong>Repository:</strong> nơi lưu dữ liệu đã mã hoá — có thể là thư mục local, máy chủ qua SFTP, một <code>rest-server</code> riêng, hoặc kho S3-compatible.</li>
+      <li><strong>Snapshot:</strong> một lần chạy <code>restic backup</code> thành công; chỉ những khối dữ liệu thay đổi mới được gửi thêm, phần còn lại tham chiếu lại khối cũ.</li>
+      <li><strong>Mã hoá & khử trùng lặp:</strong> dữ liệu được băm và mã hoá AES-256 ngay trên máy nguồn — máy chứa repo (kể cả bị xâm nhập) không đọc được nội dung nếu không có mật khẩu.</li>
+      <li><strong>Mật khẩu repo:</strong> KHÔNG lưu trong repo. Mất mật khẩu = mất trắng dữ liệu, không có cửa khôi phục nào khác.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh cài đặt restic trên 4 hệ điều hành -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng cài đặt restic: Ubuntu và Xubuntu dùng apt install restic, Debian dùng apt install restic từ bản bookworm trở lên, Fedora dùng dnf install restic, FreeBSD dùng pkg install restic">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install</text>
+        <text x="104" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">restic</text>
+        <text x="104" y="152" text-anchor="middle" font-size="10" fill="#566661">universe repo</text>
+        <text x="104" y="167" text-anchor="middle" font-size="10" fill="#566661">bản khá mới</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install</text>
+        <text x="284" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">restic</text>
+        <text x="284" y="152" text-anchor="middle" font-size="10" fill="#566661">có từ bookworm</text>
+        <text x="284" y="167" text-anchor="middle" font-size="10" fill="#566661">bản cũ hơn → backports</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">dnf install</text>
+        <text x="464" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">restic</text>
+        <text x="464" y="152" text-anchor="middle" font-size="10" fill="#566661">kho mặc định</text>
+        <text x="464" y="167" text-anchor="middle" font-size="10" fill="#566661">SELinux: xem mục 05</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="150" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="108" text-anchor="middle" font-size="11.5" fill="#B23A2E">pkg install</text>
+        <text x="650" y="124" text-anchor="middle" font-size="11.5" fill="#B23A2E">restic</text>
+        <text x="650" y="152" text-anchor="middle" font-size="10" fill="#7A4A44">sysutils/restic</text>
+        <text x="650" y="210" text-anchor="middle" font-size="10.5" fill="#B23A2E" letter-spacing="1">— cách cài khác, lệnh dùng giống —</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG BINARY · KHÁC NGUỒN GÓI</text>
+    </svg>
+    <figcaption>Hình 2 — Bốn hệ điều hành lấy gói restic ở bốn nơi khác nhau, nhưng sau khi cài xong thì mọi lệnh <code>restic</code> giống hệt nhau.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Cài đặt &amp; khởi tạo trên từng hệ điều hành</h2>
+    <p>Giả định chung: sao lưu thư mục <code>/etc</code> và <code>/var/www</code> vào một repository qua SFTP, đích <code>backup@10.0.0.9:/srv/restic-repo</code>.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span>
+    <pre><code>sudo apt update
+sudo apt install -y restic
+
+<span class="cmt"># Khởi tạo repo (chỉ chạy một lần):</span>
+restic -r sftp:backup@10.0.0.9:/srv/restic-repo init</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Debian — từ bookworm (12) trở lên</span>
+    <pre><code>sudo apt update
+sudo apt install -y restic
+<span class="cmt"># Debian 11 (bullseye) trở về trước: dùng bookworm-backports</span>
+<span class="cmt"># hoặc tải binary tĩnh từ trang phát hành chính thức.</span>
+
+restic -r sftp:backup@10.0.0.9:/srv/restic-repo init</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — dnf</span>
+    <pre><code>sudo dnf install -y restic
+
+restic -r sftp:backup@10.0.0.9:/srv/restic-repo init</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg (tách riêng)</span>
+    <pre class="bsd"><code>pkg install -y restic
+<span class="cmt"># hoặc build từ ports: sysutils/restic</span>
+
+restic -r sftp:backup@10.0.0.9:/srv/restic-repo init</code></pre>
+
+    <p>Sau khi <code>init</code>, backup chạy đúng một lệnh — giống hệt nhau trên cả bốn hệ điều hành:</p>
+    <pre><code>export RESTIC_REPOSITORY=sftp:backup@10.0.0.9:/srv/restic-repo
+export RESTIC_PASSWORD_FILE=/root/.restic-pass   <span class="cmt"># file quyền 600, chỉ root đọc</span>
+
+restic backup /etc /var/www</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <p>Vì cùng một binary, các lệnh kiểm tra dưới đây chạy giống hệt trên cả Linux lẫn FreeBSD — khác biệt duy nhất là cách bạn đặt lịch chạy nó (xem mục 06).</p>
+    <span class="code-label"><span class="dot"></span>Linux &amp; FreeBSD — như nhau</span>
+    <pre><code>restic snapshots                 <span class="cmt"># liệt kê các bản đã chụp</span>
+restic check                     <span class="cmt"># kiểm tra tính toàn vẹn repo</span>
+restic restore latest --target /tmp/kiemtra --include /etc/hostname</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Mất mật khẩu repo:</strong> restic không có "quên mật khẩu, bấm vào đây" — mất là mất trắng. Lưu mật khẩu ở một nơi tách biệt khỏi chính repo (password manager, hoặc bản in giấy cất tủ).</li>
+      <li><strong>Ubuntu/Debian:</strong> bản trong kho có thể cũ hơn bản thượng nguồn khá nhiều; nếu cần tính năng mới, cân nhắc tải binary tĩnh từ trang phát hành thay vì chờ backports.</li>
+      <li><strong>Fedora:</strong> SELinux có thể chặn tiến trình đọc những thư mục không thuộc ngữ cảnh quen thuộc — kiểm tra <code>journalctl</code>/<code>audit.log</code> nếu backup báo "Permission denied" dù quyền file đúng.</li>
+      <li><strong>FreeBSD:</strong> không có <code>systemctl</code>/<code>cron</code> theo kiểu Linux — lên lịch bằng <code>cron</code> truyền thống hoặc <code>periodic(8)</code>; đường dẫn ports thường ở <code>/usr/local/bin/restic</code>, khai đúng trong crontab.</li>
+      <li><strong>Quên dọn kho:</strong> không chạy <code>forget --prune</code> định kỳ thì repo phình vô hạn — snapshot cũ giữ lại mọi khối dữ liệu đã bị xoá/ghi đè.</li>
+    </ul>
+    <div class="callout">
+      <span class="k">Repo không phải là chỗ tin tuyệt đối</span>
+      Máy chứa repo có thể đọc/ghi các khối đã mã hoá nhưng không giải mã được nội dung — <em>trừ khi</em> nó cũng biết mật khẩu. Đừng lưu <code>RESTIC_PASSWORD_FILE</code> cùng máy với repo local; tách vật lý người giữ khoá khỏi người giữ kho.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li><code>RESTIC_PASSWORD_FILE</code> luôn đặt quyền <code>600</code>, chủ sở hữu <code>root</code>; không bao giờ gõ mật khẩu thẳng vào dòng lệnh (lưu lại trong lịch sử shell).</li>
+      <li>Đặt chính sách giữ bản rõ ràng rồi dọn kho: <code>restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune</code>.</li>
+      <li>Lên lịch: Ubuntu/Debian/Fedora dùng <strong>systemd timer</strong> (ổn định hơn cron khi máy có thể tắt lúc tới giờ); FreeBSD dùng <strong>cron</strong> hoặc <strong>periodic(8)</strong>.</li>
+      <li>Kiểm tra định kỳ bằng <code>restic check --read-data-subset=5%</code> — chỉ chạy <code>restic backup</code> mà không bao giờ verify thì tới lúc cần khôi phục mới biết repo đã hỏng.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Dựng một repo restic qua SFTP giữa một máy <strong>Ubuntu</strong> (nguồn) và một máy <strong>FreeBSD</strong> (nơi chứa repo). Backup một thư mục thử, sửa một file rồi backup lần hai, sau đó dùng <code>restic restore</code> để lấy lại đúng phiên bản đầu tiên của file đó mà không đụng tới phiên bản mới. Câu hỏi: <code>restic forget --keep-daily 7 --prune</code> thật sự xoá dữ liệu ở bước nào — <code>forget</code> hay <code>prune</code> — và vì sao tách làm hai bước?</p>
+  </div>
+
+  <footer>
+    <div class="foot-row">
+      <span>Linux Daily #004 · Công cụ mới</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Restic #Backup</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

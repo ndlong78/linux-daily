@@ -1,0 +1,15 @@
+💾 Bạn đang "backup" bằng một dòng rsync chạy tay trong cron? Đến lúc đổi sang thứ đúng nghĩa là backup: mã hoá sẵn, không trùng lặp, và khôi phục đúng ngày bạn muốn.
+
+restic là một binary Go tĩnh — cài xong ở đâu cũng chạy y hệt một bộ lệnh, kể cả giữa Linux và FreeBSD. Khác biệt thật sự chỉ nằm ở chỗ lấy gói:
+• Ubuntu/Xubuntu → apt install restic (kho universe, khá mới)
+• Debian → apt install restic (có từ bookworm; bản cũ hơn cần backports)
+• Fedora → dnf install restic (chú ý SELinux nếu bị "Permission denied")
+• FreeBSD → pkg install restic (sysutils/restic, không có systemd/cron kiểu Linux)
+
+Còn lại — init repo, backup, snapshots, restore, forget --prune — giống hệt nhau trên cả bốn hệ điều hành. Bài #004 đi từ khởi tạo repo SFTP, lịch trình bằng systemd timer/cron, đến cạm bẫy chết người nhất: mất mật khẩu repo là mất trắng, không có "quên mật khẩu, bấm vào đây".
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Restic #Backup #FreeBSD
+
+[Đính kèm ảnh: post-004-code.png]

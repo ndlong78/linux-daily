@@ -1,0 +1,27 @@
+[Tweet 1] — đính kèm post-004-code.png
+💾 restic: một binary Go tĩnh thay thế "rsync chạy tay trong cron" bằng backup mã hoá sẵn, không trùng lặp, tăng dần. Điểm lật: cùng một bộ lệnh trên mọi HĐH — chỉ CÀI là khác nhau. Thread 🧵
+
+[Tweet 2]
+Sau khi cài, lệnh dùng giống hệt mọi nơi:
+restic backup /etc /var/www
+restic snapshots
+restic forget --keep-daily 7 --prune
+
+[Tweet 3]
+Cài đặt — đây mới là chỗ khác nhau:
+• Ubuntu/Xubuntu: apt install restic
+• Debian: apt install restic (từ bookworm; bản cũ hơn cần backports)
+• Fedora: dnf install restic (coi chừng SELinux chặn)
+
+[Tweet 4] — FreeBSD
+FreeBSD: pkg install restic (sysutils/restic). Không có systemd — lên lịch bằng cron truyền thống hoặc periodic(8), không phải systemd timer.
+
+[Tweet 5]
+⚠️ Mật khẩu repo KHÔNG lưu trong repo. Mất mật khẩu = mất trắng dữ liệu, không có "quên mật khẩu, bấm vào đây".
+
+[Tweet 6]
+⚠️ Không forget --prune định kỳ thì repo phình vô hạn — snapshot cũ giữ mọi khối đã xoá/ghi đè.
+
+[Tweet 7]
+Full bài + sơ đồ luồng mã hoá/dedup: {{LINK}}
+#LinuxDaily #Restic #Backup #FreeBSD
