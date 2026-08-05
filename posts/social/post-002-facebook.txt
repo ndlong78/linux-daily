@@ -1,0 +1,17 @@
+🔒 Cổng SSH mở ra mạng là bị bot dò mật khẩu trong vài phút. Tin tốt: gia cố SSH làm MỘT lần là chặn được phần lớn.
+
+Điều thú vị — file /etc/ssh/sshd_config gần như GIỐNG NHAU trên Ubuntu, Debian, Fedora, FreeBSD. Khác nhau nằm ở ngoài file:
+• Tên service: ssh (Ubuntu/Debian) vs sshd (Fedora/FreeBSD)
+• Nạp lại: systemctl vs service (FreeBSD)
+• Tường lửa: UFW / nftables / firewalld vs pf
+• Fedora đổi cổng SSH còn phải khai với SELinux
+
+Ba lớp đem lại hiệu quả lớn nhất: chỉ dùng khóa, cấm root, giới hạn AllowUsers. Đổi cổng chỉ là phụ.
+
+Bài #002 có đủ lệnh cho cả bốn HĐH + cạm bẫy tự-khóa-mình + file drop-in sshd_config.d hay ghi đè.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #SSH #Linux #FreeBSD
+
+[Đính kèm ảnh: post-002-code.png]

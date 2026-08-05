@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{TITLE}} — Linux Daily {{ISSUE}}</title>
+<meta name="description" content="{{META_DESCRIPTION}}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">{{ISSUE}} · {{DATE}}</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">{{EYEBROW_AXIS}}</p>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">{{LEDE}}</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · {{AXIS_SHORT}}</span>
+      <span class="tag">ĐỘ KHÓ · {{DIFFICULTY}}</span>
+      <span class="tag">{{READ_TIME}}</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- HÌNH 1 (hero): vẽ SVG khái niệm chủ đề. Teal #0C6E61 cho Linux, đỏ #B23A2E cho FreeBSD.
+         Bắt buộc role="img" + aria-label. -->
+    {{FIGURE_HERO_SVG}}
+    <figcaption>{{FIGURE_HERO_CAPTION}}</figcaption>
+  </figure>
+
+  <!-- MỤC 01–02 -->
+  {{SECTIONS_01_02}}
+
+  <figure>
+    <!-- HÌNH 2 (so sánh): dải 4 cột Ubuntu/Xubuntu · Debian · Fedora · FreeBSD.
+         Cột FreeBSD tô đỏ, tách riêng. role="img" + aria-label. -->
+    {{FIGURE_COMPARE_SVG}}
+    <figcaption>{{FIGURE_COMPARE_CAPTION}}</figcaption>
+  </figure>
+
+  <!-- MỤC 03–06 (mục 07 dùng <div class="exercise">) -->
+  {{SECTIONS_03_07}}
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily {{ISSUE}} · {{AXIS_SHORT}}</span>
+      <span class="hashtags">{{HASHTAGS}}</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

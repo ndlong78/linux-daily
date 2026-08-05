@@ -1,0 +1,15 @@
+💾 Trước khi nâng cấp hay chạy script "một lần rồi thôi", bạn muốn có nút UNDO. Snapshot của ZFS chính là nút đó — chụp tức thời, gần như không tốn dung lượng, khôi phục trong vài giây.
+
+Điểm lật của bài này: vì là OpenZFS thống nhất, lệnh zfs/zpool GIỐNG HỆT nhau trên Linux lẫn FreeBSD. Phần khác nhau là… cách CÀI được ZFS:
+• Ubuntu → apt install zfsutils-linux (dễ)
+• Debian → contrib + zfs-dkms (cần kernel headers)
+• Fedora → kho ngoài + DKMS + để ý Secure Boot (khó nhất)
+• FreeBSD → có sẵn trong base (dễ nhất!)
+
+Lần này cột FreeBSD lại nhẹ nhất. Bài #003 kèm cảnh báo quan trọng: rollback phá hủy dữ liệu mới hơn, và "snapshot KHÔNG phải backup".
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #ZFS #FreeBSD #Storage
+
+[Đính kèm ảnh: post-003-code.png]

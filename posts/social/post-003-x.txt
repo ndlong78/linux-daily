@@ -1,0 +1,27 @@
+[Tweet 1] — đính kèm post-003-code.png
+💾 Snapshot ZFS: nút UNDO cho hệ thống của bạn.
+Điểm lật: lệnh giống hệt nhau mọi HĐH — chỉ việc CÀI được ZFS mới khác nhau. Thread 🧵
+
+[Tweet 2]
+Dùng snapshot — y hệt trên Ubuntu/Debian/Fedora/FreeBSD:
+zfs snapshot tank/data@before
+zfs list -t snapshot
+zfs rollback tank/data@before
+Lấy lại 1 file cũ không cần rollback: /tank/data/.zfs/snapshot/before/
+
+[Tweet 3]
+Cái khác nhau là CÀI ZFS:
+• Ubuntu: apt install zfsutils-linux
+• Debian: contrib + zfs-dkms (cần headers)
+• Fedora: kho OpenZFS + DKMS + Secure Boot
+• FreeBSD: có sẵn trong base ✓
+
+[Tweet 4]
+⚠️ rollback XÓA mọi thay đổi sau snapshot. Có snapshot mới hơn thì cần -r để xóa chúng. Nhầm là mất dữ liệu.
+
+[Tweet 5]
+⚠️ Snapshot ≠ backup. Nó nằm cùng pool — đĩa chết là mất cả. Muốn an toàn: zfs send sang pool/máy khác.
+
+[Tweet 6]
+Full bài + sơ đồ copy-on-write: {{LINK}}
+#LinuxDaily #ZFS #FreeBSD

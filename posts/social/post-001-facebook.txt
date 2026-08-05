@@ -1,0 +1,15 @@
+🖧 IP tĩnh nghe đơn giản — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình mạng ở BỐN nơi hoàn toàn khác nhau.
+
+Cùng một mục tiêu (gán địa chỉ cố định + cặp DNS dự phòng), khác nhau ở chỗ lưu:
+• Ubuntu/Xubuntu → netplan (YAML trong /etc/netplan)
+• Debian → /etc/network/interfaces
+• Fedora → nmcli (NetworkManager)
+• FreeBSD → /etc/rc.conf (thế giới riêng: không netplan, không systemctl)
+
+Nhớ sai chỗ là mất cả buổi. Bài mở màn series Linux Daily mổ xẻ đủ bốn HĐH, kèm lệnh copy-paste, cạm bẫy hay gặp (YAML kỵ tab, Debian cần resolvconf, Fedora đã bỏ ifcfg…) và một quy tắc vàng: DNS luôn khai đủ CẶP.
+
+👉 Đọc đầy đủ (có sơ đồ): {{LINK}}
+
+#LinuxDaily #SysAdmin #Linux #FreeBSD #Networking
+
+[Đính kèm ảnh: post-001-code.png]

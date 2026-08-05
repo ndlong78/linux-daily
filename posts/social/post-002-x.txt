@@ -1,0 +1,34 @@
+[Tweet 1] — đính kèm post-002-code.png
+🔒 Gia cố SSH: khóa cửa trước khi có người gõ.
+sshd_config gần như giống nhau mọi HĐH — nhưng tên service, lệnh reload và tường lửa thì khác. Thread 🧵
+
+[Tweet 2]
+Khối vàng trong /etc/ssh/sshd_config:
+PermitRootLogin no
+PasswordAuthentication no
+PubkeyAuthentication yes
+AllowUsers longnd deploy
+MaxAuthTries 3
+(chỉ tắt mật khẩu SAU khi key đã vào được!)
+
+[Tweet 3]
+Tên service khác nhau — chỗ dễ sai nhất:
+• Ubuntu/Debian → "ssh": systemctl reload ssh
+• Fedora → "sshd": systemctl reload sshd
+Gõ nhầm là báo not found.
+
+[Tweet 4]
+FreeBSD (thế giới riêng):
+sysrc sshd_enable=YES
+service sshd reload
+Tường lửa = pf. KHÔNG systemctl, KHÔNG ufw.
+
+[Tweet 5]
+Cạm bẫy: Ubuntu nạp thêm /etc/ssh/sshd_config.d/*.conf — một file trong đó có thể bật LẠI mật khẩu. Luôn kiểm tra cả thư mục. Fedora đổi cổng thì phải semanage port.
+
+[Tweet 6]
+Luôn: sudo sshd -t trước khi reload, và giữ một phiên SSH đang mở làm phao. Sai một dòng là tự khóa mình ra khỏi máy.
+
+[Tweet 7]
+Full bài: {{LINK}}
+#LinuxDaily #SysAdmin #SSH #FreeBSD

@@ -1,0 +1,38 @@
+[Tweet 1] — đính kèm post-001-code.png
+🖧 Một IP tĩnh, bốn cách khai báo.
+Ubuntu · Debian · Fedora · FreeBSD — cùng mục tiêu, bốn nơi lưu cấu hình khác nhau. Nhớ sai là mất cả buổi. Thread 🧵
+
+[Tweet 2]
+Ubuntu / Xubuntu → netplan
+/etc/netplan/*.yaml (YAML, KỴ tab):
+addresses: [192.168.10.20/24]
+routes → default via .1
+→ sudo netplan apply
+(gateway4: đã lỗi thời, dùng routes:)
+
+[Tweet 3]
+Debian → /etc/network/interfaces
+iface ens33 inet static
+ address 192.168.10.20/24
+ gateway 192.168.10.1
+ dns-nameservers .2 .3
+→ systemctl restart networking
+(cần gói resolvconf để DNS ăn)
+
+[Tweet 4]
+Fedora → nmcli
+nmcli con mod ens33 ipv4.addresses …/24 ipv4.gateway .1 ipv4.dns ".2 .3" ipv4.method manual
+Thiếu "manual" là máy vẫn xin DHCP. File ifcfg-* đã bị bỏ.
+
+[Tweet 5]
+FreeBSD → /etc/rc.conf (thế giới riêng)
+ifconfig_em0="inet 192.168.10.20 netmask 255.255.255.0"
+defaultrouter="192.168.10.1"
+KHÔNG systemctl, KHÔNG netplan. DNS ở /etc/resolv.conf.
+
+[Tweet 6]
+Quy tắc vàng: DNS luôn khai đủ CẶP (.2 và .3). Cấu hình một địa chỉ = lỗi chờ ngày xảy ra.
+
+[Tweet 7]
+Full bài + sơ đồ: {{LINK}}
+#LinuxDaily #SysAdmin #FreeBSD
