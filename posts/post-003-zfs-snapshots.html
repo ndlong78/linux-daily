@@ -16,7 +16,7 @@
   <div class="masthead">
     <div class="brand">
       <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#003 · 07·08·2026</span>
+      <span class="issue">#003 · 05·07·2026</span>
     </div>
   </div>
 
@@ -200,7 +200,7 @@ sudo zfs send tank/data@before-upgrade | ssh backup "zfs recv tank/data"</code><
       Đừng chụp thủ công mãi. Dùng <code>sanoid</code>/<code>zfs-auto-snapshot</code> (Linux) hoặc <code>zfsnap</code>/cơ chế <code>periodic</code> (FreeBSD) để chụp và dọn theo lịch, rồi <code>zfs send</code> định kỳ sang một pool dự phòng.
     </div>
     <ul class="clean">
-      <li>Đặt tên snapshot có ý nghĩa kèm thời gian (ví dụ <code>@2026-08-07-pre-deploy</code>) để dễ truy vết.</li>
+      <li>Đặt tên snapshot có ý nghĩa kèm thời gian (ví dụ <code>@2026-07-05-pre-deploy</code>) để dễ truy vết.</li>
       <li>Dọn snapshot cũ để pool không phình: snapshot giữ lại mọi khối đã bị xóa/ghi đè, để lâu sẽ ăn dung lượng.</li>
       <li>Giữ ít nhất một bản gửi ra ngoài pool chính — snapshot cùng pool không phải là điểm an toàn cuối cùng.</li>
     </ul>

@@ -8,165 +8,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg:#EEF2F0; --surface:#FFFFFF; --ink:#14201D; --muted:#566661;
-    --accent:#0C6E61; --accent-deep:#084E45; --freebsd:#B23A2E;
-    --line:#D5DEDA; --code-bg:#13211E; --code-text:#E7ECEA; --code-muted:#8AA39B;
-    --maxw:760px;
-  }
-  *{box-sizing:border-box}
-  html{-webkit-text-size-adjust:100%}
-  body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font-family:"Noto Serif",Georgia,serif; font-size:18px; line-height:1.72;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:var(--maxw); margin:0 auto; padding:0 22px}
-
-  /* --- Masthead --- */
-  .masthead{border-bottom:2px solid var(--ink); margin-top:34px}
-  .brand{
-    display:flex; align-items:baseline; justify-content:space-between;
-    gap:12px; flex-wrap:wrap; padding-bottom:10px;
-  }
-  .brand .name{
-    font-family:"JetBrains Mono",monospace; font-weight:700;
-    letter-spacing:.22em; text-transform:uppercase; font-size:13px; color:var(--accent-deep);
-  }
-  .brand .issue{
-    font-family:"JetBrains Mono",monospace; font-size:13px; color:var(--muted);
-    letter-spacing:.06em;
-  }
-
-  /* --- Title block --- */
-  header.post{padding:30px 0 12px}
-  .eyebrow{
-    font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.18em;
-    text-transform:uppercase; color:var(--accent); margin:0 0 14px;
-  }
-  h1{
-    font-family:"Be Vietnam Pro",system-ui,sans-serif; font-weight:800;
-    font-size:clamp(30px,6vw,46px); line-height:1.08; letter-spacing:-.015em;
-    margin:0 0 18px;
-  }
-  .lede{font-size:19px; color:var(--muted); margin:0 0 22px; max-width:60ch}
-  .meta{
-    display:flex; flex-wrap:wrap; gap:8px; font-family:"JetBrains Mono",monospace;
-    font-size:12px; letter-spacing:.04em; padding:14px 0 4px; border-top:1px solid var(--line);
-  }
-  .tag{
-    border:1px solid var(--line); border-radius:2px; padding:4px 9px;
-    color:var(--muted); background:var(--surface); white-space:nowrap;
-  }
-  .tag.axis{color:var(--accent-deep); border-color:var(--accent); font-weight:500}
-
-  /* --- Hero illustration --- */
-  figure{margin:26px 0 8px}
-  figure svg{display:block; width:100%; height:auto; border:1px solid var(--line); border-radius:6px; background:var(--surface)}
-  figcaption{
-    font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted);
-    margin-top:9px; letter-spacing:.02em;
-  }
-
-  /* --- Sections --- */
-  section{padding:26px 0; border-top:1px solid var(--line)}
-  section:first-of-type{border-top:none}
-  h2{
-    font-family:"Be Vietnam Pro",sans-serif; font-weight:700;
-    font-size:24px; line-height:1.2; margin:0 0 14px; letter-spacing:-.01em;
-    display:flex; align-items:baseline; gap:12px;
-  }
-  h2 .num{
-    font-family:"JetBrains Mono",monospace; font-size:13px; font-weight:700;
-    color:var(--accent); background:rgba(12,110,97,.08); border:1px solid rgba(12,110,97,.25);
-    border-radius:3px; padding:3px 7px; letter-spacing:.05em; flex:none; transform:translateY(-2px);
-  }
-  p{margin:0 0 16px}
-  strong{font-weight:600}
-  a{color:var(--accent-deep)}
-
-  /* --- Code --- */
-  .code-label{
-    display:inline-flex; align-items:center; gap:7px;
-    font-family:"Be Vietnam Pro",sans-serif; font-weight:600; font-size:12px;
-    letter-spacing:.08em; text-transform:uppercase; color:var(--accent-deep);
-    margin:18px 0 0; padding:5px 10px; background:rgba(12,110,97,.08);
-    border:1px solid rgba(12,110,97,.22); border-bottom:none; border-radius:5px 5px 0 0;
-  }
-  .code-label.bsd{color:var(--freebsd); background:rgba(178,58,46,.08); border-color:rgba(178,58,46,.28)}
-  .code-label .dot{width:7px; height:7px; border-radius:50%; background:var(--accent)}
-  .code-label.bsd .dot{background:var(--freebsd)}
-  pre{
-    margin:0 0 16px; background:var(--code-bg); color:var(--code-text);
-    border-radius:0 6px 6px 6px; border-left:4px solid var(--accent);
-    padding:16px 18px; overflow-x:auto; font-size:14.5px; line-height:1.6;
-    font-family:"JetBrains Mono",monospace;
-  }
-  pre.bsd{border-left-color:var(--freebsd)}
-  pre + .code-label{margin-top:6px}
-  code{font-family:"JetBrains Mono",monospace; font-size:.9em}
-  p code, li code{
-    background:rgba(20,32,29,.06); padding:1px 6px; border-radius:4px;
-    font-size:.86em; color:var(--accent-deep);
-  }
-  .cmt{color:var(--code-muted)}
-
-  ul.clean{margin:0 0 16px; padding-left:0; list-style:none}
-  ul.clean li{position:relative; padding-left:22px; margin-bottom:10px}
-  ul.clean li::before{
-    content:"›"; position:absolute; left:2px; top:-1px;
-    color:var(--accent); font-family:"JetBrains Mono",monospace; font-weight:700;
-  }
-
-  .callout{
-    background:var(--surface); border:1px solid var(--line); border-left:4px solid var(--freebsd);
-    border-radius:0 6px 6px 0; padding:16px 18px; margin:0 0 16px;
-    font-size:16px;
-  }
-  .callout .k{
-    font-family:"JetBrains Mono",monospace; font-size:11px; letter-spacing:.14em;
-    text-transform:uppercase; color:var(--freebsd); display:block; margin-bottom:6px; font-weight:700;
-  }
-  .callout.tip{border-left-color:var(--accent)}
-  .callout.tip .k{color:var(--accent-deep)}
-
-  .exercise{
-    background:var(--ink); color:#EAF0EE; border-radius:8px; padding:22px 22px; margin-top:4px;
-  }
-  .exercise h2{color:#fff; margin-bottom:12px}
-  .exercise h2 .num{color:#7FE0D2; background:rgba(127,224,210,.12); border-color:rgba(127,224,210,.3)}
-  .exercise p{color:#C6D3CF; font-size:16px}
-  .exercise code{color:#9FE9DC}
-
-  /* --- Footer --- */
-  footer{border-top:2px solid var(--ink); margin:36px 0 60px; padding-top:16px}
-  .foot-row{
-    display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px;
-    font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted);
-    letter-spacing:.04em;
-  }
-  .hashtags{color:var(--accent-deep)}
-
-  /* motion */
-  @media (prefers-reduced-motion:no-preference){
-    header.post,figure:first-of-type{animation:rise .6s ease both}
-    @keyframes rise{from{opacity:0; transform:translateY(10px)} to{opacity:1; transform:none}}
-  }
-  :focus-visible{outline:2px solid var(--accent); outline-offset:2px; border-radius:2px}
-  @media (max-width:520px){
-    body{font-size:17px}
-    h2{font-size:21px}
-    pre{font-size:13px}
-  }
-</style>
+<link rel="stylesheet" href="../assets/style.css">
 </head>
-<body>
+<body class="post">
 <div class="wrap">
 
   <div class="masthead">
     <div class="brand">
-      <span class="name">Linux Daily</span>
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
       <span class="issue">#004 · 05·08·2026</span>
     </div>
   </div>
@@ -365,6 +214,7 @@ restic restore latest --target /tmp/kiemtra --include /etc/hostname</code></pre>
   </div>
 
   <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
     <div class="foot-row">
       <span>Linux Daily #004 · Công cụ mới</span>
       <span class="hashtags">#LinuxDaily #SysAdmin #Restic #Backup</span>
