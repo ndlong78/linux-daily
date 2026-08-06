@@ -1,0 +1,18 @@
+🧩 Đang apt upgrade qua SSH thì Wi-Fi chớp, VPN rớt, laptop ngủ — thế là tiến trình chết giữa chừng, để lại hệ thống dở dang. Ai quản trị máy từ xa cũng từng dính pha này ít nhất một lần.
+
+tmux gỡ đúng nỗi đau đó: nó tách phiên làm việc ra khỏi kết nối SSH. Mọi thứ chạy trong một tmux server nằm TRÊN MÁY CHỦ, nên client rớt chỉ "detach" chứ không đụng gì tới công việc đang chạy. Đăng nhập lại → tmux attach → về đúng chỗ, tiến trình vẫn đang chạy.
+
+Bonus: chia một cửa sổ thành nhiều khung (vừa chạy lệnh vừa tail -f log), nhiều cửa sổ như tab.
+
+Điểm hay: cách dùng GIỐNG HỆT trên cả 4 HĐH — cùng phím prefix Ctrl-b, cùng lệnh, cùng ~/.tmux.conf. Chỉ khác lệnh cài:
+• Ubuntu/Xubuntu & Debian → apt install tmux
+• Fedora → dnf install tmux
+• FreeBSD → pkg install tmux (không có trong base)
+
+Lưu ý quan trọng: tmux KHÔNG phải dịch vụ nền — phiên sống qua SSH rớt, nhưng mất khi máy reboot. Cần chạy bền qua khởi động lại thì dùng systemd unit/rc service.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #tmux #FreeBSD #CLI
+
+[Đính kèm ảnh: post-011-code.png]

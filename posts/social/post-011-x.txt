@@ -1,0 +1,29 @@
+[Tweet 1] — đính kèm post-011-code.png
+🧩 Đang apt upgrade qua SSH thì mạng rớt → tiến trình chết giữa chừng, hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên chạy trên máy chủ, SSH rớt cũng không sao. Thread 🧵
+
+[Tweet 2]
+tmux tách phiên làm việc khỏi kết nối SSH. Mọi thứ chạy trong tmux server TRÊN MÁY CHỦ — client rớt chỉ "detach", việc vẫn chạy tiếp. Đăng nhập lại → attach → về đúng chỗ.
+
+[Tweet 3]
+Cốt lõi, phím prefix là Ctrl-b (C-b):
+tmux new -s work    # tạo phiên
+C-b d               # detach
+tmux ls             # liệt kê phiên
+tmux attach -t work # quay lại
+
+[Tweet 4]
+Chia màn hình để vừa chạy vừa theo dõi:
+C-b %   chia dọc (trái | phải)
+C-b "   chia ngang (trên / dưới)
+C-b c   cửa sổ mới (như tab)
+
+[Tweet 5]
+Điểm hay: cách dùng GIỐNG HỆT mọi HĐH. Chỉ khác lệnh cài:
+apt install tmux / dnf install tmux / pkg install tmux (FreeBSD, không có trong base).
+
+[Tweet 6]
+⚠️ tmux KHÔNG phải dịch vụ nền. Phiên sống qua SSH rớt, nhưng MẤT khi máy reboot (tmux server cũng tắt). Cần chạy bền qua khởi động lại → systemd unit/rc service, không phải tmux.
+
+[Tweet 7]
+Full bài + sơ đồ client/server: {{LINK}}
+#LinuxDaily #tmux #FreeBSD #CLI
