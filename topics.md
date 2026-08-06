@@ -8,3 +8,4 @@
 #004 | 2026-08-05 | Công cụ mới | restic: backup mã hoá, khử trùng lặp, tăng dần trên Ubuntu/Debian/Fedora/FreeBSD
 #005 | 2026-07-07 | Monitoring | Đọc log hệ thống: journald/journalctl trên Linux vs syslog/newsyslog trên FreeBSD
 #006 | 2026-07-09 | Automation | Ansible: một playbook đa nền tảng (apt/dnf/pkgng, systemd vs rc) trên Ubuntu/Debian/Fedora/FreeBSD
+#007 | 2026-07-11 | Ôn tập | Lab end-to-end: dựng web server an toàn, mở đúng cổng qua tường lửa (ufw/firewalld/pf) trên Ubuntu/Debian/Fedora/FreeBSD
