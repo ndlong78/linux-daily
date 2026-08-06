@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab end-to-end: hệ backup tự động, có kiểm chứng bằng restore thật — Linux Daily #014</title>
+<meta name="description" content="Bài ôn tập ghép cả chu kỳ: script backup vững (restic + set -euo pipefail), chạy dưới user tối thiểu quyền, lập lịch bằng systemd timer (Linux) hay cron (FreeBSD), và diễn tập khôi phục để chứng minh backup dùng được.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#014 · 25·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Ôn tập · Lab end-to-end</p>
+    <h1>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h1>
+    <p class="lede">Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: <strong>được kiểm chứng bằng một lần khôi phục thật</strong>. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · ÔN TẬP</span>
+      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
+      <span class="tag">~12 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: vòng lặp backup đáng tin, ghép các bài của chu kỳ 2 -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ vòng lặp backup đáng tin năm mắt xích: đích lưu trên đĩa riêng, script backup vững, chạy dưới user tối thiểu quyền, lập lịch định kỳ, và diễn tập khôi phục để kiểm chứng — mỗi mắt xích dựa trên một bài trước">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <text x="24" y="28" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">VÒNG LẶP BACKUP ĐÁNG TIN · GHÉP CẢ CHU KỲ</text>
+
+      <g font-family="JetBrains Mono, monospace">
+        <!-- 1 đích lưu -->
+        <rect x="40" y="70" width="180" height="56" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="56" y="94" fill="#14201D" font-size="12">1 · Đích lưu (đĩa riêng)</text>
+        <text x="56" y="112" fill="#566661" font-size="10">bài #010</text>
+        <!-- 2 script -->
+        <rect x="290" y="70" width="180" height="56" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="306" y="94" fill="#14201D" font-size="12">2 · Script vững</text>
+        <text x="306" y="112" fill="#566661" font-size="10">restic · #013 · #004</text>
+        <!-- 3 user -->
+        <rect x="540" y="70" width="196" height="56" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="556" y="94" fill="#14201D" font-size="12">3 · User tối thiểu quyền</text>
+        <text x="556" y="112" fill="#566661" font-size="10">bài #009</text>
+
+        <!-- arrows row1 -->
+        <line x1="220" y1="98" x2="286" y2="98" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+        <line x1="470" y1="98" x2="536" y2="98" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+        <!-- down -->
+        <line x1="638" y1="126" x2="638" y2="158" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+
+        <!-- 4 lập lịch -->
+        <rect x="540" y="164" width="196" height="56" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
+        <text x="556" y="188" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">4 · Lập lịch định kỳ</text>
+        <text x="556" y="206" fill="#566661" font-size="10">timer / cron · bài #012</text>
+        <!-- 5 kiểm chứng -->
+        <rect x="290" y="164" width="180" height="56" rx="6" fill="#14201D"/>
+        <text x="306" y="188" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">5 · Diễn tập restore</text>
+        <text x="306" y="206" fill="#9FE9DC" font-size="10">restic check + restore</text>
+
+        <!-- arrows row2 (phải sang trái) -->
+        <line x1="538" y1="192" x2="472" y2="192" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+
+        <!-- vòng lặp về đầu -->
+        <path d="M290 192 H150 V126" fill="none" stroke="#0C6E61" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arw)"/>
+        <text x="150" y="252" text-anchor="middle" fill="#566661" font-size="10.5">lặp lại mỗi đêm — và tin được vì đã restore</text>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Năm mắt xích, mỗi mắt xích là một bài trước. Mắt xích số 5 (diễn tập khôi phục) là thứ biến "đống snapshot" thành "backup đáng tin".</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Rất nhiều "hệ backup" thực ra là một script chạy tay thỉnh thoảng, không ai chắc lần cuối chạy khi nào, và <em>chưa ai từng thử khôi phục</em>. Đến ngày ổ hỏng mới phát hiện repo rỗng, mật khẩu thất lạc, hoặc bản sao thiếu mất thư mục quan trọng. Lab này dựng một quy trình khép kín và <strong>tự chứng minh</strong>: chạy tự động, ghi log để biết mỗi đêm thành hay bại, và định kỳ khôi phục thử để đảm bảo dữ liệu thật sự lấy lại được.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p>Một hệ backup đáng tin gồm năm mắt xích — bốn cái đầu đã có bài riêng, cái thứ năm là trọng tâm mới:</p>
+    <ul class="clean">
+      <li><strong>Đích lưu tách biệt</strong> (bài #010): backup phải nằm ở đĩa/khác máy, không cùng ổ với dữ liệu gốc.</li>
+      <li><strong>Script vững</strong> (bài #013 + engine restic #004): <code>set -euo pipefail</code>, <code>trap</code>, ghi log — để thất bại không im lặng.</li>
+      <li><strong>User tối thiểu quyền</strong> (bài #009): chạy job bằng đúng tài khoản cần, không phải root nếu tránh được.</li>
+      <li><strong>Lập lịch</strong> (bài #012): systemd timer (Ubuntu/Debian/Fedora) hoặc cron (FreeBSD — không có timer).</li>
+      <li><strong>Diễn tập khôi phục:</strong> <code>restic check</code> + một lần <code>restore</code> thử định kỳ. Đây là mắt xích hay bị bỏ, và là mắt xích quyết định.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh cơ chế lập lịch + log đích cho backup 4 HĐH -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh: Ubuntu, Xubuntu, Debian và Fedora lập lịch backup bằng systemd timer và xem log qua journald; FreeBSD dùng cron và xem log trong /var/log">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="102" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timer</text>
+        <text x="104" y="130" text-anchor="middle" font-size="10.5" fill="#566661">User= trong unit</text>
+        <text x="104" y="158" text-anchor="middle" font-size="10.5" fill="#566661">log → journald</text>
+        <text x="104" y="184" text-anchor="middle" font-size="10" fill="#566661">restic engine</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="102" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timer</text>
+        <text x="284" y="130" text-anchor="middle" font-size="10.5" fill="#566661">User= trong unit</text>
+        <text x="284" y="158" text-anchor="middle" font-size="10.5" fill="#566661">log → journald</text>
+        <text x="284" y="184" text-anchor="middle" font-size="10" fill="#566661">restic engine</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="102" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timer</text>
+        <text x="464" y="130" text-anchor="middle" font-size="10.5" fill="#566661">User= trong unit</text>
+        <text x="464" y="158" text-anchor="middle" font-size="10.5" fill="#566661">log → journald</text>
+        <text x="464" y="184" text-anchor="middle" font-size="10" fill="#566661">restic engine</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="102" text-anchor="middle" font-size="11" fill="#B23A2E">cron</text>
+        <text x="650" y="130" text-anchor="middle" font-size="10.5" fill="#7A4A44">crontab -u backup</text>
+        <text x="650" y="158" text-anchor="middle" font-size="10.5" fill="#7A4A44">log → /var/log</text>
+        <text x="650" y="184" text-anchor="middle" font-size="10" fill="#B23A2E">restic từ pkg</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG QUY TRÌNH · LẬP LỊCH &amp; LOG KHÁC NHAU</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal lập lịch bằng systemd timer và log vào journald; cột đỏ (FreeBSD) dùng cron và log ra <code>/var/log</code>. Engine backup (restic) và script thì giống nhau.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Dựng hệ backup trên từng hệ điều hành</h2>
+    <p>Giả định đã có user <code>backup</code> (bài #009) và một repo restic (bài #004). Trước hết là script vững — giống nhau mọi hệ.</p>
+
+    <span class="code-label"><span class="dot"></span>Khung chung — script backup vững</span>
+    <pre><code>#!/usr/bin/env bash
+<span class="cmt"># /usr/local/bin/backup.sh</span>
+set -euo pipefail
+export RESTIC_REPOSITORY="sftp:backup@10.0.0.9:/srv/restic-repo"
+export RESTIC_PASSWORD_FILE="/etc/restic/pass"   <span class="cmt"># quyền 600</span>
+
+log() { logger -t backup "$*"; }                 <span class="cmt"># đẩy vào syslog/journald</span>
+trap 'log "THẤT BẠI ở dòng $LINENO"' ERR
+
+restic backup /etc /var/www
+restic forget --keep-daily 7 --keep-weekly 4 --prune
+log "backup OK"</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — systemd timer</span>
+    <pre><code><span class="cmt"># /etc/systemd/system/backup.service</span>
+[Service]
+Type=oneshot
+User=backup
+ExecStart=/usr/local/bin/backup.sh
+
+<span class="cmt"># /etc/systemd/system/backup.timer</span>
+[Timer]
+OnCalendar=*-*-* 02:00:00
+Persistent=true
+[Install]
+WantedBy=timers.target
+
+sudo systemctl enable --now backup.timer</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — cron (tách riêng, không có systemd timer)</span>
+    <pre class="bsd"><code>pkg install -y restic bash
+<span class="cmt"># Lịch cho user backup — crontab -u backup -e:</span>
+0 2 * * *  /usr/local/bin/backup.sh
+<span class="cmt"># cron của FreeBSD tự gửi output qua mail; hoặc dùng logger trong script</span>
+service cron status</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng — mắt xích quan trọng nhất</h2>
+    <p>Chạy backup không đủ; phải chứng minh khôi phục được. Làm cả hai: soi toàn vẹn repo, và <em>restore thử</em> ra một thư mục tạm rồi so.</p>
+    <span class="code-label"><span class="dot"></span>Mọi hệ — diễn tập khôi phục</span>
+    <pre><code>restic snapshots                 <span class="cmt"># có bản mới nhất, đúng giờ chạy?</span>
+restic check                     <span class="cmt"># toàn vẹn repo</span>
+restic restore latest --target /tmp/restore-test \
+       --include /etc/hostname   <span class="cmt"># khôi phục thử một file</span>
+diff /etc/hostname /tmp/restore-test/etc/hostname   <span class="cmt"># khớp = backup dùng được</span></code></pre>
+    <span class="code-label"><span class="dot"></span>Xem job chạy đêm qua thành/bại</span>
+    <pre><code>journalctl -u backup.service --since yesterday   <span class="cmt"># Ubuntu/Debian/Fedora</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — xem log</span>
+    <pre class="bsd"><code>grep backup /var/log/cron /var/log/messages       <span class="cmt"># FreeBSD: log ở /var/log</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Không bao giờ thử restore:</strong> lỗi kinh điển. Repo có thể hỏng, thiếu thư mục, hoặc mật khẩu sai — chỉ một lần restore thật mới lộ ra. Đặt lịch diễn tập khôi phục định kỳ.</li>
+      <li><strong>Quyền của user backup:</strong> job chạy bằng <code>User=backup</code> nhưng backup <code>/etc</code> cần quyền đọc; hoặc cấp quyền đọc phù hợp, hoặc backup dữ liệu ứng dụng bằng user thường và để backup hệ cho một job root riêng.</li>
+      <li><strong>PATH &amp; môi trường trong cron/timer:</strong> job chạy môi trường tối giản (nhắc lại bài #012/#013) — dùng đường dẫn tuyệt đối và khai biến trong script, đừng dựa vào profile shell.</li>
+      <li><strong>Đích lưu đầy trong im lặng:</strong> repo phình khi quên <code>forget --prune</code>, hoặc đĩa đích đầy làm backup thất bại — giám sát dung lượng và <em>đọc log thất bại</em>, đừng cho là "chắc vẫn chạy".</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Không có systemd timer trên FreeBSD: lập lịch bằng <code>cron</code> (crontab của user backup), và xem kết quả trong <code>/var/log</code> thay vì <code>journalctl</code>. restic phải cài từ <code>pkg</code>. Script backup thì giống hệt — chỉ lớp lập lịch và xem log là khác.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Mật khẩu repo tách khỏi chính repo (bài #004): <code>RESTIC_PASSWORD_FILE</code> quyền <code>600</code>, cất bản dự phòng ở nơi khác — mất mật khẩu là mất trắng.</li>
+      <li>Áp quy tắc 3-2-1: ít nhất một bản ở máy/khu vực khác; snapshot cùng ổ với dữ liệu gốc không cứu được khi ổ chết (nhắc lại tinh thần #003).</li>
+      <li>Giám sát <em>thất bại</em>, không chỉ thành công: đẩy log job về nơi tập trung (bài #005) và đặt cảnh báo nếu một đêm không có snapshot mới.</li>
+      <li>Chạy lần backup đầu (thường rất lâu) trong <code>tmux</code> (bài #011) để mạng rớt không làm hỏng; các lần sau đã có timer/cron lo.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Dựng trọn hệ backup trên một máy <strong>Debian</strong> (systemd timer) và một máy <strong>FreeBSD</strong> (cron): script vững + user <code>backup</code> + lập lịch + đích lưu trên đĩa riêng. Sau lần chạy đầu, <em>xoá</em> một file nguồn rồi khôi phục lại nó <em>chỉ từ backup</em>. Câu hỏi: trong cả quy trình, bước nào chứng minh backup thật sự dùng được (chứ không chỉ "đã chạy"), và bạn kiểm tra job đêm qua thành hay bại bằng lệnh gì trên mỗi hệ?</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #014 · Ôn tập</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Backup</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
