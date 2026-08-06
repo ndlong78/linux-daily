@@ -7,3 +7,4 @@
 #003 | 2026-07-05 | Storage | Ảnh chụp (snapshot) ZFS: lệnh chung, cài đặt khác nhau trên Ubuntu/Debian/Fedora/FreeBSD
 #004 | 2026-08-05 | Công cụ mới | restic: backup mã hoá, khử trùng lặp, tăng dần trên Ubuntu/Debian/Fedora/FreeBSD
 #005 | 2026-07-07 | Monitoring | Đọc log hệ thống: journald/journalctl trên Linux vs syslog/newsyslog trên FreeBSD
+#006 | 2026-07-09 | Automation | Ansible: một playbook đa nền tảng (apt/dnf/pkgng, systemd vs rc) trên Ubuntu/Debian/Fedora/FreeBSD
