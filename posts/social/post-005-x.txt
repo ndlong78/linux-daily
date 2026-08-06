@@ -1,0 +1,30 @@
+[Tweet 1] — đính kèm post-005-code.png
+🔎 "Log nói gì?" — câu hỏi đầu tiên khi có sự cố. Nhưng log ở ĐÂU và đọc bằng GÌ thì mỗi HĐH một kiểu. Có hai mô hình, biết mình ở đâu mới điều tra được. Thread 🧵
+
+[Tweet 2]
+Linux (Ubuntu/Debian/Fedora) — journald + journalctl. Lọc theo trường có sẵn, gọn hơn ghép grep:
+journalctl -u sshd -b
+journalctl -p err --since "1 hour ago"
+journalctl -f
+
+[Tweet 3]
+⚠️ Debian: journalctl có đó, nhưng mặc định journal nằm trong RAM (Storage=auto, không có /var/log/journal) → mất sạch sau reboot. Điều tra sự cố kèm khởi động lại = mất chứng cứ.
+
+[Tweet 4]
+Bật journal lưu bền cho Debian:
+sudo mkdir -p /var/log/journal
+sudo systemd-tmpfiles --create --prefix /var/log/journal
+sudo systemctl restart systemd-journald
+
+[Tweet 5] — FreeBSD
+FreeBSD: KHÔNG có journalctl. Log là file text trong /var/log:
+grep sshd /var/log/auth.log
+tail -f /var/log/messages
+Xoay vòng do newsyslog lo (/etc/newsyslog.conf), KHÔNG phải logrotate.
+
+[Tweet 6]
+Mẹo vận hành: đồng bộ NTP trước khi tin mốc thời gian trong log — log lệch giờ giữa các máy làm việc truy vết gần như bất khả.
+
+[Tweet 7]
+Full bài + sơ đồ hai mô hình log: {{LINK}}
+#LinuxDaily #journald #FreeBSD #Monitoring
