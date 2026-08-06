@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Thêm đĩa mới: phân vùng, định dạng, mount vĩnh viễn — Linux Daily #010</title>
+<meta name="description" content="Gắn thêm một ổ đĩa: nhận diện, phân vùng GPT, tạo filesystem rồi mount vĩnh viễn qua fstab. Linux dùng parted/mkfs + UUID; FreeBSD dùng gpart/newfs (UFS) + nhãn GPT. Cùng quy trình, hai bộ công cụ.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#010 · 17·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Storage · Hệ thống tệp</p>
+    <h1>Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</h1>
+    <p class="lede">Bài #003 nói về snapshot khi đã có sẵn pool; bài này lùi về bước cơ bản hơn — gắn một ổ đĩa trống và đưa nó vào dùng. Quy trình bốn bước giống nhau ở mọi hệ: nhận diện đĩa, phân vùng, tạo filesystem, mount vĩnh viễn. Nhưng công cụ thì rẽ nhánh: Linux dùng <code>parted</code>/<code>mkfs</code>, FreeBSD dùng <code>gpart</code>/<code>newfs</code> — và cách định danh đĩa để mount cho bền cũng khác.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · STORAGE</span>
+      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
+      <span class="tag">~10 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: quy trình 4 bước đĩa trống -> mount point, lệnh Linux vs FreeBSD -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Quy trình bốn bước thêm đĩa: nhận diện đĩa, phân vùng GPT, tạo filesystem, mount qua fstab; mỗi bước ghi lệnh Linux màu teal và lệnh FreeBSD màu đỏ">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <text x="24" y="26" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">ĐĨA TRỐNG → SẴN SÀNG DÙNG · BỐN BƯỚC</text>
+      <text x="150" y="52" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="10.5">LINUX</text>
+      <text x="150" y="66" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="10.5">FREEBSD</text>
+
+      <!-- 4 bước dạng cột dọc -->
+      <g font-family="JetBrains Mono, monospace" font-size="11">
+        <!-- b1 -->
+        <rect x="250" y="44" width="260" height="44" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
+        <text x="380" y="62" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">1 · Nhận diện đĩa</text>
+        <text x="380" y="80" text-anchor="middle" fill="#566661" font-size="10">đĩa mới tên gì?</text>
+        <text x="150" y="62" text-anchor="middle" fill="#0C6E61">lsblk</text>
+        <text x="150" y="80" text-anchor="middle" fill="#B23A2E">gpart show</text>
+        <line x1="380" y1="88" x2="380" y2="104" stroke="#566661" stroke-width="1.4" marker-end="url(#arw)"/>
+
+        <!-- b2 -->
+        <rect x="250" y="108" width="260" height="44" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="380" y="126" text-anchor="middle" fill="#14201D" font-size="12">2 · Phân vùng (GPT)</text>
+        <text x="380" y="144" text-anchor="middle" fill="#566661" font-size="10">tạo bảng + phân vùng</text>
+        <text x="150" y="134" text-anchor="middle" fill="#0C6E61">parted</text>
+        <text x="600" y="134" text-anchor="middle" fill="#B23A2E">gpart add</text>
+        <line x1="380" y1="152" x2="380" y2="168" stroke="#566661" stroke-width="1.4" marker-end="url(#arw)"/>
+
+        <!-- b3 -->
+        <rect x="250" y="172" width="260" height="44" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="380" y="190" text-anchor="middle" fill="#14201D" font-size="12">3 · Tạo filesystem</text>
+        <text x="380" y="208" text-anchor="middle" fill="#566661" font-size="10">ext4/xfs · UFS</text>
+        <text x="150" y="198" text-anchor="middle" fill="#0C6E61">mkfs.ext4</text>
+        <text x="600" y="198" text-anchor="middle" fill="#B23A2E">newfs -U</text>
+        <line x1="380" y1="216" x2="380" y2="232" stroke="#566661" stroke-width="1.4" marker-end="url(#arw)"/>
+
+        <!-- b4 -->
+        <rect x="250" y="236" width="260" height="46" rx="6" fill="#14201D"/>
+        <text x="380" y="255" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">4 · Mount vĩnh viễn</text>
+        <text x="380" y="273" text-anchor="middle" fill="#9FE9DC" font-size="10">/etc/fstab — dùng định danh bền</text>
+        <text x="150" y="263" text-anchor="middle" fill="#0C6E61">UUID=…</text>
+        <text x="600" y="263" text-anchor="middle" fill="#B23A2E">/dev/gpt/label</text>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Bốn bước từ đĩa trống tới thư mục dùng được. Bước 4 là mấu chốt: khai <code>fstab</code> bằng định danh bền (UUID trên Linux, nhãn GPT trên FreeBSD) để mount không vỡ sau khi khởi động lại.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Máy sắp đầy đĩa, bạn gắn thêm một ổ. Sai lầm phổ biến của người mới: <code>mount /dev/sdb1 /data</code> một phát rồi tưởng xong — nhưng lần khởi động sau, thư mục <code>/data</code> trống trơn vì mount tay không tồn tại qua reboot. Muốn đĩa <em>ở lại</em>, phải khai vào <code>/etc/fstab</code>. Và nếu khai bằng tên thiết bị (<code>/dev/sdb1</code>) thì chỉ cần cắm thêm một ổ khác là thứ tự đổi, máy mount nhầm hoặc không boot. Bài này đi trọn quy trình đúng, cho cả Linux lẫn FreeBSD.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p>Quy trình bốn bước là chung: <strong>nhận diện → phân vùng → tạo filesystem → mount vĩnh viễn</strong>. Điểm khác nằm ở công cụ và ở <em>cách định danh bền</em> để khai fstab:</p>
+    <ul class="clean">
+      <li><strong>Phân vùng:</strong> Linux dùng <code>parted</code> (hoặc <code>fdisk</code>); FreeBSD dùng <code>gpart</code>. Cả hai nên dùng bảng phân vùng <strong>GPT</strong>.</li>
+      <li><strong>Filesystem mặc định:</strong> Ubuntu/Debian thường <code>ext4</code>; Fedora nghiêng về <code>xfs</code> (server) hoặc <code>btrfs</code> (workstation); FreeBSD dùng <code>UFS</code> (qua <code>newfs</code>) hoặc ZFS.</li>
+      <li><strong>Định danh bền:</strong> Linux mount theo <code>UUID</code> (lấy bằng <code>blkid</code>); FreeBSD mount theo <strong>nhãn GPT</strong> <code>/dev/gpt/&lt;label&gt;</code> — cả hai đều ổn định dù tên thiết bị đổi.</li>
+      <li><strong>Tên thiết bị:</strong> Linux <code>/dev/sdb</code>, <code>/dev/vdb</code>, <code>/dev/nvme0n1</code>; FreeBSD <code>ada1</code>, <code>da1</code>, <code>vtbd1</code> — luôn kiểm trước, đừng đoán.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh công cụ thêm đĩa 4 HĐH -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh thêm đĩa: Ubuntu và Xubuntu cùng Debian dùng parted và mkfs.ext4; Fedora dùng parted và mkfs.xfs hoặc btrfs; FreeBSD dùng gpart và newfs tạo UFS, mount theo nhãn GPT">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">parted</text>
+        <text x="104" y="124" text-anchor="middle" font-size="11" fill="#0C6E61">mkfs.ext4</text>
+        <text x="104" y="150" text-anchor="middle" font-size="10.5" fill="#566661">fstab: UUID=</text>
+        <text x="104" y="182" text-anchor="middle" font-size="10" fill="#566661">/dev/sdb</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">parted</text>
+        <text x="284" y="124" text-anchor="middle" font-size="11" fill="#0C6E61">mkfs.ext4</text>
+        <text x="284" y="150" text-anchor="middle" font-size="10.5" fill="#566661">fstab: UUID=</text>
+        <text x="284" y="182" text-anchor="middle" font-size="10" fill="#566661">/dev/sdb</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">parted</text>
+        <text x="464" y="124" text-anchor="middle" font-size="11" fill="#0C6E61">mkfs.xfs / btrfs</text>
+        <text x="464" y="150" text-anchor="middle" font-size="10.5" fill="#566661">fstab: UUID=</text>
+        <text x="464" y="182" text-anchor="middle" font-size="10" fill="#566661">/dev/sdb</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="98" text-anchor="middle" font-size="11" fill="#B23A2E">gpart</text>
+        <text x="650" y="124" text-anchor="middle" font-size="11" fill="#B23A2E">newfs (UFS)</text>
+        <text x="650" y="150" text-anchor="middle" font-size="10.5" fill="#7A4A44">fstab: /dev/gpt/</text>
+        <text x="650" y="182" text-anchor="middle" font-size="10" fill="#B23A2E">ada1 / da1</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG QUY TRÌNH · HAI BỘ CÔNG CỤ</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal dùng <code>parted</code> + <code>mkfs.*</code> và mount theo UUID; cột đỏ (FreeBSD) dùng <code>gpart</code> + <code>newfs</code> (UFS) và mount theo nhãn GPT.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Thêm đĩa trên từng hệ điều hành</h2>
+    <p>Giả định đĩa mới là <code>/dev/sdb</code> (Linux) / <code>ada1</code> (FreeBSD), mount vào <code>/data</code>. <strong>Cảnh báo:</strong> phân vùng xoá sạch dữ liệu — chắc chắn đúng ổ trước khi chạy.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian — parted + mkfs.ext4</span>
+    <pre><code>lsblk                                    <span class="cmt"># 1. xác nhận đĩa mới: /dev/sdb</span>
+sudo parted /dev/sdb --script mklabel gpt \
+     mkpart primary 0% 100%              <span class="cmt"># 2. bảng GPT + 1 phân vùng → sdb1</span>
+sudo mkfs.ext4 /dev/sdb1                 <span class="cmt"># 3. tạo filesystem ext4</span>
+
+sudo mkdir -p /data
+sudo blkid /dev/sdb1                     <span class="cmt"># 4. lấy UUID để khai fstab</span>
+<span class="cmt"># /etc/fstab:  UUID=xxxx-xxxx  /data  ext4  defaults,nofail  0 2</span>
+sudo mount -a                            <span class="cmt"># thử ngay: không lỗi mới an toàn reboot</span></code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — parted + mkfs.xfs</span>
+    <pre><code>lsblk
+sudo parted /dev/sdb --script mklabel gpt mkpart primary 0% 100%
+sudo mkfs.xfs /dev/sdb1                  <span class="cmt"># Fedora thường dùng xfs</span>
+sudo mkdir -p /data
+sudo blkid /dev/sdb1
+<span class="cmt"># /etc/fstab:  UUID=xxxx  /data  xfs  defaults,nofail  0 0</span>
+sudo mount -a</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — gpart + newfs (tách riêng)</span>
+    <pre class="bsd"><code>gpart show                               <span class="cmt"># 1. xác nhận đĩa mới: ada1</span>
+gpart create -s gpt ada1                 <span class="cmt"># 2. tạo bảng GPT</span>
+gpart add -t freebsd-ufs -l data0 ada1   <span class="cmt">#    phân vùng + NHÃN "data0" → /dev/gpt/data0</span>
+newfs -U /dev/gpt/data0                  <span class="cmt"># 3. UFS + soft-updates (-U)</span>
+
+mkdir -p /data
+<span class="cmt"># /etc/fstab:  /dev/gpt/data0  /data  ufs  rw  2 2</span>
+mount -a                                 <span class="cmt"># thử ngay trước khi tin</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
+    <pre><code>lsblk -f                     <span class="cmt"># thấy filesystem + điểm mount</span>
+df -hT /data                 <span class="cmt"># dung lượng + loại fs</span>
+findmnt /data                <span class="cmt"># nguồn thiết bị + tuỳ chọn mount</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
+    <pre class="bsd"><code>gpart show ada1              <span class="cmt"># sơ đồ phân vùng</span>
+df -h /data                  <span class="cmt"># dung lượng đã mount</span>
+mount | grep /data          <span class="cmt"># xác nhận nguồn /dev/gpt/data0</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Mount tay, quên fstab:</strong> <code>mount</code> thủ công mất sau reboot. Muốn bền phải khai <code>/etc/fstab</code>.</li>
+      <li><strong>Khai fstab bằng tên thiết bị:</strong> <code>/dev/sdb1</code> có thể thành <code>/dev/sdc1</code> khi cắm thêm ổ khác. Dùng <strong>UUID</strong> (Linux) hoặc <strong>nhãn GPT</strong> (FreeBSD) để mount đúng ổ bất kể thứ tự.</li>
+      <li><strong>fstab sai làm treo boot:</strong> một dòng lỗi có thể khiến máy không khởi động. Luôn chạy <code>mount -a</code> để thử <em>trước khi</em> reboot; trên Linux thêm <code>nofail</code> để hệ không treo nếu đĩa vắng mặt.</li>
+      <li><strong>Nhầm ổ khi phân vùng:</strong> chạy <code>parted</code>/<code>gpart</code> nhầm lên ổ hệ thống là mất dữ liệu. Đối chiếu dung lượng/serial bằng <code>lsblk</code>/<code>gpart show</code> trước mỗi lệnh ghi.</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Trên FreeBSD: phân vùng bằng <code>gpart</code> (không phải <code>parted</code>/<code>fdisk</code>), tạo filesystem bằng <code>newfs</code> cho UFS (không có <code>mkfs.ext4</code>), và mount bền theo <code>/dev/gpt/&lt;nhãn&gt;</code> thay vì UUID kiểu Linux. Tên đĩa cũng theo driver: <code>ada</code> (SATA/AHCI), <code>da</code> (SCSI/USB), <code>vtbd</code> (virtio).
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Sao lưu trước khi phân vùng bất kỳ ổ nào đang có dữ liệu (nhắc lại restic ở bài #004) — thao tác phân vùng không có nút hoàn tác.</li>
+      <li>Với đĩa chỉ chứa dữ liệu, cân nhắc tuỳ chọn mount siết chặt: <code>nosuid,nodev</code> (và <code>noexec</code> nếu không cần chạy chương trình từ đó) để giảm bề mặt tấn công.</li>
+      <li>Theo dõi dung lượng để không đầy đĩa bất ngờ (nối với bài log #005 và monitoring): đầy đĩa làm dịch vụ chết và log ngừng ghi.</li>
+      <li>Ghi lại nhãn/UUID và mục đích từng phân vùng vào tài liệu vận hành — sáu tháng sau bạn sẽ cảm ơn chính mình.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Trên một máy <strong>Ubuntu</strong> và một máy <strong>FreeBSD</strong>, gắn thêm một đĩa ảo và đưa nó vào dùng ở <code>/data</code> theo trọn bốn bước, khai fstab bằng định danh bền (UUID trên Ubuntu, nhãn GPT trên FreeBSD). Sau đó gắn thêm một đĩa <em>thứ hai</em> rồi reboot. Câu hỏi: nếu bạn đã lỡ khai fstab bằng <code>/dev/sdb1</code> (thay vì UUID), việc cắm đĩa thứ hai có thể làm hỏng điểm mount như thế nào — và vì sao định danh bền tránh được đúng lỗi đó?</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #010 · Storage</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Storage</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

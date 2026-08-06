@@ -1,0 +1,14 @@
+💽 Gắn thêm ổ đĩa, gõ mount /dev/sdb1 /data một phát rồi tưởng xong? Lần khởi động sau, /data trống trơn — vì mount tay không sống qua reboot. Muốn đĩa Ở LẠI, phải khai fstab. Và khai sai kiểu là máy không boot.
+
+Bài #010 (Storage) đi trọn quy trình 4 bước thêm đĩa: nhận diện → phân vùng GPT → tạo filesystem → mount vĩnh viễn. Cùng quy trình, nhưng công cụ và cách định danh bền rẽ nhánh:
+• Ubuntu/Xubuntu & Debian → parted + mkfs.ext4, fstab theo UUID
+• Fedora → parted + mkfs.xfs (hoặc btrfs), fstab theo UUID
+• FreeBSD → gpart + newfs (UFS), mount theo NHÃN GPT /dev/gpt/... (không có mkfs.ext4, tên đĩa kiểu ada1/da1)
+
+Hai cạm bẫy chết người: (1) khai fstab bằng /dev/sdb1 — cắm thêm ổ khác là thứ tự đổi, mount nhầm; dùng UUID/nhãn GPT thay thế. (2) fstab sai làm treo boot — LUÔN chạy mount -a để thử trước khi reboot.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Storage #FreeBSD #Filesystem
+
+[Đính kèm ảnh: post-010-code.png]
