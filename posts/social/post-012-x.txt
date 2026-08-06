@@ -1,0 +1,30 @@
+[Tweet 1] — đính kèm post-012-code.png
+⏰ Backup quên chạy = lúc cần không có. Log không dọn = đầy đĩa. Việc lặp lại phải tự động. Nhưng dùng cron, systemd timer, hay periodic? Thread 🧵
+
+[Tweet 2]
+cron — có ở MỌI HĐH, đơn giản nhất:
+crontab -e
+# phút giờ ngày tháng thứ  lệnh
+0 2 * * *  /usr/local/bin/backup.sh   # 02:00 mỗi ngày
+Nhược: log nghèo, không tự bù lần lỡ.
+
+[Tweet 3]
+systemd timers (Ubuntu/Debian/Fedora) — cách hiện đại. Cặp .service + .timer:
+OnCalendar=*-*-* 02:00:00
+Persistent=true          # BÙ lần lỡ nếu máy đã tắt
+systemctl enable --now backup.timer
+
+[Tweet 4]
+Ưu điểm timer: output vào journald, systemctl list-timers xem lần chạy kế/trước, RandomizedDelaySec để tránh dồn tải. Đáng đổi từ cron trên Linux.
+
+[Tweet 5] — FreeBSD
+FreeBSD KHÔNG có systemd timers. Lịch tuỳ ý dùng cron (giống Linux); việc bảo trì hệ do periodic(8) lo:
+sysrc -f /etc/periodic.conf ...
+periodic daily   # chạy thử bộ script daily
+
+[Tweet 6]
+⚠️ Cạm bẫy: cron chạy PATH tối giản → dùng đường dẫn tuyệt đối. Tạo .timer nhưng quên enable --now. Máy tắt đúng giờ → cron bỏ qua; muốn bù dùng Persistent=true.
+
+[Tweet 7]
+Full bài + sơ đồ 3 cơ chế: {{LINK}}
+#LinuxDaily #cron #FreeBSD #systemd
