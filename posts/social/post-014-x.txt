@@ -1,0 +1,40 @@
+[Tweet 1] — đính kèm post-014-code.png
+🔁 Câu hỏi phũ: bản backup gần nhất của bạn — đã bao giờ thử KHÔI PHỤC chưa? Nếu chưa, đó không phải backup, chỉ là hy vọng. Lab #014: dựng hệ backup tự động, có kiểm chứng. Thread 🧵
+
+[Tweet 2]
+Hệ backup đáng tin = 5 mắt xích, ghép cả chu kỳ:
+1 đĩa đích riêng (#010)
+2 script vững restic (#013+#004)
+3 user tối thiểu quyền (#009)
+4 lập lịch (#012)
+5 diễn tập khôi phục ← quyết định
+
+[Tweet 3]
+Script vững (giống nhau mọi HĐH):
+#!/usr/bin/env bash
+set -euo pipefail
+trap 'logger -t backup "FAIL dòng $LINENO"' ERR
+restic backup /etc /var/www
+restic forget --keep-daily 7 --prune
+
+[Tweet 4]
+Lập lịch — Ubuntu/Debian/Fedora dùng systemd timer:
+[Timer] OnCalendar=*-*-* 02:00:00 / Persistent=true
+[Service] User=backup
+systemctl enable --now backup.timer
+
+[Tweet 5] — FreeBSD
+FreeBSD KHÔNG có systemd timer → dùng cron:
+crontab -u backup -e
+0 2 * * *  /usr/local/bin/backup.sh
+Log ở /var/log (không phải journalctl). restic cài từ pkg.
+
+[Tweet 6]
+Mắt xích quan trọng nhất — diễn tập khôi phục:
+restic check
+restic restore latest --target /tmp/test --include /etc/hostname
+diff ... # khớp = backup THẬT SỰ dùng được
+
+[Tweet 7]
+Full lab + sơ đồ 5 mắt xích: {{LINK}}
+#LinuxDaily #Backup #FreeBSD #restic
