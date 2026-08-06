@@ -1,0 +1,31 @@
+[Tweet 1] — đính kèm post-013-code.png
+🐚 Script chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm không phải logic — mà là /bin/sh trỏ vào shell KHÁC NHAU trên mỗi hệ. Thread 🧵
+
+[Tweet 2]
+/bin/sh mỗi nơi một khác:
+• Ubuntu/Debian → dash
+• Fedora → bash (as sh)
+• FreeBSD → sh của BSD
+Nên bashism viết trên Fedora "lọt lưới" rồi vỡ trên Debian/FreeBSD.
+
+[Tweet 3]
+Shebang đúng:
+#!/usr/bin/env bash   ← tìm bash trong PATH
+Tránh #!/bin/bash cứng — FreeBSD để bash ở /usr/local/bin/bash, không phải /bin/bash. env bash chạy cả hai.
+
+[Tweet 4]
+Bật chế độ nghiêm ngay dòng đầu:
+set -euo pipefail
+-e dừng khi lỗi | -u báo biến chưa đặt | -o pipefail để lỗi giữa pipe không bị nuốt (pipefail là của bash, dash không có).
+
+[Tweet 5]
+Dọn dẹp + quoting:
+tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
+Luôn quote "$var". rm -rf $dir/ với $dir rỗng = rm -rf /. Thêm -- chặn tên bắt đầu bằng -.
+
+[Tweet 6] — FreeBSD
+FreeBSD: bash không có trong base → pkg install bash (vào /usr/local/bin). Nhờ shebang env bash, không cần sửa đường dẫn trong script. Soi lỗi: shellcheck script.sh
+
+[Tweet 7]
+Full bài + sơ đồ 4 shell: {{LINK}}
+#LinuxDaily #Bash #FreeBSD
