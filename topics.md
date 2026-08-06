@@ -16,3 +16,4 @@
 #012 | 2026-07-21 | Monitoring | Lập lịch định kỳ: cron (mọi nơi) + systemd timers trên Linux vs cron + periodic(8) trên FreeBSD
 #013 | 2026-07-23 | Automation | Viết bash script vững: /bin/sh (dash/bash/sh) khác nhau, shebang env bash, set -euo pipefail + trap trên Ubuntu/Debian/Fedora/FreeBSD
 #014 | 2026-07-25 | Ôn tập | Lab end-to-end: hệ backup tự động có kiểm chứng bằng restore thật (restic + systemd timer trên Linux / cron trên FreeBSD)
+#015 | 2026-07-27 | Networking | WireGuard: đường hầm VPN mã hoá — cùng wg0.conf, bật bằng systemd wg-quick trên Linux vs rc.conf trên FreeBSD
