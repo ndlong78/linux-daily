@@ -1,0 +1,32 @@
+[Tweet 1] — đính kèm post-009-code.png
+🔑 Đăng nhập root cho mọi việc = một lệnh nhầm là hỏng cả hệ, không dấu vết ai làm gì. Cách chuẩn: user thường + leo thang quyền có kiểm soát. Nhưng cơ chế mỗi HĐH một khác. Thread 🧵
+
+[Tweet 2]
+Ubuntu/Debian — nhóm quản trị là "sudo":
+adduser alice
+usermod -aG sudo alice
+⚠️ Nhớ -a! usermod -G (thiếu -a) sẽ XOÁ alice khỏi mọi nhóm khác.
+
+[Tweet 3]
+Fedora — nhóm quản trị là "wheel":
+useradd -m alice && passwd alice
+usermod -aG wheel alice
+%wheel đã có sẵn trong /etc/sudoers.
+
+[Tweet 4] — FreeBSD
+FreeBSD: dùng pw (không phải useradd), nhóm wheel, và sudo/doas KHÔNG có trong base:
+pw useradd alice -m
+pw groupmod wheel -m alice
+pkg install -y doas
+
+[Tweet 5] — FreeBSD
+Cấu hình doas ở /usr/local/etc/doas.conf, cú pháp khác hẳn sudoers:
+permit persist :wheel
+Kiểm cú pháp: doas -C /usr/local/etc/doas.conf
+
+[Tweet 6]
+⚠️ Đừng sửa /etc/sudoers trực tiếp — một lỗi cú pháp khoá sudo cả máy. Dùng visudo (kiểm trước khi lưu) + drop-in /etc/sudoers.d/. Và tránh NOPASSWD: ALL — trao đúng lệnh cần thôi.
+
+[Tweet 7]
+Full bài + sơ đồ leo thang quyền: {{LINK}}
+#LinuxDaily #sudo #FreeBSD #Security
