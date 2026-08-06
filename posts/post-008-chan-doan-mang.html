@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chẩn đoán mạng: ip/ss trên Linux, ifconfig/netstat trên FreeBSD — Linux Daily #008</title>
+<meta name="description" content="Khi mạng không chạy, cần một bộ công cụ chẩn đoán theo tầng. Linux dùng iproute2 (ip, ss); FreeBSD giữ bộ BSD (ifconfig, netstat, sockstat). Cùng câu hỏi, hai bộ lệnh.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#008 · 13·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Networking · Chẩn đoán</p>
+    <h1>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</h1>
+    <p class="lede">Bài #001 dạy cách <em>đặt</em> cấu hình mạng; bài này dạy cách <em>đọc</em> nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có "up" không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng <code>ip</code> và <code>ss</code>; FreeBSD giữ bộ BSD cổ điển <code>ifconfig</code>, <code>netstat</code>, <code>sockstat</code>.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · NETWORKING</span>
+      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
+      <span class="tag">~9 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: thang chẩn đoán 5 tầng, lệnh Linux (teal) vs FreeBSD (đỏ) mỗi tầng -->
+    <svg viewBox="0 0 760 320" role="img" aria-label="Thang chẩn đoán mạng năm tầng từ dưới lên: interface up, có IP, route/gateway, cổng đang nghe, gói tin tới; mỗi tầng ghi lệnh Linux bên trái màu teal và lệnh FreeBSD bên phải màu đỏ">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+      </defs>
+      <rect x="0" y="0" width="760" height="320" fill="url(#grid)"/>
+
+      <text x="24" y="26" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">CHẨN ĐOÁN TỪ DƯỚI LÊN · MỖI TẦNG MỘT CÂU HỎI</text>
+      <text x="150" y="46" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">LINUX (ip / ss)</text>
+      <text x="560" y="46" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="11">FREEBSD (bsd tools)</text>
+
+      <!-- 5 tầng -->
+      <g font-family="JetBrains Mono, monospace" font-size="12">
+        <!-- tầng 5 -->
+        <rect x="300" y="56" width="160" height="40" rx="6" fill="#14201D"/>
+        <text x="380" y="81" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">5 · Gói tin tới?</text>
+        <text x="150" y="81" text-anchor="middle" fill="#0C6E61">tcpdump</text>
+        <text x="610" y="81" text-anchor="middle" fill="#B23A2E">tcpdump</text>
+
+        <!-- tầng 4 -->
+        <rect x="300" y="104" width="160" height="40" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="380" y="129" text-anchor="middle" fill="#14201D" font-size="12">4 · Cổng nghe?</text>
+        <text x="150" y="129" text-anchor="middle" fill="#0C6E61">ss -tlnp</text>
+        <text x="610" y="129" text-anchor="middle" fill="#B23A2E">sockstat -4 -l</text>
+
+        <!-- tầng 3 -->
+        <rect x="300" y="152" width="160" height="40" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="380" y="177" text-anchor="middle" fill="#14201D" font-size="12">3 · Route/gateway?</text>
+        <text x="150" y="177" text-anchor="middle" fill="#0C6E61">ip route</text>
+        <text x="610" y="177" text-anchor="middle" fill="#B23A2E">netstat -rn</text>
+
+        <!-- tầng 2 -->
+        <rect x="300" y="200" width="160" height="40" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="380" y="225" text-anchor="middle" fill="#14201D" font-size="12">2 · Có IP?</text>
+        <text x="150" y="225" text-anchor="middle" fill="#0C6E61">ip addr</text>
+        <text x="610" y="225" text-anchor="middle" fill="#B23A2E">ifconfig</text>
+
+        <!-- tầng 1 -->
+        <rect x="300" y="248" width="160" height="40" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
+        <text x="380" y="273" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">1 · Interface up?</text>
+        <text x="150" y="273" text-anchor="middle" fill="#0C6E61">ip link</text>
+        <text x="610" y="273" text-anchor="middle" fill="#B23A2E">ifconfig</text>
+      </g>
+
+      <!-- mũi tên đi lên -->
+      <line x1="380" y1="248" x2="380" y2="240" stroke="#566661" stroke-width="1.4"/>
+      <line x1="380" y1="200" x2="380" y2="192" stroke="#566661" stroke-width="1.4"/>
+      <line x1="380" y1="152" x2="380" y2="144" stroke="#566661" stroke-width="1.4"/>
+      <line x1="380" y1="104" x2="380" y2="96" stroke="#566661" stroke-width="1.4"/>
+      <text x="380" y="306" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">bắt đầu từ tầng 1, lên dần tới nơi hỏng</text>
+    </svg>
+    <figcaption>Hình 1 — Thang chẩn đoán: sửa mạng là leo từ tầng 1 lên, dừng ở tầng đầu tiên thấy sai. Cùng câu hỏi mỗi tầng, nhưng lệnh Linux (trái) và FreeBSD (phải) khác nhau.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>"Máy không vào được mạng" là mô tả vô dụng — hỏng có thể ở bất kỳ tầng nào: cáp/interface chưa up, chưa nhận IP, thiếu route mặc định, DNS chết, hay dịch vụ đích không nghe. Người mới đoán mò và restart lung tung; người có nghề đi <strong>theo tầng, từ dưới lên</strong>, mỗi tầng một câu hỏi có/không. Vấn đề khi quản trị đa nền tảng: phản xạ gõ <code>ip a</code> trên FreeBSD sẽ "command not found", còn <code>ifconfig</code> trên Fedora thì có khi chưa cài.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p>Có hai trường phái công cụ. Linux hiện đại chuyển sang bộ <strong>iproute2</strong>: <code>ip</code> (interface, địa chỉ, route, bảng neighbor/ARP) và <code>ss</code> (socket đang mở). Bộ <em>net-tools</em> cũ (<code>ifconfig</code>, <code>netstat</code>, <code>route</code>, <code>arp</code>) đã bị coi là lỗi thời và nhiều bản (như Fedora) không cài sẵn. <strong>FreeBSD</strong> đi hướng ngược lại: giữ bộ BSD gốc — <code>ifconfig</code>, <code>netstat</code>, <code>route</code>, <code>arp</code>, cộng <code>sockstat</code> — và <em>không</em> có <code>ip</code> hay <code>ss</code>.</p>
+    <ul class="clean">
+      <li><strong>Linux (Ubuntu/Debian/Fedora):</strong> <code>ip</code> + <code>ss</code> là chuẩn hiện hành; nhớ hai lệnh này là đủ 90% việc.</li>
+      <li><strong>FreeBSD:</strong> <code>ifconfig</code> lo interface + địa chỉ; <code>netstat -rn</code> lo route; <code>sockstat</code> lo cổng đang nghe.</li>
+      <li><strong>Điểm chung:</strong> <code>ping</code>, <code>traceroute</code>, <code>tcpdump</code> tồn tại cả hai bên với cú pháp gần như y hệt.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh bộ công cụ chẩn đoán 4 HĐH -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh công cụ chẩn đoán mạng: Ubuntu, Debian và Fedora đều dùng iproute2 với ip và ss; FreeBSD dùng ifconfig, netstat và sockstat, không có ip hay ss">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">ip · ss</text>
+        <text x="104" y="132" text-anchor="middle" font-size="10.5" fill="#566661">iproute2</text>
+        <text x="104" y="160" text-anchor="middle" font-size="10.5" fill="#566661">có sẵn</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">ip · ss</text>
+        <text x="284" y="132" text-anchor="middle" font-size="10.5" fill="#566661">iproute2</text>
+        <text x="284" y="160" text-anchor="middle" font-size="10.5" fill="#566661">có sẵn</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">ip · ss</text>
+        <text x="464" y="132" text-anchor="middle" font-size="10.5" fill="#566661">iproute2</text>
+        <text x="464" y="160" text-anchor="middle" font-size="10" fill="#566661">net-tools: chưa cài</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="100" text-anchor="middle" font-size="11.5" fill="#B23A2E">ifconfig</text>
+        <text x="650" y="122" text-anchor="middle" font-size="11.5" fill="#B23A2E">netstat · sockstat</text>
+        <text x="650" y="150" text-anchor="middle" font-size="10.5" fill="#7A4A44">bộ BSD gốc</text>
+        <text x="650" y="176" text-anchor="middle" font-size="10" fill="#B23A2E">KHÔNG có ip / ss</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG CÂU HỎI · HAI BỘ CÔNG CỤ</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal dùng chung <code>ip</code>/<code>ss</code> (iproute2); cột đỏ (FreeBSD) dùng bộ BSD gốc. Lưu ý Fedora không cài sẵn net-tools cũ.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Bộ lệnh trên từng hệ điều hành</h2>
+    <p>Giả định interface <code>ens33</code> (Linux) / <code>em0</code> (FreeBSD). Đi lần lượt năm tầng của thang chẩn đoán.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — iproute2</span>
+    <pre><code>ip link show ens33            <span class="cmt"># 1. interface có "state UP" không?</span>
+ip addr show ens33            <span class="cmt"># 2. có địa chỉ IP chưa?</span>
+ip route                      <span class="cmt"># 3. có default via gateway không?</span>
+ip neigh                      <span class="cmt">#    bảng ARP/neighbor (thay arp -a)</span>
+ss -tlnp                      <span class="cmt"># 4. cổng TCP đang nghe + tiến trình</span>
+sudo tcpdump -ni ens33 port 80   <span class="cmt"># 5. gói tin có tới interface?</span></code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — bộ BSD (tách riêng)</span>
+    <pre class="bsd"><code>ifconfig em0                  <span class="cmt"># 1+2. trạng thái interface VÀ địa chỉ IP</span>
+netstat -rn                   <span class="cmt"># 3. bảng định tuyến (KHÔNG có "ip route")</span>
+arp -a                        <span class="cmt">#    bảng ARP</span>
+sockstat -4 -l                <span class="cmt"># 4. cổng đang nghe (KHÔNG có "ss")</span>
+sudo tcpdump -ni em0 port 80  <span class="cmt"># 5. bắt gói — cú pháp y hệt Linux</span></code></pre>
+
+    <div class="callout tip">
+      <span class="k">Ánh xạ nhanh Linux → FreeBSD</span>
+      <code>ip link</code>/<code>ip addr</code> → <code>ifconfig</code> · <code>ip route</code> → <code>netstat -rn</code> · <code>ip neigh</code> → <code>arp -a</code> · <code>ss -tlnp</code> → <code>sockstat -4 -l</code>. Riêng <code>ping</code>, <code>traceroute</code>, <code>tcpdump</code> thì hai bên như nhau.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <p>Một quy trình đối chiếu nhanh: kiểm tra kết nối tầng thấp rồi lên tới phân giải tên. Chạy song song trên cả hai họ để thấy điểm khác.</p>
+    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
+    <pre><code>ping -c3 192.168.10.1         <span class="cmt"># tới được gateway?</span>
+ip route get 1.1.1.1          <span class="cmt"># gói ra ngoài đi qua route nào?</span>
+ss -s                         <span class="cmt"># thống kê socket tổng quát</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
+    <pre class="bsd"><code>ping -c3 192.168.10.1
+netstat -rn | grep default    <span class="cmt"># xem route mặc định</span>
+netstat -an -p tcp            <span class="cmt"># trạng thái các kết nối TCP</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Bám <code>ifconfig</code>/<code>netstat</code> trên Linux:</strong> chúng đã lỗi thời và có thể chưa cài (Fedora). Đầu ra cũng có thể thiếu thông tin so với <code>ip</code>/<code>ss</code>. Chuyển hẳn sang iproute2 trên Linux.</li>
+      <li><strong>Gõ <code>ip</code>/<code>ss</code> trên FreeBSD:</strong> không tồn tại — "command not found". Đừng cài gói để "vá" cho giống Linux; hãy dùng bộ BSD gốc, nó đầy đủ cho mọi việc.</li>
+      <li><strong>Quên quyền cho tcpdump và cột PID của ss:</strong> bắt gói cần <code>root</code>; xem tiến trình gắn với socket (<code>ss -p</code> / <code>sockstat</code>) cũng cần quyền cao mới thấy đủ.</li>
+      <li><strong>Nhầm tầng:</strong> đổ lỗi cho DNS trong khi thực ra chưa có route mặc định. Cứ leo từ tầng 1: interface → IP → route → cổng → gói, dừng ở chỗ đầu tiên sai.</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Trên FreeBSD không có <code>ip</code> hay <code>ss</code>. Ánh xạ: <code>ifconfig</code> cho interface+IP, <code>netstat -rn</code> cho route, <code>sockstat</code> cho cổng nghe, <code>arp -a</code> cho ARP. Ngược lại, trên Linux hiện đại đừng trông đợi <code>ifconfig</code>/<code>netstat</code> luôn có sẵn.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li><code>tcpdump</code> thấy được nội dung gói không mã hoá — chạy có mục đích, giới hạn bộ lọc, và không lưu bừa file bắt gói chứa dữ liệu nhạy cảm.</li>
+      <li>Trên production, ưu tiên lệnh <em>chỉ đọc</em> (<code>ip</code>, <code>ss</code>, <code>netstat</code>); tránh thao tác đổi trạng thái interface khi đang có tải, kẻo tự cắt kết nối.</li>
+      <li>Đồng bộ NTP giữa các máy trước khi so mốc thời gian gói/log — lệch giờ làm việc truy vết gần như bất khả (nhắc lại từ bài log #005).</li>
+      <li>Để chẩn đoán từ xa an toàn, dựa trên SSH đã gia cố (bài #002) và tường lửa chỉ mở cổng cần thiết (bài #007) — đừng mở thêm cổng chỉ để "cho dễ debug".</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Trên một máy <strong>Fedora</strong> và một máy <strong>FreeBSD</strong>, cố tình gỡ route mặc định (hoặc tắt gateway), rồi dùng thang năm tầng để xác định chính xác mạng hỏng ở tầng nào — chỉ bằng lệnh chẩn đoán, không xem lại file cấu hình. Ghi ra cặp lệnh tương ứng ở mỗi tầng cho hai HĐH. Câu hỏi: ở tầng 3, output của <code>ip route</code> (Fedora) và <code>netstat -rn</code> (FreeBSD) khác nhau ở những cột nào, và cùng cho bạn biết điều gì về default gateway?</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #008 · Networking</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Networking</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
