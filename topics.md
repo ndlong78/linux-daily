@@ -11,3 +11,4 @@
 #007 | 2026-07-11 | Ôn tập | Lab end-to-end: dựng web server an toàn, mở đúng cổng qua tường lửa (ufw/firewalld/pf) trên Ubuntu/Debian/Fedora/FreeBSD
 #008 | 2026-07-13 | Networking | Chẩn đoán mạng theo tầng: ip/ss (iproute2) trên Linux vs ifconfig/netstat/sockstat trên FreeBSD
 #009 | 2026-07-15 | Bảo mật | Tạo user & trao quyền: nhóm sudo/wheel + sudo trên Linux vs pw + doas trên FreeBSD
+#010 | 2026-07-17 | Storage | Thêm đĩa mới: phân vùng/định dạng/mount vĩnh viễn — parted+mkfs (UUID) trên Linux vs gpart+newfs (nhãn GPT) trên FreeBSD
