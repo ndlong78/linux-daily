@@ -7,6 +7,7 @@ on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:   # cho phép chạy tay từ tab Actions (hữu ích khi vừa bật Actions)
 
 permissions:
   contents: read
