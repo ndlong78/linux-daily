@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible: một playbook, bốn hệ điều hành — Linux Daily #006</title>
+<meta name="description" content="Ansible điều khiển từ xa qua SSH, không cần agent. Cùng một playbook cài gói và bật dịch vụ trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD — khác biệt gói gọn trong module (apt/dnf/pkgng) và trình quản lý dịch vụ (systemd vs rc).">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#006 · 09·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Automation · Scripting</p>
+    <h1>Ansible: một playbook, bốn hệ điều hành</h1>
+    <p class="lede">Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả <em>trạng thái mong muốn</em> một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · AUTOMATION</span>
+      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
+      <span class="tag">~10 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: control node đẩy playbook qua SSH tới 4 managed node -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ Ansible: một control node chạy playbook, đẩy cấu hình qua SSH tới bốn máy đích Ubuntu, Debian, Fedora và FreeBSD; mỗi máy đích cần sẵn Python, không cần cài agent">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+        <marker id="arwr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#B23A2E"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <!-- CONTROL NODE -->
+      <g font-family="JetBrains Mono, monospace">
+        <rect x="30" y="112" width="150" height="76" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+        <text x="105" y="140" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">CONTROL</text>
+        <text x="105" y="160" text-anchor="middle" fill="#14201D" font-size="11">playbook.yml</text>
+        <text x="105" y="176" text-anchor="middle" fill="#566661" font-size="10">+ inventory</text>
+      </g>
+
+      <!-- SSH fan-out -->
+      <text x="250" y="40" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">SSH · KHÔNG AGENT · CẦN PYTHON</text>
+      <line x1="180" y1="150" x2="250" y2="62"  stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+      <line x1="180" y1="150" x2="250" y2="122" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+      <line x1="180" y1="150" x2="250" y2="182" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+      <line x1="180" y1="150" x2="250" y2="242" stroke="#B23A2E" stroke-width="2" marker-end="url(#arwr)"/>
+
+      <!-- 4 managed nodes -->
+      <g font-family="JetBrains Mono, monospace">
+        <rect x="256" y="44" width="220" height="40" rx="5" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.6"/>
+        <text x="272" y="69" fill="#14201D" font-size="12">Ubuntu / Xubuntu</text>
+        <text x="466" y="69" text-anchor="end" fill="#0C6E61" font-size="11">apt</text>
+
+        <rect x="256" y="104" width="220" height="40" rx="5" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.6"/>
+        <text x="272" y="129" fill="#14201D" font-size="12">Debian</text>
+        <text x="466" y="129" text-anchor="end" fill="#0C6E61" font-size="11">apt</text>
+
+        <rect x="256" y="164" width="220" height="40" rx="5" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.6"/>
+        <text x="272" y="189" fill="#14201D" font-size="12">Fedora</text>
+        <text x="466" y="189" text-anchor="end" fill="#0C6E61" font-size="11">dnf</text>
+
+        <rect x="256" y="224" width="220" height="40" rx="5" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="272" y="249" fill="#B23A2E" font-size="12">FreeBSD</text>
+        <text x="466" y="249" text-anchor="end" fill="#B23A2E" font-size="11">pkgng</text>
+      </g>
+
+      <!-- os_family grouping -->
+      <g font-family="JetBrains Mono, monospace" font-size="10.5">
+        <path d="M500 48 h150 v96 h-150" fill="none" stroke="#0C6E61" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="512" y="100" fill="#0C6E61">os_family = "Debian"</text>
+        <path d="M500 166 h150 v36 h-150" fill="none" stroke="#0C6E61" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="512" y="188" fill="#0C6E61">"RedHat"</text>
+        <path d="M500 226 h150 v36 h-150" fill="none" stroke="#B23A2E" stroke-width="1" stroke-dasharray="3 3"/>
+        <text x="512" y="248" fill="#B23A2E">"FreeBSD"</text>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Một control node đẩy cùng một playbook tới cả đàn máy qua SSH. Ansible nhóm máy theo <code>ansible_os_family</code> để chọn đúng module cho từng họ.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Bạn có mười máy cần cùng một phần mềm, cùng một dịch vụ bật sẵn. Làm tay: SSH vào từng máy, gõ lại loạt lệnh, và cầu cho không bỏ sót. Vấn đề không chỉ là mất thời gian — mà là <strong>không ai biết chắc mười máy đó có thực sự giống nhau không</strong>. Ansible đổi cách nghĩ: bạn khai báo trạng thái mong muốn ("gói X phải có, dịch vụ Y phải chạy"), Ansible tự so với thực tế và chỉ sửa phần lệch. Chạy lại nhiều lần vẫn ra một kết quả — tính <em>idempotent</em>.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p><strong>Ansible</strong> chạy từ một <em>control node</em> (chỉ cần cài trên máy này), đẩy lệnh tới các <em>managed node</em> qua SSH. Không có agent thường trực; đổi lại, mỗi máy đích cần sẵn <strong>Python</strong> để Ansible thực thi module. Khi kết nối, Ansible thu thập <em>facts</em> — trong đó <code>ansible_os_family</code> cho biết máy thuộc họ nào để bạn rẽ nhánh.</p>
+    <ul class="clean">
+      <li><strong>Inventory:</strong> danh sách máy, nhóm theo vai trò/HĐH.</li>
+      <li><strong>Playbook:</strong> file YAML mô tả các <em>task</em> áp lên nhóm máy.</li>
+      <li><strong><code>ansible_os_family</code>:</strong> <code>Debian</code> (gồm cả Ubuntu/Xubuntu), <code>RedHat</code> (Fedora), <code>FreeBSD</code> — dùng trong <code>when:</code> để chọn đúng module.</li>
+      <li><strong>Module <code>package</code> tổng quát</strong> tự dò trình quản lý gói, nhưng khi cần tuỳ chọn riêng (ví dụ <code>pkgng</code>) thì gọi module cụ thể.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh module gói + service theo hệ điều hành -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh Ansible theo hệ điều hành: Ubuntu và Xubuntu cùng Debian dùng module apt và dịch vụ systemd, Fedora dùng module dnf và systemd, FreeBSD dùng module pkgng và dịch vụ rc ghi vào rc.conf">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">module: apt</text>
+        <text x="104" y="132" text-anchor="middle" font-size="10.5" fill="#566661">os_family Debian</text>
+        <text x="104" y="158" text-anchor="middle" font-size="10.5" fill="#566661">dịch vụ: systemd</text>
+        <text x="104" y="182" text-anchor="middle" font-size="10" fill="#566661">become: sudo</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">module: apt</text>
+        <text x="284" y="132" text-anchor="middle" font-size="10.5" fill="#566661">os_family Debian</text>
+        <text x="284" y="158" text-anchor="middle" font-size="10.5" fill="#566661">dịch vụ: systemd</text>
+        <text x="284" y="182" text-anchor="middle" font-size="10" fill="#566661">become: sudo</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">module: dnf</text>
+        <text x="464" y="132" text-anchor="middle" font-size="10.5" fill="#566661">os_family RedHat</text>
+        <text x="464" y="158" text-anchor="middle" font-size="10.5" fill="#566661">dịch vụ: systemd</text>
+        <text x="464" y="182" text-anchor="middle" font-size="10" fill="#566661">become: sudo</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="104" text-anchor="middle" font-size="12" fill="#B23A2E">module: pkgng</text>
+        <text x="650" y="132" text-anchor="middle" font-size="10.5" fill="#7A4A44">os_family FreeBSD</text>
+        <text x="650" y="158" text-anchor="middle" font-size="10.5" fill="#7A4A44">dịch vụ: rc / rc.conf</text>
+        <text x="650" y="182" text-anchor="middle" font-size="10" fill="#B23A2E">Python phải tự cài</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">MỘT PLAYBOOK · MODULE KHÁC NHAU THEO HỌ</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal chia hai họ (Debian/RedHat) nhưng đều systemd; cột đỏ (FreeBSD) đổi cả module gói lẫn trình quản lý dịch vụ, và cần Python được cài trước.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Playbook cho từng hệ điều hành</h2>
+    <p>Mục tiêu chung: cài máy chủ web <code>nginx</code> và bật nó chạy khi khởi động. Trước hết, khai inventory (nhóm theo HĐH để rẽ nhánh gọn):</p>
+    <pre><code><span class="cmt"># inventory.ini</span>
+[web]
+web1 ansible_host=10.0.0.11        <span class="cmt"># Ubuntu</span>
+web2 ansible_host=10.0.0.12        <span class="cmt"># Fedora</span>
+bsd1 ansible_host=10.0.0.19 ansible_python_interpreter=/usr/local/bin/python3   <span class="cmt"># FreeBSD</span></code></pre>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian — module apt</span>
+    <pre><code><span class="cmt"># task trong playbook.yml</span>
+- name: Cài nginx (họ Debian)
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — module dnf</span>
+    <pre><code>- name: Cài nginx (Fedora / họ RedHat)
+  ansible.builtin.dnf:
+    name: nginx
+    state: present
+  when: ansible_os_family == "RedHat"</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — module pkgng (tách riêng)</span>
+    <pre class="bsd"><code>- name: Cài nginx (FreeBSD)
+  community.general.pkgng:
+    name: nginx
+    state: present
+  when: ansible_os_family == "FreeBSD"</code></pre>
+
+    <p>Bật dịch vụ thì dùng chung một module — nhưng trên FreeBSD, <code>enabled: true</code> ghi vào <code>/etc/rc.conf</code> thay vì tạo symlink systemd:</p>
+    <pre><code>- name: Bật &amp; khởi động nginx (mọi HĐH)
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true</code></pre>
+
+    <p>Chạy playbook (<code>become</code> để leo quyền root — Ubuntu/Debian/Fedora dùng <code>sudo</code>; FreeBSD cần cài sẵn <code>sudo</code> hoặc dùng <code>doas</code>):</p>
+    <pre><code>ansible-playbook -i inventory.ini playbook.yml --become</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <p>Trước khi tin playbook, kiểm tra kết nối và xem trước thay đổi. Các lệnh này chạy từ control node, không phân biệt HĐH đích:</p>
+    <span class="code-label"><span class="dot"></span>Từ control node (áp cho mọi máy đích)</span>
+    <pre><code>ansible all -i inventory.ini -m ping        <span class="cmt"># SSH + Python có sẵn chưa?</span>
+ansible all -i inventory.ini -m setup \
+  -a "filter=ansible_os_family"             <span class="cmt"># in os_family từng máy</span>
+ansible-playbook -i inventory.ini playbook.yml --check --diff   <span class="cmt"># chạy thử, không sửa thật</span></code></pre>
+    <div class="callout tip">
+      <span class="k">--check trước, --become sau</span>
+      Luôn chạy <code>--check --diff</code> để xem Ansible <em>định</em> đổi gì trước khi áp thật. Một playbook idempotent chạy lần hai phải báo <code>changed=0</code>; nếu vẫn <code>changed</code>, task của bạn chưa thực sự khai báo trạng thái.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>FreeBSD thiếu Python:</strong> bản cài tối thiểu không có Python, nên <code>ping</code>/facts sẽ lỗi. Bootstrap trước bằng module <code>raw</code>: <code>ansible bsd1 -m raw -a "pkg install -y python3"</code>, rồi chỉ đường bằng <code>ansible_python_interpreter=/usr/local/bin/python3</code>.</li>
+      <li><strong>Nhầm module theo HĐH:</strong> gọi <code>apt</code> trên Fedora hay <code>dnf</code> trên FreeBSD sẽ fail. Rẽ nhánh bằng <code>when: ansible_os_family == ...</code>, hoặc dùng module <code>package</code> tổng quát cho ca đơn giản.</li>
+      <li><strong>become trên FreeBSD:</strong> FreeBSD không có <code>sudo</code> mặc định — cài <code>sudo</code> hoặc đặt <code>ansible_become_method: doas</code>. Đừng cho rằng <code>--become</code> luôn chạy được như trên Linux.</li>
+      <li><strong>Tên gói khác nhau:</strong> cùng phần mềm nhưng tên gói/tên service có thể lệch giữa các họ — kiểm tra thay vì giả định (ví dụ gói phát triển, apache là <code>apache2</code> vs <code>httpd</code>).</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Trên FreeBSD, Ansible bật dịch vụ bằng cách ghi <code>rc.conf</code> (không có systemd unit), quản lý gói qua <code>pkgng</code> (không phải <code>apt</code>/<code>dnf</code>), và thường leo quyền bằng <code>doas</code> thay vì <code>sudo</code>. Cùng một playbook, nhưng cơ chế bên dưới hoàn toàn khác.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Ansible đăng nhập bằng SSH — áp thẳng các nguyên tắc gia cố SSH (khoá thay mật khẩu, cấm root); dùng một tài khoản riêng có quyền <code>become</code> thay vì SSH thẳng vào root.</li>
+      <li>Giữ bí mật (mật khẩu, token) trong <strong>Ansible Vault</strong>, không để plaintext trong playbook hay inventory đẩy lên Git.</li>
+      <li>Chạy <code>--check --diff</code> trên môi trường thử trước, rồi mới áp production; giới hạn phạm vi bằng <code>--limit</code> khi cần.</li>
+      <li>Ghim phiên bản collection (ví dụ <code>community.general</code> cho <code>pkgng</code>) để playbook chạy lại sau nhiều tháng vẫn cho kết quả ổn định.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Viết một playbook cài <code>nginx</code> và bật dịch vụ, rồi áp lên hai máy: một <strong>Debian</strong> và một <strong>FreeBSD</strong>. Trên FreeBSD, bootstrap Python trước bằng module <code>raw</code>. Chạy <code>--check --diff</code> lần đầu, áp thật, rồi chạy lại lần hai. Câu hỏi: lần chạy thứ hai báo <code>changed</code> bao nhiêu, và nếu khác 0 thì task nào chưa idempotent — vì sao? Đồng thời, kiểm tra trên FreeBSD xem <code>enabled: true</code> đã thêm dòng gì vào <code>/etc/rc.conf</code>.</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #006 · Automation</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Ansible</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,16 @@
+⚙️ Làm tay từng máy: lần thứ ba là quên bước, lần thứ mười là sai. Vấn đề không chỉ là mất thời gian — mà là bạn KHÔNG BIẾT CHẮC mười máy đó có thật sự giống nhau không.
+
+Ansible đổi cách nghĩ: khai báo "trạng thái mong muốn", nó tự so với thực tế và chỉ sửa phần lệch. Chạy lại bao nhiêu lần cũng ra một kết quả (idempotent). Điều khiển qua SSH, không cần cài agent — nhưng máy đích phải có sẵn Python.
+
+Cùng một playbook chạy khắp 4 HĐH, khác biệt gói gọn ở module + trình quản lý dịch vụ:
+• Ubuntu/Xubuntu & Debian → module apt, os_family "Debian", dịch vụ systemd
+• Fedora → module dnf, os_family "RedHat", dịch vụ systemd
+• FreeBSD → module pkgng, os_family "FreeBSD", bật dịch vụ = ghi vào /etc/rc.conf (không có systemd); Python phải tự cài trước; become thường dùng doas thay sudo
+
+Bài #006 chỉ cách rẽ nhánh bằng when: ansible_os_family, bootstrap Python cho FreeBSD, và vì sao luôn chạy --check --diff trước khi áp thật.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Ansible #FreeBSD #Automation
+
+[Đính kèm ảnh: post-006-code.png]
