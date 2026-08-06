@@ -1,1 +1,18 @@
+# macOS
 .DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+build/
+dist/
+
+# File tạm khi soạn snippet cho render_code
+*.snippet.tmp
+scratch/

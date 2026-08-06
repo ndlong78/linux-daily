@@ -90,8 +90,24 @@ Tạo thư mục `posts/social/` nếu chưa có, rồi sinh ba thứ cho bài:
 Thêm dòng vào `topics.md`:
 `#<số> | <YYYY-MM-DD> | <trục> | <tên chủ đề>`
 
+**Ngày phải là ngày chạy thực tế (hôm nay)** và **không được nhỏ hơn** ngày của
+bài trước đó — validator sẽ chặn nếu lùi ngày (backdate). `<YYYY-MM-DD>` trong
+`topics.md` và ngày `DD·MM·YYYY` hiển thị trong HTML bài phải khớp nhau.
+
 Rồi dựng lại trang chủ để nó liệt kê bài mới:
 `python3 tools/build_index.py`   (cập nhật `index.html` ở gốc repo)
+
+## Bước 5b — Kiểm định trước khi commit (BẮT BUỘC)
+Chạy quality gate; **không commit nếu còn lỗi** — sửa cho đến khi sạch:
+
+```
+python3 tools/validate_repo.py     # số bài liên tục, trục đúng chu kỳ, ngày hợp lệ,
+                                    # 2 SVG + aria, đủ 7 mục, khối FreeBSD, tweet ≤ 280…
+python3 tools/build_index.py --check   # index.html đã dựng lại chưa
+```
+
+CI cũng chạy đúng các lệnh này trên PR (xem `.github/workflows/ci.yml`), nên đây
+là cùng một cổng chất lượng — chạy trước để khỏi phải sửa vòng hai.
 
 ## Bước 6 — Commit (KHÔNG tự đăng)
 - Tạo/chuyển sang nhánh `claude/linux-daily-<YYYY-MM-DD>`.
