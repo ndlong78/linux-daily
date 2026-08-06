@@ -3,26 +3,38 @@
 build_index.py — Quét posts/post-*.html và dựng trang chủ index.html liệt kê bài,
 mới nhất lên đầu. Dùng CSS chung ở assets/style.css. Chạy sau mỗi lần thêm bài.
 
-Dùng: python3 tools/build_index.py
+Dùng:
+  python3 tools/build_index.py            # dựng lại index.html
+  python3 tools/build_index.py --check     # chỉ kiểm tra index.html đã đồng bộ chưa
 """
-import glob, os, re, html
+import argparse
+import glob
+import html
+import os
+import re
+import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
+INDEX_PATH = os.path.join(ROOT, "index.html")
+
 
 def strip_tags(s):
     return re.sub(r"<[^>]+>", "", s or "").strip()
+
 
 def grab(pattern, text, flags=re.S):
     m = re.search(pattern, text, flags)
     return m.group(1).strip() if m else ""
 
+
 def parse_post(path):
-    t = open(path, encoding="utf-8").read()
+    with open(path, encoding="utf-8") as fh:
+        t = fh.read()
     issue_raw = grab(r'<span class="issue">(.*?)</span>', t)
     num, date = issue_raw, ""
     if "·" in issue_raw:
-        num, date = [x.strip() for x in issue_raw.split("·", 1)]
+        num, date = (x.strip() for x in issue_raw.split("·", 1))
     axis = strip_tags(grab(r'<p class="eyebrow">(.*?)</p>', t))
     title = strip_tags(grab(r"<h1>(.*?)</h1>", t))
     lede = strip_tags(grab(r'<p class="lede">(.*?)</p>', t))
@@ -32,6 +44,7 @@ def parse_post(path):
         n = int(m.group(1))
     return {"file": "posts/" + os.path.basename(path), "num": num, "n": n,
             "date": date, "axis": axis, "title": title, "lede": lede}
+
 
 def card(p):
     return f'''      <a class="card" href="{html.escape(p['file'])}">
@@ -43,6 +56,7 @@ def card(p):
         <h2>{html.escape(p['title'])}</h2>
         <p>{html.escape(p['lede'])}</p>
       </a>'''
+
 
 TEMPLATE = '''<!DOCTYPE html>
 <html lang="vi">
@@ -73,14 +87,41 @@ TEMPLATE = '''<!DOCTYPE html>
 </html>
 '''
 
-def main():
-    posts = [parse_post(p) for p in glob.glob(os.path.join(POSTS_DIR, "post-*.html"))]
+
+def render_index(posts_dir=POSTS_DIR):
+    """Dựng nội dung HTML của trang chủ (không ghi ra đĩa) — dùng chung cho build và --check."""
+    posts = [parse_post(p) for p in glob.glob(os.path.join(posts_dir, "post-*.html"))]
     posts.sort(key=lambda x: x["n"], reverse=True)
     cards = "\n".join(card(p) for p in posts) or '<p class="empty">Chưa có bài nào.</p>'
     out = TEMPLATE.replace("{{CARDS}}", cards).replace("{{COUNT}}", str(len(posts)))
-    with open(os.path.join(ROOT, "index.html"), "w", encoding="utf-8") as f:
+    return out, len(posts)
+
+
+def main():
+    ap = argparse.ArgumentParser(description="Dựng hoặc kiểm tra index.html.")
+    ap.add_argument("--check", action="store_true",
+                    help="Không ghi; báo lỗi nếu index.html chưa được dựng lại từ posts/ hiện tại.")
+    args = ap.parse_args()
+
+    out, n = render_index()
+
+    if args.check:
+        current = ""
+        if os.path.exists(INDEX_PATH):
+            with open(INDEX_PATH, encoding="utf-8") as f:
+                current = f.read()
+        if current != out:
+            print("LỖI: index.html chưa đồng bộ với posts/. "
+                  "Chạy `python3 tools/build_index.py` rồi commit lại.", file=sys.stderr)
+            return 1
+        print(f"OK: index.html đã đồng bộ ({n} bài).")
+        return 0
+
+    with open(INDEX_PATH, "w", encoding="utf-8") as f:
         f.write(out)
-    print(f"Đã dựng index.html với {len(posts)} bài.")
+    print(f"Đã dựng index.html với {n} bài.")
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

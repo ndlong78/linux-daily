@@ -1,0 +1,35 @@
+[project]
+name = "linux-daily"
+version = "0.1.0"
+description = "Công cụ dựng site và kiểm định chất lượng cho series Linux Daily."
+readme = "README.md"
+requires-python = ">=3.10"
+# Pillow chỉ cần cho tools/render_code.py (sinh ảnh code cho Facebook/X).
+dependencies = [
+    "Pillow==11.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==8.3.4",
+    "ruff==0.8.4",
+]
+
+[tool.setuptools]
+# Repo là static site + vài script; không đóng gói thành package Python.
+py-modules = []
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+extend-exclude = ["tools/fonts"]
+
+[tool.ruff.lint]
+# Quy tắc gọn: lỗi cú pháp/logic (E, F), import (I), nâng cấp cú pháp (UP), bug bẫy (B).
+select = ["E", "F", "I", "UP", "B"]
+# E501 (độ dài dòng) bỏ qua vì các script có chuỗi HTML/thông báo tiếng Việt dài.
+ignore = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
