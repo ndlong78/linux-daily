@@ -1,0 +1,31 @@
+[Tweet 1] — đính kèm post-015-code.png
+🔐 Nối hai máy qua Internet như cùng một LAN, mã hoá đầu-cuối, không phơi SSH ra ngoài — không cần vật lộn với IPsec. WireGuard: một cặp khoá, vài dòng config. Thread 🧵
+
+[Tweet 2]
+WireGuard nằm trong nhân (Linux 5.6+, FreeBSD if_wg), mật mã hiện đại cố định. Mỗi peer có private key (giữ kín) + public key (chia cho bên kia). Không mật khẩu, không CA.
+
+[Tweet 3]
+wg0.conf gói gọn tất cả:
+[Interface] Address=10.10.0.1/24
+ListenPort=51820, PrivateKey=...
+[Peer] PublicKey=..., AllowedIPs=10.10.0.2/32
+File này GIỐNG NHAU mọi HĐH.
+
+[Tweet 4]
+Bật dịch vụ — Linux (Ubuntu/Debian/Fedora):
+apt/dnf install wireguard(-tools)
+systemctl enable --now wg-quick@wg0
+Config ở /etc/wireguard.
+
+[Tweet 5] — FreeBSD
+FreeBSD: pkg install wireguard-tools. KHÔNG có systemd:
+sysrc wireguard_interfaces=wg0
+service wireguard start
+Config ở /usr/local/etc/wireguard (khác Linux). Kiểm: ifconfig wg0.
+
+[Tweet 6]
+⚠️ AllowedIPs vừa lọc vừa định tuyến. 0.0.0.0/0 = full tunnel (mọi lưu lượng qua peer). Nối 2 máy thì để dải nhỏ. Và nhớ mở cổng UDP 51820 trên tường lửa, thiếu là không handshake.
+
+[Tweet 7]
+Full bài + sơ đồ peer↔peer: {{LINK}}
+#LinuxDaily #WireGuard #FreeBSD #VPN

@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WireGuard: VPN mã hoá gọn nhẹ giữa hai máy — Linux Daily #015</title>
+<meta name="description" content="WireGuard dựng đường hầm mã hoá bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau mọi hệ; khác là cách bật dịch vụ (systemd wg-quick trên Linux, rc.conf trên FreeBSD) và đường dẫn cấu hình.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#015 · 27·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Networking · VPN</p>
+    <h1>WireGuard: một cặp khoá, một đường hầm mã hoá</h1>
+    <p class="lede">Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? <strong>WireGuard</strong> làm điều đó bằng một cặp khoá và vài dòng cấu hình. File <code>wg0.conf</code> giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · NETWORKING</span>
+      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
+      <span class="tag">~10 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: hai peer nối qua đường hầm WireGuard mã hoá -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ WireGuard: hai máy peer A và peer B, mỗi máy có một cặp khoá riêng và công khai, nối với nhau qua một đường hầm mã hoá trên nền UDP; mỗi bên khai AllowedIPs để định tuyến dải địa chỉ của bên kia">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <text x="24" y="28" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">ĐƯỜNG HẦM MÃ HOÁ · PEER ↔ PEER TRÊN NỀN UDP</text>
+
+      <!-- Peer A -->
+      <g font-family="JetBrains Mono, monospace">
+        <rect x="40" y="110" width="180" height="96" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+        <text x="130" y="136" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">PEER A</text>
+        <text x="130" y="158" text-anchor="middle" fill="#14201D" font-size="11">wg0 · 10.10.0.1</text>
+        <text x="130" y="177" text-anchor="middle" fill="#566661" font-size="10">privkey A · pubkey A</text>
+        <text x="130" y="195" text-anchor="middle" fill="#566661" font-size="10">UDP :51820</text>
+      </g>
+
+      <!-- Peer B -->
+      <g font-family="JetBrains Mono, monospace">
+        <rect x="540" y="110" width="180" height="96" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+        <text x="630" y="136" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">PEER B</text>
+        <text x="630" y="158" text-anchor="middle" fill="#14201D" font-size="11">wg0 · 10.10.0.2</text>
+        <text x="630" y="177" text-anchor="middle" fill="#566661" font-size="10">privkey B · pubkey B</text>
+        <text x="630" y="195" text-anchor="middle" fill="#566661" font-size="10">endpoint: A:51820</text>
+      </g>
+
+      <!-- tunnel -->
+      <rect x="240" y="128" width="280" height="60" rx="30" fill="#FFFFFF" stroke="#14201D" stroke-width="2" stroke-dasharray="6 4"/>
+      <text x="380" y="152" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">đường hầm mã hoá</text>
+      <text x="380" y="172" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">AllowedIPs định tuyến 10.10.0.0/24</text>
+      <line x1="220" y1="158" x2="240" y2="158" stroke="#0C6E61" stroke-width="2.5"/>
+      <line x1="520" y1="158" x2="540" y2="158" stroke="#0C6E61" stroke-width="2.5"/>
+      <line x1="300" y1="158" x2="460" y2="158" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+      <line x1="460" y1="200" x2="300" y2="200" stroke="#0C6E61" stroke-width="1.4" marker-end="url(#arw)"/>
+      <text x="380" y="232" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">chỉ ai có đúng khoá mới vào được — không phơi dịch vụ ra Internet</text>
+    </svg>
+    <figcaption>Hình 1 — Hai peer, mỗi bên giữ khoá riêng và biết khoá công khai của bên kia. Lưu lượng đi trong đường hầm mã hoá; <code>AllowedIPs</code> quyết định dải nào được định tuyến qua peer.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Bạn cần quản trị một server nội bộ từ xa, hoặc nối hai văn phòng, mà không muốn mở SSH/CSDL thẳng ra Internet. Giải pháp cổ điển là IPsec — mạnh nhưng cấu hình rối rắm. <strong>WireGuard</strong> đảo ngược sự phức tạp đó: nó nằm ngay trong nhân (Linux từ 5.6, FreeBSD có <code>if_wg</code>), dùng mật mã hiện đại cố định, và toàn bộ cấu hình gói trong một file nhỏ với một cặp khoá. Dựng xong, hai máy "thấy" nhau qua một dải IP riêng như trong cùng LAN, còn lưu lượng thì được mã hoá đầu-cuối.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li><strong>Cặp khoá:</strong> mỗi peer có một <em>private key</em> (giữ kín) và một <em>public key</em> (chia cho bên kia). Không có mật khẩu, không có CA.</li>
+      <li><strong>Interface <code>wg0</code>:</strong> khai <code>Address</code> (IP trong VPN), <code>ListenPort</code>, <code>PrivateKey</code>; mỗi <code>[Peer]</code> khai <code>PublicKey</code>, <code>AllowedIPs</code> và (nếu chủ động kết nối) <code>Endpoint</code>.</li>
+      <li><strong><code>AllowedIPs</code> — vừa lọc vừa định tuyến:</strong> dải IP mà peer đó được phép gửi đến, đồng thời là dải mà hệ sẽ định tuyến <em>qua</em> peer đó (cryptokey routing). Đây là khái niệm dễ hiểu sai nhất.</li>
+      <li><strong><code>wg-quick</code></strong> đọc <code>wg0.conf</code> rồi dựng interface + route giúp bạn — có trên cả Linux lẫn FreeBSD (gói <code>wireguard-tools</code>).</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh cài & bật WireGuard trên 4 HĐH -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh WireGuard: Ubuntu, Xubuntu và Debian cài gói wireguard rồi bật bằng systemd wg-quick, Fedora cài wireguard-tools rồi bật bằng systemd, FreeBSD cài wireguard-tools từ pkg và bật qua rc.conf với config ở /usr/local/etc/wireguard">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="100" text-anchor="middle" font-size="10.5" fill="#0C6E61">apt install wireguard</text>
+        <text x="104" y="128" text-anchor="middle" font-size="10.5" fill="#566661">wg-quick@wg0</text>
+        <text x="104" y="152" text-anchor="middle" font-size="10.5" fill="#566661">systemd</text>
+        <text x="104" y="182" text-anchor="middle" font-size="10" fill="#566661">/etc/wireguard</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="100" text-anchor="middle" font-size="10.5" fill="#0C6E61">apt install wireguard</text>
+        <text x="284" y="128" text-anchor="middle" font-size="10.5" fill="#566661">wg-quick@wg0</text>
+        <text x="284" y="152" text-anchor="middle" font-size="10.5" fill="#566661">systemd</text>
+        <text x="284" y="182" text-anchor="middle" font-size="10" fill="#566661">/etc/wireguard</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="100" text-anchor="middle" font-size="10.5" fill="#0C6E61">dnf install</text>
+        <text x="464" y="118" text-anchor="middle" font-size="10.5" fill="#0C6E61">wireguard-tools</text>
+        <text x="464" y="146" text-anchor="middle" font-size="10.5" fill="#566661">wg-quick@wg0</text>
+        <text x="464" y="182" text-anchor="middle" font-size="10" fill="#566661">/etc/wireguard</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="100" text-anchor="middle" font-size="10.5" fill="#B23A2E">pkg install</text>
+        <text x="650" y="118" text-anchor="middle" font-size="10.5" fill="#B23A2E">wireguard-tools</text>
+        <text x="650" y="146" text-anchor="middle" font-size="10.5" fill="#7A4A44">rc.conf + rc script</text>
+        <text x="650" y="182" text-anchor="middle" font-size="10" fill="#B23A2E">/usr/local/etc/wireguard</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG wg0.conf · BẬT DỊCH VỤ &amp; ĐƯỜNG DẪN KHÁC</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal bật bằng systemd <code>wg-quick@wg0</code>, config ở <code>/etc/wireguard</code>; cột đỏ (FreeBSD) bật qua <code>rc.conf</code> và đặt config ở <code>/usr/local/etc/wireguard</code>.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Dựng đường hầm trên từng hệ điều hành</h2>
+    <p>Kịch bản: hai peer, A (10.10.0.1) và B (10.10.0.2). Trước hết tạo khoá — bước này giống nhau mọi hệ.</p>
+
+    <span class="code-label"><span class="dot"></span>Tạo khoá (chung mọi hệ)</span>
+    <pre><code>umask 077
+wg genkey | tee privatekey | wg pubkey &gt; publickey
+<span class="cmt"># làm trên CẢ hai peer; đổi public key cho nhau</span></code></pre>
+
+    <span class="code-label"><span class="dot"></span>File cấu hình wg0.conf (chung — ví dụ trên peer A)</span>
+    <pre><code>[Interface]
+Address = 10.10.0.1/24
+ListenPort = 51820
+PrivateKey = &lt;privkey-A&gt;
+
+[Peer]
+PublicKey = &lt;pubkey-B&gt;
+AllowedIPs = 10.10.0.2/32        <span class="cmt"># chỉ định tuyến IP của B qua peer này</span>
+<span class="cmt"># Endpoint = b.example.com:51820  (bên chủ động kết nối mới cần)</span></code></pre>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — systemd wg-quick</span>
+    <pre><code>sudo apt install -y wireguard        <span class="cmt"># Fedora: dnf install -y wireguard-tools</span>
+sudo cp wg0.conf /etc/wireguard/wg0.conf
+sudo chmod 600 /etc/wireguard/wg0.conf
+sudo systemctl enable --now wg-quick@wg0</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg + rc.conf (tách riêng)</span>
+    <pre class="bsd"><code>pkg install -y wireguard-tools
+cp wg0.conf /usr/local/etc/wireguard/wg0.conf   <span class="cmt"># đường dẫn KHÁC Linux</span>
+chmod 600 /usr/local/etc/wireguard/wg0.conf
+
+<span class="cmt"># Bật qua rc.conf (KHÔNG có systemd):</span>
+sysrc wireguard_interfaces="wg0"
+service wireguard start</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
+    <pre><code>sudo wg show                     <span class="cmt"># peer, handshake gần nhất, byte trao đổi</span>
+ip addr show wg0                 <span class="cmt"># interface đã có IP 10.10.0.x</span>
+ping -c3 10.10.0.2               <span class="cmt"># tới được peer bên kia?</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
+    <pre class="bsd"><code>wg show                          <span class="cmt"># y hệt lệnh trên Linux</span>
+ifconfig wg0                     <span class="cmt"># FreeBSD: ifconfig, KHÔNG có "ip addr"</span>
+ping -c3 10.10.0.2</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Hiểu sai <code>AllowedIPs</code>:</strong> đây vừa là bộ lọc vừa là bảng định tuyến. Đặt <code>0.0.0.0/0</code> nghĩa là <em>toàn bộ</em> lưu lượng đi qua peer đó — hữu ích cho "full tunnel" nhưng cắt mất mạng thường nếu khai nhầm. Chỉ nối hai máy thì để dải nhỏ (ví dụ <code>/32</code> hoặc <code>10.10.0.0/24</code>).</li>
+      <li><strong>Quên mở cổng UDP:</strong> peer nhận kết nối phải mở <code>ListenPort</code> (mặc định UDP 51820) trên tường lửa — nối thẳng với bài #007 (ufw/firewalld/pf). Thiếu bước này thì handshake không bao giờ xảy ra.</li>
+      <li><strong>Thiếu IP forwarding khi làm gateway:</strong> nếu định tuyến qua VPN tới mạng sau peer, phải bật chuyển tiếp gói: <code>net.ipv4.ip_forward=1</code> (Linux) / <code>net.inet.ip.forwarding=1</code> (FreeBSD).</li>
+      <li><strong>FreeBSD nhầm đường dẫn:</strong> config nằm ở <code>/usr/local/etc/wireguard</code> chứ không phải <code>/etc/wireguard</code>, và bật bằng <code>rc.conf</code> — gõ <code>systemctl</code> sẽ "command not found".</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Lệnh <code>wg</code>/<code>wg-quick</code> và file <code>wg0.conf</code> giống hệt Linux, nhưng FreeBSD đặt cấu hình ở <code>/usr/local/etc/wireguard</code> và bật dịch vụ qua <code>rc.conf</code> (<code>wireguard_interfaces="wg0"</code> + <code>service wireguard start</code>) thay vì <code>systemctl enable wg-quick@wg0</code>. Kiểm interface bằng <code>ifconfig wg0</code>, không phải <code>ip addr</code>.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Private key là bí mật tối thượng: file <code>wg0.conf</code> luôn quyền <code>600</code>, chủ <code>root</code>; đừng bao giờ commit hay gửi private key qua kênh không an toàn.</li>
+      <li>Chỉ mở đúng cổng UDP của WireGuard ra ngoài; nhờ đó bạn có thể <em>đóng</em> SSH/dịch vụ khỏi Internet và chỉ cho truy cập qua đường hầm (ghép với gia cố SSH bài #002 và tường lửa bài #007).</li>
+      <li>Đặt <code>PersistentKeepalive = 25</code> cho peer nằm sau NAT để giữ đường hầm sống; xoay khoá định kỳ và gỡ peer cũ khi không dùng.</li>
+      <li>Giám sát handshake bằng <code>wg show</code> (thời điểm bắt tay gần nhất) — không có handshake tức là đường hầm chưa thông, kiểm lại cổng UDP và khoá.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Dựng một đường hầm WireGuard giữa một máy <strong>Debian</strong> và một máy <strong>FreeBSD</strong>: tạo khoá hai bên, viết <code>wg0.conf</code>, mở cổng UDP trên tường lửa mỗi hệ, rồi <code>ping</code> qua dải 10.10.0.0/24. Sau khi thông, thử đóng SSH khỏi mạng ngoài và chỉ SSH qua IP trong VPN. Câu hỏi: <code>AllowedIPs</code> trên mỗi peer nên đặt là gì để hai máy thấy nhau nhưng <em>không</em> route toàn bộ Internet qua đường hầm — và điều gì xảy ra nếu bạn để nhầm <code>0.0.0.0/0</code>?</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #015 · Networking</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #WireGuard</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
