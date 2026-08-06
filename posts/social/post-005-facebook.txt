@@ -1,0 +1,15 @@
+🔎 Dịch vụ chết lúc 3 giờ sáng. Câu đầu tiên luôn là: "log nói gì?" — nhưng câu trả lời "log ở đâu, đọc bằng gì" lại khác nhau tuỳ hệ điều hành.
+
+Có hai mô hình log, và biết mình đang ở mô hình nào là kỹ năng vận hành nền tảng:
+• Ubuntu/Xubuntu → journald + journalctl, journal lưu bền sẵn
+• Debian → cũng journalctl, NHƯNG mặc định journal nằm trong RAM, mất sạch sau reboot (⚠ dễ mất chứng cứ khi điều tra sự cố)
+• Fedora → journald + journalctl, lưu bền sẵn (không dùng /var/log/syslog)
+• FreeBSD → syslog truyền thống: log là file text trong /var/log, đọc bằng grep/tail, xoay vòng bằng newsyslog (KHÔNG có journalctl, KHÔNG có logrotate)
+
+Bài #005 chỉ cách lọc log theo dịch vụ + mức ưu tiên bằng journalctl (gọn hơn ghép grep nhiều), cách bật journal lưu bền cho Debian, và bản đồ /var/log của FreeBSD — kèm cảnh báo đồng bộ NTP trước khi tin vào mốc thời gian trong log.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #journald #FreeBSD #Monitoring
+
+[Đính kèm ảnh: post-005-code.png]
