@@ -1,0 +1,32 @@
+[Tweet 1] — đính kèm post-007-code.png
+🧱 Cài nginx, thấy trang "Welcome" là tưởng xong? SSH vẫn cho mật khẩu, tường lửa mở toang, không backup. Bài ôn tập #007: dựng web server AN TOÀN từ máy mới, end-to-end. Thread 🧵
+
+[Tweet 2]
+Quy trình 6 bước, ghép lại cả chuỗi:
+1 IP tĩnh (#001) → 2 gia cố SSH (#002) → 3 cài nginx → 4 tường lửa → 5 backup cấu hình (#004) → 6 kiểm chứng. Mảng mới: tường lửa.
+
+[Tweet 3]
+Mở đúng 22/80/443, chặn còn lại:
+Ubuntu/Debian — ufw:
+ufw allow OpenSSH
+ufw allow 80/tcp && ufw allow 443/tcp
+ufw enable
+(Debian tối giản: apt install ufw trước)
+
+[Tweet 4]
+Fedora — firewalld:
+firewall-cmd --permanent --add-service={ssh,http,https}
+firewall-cmd --reload
+⚠️ Quên --permanent là luật bay sau reboot.
+
+[Tweet 5] — FreeBSD
+FreeBSD dùng pf, KHÔNG có ufw/firewalld. /etc/pf.conf:
+pass in on em0 proto tcp to port { 22 80 443 } keep state
+Bật: sysrc pf_enable=YES && service pf start
+
+[Tweet 6]
+⚠️ Cạm bẫy chết người: LUÔN mở SSH (22) TRƯỚC khi bật tường lửa. Bật trước, mở sau = tự khoá mình ra khỏi máy từ xa ngay lập tức.
+
+[Tweet 7]
+Full lab + sơ đồ 6 bước end-to-end: {{LINK}}
+#LinuxDaily #Firewall #FreeBSD #Nginx

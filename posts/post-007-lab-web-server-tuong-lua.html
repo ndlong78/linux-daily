@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab end-to-end: dựng web server an toàn, mở đúng cổng qua tường lửa — Linux Daily #007</title>
+<meta name="description" content="Bài ôn tập ghép cả chuỗi: từ máy mới đến một web server có IP tĩnh, SSH đã gia cố, nginx chạy và tường lửa chỉ mở đúng cổng — UFW trên Ubuntu/Debian, firewalld trên Fedora, pf trên FreeBSD.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/style.css">
+</head>
+<body class="post">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#007 · 11·07·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Ôn tập · Lab end-to-end</p>
+    <h1>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</h1>
+    <p class="lede">Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng <code>nginx</code>, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · ÔN TẬP</span>
+      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
+      <span class="tag">~12 PHÚT</span>
+    </div>
+  </header>
+
+  <figure>
+    <!-- Hero: pipeline end-to-end từ máy mới -> server chạy, kèm số bài đã học -->
+    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ quy trình end-to-end sáu bước: máy mới, gán IP tĩnh (bài 1), gia cố SSH (bài 2), cài nginx, mở đúng cổng qua tường lửa, và sao lưu cấu hình bằng restic (bài 4), dẫn tới một web server an toàn đang chạy">
+      <defs>
+        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
+          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
+        </pattern>
+        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
+        </marker>
+      </defs>
+      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+
+      <text x="24" y="30" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">QUY TRÌNH END-TO-END · GHÉP LẠI CẢ CHUỖI</text>
+
+      <!-- 6 bước dạng thang -->
+      <g font-family="JetBrains Mono, monospace">
+        <!-- b1 -->
+        <rect x="24" y="56" width="210" height="52" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="40" y="80" fill="#14201D" font-size="12">1 · Máy mới → IP tĩnh</text>
+        <text x="40" y="98" fill="#566661" font-size="10">cặp DNS · bài #001</text>
+        <!-- b2 -->
+        <rect x="272" y="56" width="210" height="52" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="288" y="80" fill="#14201D" font-size="12">2 · Gia cố SSH</text>
+        <text x="288" y="98" fill="#566661" font-size="10">key-only · bài #002</text>
+        <!-- b3 -->
+        <rect x="520" y="56" width="216" height="52" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
+        <text x="536" y="80" fill="#0C6E61" font-size="12">3 · Cài nginx</text>
+        <text x="536" y="98" fill="#566661" font-size="10">apt / dnf / pkg</text>
+
+        <!-- arrows row1 -->
+        <line x1="234" y1="82" x2="266" y2="82" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+        <line x1="482" y1="82" x2="514" y2="82" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+
+        <!-- down connector -->
+        <line x1="628" y1="108" x2="628" y2="140" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+
+        <!-- b4 (tường lửa) — nhấn mạnh -->
+        <rect x="520" y="146" width="216" height="60" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/>
+        <text x="536" y="170" fill="#B23A2E" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">4 · Tường lửa</text>
+        <text x="536" y="189" fill="#7A4A44" font-size="10">mở 22 · 80 · 443, chặn còn lại</text>
+        <!-- b5 -->
+        <rect x="272" y="146" width="210" height="60" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
+        <text x="288" y="170" fill="#14201D" font-size="12">5 · Backup cấu hình</text>
+        <text x="288" y="189" fill="#566661" font-size="10">restic · bài #004</text>
+        <!-- b6 -->
+        <rect x="24" y="146" width="210" height="60" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
+        <text x="40" y="170" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">6 · Kiểm chứng</text>
+        <text x="40" y="189" fill="#566661" font-size="10">cổng nghe · log · fetch</text>
+
+        <!-- arrows row2 (phải sang trái) -->
+        <line x1="518" y1="176" x2="486" y2="176" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+        <line x1="270" y1="176" x2="238" y2="176" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+
+        <!-- result -->
+        <line x1="129" y1="206" x2="129" y2="238" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+        <rect x="250" y="238" width="260" height="46" rx="8" fill="#14201D"/>
+        <text x="380" y="266" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">WEB SERVER AN TOÀN ✓</text>
+        <line x1="129" y1="261" x2="244" y2="261" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Sáu bước khép kín: mỗi bước dựa trên một bài trước, chốt lại ở tường lửa (bước 4) và kiểm chứng (bước 6). Bước tô đỏ là mảng kỹ thuật mới của lab này.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>"Dựng cho tôi một web server" là yêu cầu nghe đơn giản nhưng dễ làm ẩu: cài xong <code>nginx</code>, thấy trang "Welcome" là tưởng xong — trong khi SSH vẫn cho đăng nhập mật khẩu, tường lửa mở toang, và không có bản sao lưu nào. Lab này đi trọn quy trình một quản trị viên cẩn thận thực sự làm, ghép lại những mảnh đã học thành một chuỗi có thể lặp lại. Trọng tâm mới: <strong>chỉ phơi ra mạng đúng những cổng cần thiết</strong> — nguyên tắc tối thiểu hoá bề mặt tấn công.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <p>Quy trình gồm sáu bước; bốn bước đầu đã có bài riêng, ở đây chỉ nhắc mắt xích. Mảng mới là <strong>tường lửa máy chủ (host firewall)</strong> — và mỗi họ HĐH có một công cụ mặc định khác nhau:</p>
+    <ul class="clean">
+      <li><strong>Ubuntu/Xubuntu · Debian:</strong> <code>ufw</code> — lớp vỏ đơn giản đứng trước <code>nftables</code>. Trên Debian tối giản cần cài (<code>apt install ufw</code>).</li>
+      <li><strong>Fedora:</strong> <code>firewalld</code>, thao tác qua <code>firewall-cmd</code>, tổ chức theo <em>zone</em> và <em>service</em>.</li>
+      <li><strong>FreeBSD:</strong> <code>pf</code> — luật khai trong <code>/etc/pf.conf</code>, bật qua <code>rc.conf</code>. Không có UFW/firewalld.</li>
+      <li><strong>Nguyên tắc chung:</strong> mặc định <em>chặn vào</em>, chỉ mở đúng cổng dịch vụ (22/80/443), và <strong>luôn cho phép SSH trước khi bật tường lửa</strong> kẻo tự khoá mình ra ngoài.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <!-- So sánh công cụ tường lửa 4 HĐH -->
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh tường lửa: Ubuntu và Xubuntu cùng Debian dùng ufw đứng trước nftables, Fedora dùng firewalld qua firewall-cmd, FreeBSD dùng pf khai trong pf.conf">
+      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono, monospace">
+        <!-- Ubuntu -->
+        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
+        <text x="104" y="108" text-anchor="middle" font-size="12" fill="#0C6E61">ufw</text>
+        <text x="104" y="136" text-anchor="middle" font-size="10.5" fill="#566661">trước nftables</text>
+        <text x="104" y="162" text-anchor="middle" font-size="10.5" fill="#566661">có sẵn</text>
+        <!-- Debian -->
+        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
+        <text x="284" y="108" text-anchor="middle" font-size="12" fill="#0C6E61">ufw</text>
+        <text x="284" y="136" text-anchor="middle" font-size="10.5" fill="#566661">trước nftables</text>
+        <text x="284" y="162" text-anchor="middle" font-size="10.5" fill="#566661">apt install ufw</text>
+        <!-- Fedora -->
+        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
+        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
+        <text x="464" y="108" text-anchor="middle" font-size="12" fill="#0C6E61">firewalld</text>
+        <text x="464" y="136" text-anchor="middle" font-size="10.5" fill="#566661">firewall-cmd</text>
+        <text x="464" y="162" text-anchor="middle" font-size="10.5" fill="#566661">zone + service</text>
+        <!-- FreeBSD -->
+        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
+        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="108" text-anchor="middle" font-size="12" fill="#B23A2E">pf</text>
+        <text x="650" y="136" text-anchor="middle" font-size="10.5" fill="#7A4A44">/etc/pf.conf</text>
+        <text x="650" y="162" text-anchor="middle" font-size="10.5" fill="#7A4A44">bật qua rc.conf</text>
+      </g>
+      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG MỤC TIÊU · BỐN CÔNG CỤ TƯỜNG LỬA</text>
+    </svg>
+    <figcaption>Hình 2 — Ba cột teal chia hai công cụ (ufw / firewalld); cột đỏ (FreeBSD) dùng pf, khai luật kiểu khác hẳn. Cùng một đích: chỉ mở 22/80/443.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Mở đúng cổng trên từng hệ điều hành</h2>
+    <p>Giả định các bước 1–3 đã xong (IP tĩnh, SSH gia cố, <code>nginx</code> đã cài). Giờ mở đúng ba cổng: 22 (SSH), 80 và 443 (web), chặn phần còn lại.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian — ufw</span>
+    <pre><code><span class="cmt"># Debian tối giản: cài trước — sudo apt install ufw</span>
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow OpenSSH          <span class="cmt"># MỞ SSH TRƯỚC khi enable!</span>
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
+sudo ufw enable</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — firewalld</span>
+    <pre><code>sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+sudo firewall-cmd --reload
+sudo firewall-cmd --list-services   <span class="cmt"># xác nhận: ssh http https</span></code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — pf (tách riêng)</span>
+    <pre class="bsd"><code><span class="cmt"># /etc/pf.conf</span>
+ext_if = "em0"                  <span class="cmt"># đổi theo interface thật (ifconfig)</span>
+set skip on lo
+block in all
+pass out all keep state
+pass in on $ext_if proto tcp to port { 22 80 443 } keep state
+
+<span class="cmt"># Bật pf: thêm vào /etc/rc.conf rồi nạp luật</span>
+sysrc pf_enable="YES"
+service pf start
+pfctl -f /etc/pf.conf            <span class="cmt"># nạp/kiểm tra lại luật</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <p>Ba câu hỏi: nginx có đang nghe không, tường lửa mở đúng cổng chưa, và trang có trả về không?</p>
+    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
+    <pre><code>ss -tlnp | grep -E ':(22|80|443)'   <span class="cmt"># cổng đang nghe</span>
+sudo ufw status verbose             <span class="cmt"># Ubuntu/Debian</span>
+sudo firewall-cmd --list-all        <span class="cmt"># Fedora</span>
+curl -I http://localhost            <span class="cmt"># kỳ vọng: HTTP/1.1 200</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
+    <pre class="bsd"><code>sockstat -4 -l | grep -E '(:22|:80|:443)'   <span class="cmt"># cổng đang nghe</span>
+pfctl -s rules                              <span class="cmt"># luật pf đang áp</span>
+fetch -qo - http://localhost | head         <span class="cmt"># fetch thay curl nếu chưa cài curl</span></code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+    <ul class="clean">
+      <li><strong>Tự khoá mình ra ngoài:</strong> bật tường lửa mà chưa mở SSH là mất kết nối tức thì trên máy từ xa. Luôn thêm luật cho cổng 22 <em>trước</em> khi <code>enable</code>/nạp luật. Với máy production ở xa, cân nhắc lịch tự tắt tường lửa để có đường cứu.</li>
+      <li><strong>Fedora quên <code>--permanent</code>:</strong> luật không kèm <code>--permanent</code> sẽ bay sau khi reload/reboot. Đặt <code>--permanent</code> rồi <code>--reload</code>, hoặc <code>--runtime-to-permanent</code>.</li>
+      <li><strong>FreeBSD sai tên interface:</strong> <code>ext_if</code> phải khớp tên thật (<code>em0</code>, <code>vtnet0</code>, <code>igb0</code>…). Chạy <code>ifconfig</code> xem trước; sai tên thì luật không áp đúng và pf có thể chặn nhầm.</li>
+      <li><strong>Nhầm công cụ:</strong> gõ <code>ufw</code> trên Fedora hay <code>firewall-cmd</code> trên FreeBSD đều "command not found". Tường lửa là chỗ khác biệt HĐH lớn nhất trong lab này.</li>
+    </ul>
+    <div class="callout">
+      <span class="k">FreeBSD ≠ Linux</span>
+      Không có <code>ufw</code> hay <code>firewalld</code> trên FreeBSD. Mô hình là <code>pf</code>: luật văn bản trong <code>/etc/pf.conf</code>, bật bằng <code>pf_enable="YES"</code> trong <code>rc.conf</code>, nạp bằng <code>pfctl -f</code>. Cú pháp luật cũng khác hẳn dạng "allow" từng dòng của UFW.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Tối thiểu hoá bề mặt: chỉ mở cổng thực sự dùng. Nếu web chỉ chạy HTTPS, cân nhắc bỏ luôn cổng 80 (hoặc chỉ dùng để chuyển hướng sang 443).</li>
+      <li>Ghép với các bài trước để có lớp phòng thủ đủ dày: SSH key-only (bài #002) + tường lửa chặn mặc định + cặp DNS khai đủ hai địa chỉ (bài #001).</li>
+      <li>Sau khi mọi thứ chạy, <strong>sao lưu cấu hình</strong> (bài #004): <code>/etc/nginx</code>, quy tắc tường lửa, <code>rc.conf</code>/<code>netplan</code>… vào một repo restic — để dựng lại máy khác trong vài phút.</li>
+      <li>Kiểm tra lại từ <em>bên ngoài</em> máy (một host khác) chứ không chỉ <code>localhost</code>: cổng bị chặn nhìn từ ngoài mới là bằng chứng tường lửa hoạt động.</li>
+    </ul>
+  </section>
+
+  <div class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Đi trọn quy trình sáu bước trên hai máy mới: một <strong>Debian</strong> và một <strong>FreeBSD</strong>. Kết quả cuối: cả hai đều có IP tĩnh, SSH chỉ nhận khoá, <code>nginx</code> trả trang qua cổng 80/443, và tường lửa chặn mọi cổng khác. Kiểm chứng từ một máy thứ ba bằng <code>curl</code>/<code>nc</code>. Câu hỏi: khi bạn cố kết nối tới một cổng <em>không</em> mở (ví dụ 3306), phản hồi nhìn từ ngoài khác nhau thế nào giữa UFW (mặc định <em>drop</em>) và một cấu hình <em>reject</em> — và vì sao "im lặng" (drop) thường an toàn hơn "từ chối" (reject)?</p>
+  </div>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #007 · Ôn tập</span>
+      <span class="hashtags">#LinuxDaily #SysAdmin #Firewall</span>
+    </div>
+  </footer>
+
+</div>
+</body>
+</html>
