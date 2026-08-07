@@ -5,9 +5,10 @@ build.py — Một lệnh duy nhất: dựng website output rồi chạy quality
   python3 tools/build.py            # dựng output + chuẩn hóa post metadata + kiểm định
   python3 tools/build.py --check    # không ghi; chỉ kiểm tra mọi artifact/post đã đồng bộ
 
-Gộp index, RSS, sitemap/robots, historical discovery metadata, structural/source-backed
-validation và deterministic internal-link gate vào một luồng. External HTTP checks chạy
-riêng trong CI để lỗi mạng/website bên thứ ba không che mất quality gate local.
+Gộp index, RSS, sitemap/robots, historical discovery + social preview metadata,
+structural/source-backed validation và deterministic internal-link gate vào một luồng.
+External HTTP checks chạy riêng trong CI để lỗi mạng/website bên thứ ba không che mất
+quality gate local.
 """
 import argparse
 import os
@@ -102,8 +103,8 @@ def main(argv=None) -> int:
         return 1
 
     print(
-        "✓ Build + RSS + sitemap/robots + historical canonical/OG/RSS + quality gate + "
-        "source-backed review + internal links: tất cả kiểm tra đều đạt."
+        "✓ Build + RSS + sitemap/robots + historical canonical/OG/RSS/social preview + "
+        "quality gate + source-backed review + internal links: tất cả kiểm tra đều đạt."
     )
     return 0
 
