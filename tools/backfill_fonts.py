@@ -11,9 +11,9 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 
-GOOGLE_FONT_LINE = re.compile(
-    r'^<link[^>]+(?:fonts\.googleapis\.com|fonts\.gstatic\.com)[^>]*>\n?',
-    re.MULTILINE,
+GOOGLE_FONT_TAG = re.compile(
+    r'<link\b[^>]*(?:fonts\.googleapis\.com|fonts\.gstatic\.com)[^>]*>\s*',
+    re.IGNORECASE,
 )
 LOCAL_BLOCK = (
     '<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" '
@@ -25,7 +25,7 @@ STYLE_LINK = '<link rel="stylesheet" href="../assets/style.css">'
 
 def transform(text: str) -> str:
     """Return post HTML using only local web-font resources."""
-    text = GOOGLE_FONT_LINE.sub("", text)
+    text = GOOGLE_FONT_TAG.sub("", text)
     text = text.replace(LOCAL_BLOCK, "")
     if STYLE_LINK not in text:
         raise ValueError("post thiếu shared stylesheet link")
