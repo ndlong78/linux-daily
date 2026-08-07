@@ -1,34 +1,31 @@
 [Tweet 1] — đính kèm post-002-code.png
-🔒 Gia cố SSH: khóa cửa trước khi có người gõ.
-sshd_config gần như giống nhau mọi HĐH — nhưng tên service, lệnh reload và tường lửa thì khác. Thread 🧵
+🔒 SSH hardening từ xa: mục tiêu không chỉ là “tắt password”, mà là chuyển sang key-only mà vẫn giữ được đường quản trị. Thread 🧵
 
 [Tweet 2]
-Khối vàng trong /etc/ssh/sshd_config:
-PermitRootLogin no
+Key-only thật sự cần nhìn nhiều hơn một directive:
 PasswordAuthentication no
-PubkeyAuthentication yes
-AllowUsers longnd deploy
-MaxAuthTries 3
-(chỉ tắt mật khẩu SAU khi key đã vào được!)
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
+Chỉ làm sau khi public key đã đăng nhập thành công.
 
 [Tweet 3]
-Tên service khác nhau — chỗ dễ sai nhất:
-• Ubuntu/Debian → "ssh": systemctl reload ssh
-• Fedora → "sshd": systemctl reload sshd
-Gõ nhầm là báo not found.
+OpenSSH không dùng quy tắc “dòng sau cùng thắng” cho phần lớn directive. Giá trị ĐẦU TIÊN đọc được mới thắng. Vì vậy drop-in sshd_config.d đọc sớm có thể override file chính.
 
 [Tweet 4]
-FreeBSD (thế giới riêng):
-sysrc sshd_enable=YES
-service sshd reload
-Tường lửa = pf. KHÔNG systemctl, KHÔNG ufw.
+Validate hai lớp:
+• sshd -t → cú pháp
+• sshd -T → effective config
+Có Match block thì dùng thêm -C để kiểm đúng user/host/address.
 
 [Tweet 5]
-Cạm bẫy: Ubuntu nạp thêm /etc/ssh/sshd_config.d/*.conf — một file trong đó có thể bật LẠI mật khẩu. Luôn kiểm tra cả thư mục. Fedora đổi cổng thì phải semanage port.
+Làm máy remote: giữ phiên SSH hiện tại, reload, rồi mở một terminal MỚI. Chỉ khi phiên mới đăng nhập bằng key thành công mới đóng phiên cứu hộ.
 
 [Tweet 6]
-Luôn: sudo sshd -t trước khi reload, và giữ một phiên SSH đang mở làm phao. Sai một dòng là tự khóa mình ra khỏi máy.
+Distro khác nhau ở lớp vận hành:
+• Ubuntu/Debian: systemctl reload ssh
+• Fedora: systemctl reload sshd + SELinux/firewalld nếu đổi port
+• FreeBSD: service sshd reload, không systemd
 
 [Tweet 7]
-Full bài: {{LINK}}
-#LinuxDaily #SysAdmin #SSH #FreeBSD
+Full bài #002: {{LINK}}
+#LinuxDaily #SSH #SysAdmin #FreeBSD #Security

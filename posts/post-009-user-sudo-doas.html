@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tạo user và trao quyền: sudo trên Linux, doas trên FreeBSD — Linux Daily #009</title>
-<meta name="description" content="Đừng dùng root cho mọi việc. Tạo user thường rồi trao quyền leo thang có kiểm soát: nhóm sudo (Ubuntu/Debian) hay wheel (Fedora) với sudo, còn FreeBSD dùng pw + doas. Cùng nguyên tắc tối thiểu quyền, bốn cách làm.">
+<meta name="description" content="Tạo user và trao quyền theo hai vai trò rõ ràng: administrator có quyền rộng qua sudo/wheel, còn limited operator chỉ được chạy đúng command cần thiết. FreeBSD dùng pw + doas riêng, không dùng systemd.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -17,222 +17,184 @@
   "eyebrow": "Bảo mật · Phân quyền",
   "slug": "user-sudo-doas",
   "title": "Tạo user và trao quyền: một nguyên tắc, bốn cơ chế",
-  "lede": "Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ."
+  "lede": "Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "Debian Wiki — sudo",
+      "url": "https://wiki.debian.org/sudo",
+      "kind": "official"
+    },
+    {
+      "title": "Fedora Docs — Gaining Privileges",
+      "url": "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Security",
+      "url": "https://docs.freebsd.org/en/books/handbook/security/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD manpage — doas(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=doas&sektion=1",
+      "kind": "official"
+    }
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#009 · 15·07·2026</span>
-    </div>
-  </div>
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#009 · 15·07·2026</span></div></div>
 
   <header class="post">
     <p class="eyebrow">Bảo mật · Phân quyền</p>
     <h1>Tạo user và trao quyền: một nguyên tắc, bốn cơ chế</h1>
     <p class="lede">Bài #002 kiểm soát <em>ai được vào</em> máy; bài này kiểm soát <em>vào rồi làm được gì</em>. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm <code>sudo</code> hay <code>wheel</code>, công cụ <code>sudo</code> hay <code>doas</code>, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · BẢO MẬT</span>
-      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
-      <span class="tag">~9 PHÚT</span>
-    </div>
+    <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: user thường -> nhóm admin -> cơ chế leo quyền -> chạy lệnh root -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ leo thang quyền: một user thường thuộc nhóm quản trị (sudo hoặc wheel), qua công cụ sudo hay doas, chạy được một lệnh với quyền root; nguyên tắc tối thiểu quyền giới hạn chỉ những lệnh cần thiết">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <text x="24" y="28" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">LEO THANG QUYỀN CÓ KIỂM SOÁT · TỐI THIỂU HOÁ</text>
-
-      <!-- user thường -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="34" y="118" width="150" height="70" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="109" y="146" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">USER thường</text>
-        <text x="109" y="167" text-anchor="middle" fill="#566661" font-size="11">alice · UID 1001</text>
-        <line x1="184" y1="153" x2="248" y2="153" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      </g>
-
-      <!-- nhóm admin -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="252" y="106" width="180" height="94" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
-        <text x="342" y="132" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">NHÓM QUẢN TRỊ</text>
-        <text x="342" y="156" text-anchor="middle" fill="#14201D" font-size="12">sudo (Ubuntu/Debian)</text>
-        <text x="342" y="176" text-anchor="middle" fill="#14201D" font-size="12">wheel (Fedora/FreeBSD)</text>
-        <line x1="432" y1="153" x2="496" y2="153" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      </g>
-
-      <!-- công cụ leo quyền -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="500" y="92" width="118" height="52" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
-        <text x="559" y="115" text-anchor="middle" fill="#0C6E61" font-size="13">sudo</text>
-        <text x="559" y="133" text-anchor="middle" fill="#566661" font-size="9.5">Linux · có sẵn</text>
-        <rect x="500" y="162" width="118" height="52" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="559" y="185" text-anchor="middle" fill="#B23A2E" font-size="13">doas</text>
-        <text x="559" y="203" text-anchor="middle" fill="#7A4A44" font-size="9.5">FreeBSD · pkg</text>
-        <line x1="618" y1="118" x2="662" y2="140" stroke="#0C6E61" stroke-width="2.2" marker-end="url(#arw)"/>
-        <line x1="618" y1="188" x2="662" y2="166" stroke="#0C6E61" stroke-width="2.2" marker-end="url(#arw)"/>
-      </g>
-
-      <!-- root -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="666" y="126" width="80" height="54" rx="6" fill="#14201D"/>
-        <text x="706" y="150" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">root</text>
-        <text x="706" y="168" text-anchor="middle" fill="#9FE9DC" font-size="9.5">1 lệnh</text>
-      </g>
-
-      <text x="342" y="238" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">chỉ trao đúng quyền cần — không phát root cho tất cả</text>
+    <svg viewBox="0 0 760 270" role="img" aria-label="Hai mô hình phân quyền: administrator được quyền quản trị rộng qua nhóm sudo hoặc wheel, limited operator không vào nhóm admin và chỉ được một command cụ thể">
+      <rect width="760" height="270" fill="#F7FAF9"/>
+      <text x="380" y="28" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#566661">HAI VAI TRÒ — ĐỪNG TRỘN LẪN</text>
+      <rect x="45" y="62" width="300" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+      <text x="195" y="92" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">ADMINISTRATOR</text>
+      <text x="195" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="11">Ubuntu/Debian: sudo</text>
+      <text x="195" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11">Fedora: wheel</text>
+      <text x="195" y="168" text-anchor="middle" font-family="JetBrains Mono" font-size="11">quyền rộng, có chủ đích</text>
+      <text x="195" y="194" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#566661">chỉ dành cho người quản trị thật sự</text>
+      <rect x="415" y="62" width="300" height="150" rx="8" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/>
+      <text x="565" y="92" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700" fill="#B23A2E">LIMITED OPERATOR</text>
+      <text x="565" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="11">KHÔNG vào sudo/wheel admin</text>
+      <text x="565" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11">sudoers/doas: đúng command</text>
+      <text x="565" y="168" text-anchor="middle" font-family="JetBrains Mono" font-size="11">đúng args nếu cần</text>
+      <text x="565" y="194" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#7A4A44">least privilege thật sự</text>
     </svg>
-    <figcaption>Hình 1 — User thường thuộc nhóm quản trị, qua <code>sudo</code>/<code>doas</code> chạy được lệnh với quyền root. Ý tưởng cốt lõi: leo thang có kiểm soát và tối thiểu hoá quyền, không đăng nhập thẳng root.</figcaption>
+    <figcaption>Hình 1 — Nếu đã cho user vào nhóm admin toàn quyền thì một rule “chỉ được restart nginx” không còn giới hạn gì. Hãy chọn rõ administrator hoặc limited operator.</figcaption>
   </figure>
 
   <section>
     <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Đăng nhập root cho mọi thao tác là thói quen nguy hiểm: một lệnh gõ nhầm là hỏng cả hệ, và không có dấu vết ai đã làm gì. Cách làm chuẩn là <strong>mỗi người một tài khoản thường</strong>, khi cần quyền cao thì leo thang qua một công cụ ghi log lại (<code>sudo</code>/<code>doas</code>). Nhưng khi quản trị đa nền tảng, ba câu hỏi có ba đáp án khác nhau: <em>tạo user bằng lệnh gì, nhóm quản trị tên gì, và công cụ leo quyền là gì</em>.</p>
+    <p>Điểm khó của phân quyền không phải là “làm sao chạy lệnh với root”, mà là <strong>trao đúng mức quyền</strong>. Có người thật sự là administrator và cần quyền rộng; có người chỉ vận hành một service. Hai vai trò này phải được cấu hình khác nhau, nếu không least privilege chỉ còn trên giấy.</p>
   </section>
 
   <section>
     <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>Mô hình user/group là chung (mỗi user có UID, thuộc một hoặc nhiều nhóm theo GID). Cái khác là <strong>nhóm nào được leo quyền</strong> và <strong>bằng công cụ gì</strong>:</p>
     <ul class="clean">
-      <li><strong>Nhóm quản trị:</strong> Ubuntu/Debian dùng nhóm <code>sudo</code>; Fedora và FreeBSD dùng nhóm <code>wheel</code>.</li>
-      <li><strong>Công cụ leo quyền:</strong> Linux mặc định có <code>sudo</code> (cấu hình <code>/etc/sudoers</code>, sửa bằng <code>visudo</code>). FreeBSD <em>không</em> có <code>sudo</code> hay <code>doas</code> trong base — phải cài gói; base chỉ có <code>su</code> (yêu cầu ở nhóm <code>wheel</code>).</li>
-      <li><strong>Tạo user:</strong> Ubuntu/Debian có <code>adduser</code> (kịch bản hỏi–đáp thân thiện); Fedora dùng <code>useradd</code> + <code>passwd</code>; FreeBSD dùng <code>pw</code> hoặc <code>adduser</code> riêng của BSD.</li>
-      <li><strong>Nguyên tắc xuyên suốt:</strong> tối thiểu hoá quyền — chỉ trao đúng lệnh/đúng người cần, thay vì phát "toàn quyền root" cho cả nhóm.</li>
+      <li><strong>Administrator:</strong> Ubuntu thường dùng nhóm <code>sudo</code>; Fedora dùng <code>wheel</code>. Thành viên các nhóm này thường nhận quyền sudo rộng theo policy mặc định.</li>
+      <li><strong>Debian có nuance:</strong> nếu lúc cài đặt đã đặt mật khẩu root, <code>sudo</code> có thể chưa được cài và user ban đầu không tự động nằm trong nhóm <code>sudo</code>.</li>
+      <li><strong>Limited operator:</strong> không thêm user vào nhóm admin; tạo rule command-specific trong <code>/etc/sudoers.d/</code> hoặc <code>/usr/local/etc/doas.conf</code>.</li>
+      <li><strong>FreeBSD:</strong> <code>wheel</code> liên quan trực tiếp tới <code>su</code>; <code>doas</code> là package riêng và có thể cấp quyền trực tiếp theo user/group/command, không bắt buộc user phải thuộc <code>wheel</code>.</li>
     </ul>
   </section>
 
   <figure>
-    <!-- So sánh tạo user + trao quyền 4 HĐH -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh: Ubuntu và Xubuntu cùng Debian dùng adduser và nhóm sudo với công cụ sudo; Fedora dùng useradd và nhóm wheel với sudo; FreeBSD dùng pw useradd và nhóm wheel với doas cài từ gói">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">adduser</text>
-        <text x="104" y="126" text-anchor="middle" font-size="11" fill="#566661">nhóm: sudo</text>
-        <text x="104" y="152" text-anchor="middle" font-size="11" fill="#566661">công cụ: sudo</text>
-        <text x="104" y="184" text-anchor="middle" font-size="10" fill="#566661">có sẵn</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">adduser</text>
-        <text x="284" y="126" text-anchor="middle" font-size="11" fill="#566661">nhóm: sudo</text>
-        <text x="284" y="152" text-anchor="middle" font-size="11" fill="#566661">công cụ: sudo</text>
-        <text x="284" y="184" text-anchor="middle" font-size="10" fill="#566661">cài khi setup</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="98" text-anchor="middle" font-size="11" fill="#0C6E61">useradd + passwd</text>
-        <text x="464" y="126" text-anchor="middle" font-size="11" fill="#566661">nhóm: wheel</text>
-        <text x="464" y="152" text-anchor="middle" font-size="11" fill="#566661">công cụ: sudo</text>
-        <text x="464" y="184" text-anchor="middle" font-size="10" fill="#566661">có sẵn</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="98" text-anchor="middle" font-size="11" fill="#B23A2E">pw useradd</text>
-        <text x="650" y="126" text-anchor="middle" font-size="11" fill="#7A4A44">nhóm: wheel</text>
-        <text x="650" y="152" text-anchor="middle" font-size="11" fill="#7A4A44">công cụ: doas</text>
-        <text x="650" y="184" text-anchor="middle" font-size="10" fill="#B23A2E">doas/sudo: cài gói</text>
+    <svg viewBox="0 0 760 250" role="img" aria-label="So sánh tạo user và công cụ phân quyền trên Ubuntu Debian Fedora và FreeBSD">
+      <rect width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono" font-size="10.5">
+        <rect x="25" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="105" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text>
+        <text x="105" y="106" text-anchor="middle">adduser</text><text x="105" y="132" text-anchor="middle">admin: sudo</text><text x="105" y="158" text-anchor="middle">policy: sudoers.d</text>
+        <rect x="205" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="285" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text>
+        <text x="285" y="106" text-anchor="middle">adduser</text><text x="285" y="132" text-anchor="middle">sudo có thể chưa cài</text><text x="285" y="158" text-anchor="middle">policy: sudoers.d</text>
+        <rect x="385" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="465" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text>
+        <text x="465" y="106" text-anchor="middle">useradd</text><text x="465" y="132" text-anchor="middle">admin: wheel</text><text x="465" y="158" text-anchor="middle">policy: sudoers.d</text>
+        <rect x="565" y="45" width="170" height="160" rx="7" fill="#FBF1F0" stroke="#B23A2E"/>
+        <text x="650" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="106" text-anchor="middle">pw / adduser</text><text x="650" y="132" text-anchor="middle">su: wheel</text><text x="650" y="158" text-anchor="middle">doas: pkg + doas.conf</text>
       </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG NGUYÊN TẮC · BỐN CƠ CHẾ</text>
     </svg>
-    <figcaption>Hình 2 — Ubuntu/Debian dùng nhóm <code>sudo</code>; Fedora/FreeBSD dùng <code>wheel</code>. Cột đỏ (FreeBSD) đổi cả lệnh tạo user (<code>pw</code>) lẫn công cụ leo quyền (<code>doas</code>, phải cài từ gói).</figcaption>
+    <figcaption>Hình 2 — FreeBSD tách riêng: không có systemd; <code>sudo</code>/<code>doas</code> không nằm trong base. Nhóm <code>wheel</code> cần cho <code>su</code>, còn doas policy có thể chỉ định user trực tiếp.</figcaption>
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Tạo user &amp; trao quyền trên từng hệ điều hành</h2>
-    <p>Mục tiêu chung: tạo user <code>alice</code>, cho phép leo quyền quản trị, và giữ nguyên tắc tối thiểu quyền.</p>
+    <h2><span class="num">03</span> Thực hành từng bước</h2>
+    <p><strong>Mô hình A — administrator:</strong> chỉ dùng khi user thật sự cần quyền quản trị rộng.</p>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
+    <pre><code>sudo adduser alice
+<span class="cmt"># Debian: nếu sudo chưa có, cài từ phiên root trước.</span>
+sudo usermod -aG sudo alice
+id alice
+sudo -l -U alice</code></pre>
 
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian — adduser + nhóm sudo</span>
-    <pre><code>sudo adduser alice               <span class="cmt"># hỏi–đáp: mật khẩu, thông tin</span>
-sudo usermod -aG sudo alice      <span class="cmt"># LƯU Ý -aG: thêm nhóm, KHÔNG ghi đè</span>
-
-<span class="cmt"># Trao quyền hẹp thay vì toàn quyền — dùng drop-in, sửa bằng visudo:</span>
-sudo visudo -f /etc/sudoers.d/alice
-<span class="cmt"># nội dung: alice ALL=(ALL) /usr/bin/systemctl restart nginx</span></code></pre>
-
-    <span class="code-label"><span class="dot"></span>Fedora — useradd + nhóm wheel</span>
+    <span class="code-label"><span class="dot"></span>Fedora</span>
     <pre><code>sudo useradd -m -s /bin/bash alice
 sudo passwd alice
-sudo usermod -aG wheel alice     <span class="cmt"># wheel = nhóm quản trị trên Fedora</span>
+sudo usermod -aG wheel alice
+id alice
+sudo -l -U alice</code></pre>
 
-<span class="cmt"># %wheel đã có sẵn trong /etc/sudoers; kiểm bằng:</span>
-sudo visudo                      <span class="cmt"># dòng: %wheel ALL=(ALL) ALL</span></code></pre>
+    <p><strong>Mô hình B — limited operator:</strong> user <code>deploy</code> chỉ được restart nginx; <em>không</em> thêm user này vào <code>sudo</code>/<code>wheel</code> admin.</p>
+    <span class="code-label"><span class="dot"></span>Linux — sudoers drop-in</span>
+    <pre><code>sudo visudo -f /etc/sudoers.d/deploy-nginx
+<span class="cmt"># nội dung:</span>
+deploy ALL=(root) /usr/bin/systemctl restart nginx
 
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — pw + doas (tách riêng)</span>
-    <pre class="bsd"><code>pw useradd alice -m -s /bin/sh    <span class="cmt"># hoặc chạy: adduser (kịch bản BSD)</span>
-passwd alice
-pw groupmod wheel -m alice        <span class="cmt"># thêm alice vào wheel</span>
+sudo visudo -cf /etc/sudoers.d/deploy-nginx
+sudo -l -U deploy</code></pre>
 
-pkg install -y doas               <span class="cmt"># base KHÔNG có sudo/doas</span>
-<span class="cmt"># /usr/local/etc/doas.conf — chỉ cho wheel, còn hỏi mật khẩu:</span>
-echo "permit persist :wheel" &gt; /usr/local/etc/doas.conf
-doas -C /usr/local/etc/doas.conf  <span class="cmt"># kiểm tra cú pháp cấu hình</span></code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — doas riêng</span>
+    <pre class="bsd"><code>pkg install -y doas
+<span class="cmt"># /usr/local/etc/doas.conf:</span>
+permit deploy as root cmd /usr/sbin/service args nginx restart
+
+<span class="cmt"># parse + command matching, KHÔNG chạy command:</span>
+doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
-    <pre><code>groups alice                     <span class="cmt"># alice có ở sudo/wheel chưa?</span>
-sudo -l -U alice                 <span class="cmt"># alice được phép chạy lệnh gì</span>
-su - alice -c 'sudo whoami'      <span class="cmt"># kỳ vọng in ra: root</span></code></pre>
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
-    <pre class="bsd"><code>id alice                         <span class="cmt"># xem UID và các nhóm (có wheel?)</span>
-su - alice -c 'doas whoami'      <span class="cmt"># kỳ vọng in ra: root</span>
-cat /usr/local/etc/doas.conf     <span class="cmt"># soát lại luật doas</span></code></pre>
+    <h2><span class="num">04</span> Kiểm chứng quyền thực tế</h2>
+    <p>Đừng suy luận từ group membership; kiểm policy mà công cụ thực sự áp.</p>
+    <pre><code><span class="cmt"># Linux:</span>
+sudo -l -U deploy
+sudo -U deploy -l /usr/bin/systemctl restart nginx
+
+<span class="cmt"># FreeBSD: chỉ kiểm match, không thực thi</span>
+doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart
+doas -C /usr/local/etc/doas.conf /bin/sh</code></pre>
+    <p>Kỳ vọng: command nginx được permit; shell tùy ý phải bị deny với limited operator.</p>
   </section>
 
   <section>
     <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
     <ul class="clean">
-      <li><strong>Quên <code>-a</code> ở <code>usermod</code>:</strong> <code>usermod -G sudo alice</code> (thiếu <code>-a</code>) sẽ <em>xoá alice khỏi mọi nhóm khác</em> và chỉ để lại <code>sudo</code>. Luôn dùng <code>-aG</code> để "thêm".</li>
-      <li><strong>Sửa <code>/etc/sudoers</code> trực tiếp:</strong> một lỗi cú pháp có thể khoá quyền sudo của cả máy. Luôn dùng <code>visudo</code> (nó kiểm cú pháp trước khi lưu) và ưu tiên drop-in trong <code>/etc/sudoers.d/</code>.</li>
-      <li><strong>Lạm dụng <code>NOPASSWD</code> / toàn quyền:</strong> cấp <code>alice ALL=(ALL) NOPASSWD: ALL</code> tiện nhưng biến tài khoản thành root không mật khẩu. Trao đúng lệnh cần, giữ yêu cầu nhập mật khẩu.</li>
-      <li><strong>FreeBSD tưởng có sudo:</strong> gõ <code>sudo</code> trên FreeBSD mới cài sẽ "command not found". Cài <code>doas</code> (hoặc <code>sudo</code>) từ gói; đừng quên nhóm <code>wheel</code> để <code>su</code> hoạt động.</li>
+      <li><strong>Vừa thêm vào admin group vừa tạo rule hẹp:</strong> rule hẹp không thu hồi quyền rộng đã có từ <code>sudo</code>/<code>wheel</code>.</li>
+      <li><strong>Quên <code>-a</code> với usermod:</strong> <code>usermod -G</code> có thể thay danh sách supplementary group; khi thêm nhóm dùng <code>-aG</code>.</li>
+      <li><strong>Sửa sudoers bằng editor thường:</strong> ưu tiên <code>visudo</code> và kiểm bằng <code>visudo -c</code>/<code>-cf</code>.</li>
+      <li><strong>FreeBSD dùng <code>permit persist</code> như OpenBSD:</strong> không coi đây là lựa chọn portable; policy nên dựa trên syntax doas package thực tế và kiểm bằng <code>doas -C</code>.</li>
     </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Trên FreeBSD, tạo user bằng <code>pw useradd</code> (không phải <code>useradd</code> kiểu Linux), nhóm quản trị là <code>wheel</code>, và <code>sudo</code>/<code>doas</code> phải cài từ gói — base chỉ có <code>su</code> (đòi ở <code>wheel</code>). Cấu hình <code>doas</code> nằm ở <code>/usr/local/etc/doas.conf</code>, cú pháp khác hẳn <code>sudoers</code>.
-    </div>
   </section>
 
   <section>
     <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
     <ul class="clean">
-      <li>Tối thiểu quyền: ưu tiên trao <em>từng lệnh cụ thể</em> qua sudoers/doas thay vì cả nhóm toàn quyền; mỗi người một tài khoản, không dùng chung.</li>
-      <li>Ghép với bài #002: SSH chỉ nhận khoá + cấm đăng nhập root nghĩa là mọi truy cập đều qua user thường rồi mới leo quyền — có dấu vết rõ ràng.</li>
-      <li>Kiểm cú pháp trước khi áp: <code>visudo</code> (Linux) và <code>doas -C</code> (FreeBSD) đều validate cấu hình; đừng lưu file chưa kiểm.</li>
-      <li>Theo dõi log leo quyền (bài #005): <code>sudo</code>/<code>doas</code> ghi lại ai chạy lệnh gì — đẩy về log tập trung để soát bất thường.</li>
+      <li>Mỗi người một tài khoản; không dùng chung tài khoản quản trị.</li>
+      <li>Limited operator không nên có command cho phép mở shell, sửa policy hoặc chạy chương trình có khả năng escape thành shell.</li>
+      <li>Ưu tiên command path đầy đủ và, khi cần, khóa cả argument.</li>
+      <li>Kiểm log sudo/doas và định kỳ chạy lại <code>sudo -l</code>/<code>doas -C</code> sau khi policy thay đổi.</li>
     </ul>
   </section>
 
   <div class="exercise">
     <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Fedora</strong> và một máy <strong>FreeBSD</strong>: tạo user <code>alice</code>, cho vào nhóm <code>wheel</code>, rồi trao đúng <em>một</em> quyền — khởi động lại dịch vụ <code>nginx</code> — mà không cho toàn quyền root. Trên Fedora dùng drop-in sudoers; trên FreeBSD dùng <code>doas.conf</code>. Kiểm chứng: alice khởi động lại được nginx nhưng <em>không</em> đọc được <code>/etc/shadow</code> (Fedora) hay <code>/etc/master.passwd</code> (FreeBSD). Câu hỏi: dòng cấu hình giới hạn "chỉ một lệnh" trên <code>sudoers</code> và <code>doas.conf</code> khác nhau ra sao về cú pháp?</p>
+    <p>Tạo hai user trên Fedora và FreeBSD: <code>admin1</code> là administrator thật sự; <code>deploy</code> chỉ được restart nginx. Chứng minh bằng <code>sudo -l</code>/<code>doas -C</code> rằng <code>deploy</code> được đúng command đã cấp nhưng không được mở shell root. Ghi lại điểm khác nhau giữa nhóm <code>wheel</code> và doas policy.</p>
   </div>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #009 · Bảo mật</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #sudo</span>
-    </div>
-  </footer>
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://wiki.debian.org/sudo">Debian Wiki — sudo</a></li>
+      <li><a href="https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/">Fedora Docs — Gaining Privileges</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li>
+      <li><a href="https://man.freebsd.org/cgi/man.cgi?query=doas&amp;sektion=1">FreeBSD manpage — doas(1)</a></li>
+    </ul>
+  </section>
 
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #009</span></div></footer>
 </div>
 </body>
 </html>
