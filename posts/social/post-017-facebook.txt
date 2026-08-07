@@ -1,18 +1,16 @@
-📦 Bạn tăng đĩa VM từ 20GB lên 50GB, reboot, rồi ngơ ngác vì df -h vẫn báo 20GB và ổ vẫn đầy. Không có gì hỏng đâu — 30GB mới nằm ở cuối đĩa, nhưng phân vùng và filesystem vẫn giữ ranh giới cũ.
+📦 Tăng virtual disk xong mà df vẫn báo dung lượng cũ? Trước khi resize, hãy vẽ đúng storage stack.
 
-Bài #017 (Storage): muốn dùng chỗ mới, phải nới LẦN LƯỢT hai lớp — volume/phân vùng trước, filesystem sau (sai thứ tự là không ăn). Và cả hai thường nới được ONLINE, không cần umount:
-• Ubuntu/Xubuntu & Debian → LVM: lvextend rồi resize2fs (ext4, tăng/giảm được)
-• Fedora → LVM: lvextend rồi xfs_growfs (xfs CHỈ tăng, không thu nhỏ)
-• FreeBSD → gpart resize rồi growfs (UFS), hoặc ZFS autoexpand. KHÔNG có LVM
+Bản review #017 sửa giả định “chỉ có hai lớp”. Linux thực tế có thể là:
+disk → partition → PV → VG/LV → filesystem.
 
-Hai cạm bẫy hay dính:
-– FreeBSD: quên gpart recover trước khi gpart resize → báo lỗi (bản sao GPT ở cuối đĩa nằm sai chỗ sau khi đĩa lớn thêm).
-– ZFS: autoexpand mặc định TẮT — quên bật là pool vẫn giữ dung lượng cũ.
+Vì vậy:
+• Không mặc định pvresize /dev/sdb. Kiểm pvs + lsblk; nếu PV là /dev/sdb1 thì partition phải được nới trước.
+• Không mặc định lvextend +100%FREE; nên cấp kích thước rõ ràng và giữ headroom VG. Red Hat hỗ trợ lvextend --size +... --resizefs.
+• FreeBSD: gpart show để tìm đúng partition index, không hard-code -i 1; growfs -N cho test mode trước khi grow UFS.
+• ZFS: zpool online -e mở rộng device; mirror/RAIDZ chỉ thấy toàn bộ space mới sau khi các member liên quan đã được mở rộng.
 
-Mẹo: dùng LVM (Linux) / ZFS (FreeBSD) ngay từ đầu để lần sau nới chỉ còn một lệnh.
+👉 Đọc đầy đủ + nguồn Red Hat/FreeBSD/OpenZFS: {{LINK}}
 
-👉 Đọc đầy đủ: {{LINK}}
-
-#LinuxDaily #SysAdmin #LVM #FreeBSD #Storage
+#LinuxDaily #LVM #ZFS #Storage #FreeBSD
 
 [Đính kèm ảnh: post-017-code.png]
