@@ -1,0 +1,14 @@
+☁️ Bạn đang backup lên Google Drive bằng kéo-thả tay, hay dán access key S3 thẳng vào script rồi aws s3 cp? Cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy.
+
+Bài #018 (Công cụ mới): rclone — "rsync cho cloud". Một binary Go tĩnh nói chuyện được với hơn 70 backend (S3, Backblaze B2, Google Drive, SFTP…), và có sẵn remote "crypt" mã hoá cả tên file lẫn nội dung ngay trên máy nguồn:
+• Ubuntu/Xubuntu & Debian → apt install rclone (cần bản mới hơn thì dùng script cài chính chủ)
+• Fedora → dnf install rclone
+• FreeBSD → pkg install rclone, cần nạp thêm module fusefs để dùng rclone mount
+
+Cạm bẫy chết người nhất: rclone sync làm đích khớp tuyệt đối với nguồn — quên --dry-run là xoá sạch remote không kịp trở tay. Và mã hoá crypt không thay thế IAM: khoá bị lộ vẫn xoá được dữ liệu dù không đọc được nội dung.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Rclone #Cloud #Backup #FreeBSD
+
+[Đính kèm ảnh: post-018-code.png]
