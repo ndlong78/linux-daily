@@ -17,13 +17,30 @@
   "eyebrow": "Automation · Scripting",
   "slug": "bash-script-vung",
   "title": "Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?",
-  "lede": "Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để \"chạy được ở đây\" đồng nghĩa \"chạy được mọi nơi\"."
+  "lede": "Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để \"chạy được ở đây\" đồng nghĩa \"chạy được mọi nơi\".",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "GNU Bash Reference Manual",
+      "url": "https://www.gnu.org/software/bash/manual/bash.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "GNU Coreutils — env invocation",
+      "url": "https://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "GNU Coreutils — rm invocation",
+      "url": "https://www.gnu.org/software/coreutils/rm",
+      "kind": "upstream"
+    }
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
   <div class="masthead">
     <div class="brand">
       <a class="brand-home" href="../index.html">← Linux Daily</a>
@@ -34,7 +51,7 @@
   <header class="post">
     <p class="eyebrow">Automation · Scripting</p>
     <h1>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</h1>
-    <p class="lede">Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: <code>/bin/sh</code> trỏ vào <em>shell khác nhau</em> trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để "chạy được ở đây" đồng nghĩa "chạy được mọi nơi".</p>
+    <p class="lede">Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để "chạy được ở đây" đồng nghĩa "chạy được mọi nơi".</p>
     <div class="meta">
       <span class="tag axis">TRỤC · AUTOMATION</span>
       <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
@@ -43,178 +60,137 @@
   </header>
 
   <figure>
-    <!-- Hero: cùng một script #!/bin/sh chạy dưới 4 shell khác nhau tuỳ HĐH -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ: cùng một script mở đầu bằng shebang bin sh, nhưng trên Ubuntu và Debian bin sh là dash, trên Fedora là bash, trên FreeBSD là sh của FreeBSD — nên cùng script cho kết quả khác nhau; giải pháp là dùng shebang env bash và bật set -euo pipefail">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-        <marker id="arwr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#B23A2E"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <!-- script nguồn -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="30" y="118" width="170" height="64" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="115" y="144" text-anchor="middle" fill="#14201D" font-size="12">#!/bin/sh</text>
-        <text x="115" y="164" text-anchor="middle" fill="#566661" font-size="10.5">cùng MỘT script</text>
-      </g>
-
-      <!-- 4 nhánh: /bin/sh là gì -->
-      <line x1="200" y1="140" x2="272" y2="60"  stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-      <line x1="200" y1="146" x2="272" y2="120" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-      <line x1="200" y1="154" x2="272" y2="180" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-      <line x1="200" y1="160" x2="272" y2="240" stroke="#B23A2E" stroke-width="2" marker-end="url(#arwr)"/>
-
-      <g font-family="JetBrains Mono, monospace" font-size="11.5">
-        <rect x="276" y="40" width="250" height="40" rx="5" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.4"/>
-        <text x="292" y="65" fill="#14201D">Ubuntu/Debian → <tspan fill="#0C6E61">dash</tspan></text>
-        <rect x="276" y="100" width="250" height="40" rx="5" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.4"/>
-        <text x="292" y="125" fill="#14201D">Fedora → <tspan fill="#0C6E61">bash (as sh)</tspan></text>
-        <rect x="276" y="160" width="250" height="40" rx="5" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.4"/>
-        <text x="292" y="185" fill="#14201D">chung → <tspan fill="#566661">bashism có thể vỡ</tspan></text>
-        <rect x="276" y="220" width="250" height="40" rx="5" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.6"/>
-        <text x="292" y="245" fill="#B23A2E">FreeBSD → sh (Almquist)</text>
-      </g>
-
-      <!-- giải pháp -->
-      <line x1="526" y1="150" x2="576" y2="150" stroke="#14201D" stroke-width="2" marker-end="url(#arw)"/>
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="580" y="110" width="156" height="82" rx="8" fill="#14201D"/>
-        <text x="658" y="136" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">GIẢI PHÁP</text>
-        <text x="658" y="156" text-anchor="middle" fill="#9FE9DC" font-size="10">env bash</text>
-        <text x="658" y="174" text-anchor="middle" fill="#9FE9DC" font-size="10">set -euo pipefail</text>
-      </g>
+    <svg viewBox="0 0 760 260" role="img" aria-label="Sơ đồ cùng một shell script đi qua các trình thông dịch khác nhau trên Ubuntu Debian Fedora và FreeBSD">
+      <rect width="760" height="260" fill="#F7FAF9"/>
+      <rect x="35" y="92" width="170" height="70" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+      <text x="120" y="122" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="13">#!/bin/sh</text>
+      <text x="120" y="145" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-size="12">một script</text>
+      <line x1="205" y1="127" x2="300" y2="127" stroke="#0C6E61" stroke-width="3"/>
+      <rect x="305" y="35" width="190" height="45" rx="7" fill="#EAF5F2" stroke="#0C6E61"/>
+      <rect x="305" y="95" width="190" height="45" rx="7" fill="#EAF5F2" stroke="#0C6E61"/>
+      <rect x="305" y="155" width="190" height="45" rx="7" fill="#FBF1F0" stroke="#B23A2E"/>
+      <text x="400" y="63" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12">Ubuntu/Debian → dash</text>
+      <text x="400" y="123" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12">Fedora → bash as sh</text>
+      <text x="400" y="183" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="12">FreeBSD → /bin/sh</text>
+      <line x1="495" y1="127" x2="565" y2="127" stroke="#0C6E61" stroke-width="3"/>
+      <rect x="570" y="80" width="155" height="95" rx="8" fill="#14201D"/>
+      <text x="647" y="110" text-anchor="middle" fill="#9FE9DC" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">CHỌN RÕ SHELL</text>
+      <text x="647" y="136" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="11">POSIX sh</text>
+      <text x="647" y="156" text-anchor="middle" fill="#FFFFFF" font-family="JetBrains Mono, monospace" font-size="11">hoặc Bash</text>
     </svg>
-    <figcaption>Hình 1 — Cùng một <code>#!/bin/sh</code> chạy dưới bốn shell khác nhau tuỳ hệ, nên hành vi lệch. Giải pháp: chọn shebang <code>#!/usr/bin/env bash</code> khi cần tính năng bash, và bật chế độ nghiêm để lỗi lộ ra ngay.</figcaption>
+    <figcaption>Hình 1 — Shebang phải phản ánh đúng ngôn ngữ shell mà script dùng. Đừng để bashism nằm dưới <code>#!/bin/sh</code> rồi trông chờ mọi hệ xử lý giống nhau.</figcaption>
   </figure>
 
   <section>
     <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Một script bung ra ở production thường không phải vì thuật toán sai, mà vì hai giả định ngầm: <em>"máy nào cũng như máy tôi"</em> và <em>"lệnh nào cũng chạy đúng"</em>. Trên Fedora, <code>/bin/sh</code> thực ra là <code>bash</code>, nên các cú pháp riêng của bash (<em>bashism</em>) tình cờ chạy được — che mất lỗi. Đẩy sang Debian/Ubuntu (<code>/bin/sh</code> là <code>dash</code>) hay FreeBSD (<code>/bin/sh</code> là sh của BSD) thì cùng script đó gãy. Cộng thêm việc không bắt lỗi, script chạy tiếp sau một bước thất bại và để lại hậu quả tệ hơn cả dừng hẳn.</p>
+    <p>Một script có thể chạy trên máy phát triển nhưng hỏng trên máy chủ vì <code>/bin/sh</code> không nhất thiết là cùng một shell. Ubuntu/Debian thường dùng <code>dash</code> cho <code>/bin/sh</code>; Fedora có thể chạy Bash ở chế độ tương thích <code>sh</code>; FreeBSD có <code>/bin/sh</code> của hệ base. Vì vậy, nếu script cần mảng, <code>[[ ... ]]</code> hay <code>pipefail</code>, hãy nói rõ rằng đó là Bash.</p>
   </section>
 
   <section>
     <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
     <ul class="clean">
-      <li><strong>Shebang quyết định trình thông dịch:</strong> <code>#!/bin/sh</code> = "POSIX shell tối giản, khả chuyển"; <code>#!/usr/bin/env bash</code> = "cần tính năng bash". Tránh <code>#!/bin/bash</code> cứng — FreeBSD để bash ở <code>/usr/local/bin/bash</code>, không phải <code>/bin/bash</code>.</li>
-      <li><strong><code>/bin/sh</code> mỗi nơi một khác:</strong> dash (Ubuntu/Debian), bash-đóng-vai-sh (Fedora), sh của FreeBSD. Vì thế bashism dưới <code>#!/bin/sh</code> không đáng tin.</li>
-      <li><strong>Chế độ nghiêm (bash):</strong> <code>set -euo pipefail</code> — <code>-e</code> dừng khi một lệnh lỗi, <code>-u</code> báo lỗi khi dùng biến chưa đặt, <code>-o pipefail</code> để lỗi giữa pipe không bị nuốt. (<code>pipefail</code> là của bash, dash không có.)</li>
-      <li><strong><code>trap</code> để dọn dẹp:</strong> đảm bảo xoá file tạm / hoàn trạng thái dù script thoát vì lỗi.</li>
+      <li><strong><code>#!/bin/sh</code>:</strong> dành cho script viết theo cú pháp shell khả chuyển; không dùng bashism.</li>
+      <li><strong><code>#!/usr/bin/env bash</code>:</strong> hữu ích khi Bash nằm ở vị trí khác nhau, nhưng <code>env</code> tìm <code>bash</code> qua <code>PATH</code>. Với cron, systemd, sudo hay môi trường bị thu gọn, phải biết <code>PATH</code> thực tế là gì.</li>
+      <li><strong><code>set -euo pipefail</code>:</strong> là một bộ guardrail tốt cho Bash, không phải cơ chế xử lý lỗi hoàn chỉnh. Đặc biệt <code>-e</code> có ngoại lệ theo ngữ cảnh điều kiện, danh sách <code>&amp;&amp;</code>/<code>||</code>, pipeline và một số cấu trúc khác.</li>
+      <li><strong>Không đổi global <code>IFS</code> theo thói quen:</strong> ưu tiên quote biến, dùng array khi cần, hoặc đặt <code>IFS=</code> cục bộ cho đúng thao tác đọc/tách trường.</li>
     </ul>
   </section>
 
   <figure>
-    <!-- So sánh /bin/sh và vị trí bash trên 4 HĐH -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh: trên Ubuntu và Xubuntu cùng Debian, /bin/sh là dash và bash ở /bin/bash; Fedora /bin/sh là bash và bash ở /bin/bash; FreeBSD /bin/sh là sh của FreeBSD và bash ở /usr/local/bin/bash cài từ gói">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="100" text-anchor="middle" font-size="11.5" fill="#0C6E61">/bin/sh → dash</text>
-        <text x="104" y="132" text-anchor="middle" font-size="10.5" fill="#566661">bash: /bin/bash</text>
-        <text x="104" y="160" text-anchor="middle" font-size="10" fill="#566661">bashism dưới sh: vỡ</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="100" text-anchor="middle" font-size="11.5" fill="#0C6E61">/bin/sh → dash</text>
-        <text x="284" y="132" text-anchor="middle" font-size="10.5" fill="#566661">bash: /bin/bash</text>
-        <text x="284" y="160" text-anchor="middle" font-size="10" fill="#566661">bashism dưới sh: vỡ</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="100" text-anchor="middle" font-size="11.5" fill="#0C6E61">/bin/sh → bash</text>
-        <text x="464" y="132" text-anchor="middle" font-size="10.5" fill="#566661">bash: /bin/bash</text>
-        <text x="464" y="160" text-anchor="middle" font-size="10" fill="#B23A2E">bashism "lọt" → ẩn lỗi</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="100" text-anchor="middle" font-size="11.5" fill="#B23A2E">/bin/sh → sh (BSD)</text>
-        <text x="650" y="132" text-anchor="middle" font-size="10.5" fill="#7A4A44">bash: /usr/local/bin</text>
-        <text x="650" y="160" text-anchor="middle" font-size="10" fill="#B23A2E">bash cài từ gói</text>
+    <svg viewBox="0 0 760 240" role="img" aria-label="Bảng so sánh cách chọn Bash trên Ubuntu Debian Fedora và FreeBSD và lưu ý PATH">
+      <rect width="760" height="240" fill="#FFFFFF"/>
+      <rect x="25" y="45" width="160" height="145" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+      <rect x="205" y="45" width="160" height="145" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+      <rect x="385" y="45" width="160" height="145" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+      <rect x="565" y="45" width="170" height="145" rx="7" fill="#FBF1F0" stroke="#B23A2E"/>
+      <g font-family="Be Vietnam Pro, sans-serif" font-size="12" text-anchor="middle">
+        <text x="105" y="72" font-weight="700">Ubuntu/Xubuntu</text>
+        <text x="285" y="72" font-weight="700">Debian</text>
+        <text x="465" y="72" font-weight="700">Fedora</text>
+        <text x="650" y="72" font-weight="700" fill="#B23A2E">FreeBSD</text>
       </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG SCRIPT · /bin/sh KHÁC NHAU</text>
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" text-anchor="middle">
+        <text x="105" y="110">command -v bash</text><text x="105" y="137">PATH phải rõ</text>
+        <text x="285" y="110">command -v bash</text><text x="285" y="137">PATH phải rõ</text>
+        <text x="465" y="110">command -v bash</text><text x="465" y="137">PATH phải rõ</text>
+        <text x="650" y="110">pkg install bash</text><text x="650" y="137">/usr/local/bin/bash</text>
+      </g>
+      <text x="380" y="218" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661">env bash = tìm Bash qua PATH, không phải đường dẫn tuyệt đối</text>
     </svg>
-    <figcaption>Hình 2 — Fedora để <code>/bin/sh</code> là bash nên bashism "lọt lưới" và ẩn lỗi; Ubuntu/Debian (dash) và FreeBSD (sh BSD) sẽ phơi ra. Trên FreeBSD, bash còn nằm ở <code>/usr/local/bin</code> và phải cài từ gói.</figcaption>
+    <figcaption>Hình 2 — <code>/usr/bin/env bash</code> giải quyết khác biệt vị trí interpreter bằng cách tra <code>PATH</code>; đổi lại, tính đúng đắn phụ thuộc môi trường chạy có <code>PATH</code> phù hợp.</figcaption>
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Viết một script vững</h2>
-    <p>Khung script mẫu dưới đây áp cho cả bốn hệ — điểm khác chỉ là đảm bảo có <code>bash</code>.</p>
-
-    <span class="code-label"><span class="dot"></span>Khung chung — bash, chế độ nghiêm + trap</span>
+    <h2><span class="num">03</span> Viết một script Bash vững</h2>
+    <span class="code-label"><span class="dot"></span>Khung chung — Bash + cleanup</span>
     <pre><code>#!/usr/bin/env bash
-<span class="cmt"># env bash: tìm bash trong PATH — chạy cả /bin/bash lẫn /usr/local/bin/bash</span>
 set -euo pipefail
-IFS=$'\n\t'                       <span class="cmt"># tách trường an toàn, tránh khoảng trắng</span>
 
-tmp="$(mktemp)"                   <span class="cmt"># file tạm an toàn, không đoán tên</span>
-cleanup() { rm -f "$tmp"; }
-trap cleanup EXIT                 <span class="cmt"># luôn dọn, dù thoát vì lỗi</span>
+tmp="$(mktemp)"
+cleanup() { rm -f -- "$tmp"; }
+trap cleanup EXIT
 
-src="${1:?cần đối số: đường dẫn nguồn}"   <span class="cmt"># thiếu tham số → báo lỗi rõ</span>
-cp -- "$src" "$tmp"               <span class="cmt"># QUOTE biến; "--" chặn tên bắt đầu bằng -</span>
-echo "Đã xử lý: $src"</code></pre>
+src="${1:?cần đối số: đường dẫn nguồn}"
+cp -- "$src" "$tmp"
+printf 'Đã xử lý: %s\n' "$src"</code></pre>
+    <p>Không đặt <code>IFS=$'\n\t'</code> toàn cục nếu không có nhu cầu cụ thể. Quote biến mới là nền tảng. Khi cần đọc dữ liệu theo delimiter, đặt <code>IFS</code> cục bộ, ví dụ <code>while IFS= read -r line</code>.</p>
 
-    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora) — bash có sẵn</span>
-    <pre><code>which bash            <span class="cmt"># /bin/bash — env bash tự tìm ra</span>
+    <span class="code-label"><span class="dot"></span>Linux — kiểm interpreter</span>
+    <pre><code>command -v bash
+bash --version
 chmod +x script.sh
 ./script.sh /etc/hostname</code></pre>
 
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — cài bash trước (tách riêng)</span>
-    <pre class="bsd"><code>pkg install -y bash               <span class="cmt"># base KHÔNG có bash</span>
-which bash                        <span class="cmt"># /usr/local/bin/bash</span>
-<span class="cmt"># Nhờ shebang env bash, KHÔNG cần sửa đường dẫn trong script:</span>
-chmod +x script.sh &amp;&amp; ./script.sh /etc/hostname</code></pre>
-
-    <p>Nếu script chỉ cần cú pháp POSIX (khả chuyển tối đa, chạy cả nơi không có bash), dùng <code>#!/bin/sh</code> và <em>tránh</em> bashism — nhưng khi đó cũng mất <code>pipefail</code>.</p>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — Bash ngoài base</span>
+    <pre class="bsd"><code>pkg install -y bash
+command -v bash
+# thường: /usr/local/bin/bash
+./script.sh /etc/hostname</code></pre>
   </section>
 
   <section>
     <h2><span class="num">04</span> Kiểm chứng</h2>
-    <p>Đừng chỉ "chạy thử thấy được". Dùng công cụ soi lỗi tĩnh và thử dưới đúng shell mục tiêu:</p>
-    <span class="code-label"><span class="dot"></span>Mọi hệ (cài shellcheck qua apt/dnf/pkg)</span>
-    <pre><code>shellcheck script.sh          <span class="cmt"># bắt lỗi quoting, biến chưa đặt, bashism…</span>
-bash -n script.sh             <span class="cmt"># kiểm cú pháp, không chạy</span>
-sh   -n script.sh             <span class="cmt"># nếu định chạy dưới /bin/sh: thử bằng sh thật</span></code></pre>
-    <span class="code-label bsd"><span class="dot"></span>Debian/Ubuntu — soi bashism riêng</span>
-    <pre class="bsd"><code>checkbashisms script.sh       <span class="cmt"># gói devscripts; báo cú pháp bash lọt vào #!/bin/sh</span></code></pre>
+    <pre><code>shellcheck script.sh
+bash -n script.sh
+command -v bash
+
+env -i PATH="/usr/bin:/bin" bash -c 'printf "%s\n" "$PATH"'</code></pre>
+    <p>Lệnh cuối minh hoạ vì sao môi trường chạy quan trọng: khi <code>PATH</code> bị thay đổi, <code>env</code> cũng thay đổi cách tìm interpreter. Với job tự động, ghi rõ hoặc kiểm tra <code>PATH</code> thay vì giả định.</p>
   </section>
 
   <section>
     <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
     <ul class="clean">
-      <li><strong>Biến không quote:</strong> <code>rm -rf $dir/</code> khi <code>$dir</code> rỗng thành <code>rm -rf /</code>; tên có khoảng trắng bị tách thành nhiều đối số. Luôn <code>"$dir"</code>, và thêm <code>--</code> trước đối số vị trí.</li>
-      <li><strong><code>set -e</code> không bắt mọi lỗi:</strong> lệnh trong <code>if</code>, sau <code>||</code>/<code>&amp;&amp;</code>, hay trong một số subshell sẽ không kích hoạt thoát. Kiểm mã trả về những chỗ quan trọng bằng tay.</li>
-      <li><strong>Shebang cứng <code>#!/bin/bash</code>:</strong> vỡ trên FreeBSD (bash ở <code>/usr/local/bin</code>). Dùng <code>#!/usr/bin/env bash</code> cho khả chuyển.</li>
-      <li><strong>Tin vào Fedora:</strong> vì <code>/bin/sh</code> là bash, script sai kiểu vẫn chạy trên Fedora rồi vỡ trên server Debian/FreeBSD. Test trên đúng shell đích, hoặc dùng <code>shellcheck</code>/<code>checkbashisms</code>.</li>
+      <li><strong>Hiểu sai <code>set -e</code>:</strong> không phải mọi non-zero đều làm script thoát. Với bước quan trọng, kiểm trạng thái rõ ràng hoặc dùng cấu trúc <code>if ! command; then ...; fi</code>.</li>
+      <li><strong><code>env bash</code> dưới <code>sudo</code>/cron:</strong> có thể gặp <code>PATH</code> khác phiên shell tương tác. Nếu môi trường được kiểm soát chặt và đường dẫn Bash cố định, shebang tuyệt đối cũng là lựa chọn hợp lệ.</li>
+      <li><strong>Dùng <code>which</code> để kiểm availability:</strong> trong script shell, ưu tiên <code>command -v bash</code>.</li>
+      <li><strong>Lệnh xoá với biến rỗng:</strong> <code>rm -rf "$dir"/</code> có thể biến thành target gốc nếu biến rỗng. GNU <code>rm</code> mặc định có <code>--preserve-root</code>, nhưng script không được dựa vào guardrail đó; hãy validate biến trước lệnh destructive.</li>
     </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Trên FreeBSD, <code>bash</code> không có trong base (cài <code>pkg install bash</code>) và nằm ở <code>/usr/local/bin/bash</code>. <code>/bin/sh</code> là sh của FreeBSD, không phải dash hay bash. Vì thế <code>#!/usr/bin/env bash</code> là cách shebang bền nhất khi cần bash; còn nếu viết thuần POSIX thì <code>#!/bin/sh</code> chạy được ngay không cần cài gì.
-    </div>
   </section>
 
   <section>
     <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
     <ul class="clean">
-      <li>Quote mọi biến và dùng <code>--</code> để chặn chèn tuỳ chọn/đường dẫn độc hại; đừng dựng lệnh bằng nối chuỗi từ dữ liệu ngoài.</li>
-      <li>File tạm luôn qua <code>mktemp</code> (không đoán tên trong <code>/tmp</code> — tránh chèn/đua điều kiện), và dọn bằng <code>trap ... EXIT</code>.</li>
-      <li>Đưa <code>shellcheck</code> vào CI (hoặc chạy trước mỗi lần commit) — bắt lỗi tự động rẻ hơn nhiều so với debug lúc 2 giờ sáng.</li>
-      <li>Chạy script với quyền tối thiểu (bài #009); ghi log rõ ràng để khi lập lịch bằng cron/timer (bài #012), thất bại không im lặng.</li>
+      <li>Trước thao tác destructive, kiểm biến: <code>: "${dir:?dir phải được đặt}"</code> và giới hạn đường dẫn hợp lệ.</li>
+      <li>Quote mọi expansion cần quote và dùng <code>--</code> khi utility hỗ trợ để chặn operand bắt đầu bằng dấu gạch ngang.</li>
+      <li>Đưa <code>shellcheck</code> và test dưới đúng interpreter vào CI.</li>
+      <li>Job chạy bằng cron/systemd phải có môi trường dự đoán được, đặc biệt là <code>PATH</code>, working directory và quyền user.</li>
     </ul>
   </section>
 
   <div class="exercise">
     <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Viết một script backup nhỏ cố tình dùng một bashism (ví dụ mảng, hoặc <code>[[ ... ]]</code>) và mở đầu bằng <code>#!/bin/sh</code>. Chạy nó trên <strong>Fedora</strong>, rồi trên <strong>Debian</strong> và <strong>FreeBSD</strong>. Câu hỏi: máy nào chạy trót lọt, máy nào báo lỗi — và vì sao? Sau đó sửa cho vững: đổi shebang phù hợp, thêm <code>set -euo pipefail</code> và <code>trap</code>, rồi cho <code>shellcheck</code> soi. Điều gì <code>shellcheck</code> cảnh báo mà mắt thường bỏ sót?</p>
+    <p>Tạo một script dùng Bash array. Chạy thử với <code>#!/bin/sh</code> và với <code>#!/usr/bin/env bash</code>. Sau đó chạy trong môi trường có <code>PATH</code> tối giản để quan sát cách <code>env</code> tìm interpreter. Cuối cùng, thay một lệnh bằng lệnh trả mã lỗi trong <code>if</code> và trong pipeline để xem hành vi thực tế của <code>set -e</code>/<code>pipefail</code>.</p>
   </div>
+
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://www.gnu.org/software/bash/manual/bash.html">GNU Bash Reference Manual</a></li>
+      <li><a href="https://www.gnu.org/software/coreutils/manual/html_node/env-invocation.html">GNU Coreutils — env invocation</a></li>
+      <li><a href="https://www.gnu.org/software/coreutils/rm">GNU Coreutils — rm invocation</a></li>
+    </ul>
+  </section>
 
   <footer>
     <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
@@ -223,7 +199,6 @@ sh   -n script.sh             <span class="cmt"># nếu định chạy dưới /
       <span class="hashtags">#LinuxDaily #SysAdmin #Bash</span>
     </div>
   </footer>
-
 </div>
 </body>
 </html>

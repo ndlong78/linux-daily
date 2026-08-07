@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Source-backed technical quality gate cho Linux Daily.
 
-Từ bài #019, mỗi bài phải khai nguồn kỹ thuật có cấu trúc trong ``ld-meta`` và
-hiển thị cùng danh sách nguồn trong ``<section class="sources">``. Bài lịch sử
-#001–#018 được grandfather để PR này không buộc backfill toàn bộ series cùng lúc.
+Từ bài #019, mỗi bài bắt buộc khai nguồn kỹ thuật có cấu trúc trong ``ld-meta``
+và hiển thị cùng danh sách nguồn trong ``<section class="sources">``.
+
+Bài lịch sử #001–#018 vẫn được grandfather nếu chưa backfill. Tuy nhiên, ngay khi
+một bài lịch sử khai ``review_status`` hoặc ``sources``, bài đó được xem là đã
+opt-in vào source-backed review và phải vượt toàn bộ gate giống bài mới. Cách này
+cho phép backfill dần mà không để bài đã sửa bị regression âm thầm.
 """
 from __future__ import annotations
 
@@ -105,16 +109,26 @@ def _valid_https_url(url: object) -> bool:
     return parsed.scheme == "https" and bool(parsed.netloc)
 
 
+def _historical_opted_in(meta: dict) -> bool:
+    """Bài cũ có một dấu hiệu source-review thì phải hoàn tất toàn bộ contract."""
+    return "review_status" in meta or "sources" in meta
+
+
 def validate_post_sources(path: str, report: Report) -> None:
     name = os.path.basename(path)
     issue = _issue_from_filename(path)
-    if issue is None or issue < SOURCE_REQUIRED_FROM_ISSUE:
+    if issue is None:
         return
 
+    # Bài #019+ luôn bắt buộc source metadata. Bài cũ chỉ được kiểm khi đã opt-in.
     try:
         meta = postmeta.read_meta(path)
     except postmeta.MetaError as exc:
-        report.fail(f"{name}: không thể kiểm tra nguồn vì metadata lỗi ({exc}).")
+        if issue >= SOURCE_REQUIRED_FROM_ISSUE:
+            report.fail(f"{name}: không thể kiểm tra nguồn vì metadata lỗi ({exc}).")
+        return
+
+    if issue < SOURCE_REQUIRED_FROM_ISSUE and not _historical_opted_in(meta):
         return
 
     status = meta.get("review_status")
@@ -148,9 +162,18 @@ def validate_post_sources(path: str, report: Report) -> None:
         title = source.get("title")
         url = source.get("url")
         kind = source.get("kind")
-        report.check(isinstance(title, str) and bool(title.strip()), f"{name}: sources[{idx}].title bị thiếu/rỗng.")
-        report.check(_valid_https_url(url), f"{name}: sources[{idx}].url phải là URL HTTPS đầy đủ, đang là {url!r}.")
-        report.check(kind in PRIMARY_KINDS, f"{name}: sources[{idx}].kind phải là official hoặc upstream, đang là {kind!r}.")
+        report.check(
+            isinstance(title, str) and bool(title.strip()),
+            f"{name}: sources[{idx}].title bị thiếu/rỗng.",
+        )
+        report.check(
+            _valid_https_url(url),
+            f"{name}: sources[{idx}].url phải là URL HTTPS đầy đủ, đang là {url!r}.",
+        )
+        report.check(
+            kind in PRIMARY_KINDS,
+            f"{name}: sources[{idx}].kind phải là official hoặc upstream, đang là {kind!r}.",
+        )
         if kind in PRIMARY_KINDS:
             primary_count += 1
         if isinstance(url, str) and url:
@@ -188,7 +211,9 @@ def main() -> int:
         for error in report.errors:
             print(f"  - {error}", file=sys.stderr)
         return 1
-    print(f"✓ Source-backed gate: bài #{SOURCE_REQUIRED_FROM_ISSUE:03d}+ có nguồn kỹ thuật hợp lệ.")
+    print(
+        f"✓ Source-backed gate: bài #{SOURCE_REQUIRED_FROM_ISSUE:03d}+ và historical opt-in có nguồn hợp lệ."
+    )
     return 0
 
 

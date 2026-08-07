@@ -1,31 +1,21 @@
 [Tweet 1] — đính kèm post-013-code.png
-🐚 Script chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm không phải logic — mà là /bin/sh trỏ vào shell KHÁC NHAU trên mỗi hệ. Thread 🧵
+🐚 Script chạy ngon trên Fedora nhưng vỡ trên Debian/FreeBSD? /bin/sh không nhất thiết là cùng một shell. Bài #013 vừa được technical review lại. Thread 🧵
 
 [Tweet 2]
-/bin/sh mỗi nơi một khác:
-• Ubuntu/Debian → dash
-• Fedora → bash (as sh)
-• FreeBSD → sh của BSD
-Nên bashism viết trên Fedora "lọt lưới" rồi vỡ trên Debian/FreeBSD.
+Nếu script cần Bash, #!/usr/bin/env bash hữu ích vì env tìm bash qua PATH. Nhưng đó cũng là điều kiện: cron, sudo hay service có thể dùng PATH khác shell tương tác.
 
 [Tweet 3]
-Shebang đúng:
-#!/usr/bin/env bash   ← tìm bash trong PATH
-Tránh #!/bin/bash cứng — FreeBSD để bash ở /usr/local/bin/bash, không phải /bin/bash. env bash chạy cả hai.
+set -euo pipefail là guardrail, không phải “mọi lỗi đều dừng”. -e có ngoại lệ trong if, while/until, &&/|| và nhiều ngữ cảnh pipeline. Bước quan trọng nên kiểm trạng thái rõ ràng.
 
 [Tweet 4]
-Bật chế độ nghiêm ngay dòng đầu:
-set -euo pipefail
--e dừng khi lỗi | -u báo biến chưa đặt | -o pipefail để lỗi giữa pipe không bị nuốt (pipefail là của bash, dash không có).
+Không cần đặt global IFS=$'\n\t' như công thức mặc định. Ưu tiên quote biến; khi cần đọc theo delimiter, đặt IFS cục bộ, ví dụ: while IFS= read -r line.
 
 [Tweet 5]
-Dọn dẹp + quoting:
-tmp="$(mktemp)"; trap 'rm -f "$tmp"' EXIT
-Luôn quote "$var". rm -rf $dir/ với $dir rỗng = rm -rf /. Thêm -- chặn tên bắt đầu bằng -.
+Trong script, dùng command -v bash thay cho which. Với lệnh destructive, validate biến trước; đừng dựa vào guardrail như GNU rm --preserve-root để cứu một path rỗng.
 
 [Tweet 6] — FreeBSD
-FreeBSD: bash không có trong base → pkg install bash (vào /usr/local/bin). Nhờ shebang env bash, không cần sửa đường dẫn trong script. Soi lỗi: shellcheck script.sh
+Bash không nằm trong FreeBSD base. Cài package bash, rồi kiểm command -v bash. Nếu dùng env bash, nhớ rằng interpreter vẫn được tìm qua PATH của môi trường chạy.
 
 [Tweet 7]
-Full bài + sơ đồ 4 shell: {{LINK}}
+Bài #013 đã bổ sung nguồn GNU Bash/Coreutils và technical review: {{LINK}}
 #LinuxDaily #Bash #FreeBSD

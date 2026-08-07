@@ -13,7 +13,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Backfill nguồn cho bài lịch sử #001–#018: ⏳ mốc riêng
+- Historical source backfill: 🟡 bắt đầu với #013 và #016 trong PR #25
 
 ## Các mốc đã hoàn thành
 
@@ -70,21 +70,30 @@ Mục tiêu: nâng chất lượng từ “đúng cấu trúc” sang “claim k
 - [x] `tools/validate_sources.py` bắt buộc từ #019: tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và metadata khớp link hiển thị.
 - [x] `review_status="draft"` không qua merge gate; chỉ `reviewed`/`published` được chấp nhận.
 - [x] `tools/build.py --check` chạy source-backed gate cùng structural quality gate.
-- [x] Test riêng cho historical grandfather, status, số nguồn, HTTPS, duplicate và metadata↔HTML drift.
+- [x] Test riêng cho status, số nguồn, HTTPS, duplicate và metadata↔HTML drift.
 - [x] `AGENTS.md` có checklist kỹ thuật cho networking/firewall, storage, backup/restore, auth/permissions và shell automation.
-- [x] Bài #001–#018 được grandfather có chủ đích để PR pipeline không biến thành một đợt backfill lớn.
+- [x] Bài #001–#018 được grandfather có chủ đích để backfill dần.
 
-## Mốc kế tiếp — Historical Technical Backfill
+## PR #25 — Historical Technical Backfill #013 + #016
 
-Mục tiêu: rà những claim rủi ro/phiên bản trong #001–#018 và thêm nguồn dần, ưu tiên theo mức ảnh hưởng thay vì sửa tất cả cùng lúc.
+Mục tiêu: backfill hai bài lịch sử có claim phụ thuộc môi trường/phiên bản rõ nhất, không đổi ngày xuất bản và không đổi `state.json`.
 
-Ưu tiên đầu:
+- [x] #013 Bash: làm rõ `#!/usr/bin/env bash` tìm interpreter qua `PATH`.
+- [x] #013 Bash: mô tả đúng giới hạn của `set -e`, bỏ khuyến nghị global `IFS=$'\n\t'`, dùng `command -v` thay `which`.
+- [x] #013 Bash: sửa ví dụ destructive path để không khẳng định GNU `rm` chắc chắn xoá `/`; nhấn mạnh validate biến thay vì dựa vào `--preserve-root`.
+- [x] #013 Bash: thêm `review_status="reviewed"`, 3 nguồn upstream GNU và section **Nguồn kỹ thuật**.
+- [x] #016 FreeBSD: đổi `blacklistd` thành tên hiện hành `blocklistd`; xác nhận `blocklistd` ở base và `sshguard` là Ports/package ngoài base.
+- [x] #016 FreeBSD: dùng `security/py-fail2ban` và filter `bsd-sshd-session` cho OpenSSH hiện hành; thêm kiểm chứng/rollback khi thay firewall từ xa.
+- [x] #016: thêm `review_status="reviewed"`, nguồn Fail2Ban upstream + FreeBSD Handbook/Ports và section **Nguồn kỹ thuật**.
+- [x] `tools/validate_sources.py`: historical post chưa backfill vẫn grandfather; historical post đã khai `review_status` hoặc `sources` phải vượt source-backed gate để chống regression.
+- [x] Đồng bộ Facebook/X cho #013 và #016 với nội dung đã review.
 
-- [ ] #016 fail2ban/FreeBSD: dùng thuật ngữ hiện hành **blocklistd**; phân biệt blocklistd trong FreeBSD base với `sshguard` là lựa chọn ngoài base/Ports-package.
-- [ ] #013 bash scripting: làm rõ `#!/usr/bin/env bash` phụ thuộc `PATH`; `set -e` có ngoại lệ; không khuyến nghị global `IFS=$'\n\t'` như mặc định; dùng `command -v` thay cho `which` khi kiểm command availability.
-- [ ] Rà các bài firewall/networking để bảo đảm có rollback khi thao tác remote.
-- [ ] Rà storage/backup để bảo đảm destructive operations và restore verification được nêu rõ.
-- [ ] Chọn chiến lược backfill nguồn: theo bài hoặc theo nhóm rủi ro, không thay đổi ngày xuất bản lịch sử.
+## Mốc kế tiếp — Historical Technical Backfill theo nhóm rủi ro
+
+- [ ] Rà firewall/networking (#001, #007, #008, #015) để bảo đảm có rollback khi thao tác remote và claim theo distro/version có nguồn.
+- [ ] Rà storage/backup (#003, #004, #010, #014, #017) để bảo đảm destructive operations, snapshot/restore semantics và restore verification được nêu rõ.
+- [ ] Rà auth/permissions (#002, #009) theo tài liệu OpenSSH/sudo/doas hiện hành.
+- [ ] Tiếp tục backfill theo PR nhỏ; không thay đổi ngày xuất bản lịch sử.
 
 ## P2 — Repository & website
 
@@ -107,4 +116,5 @@ Mục tiêu: rà những claim rủi ro/phiên bản trong #001–#018 và thêm
 3. Không push trực tiếp `main`.
 4. Không bypass quality gate.
 5. Mọi thay đổi automation phải rollback được bằng cách disable scheduler mà không làm hỏng dữ liệu series.
-6. Pipeline mới áp nghiêm cho bài mới; backfill lịch sử làm theo mốc riêng để review nhỏ, dễ audit.
+6. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
+7. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.

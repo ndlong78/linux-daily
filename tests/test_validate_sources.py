@@ -45,8 +45,23 @@ def _check(tmp_path, html, issue=19):
     return report.errors
 
 
-def test_historical_post_is_grandfathered(tmp_path):
+def test_historical_post_without_source_metadata_is_grandfathered(tmp_path):
     assert _check(tmp_path, "<html></html>", issue=18) == []
+
+
+def test_historical_post_with_valid_source_metadata_is_checked_and_passes(tmp_path):
+    assert _check(tmp_path, _post_html(issue=13), issue=13) == []
+
+
+def test_historical_opt_in_missing_sources_fails(tmp_path):
+    html = _post_html(issue=16).replace('"sources": [', '"sources_old": [', 1)
+    errors = _check(tmp_path, html, issue=16)
+    assert any("meta.sources" in e for e in errors)
+
+
+def test_historical_opt_in_draft_status_fails(tmp_path):
+    errors = _check(tmp_path, _post_html(issue=13, status="draft"), issue=13)
+    assert any("technical review" in e for e in errors)
 
 
 def test_valid_sources_pass(tmp_path):
@@ -104,7 +119,8 @@ def test_missing_visible_source_section_fails(tmp_path):
     assert any("section" in e and "sources" in e for e in errors)
 
 
-def test_run_checks_only_posts_directory(tmp_path):
+def test_run_checks_new_and_historical_opt_in_posts(tmp_path):
     (tmp_path / "post-018-old.html").write_text("<html></html>", encoding="utf-8")
+    (tmp_path / "post-013-demo.html").write_text(_post_html(issue=13), encoding="utf-8")
     (tmp_path / "post-019-demo.html").write_text(_post_html(), encoding="utf-8")
     assert validate_sources.run(str(tmp_path)).errors == []
