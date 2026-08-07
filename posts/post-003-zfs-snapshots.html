@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Ảnh chụp ZFS trên Ubuntu, Debian, Fedora & FreeBSD — Linux Daily #003</title>
-<meta name="description" content="OpenZFS thống nhất nên lệnh zfs/zpool giống hệt nhau; phần khác biệt là cách cài ZFS: sẵn trong FreeBSD, gói apt trên Ubuntu, DKMS trên Debian, kho ngoài + Secure Boot trên Fedora.">
+<meta name="description" content="OpenZFS thống nhất nên lệnh zfs/zpool giống hệt nhau; phần khác biệt là cách cài ZFS và semantics rollback/snapshot cần được hiểu đúng.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -17,219 +17,84 @@
   "eyebrow": "Storage · Hệ thống tệp",
   "slug": "zfs-snapshots",
   "title": "Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện",
-  "lede": "Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base."
+  "lede": "Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Fedora — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html", "kind": "upstream"},
+    {"title": "zfs-rollback.8 — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/man/v2.3/8/zfs-rollback.8.html", "kind": "upstream"},
+    {"title": "Snapshots, Clones and Bookmarks — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Datasets/Snapshots%20and%20Clones.html", "kind": "upstream"},
+    {"title": "Chapter 23. The Z File System (ZFS) — FreeBSD Handbook", "url": "https://docs.freebsd.org/en/books/handbook/zfs/", "kind": "official"}
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#003 · 05·07·2026</span>
-    </div>
-  </div>
-
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#003 · 05·07·2026</span></div></div>
   <header class="post">
     <p class="eyebrow">Storage · Hệ thống tệp</p>
     <h1>Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</h1>
-    <p class="lede">Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ <em>làm sao có ZFS</em> trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · STORAGE</span>
-      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
-      <span class="tag">~9 PHÚT</span>
-    </div>
+    <p class="lede">Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</p>
+    <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: copy-on-write snapshot -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ copy-on-write: dataset sống và một snapshot chia sẻ chung các khối không đổi; khi ghi đè, ZFS chỉ tạo khối mới cho phần thay đổi, nên snapshot gần như không tốn thêm dung lượng. Rollback đưa dataset về đúng snapshot.">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <!-- snapshot pin -->
-      <text x="120" y="40" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="12">@before-upgrade</text>
-      <line x1="120" y1="48" x2="120" y2="96" stroke="#14201D" stroke-width="1.5" stroke-dasharray="3 3"/>
-
-      <!-- shared blocks row -->
-      <text x="40" y="118" fill="#566661" font-family="JetBrains Mono, monospace" font-size="12">KHỐI CHUNG</text>
-      <g>
-        <rect x="200" y="98" width="60" height="40" rx="4" fill="#CDE6E1" stroke="#0C6E61" stroke-width="1.5"/>
-        <rect x="266" y="98" width="60" height="40" rx="4" fill="#CDE6E1" stroke="#0C6E61" stroke-width="1.5"/>
-        <rect x="332" y="98" width="60" height="40" rx="4" fill="#CDE6E1" stroke="#0C6E61" stroke-width="1.5"/>
-        <rect x="398" y="98" width="60" height="40" rx="4" fill="#CDE6E1" stroke="#0C6E61" stroke-width="1.5"/>
-      </g>
-
-      <!-- snapshot (read-only) -->
-      <rect x="40" y="170" width="150" height="48" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
-      <text x="115" y="192" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">SNAPSHOT</text>
-      <text x="115" y="208" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="10.5">chỉ đọc</text>
-      <line x1="190" y1="194" x2="196" y2="138" stroke="#0C6E61" stroke-width="1.5"/>
-
-      <!-- live dataset -->
-      <rect x="470" y="170" width="150" height="48" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-      <text x="545" y="192" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">DATASET SỐNG</text>
-      <text x="545" y="208" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">đang ghi</text>
-      <line x1="470" y1="194" x2="462" y2="138" stroke="#14201D" stroke-width="1.5"/>
-
-      <!-- changed block (new write) -->
-      <rect x="470" y="240" width="60" height="40" rx="4" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.5" stroke-dasharray="4 3"/>
-      <text x="500" y="264" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="10.5">mới</text>
-      <line x1="500" y1="240" x2="500" y2="220" stroke="#0C6E61" stroke-width="1.5" marker-end="url(#arw)"/>
-      <text x="545" y="266" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">chỉ khối thay đổi tốn thêm chỗ</text>
-
-      <!-- rollback arrow -->
-      <path d="M470 300 q -160 -6 -280 -78" fill="none" stroke="#0C6E61" stroke-width="1.6" stroke-dasharray="5 3" marker-end="url(#arw)"/>
-      <text x="330" y="296" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">rollback → về snapshot</text>
+    <svg viewBox="0 0 760 260" role="img" aria-label="Snapshot ZFS giữ tham chiếu tới các block cũ; khi dataset thay đổi, snapshot giữ lại block cũ nên dung lượng snapshot tăng theo dữ liệu bị thay đổi">
+      <rect width="760" height="260" fill="#fff"/><rect x="50" y="65" width="250" height="130" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="175" y="98" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">SNAPSHOT @before</text><text x="175" y="130" text-anchor="middle" font-family="JetBrains Mono" font-size="12">block A · B · C</text><rect x="460" y="65" width="250" height="130" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="585" y="98" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">DATASET HIỆN TẠI</text><text x="585" y="130" text-anchor="middle" font-family="JetBrains Mono" font-size="12">block A · B' · C</text><path d="M300 130H455" stroke="#0C6E61" stroke-width="2"/><text x="380" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="11">COW</text><text x="380" y="225" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13">Snapshot ban đầu rẻ; block cũ được giữ lại khi dữ liệu thay đổi.</text>
     </svg>
-    <figcaption>Hình 1 — Copy-on-write: snapshot và dataset sống dùng chung khối không đổi, chỉ phần bị ghi đè mới tốn dung lượng. Vì thế chụp gần như tức thời và rất rẻ.</figcaption>
+    <figcaption>Hình 1 — Snapshot không sao chép toàn bộ dataset lúc tạo. Tuy nhiên nó vẫn có thể chiếm đáng kể dung lượng vì giữ lại các block cũ sau khi dataset sống thay đổi.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">01</span> Bối cảnh</h2>
-    <p>Trước khi nâng cấp một dịch vụ, sửa hàng loạt file, hay chạy một script "một lần rồi thôi", bạn muốn có nút <em>undo</em>. Snapshot của ZFS đúng là nút đó: một ảnh chụp tức thời của dataset, gần như không tốn dung lượng lúc tạo, và khôi phục chỉ trong vài giây. Xóa nhầm hay update hỏng thì <code>rollback</code> là xong — không cần khôi phục từ backup chậm chạp.</p>
-  </section>
+  <section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Snapshot rất hợp trước nâng cấp, thay đổi cấu hình hoặc thao tác hàng loạt vì tạo nhanh và cho phép quay về trạng thái trước đó. Nhưng snapshot <strong>không phải backup</strong>: nếu pool mất thì snapshot trong chính pool đó cũng mất. Hãy dùng snapshot cho rollback cục bộ và dùng <code>zfs send</code>/backup sang nơi độc lập cho khả năng phục hồi sự cố.</p></section>
 
-  <section>
-    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>ZFS ngày nay là <strong>OpenZFS</strong> — cùng một mã nguồn trên cả FreeBSD và Linux. Hệ quả rất dễ chịu: <strong>lệnh <code>zfs</code> và <code>zpool</code> giống hệt nhau ở mọi hệ điều hành</strong>. Khác biệt duy nhất là <em>cách đưa ZFS vào máy</em>: FreeBSD có sẵn trong base; Ubuntu có gói dựng sẵn; Debian cần kho <code>contrib</code> và dựng module qua DKMS; Fedora phải thêm kho ngoài và để ý Secure Boot.</p>
-  </section>
+  <section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Copy-on-write:</strong> snapshot tham chiếu block hiện có; khi block bị thay đổi, snapshot giữ block cũ.</li><li><strong>Dung lượng:</strong> snapshot mới tạo thường rất ít tốn thêm dữ liệu, nhưng dung lượng giữ lại tăng theo lượng block cũ mà snapshot còn cần.</li><li><strong>Khôi phục một file:</strong> có thể đọc qua <code>.zfs/snapshot/</code> thay vì rollback toàn dataset.</li><li><strong>Rollback là destructive:</strong> mọi thay đổi sau snapshot bị bỏ. Rollback về snapshot không phải mới nhất cần <code>-r</code>, đồng nghĩa xóa snapshot/bookmark trung gian mới hơn.</li></ul></section>
 
   <figure>
-    <!-- So sánh cách CÓ ZFS -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh cách cài ZFS: Ubuntu/Xubuntu dùng apt cài zfsutils-linux; Debian cần kho contrib và dựng qua DKMS; Fedora thêm kho OpenZFS, dựng DKMS và lưu ý Secure Boot; FreeBSD có sẵn ZFS trong base, không cần cài.">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">LỆNH ZFS GIỐNG NHAU · CÀI ĐẶT KHÁC NHAU</text>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="104" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install</text>
-        <text x="104" y="122" text-anchor="middle" font-size="10.5" fill="#566661">zfsutils-linux</text>
-        <text x="104" y="160" text-anchor="middle" font-size="11" fill="#566661">gói dựng sẵn</text>
-        <text x="104" y="178" text-anchor="middle" font-size="11" fill="#0C6E61">dễ</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Debian</text>
-        <text x="284" y="104" text-anchor="middle" font-size="11" fill="#0C6E61">contrib +</text>
-        <text x="284" y="122" text-anchor="middle" font-size="11" fill="#0C6E61">zfs-dkms</text>
-        <text x="284" y="160" text-anchor="middle" font-size="10.5" fill="#566661">cần headers</text>
-        <text x="284" y="178" text-anchor="middle" font-size="11" fill="#566661">DKMS build</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Fedora</text>
-        <text x="464" y="104" text-anchor="middle" font-size="11" fill="#0C6E61">kho OpenZFS</text>
-        <text x="464" y="122" text-anchor="middle" font-size="11" fill="#0C6E61">+ DKMS</text>
-        <text x="464" y="160" text-anchor="middle" font-size="10.5" fill="#B23A2E">Secure Boot!</text>
-        <text x="464" y="178" text-anchor="middle" font-size="11" fill="#566661">khó nhất</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="108" text-anchor="middle" font-size="12" fill="#B23A2E">trong base</text>
-        <text x="650" y="150" text-anchor="middle" font-size="10.5" fill="#7A4A44">không cần cài</text>
-        <text x="650" y="176" text-anchor="middle" font-size="11" fill="#B23A2E">✓ dễ nhất</text>
-      </g>
+    <svg viewBox="0 0 760 245" role="img" aria-label="So sánh cách có OpenZFS trên Ubuntu Debian Fedora và FreeBSD">
+      <rect width="760" height="245" fill="#fff"/><g font-family="JetBrains Mono" font-size="11"><rect x="20" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="102" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu/Xubuntu</text><text x="102" y="112" text-anchor="middle">zfsutils-linux</text><text x="102" y="140" text-anchor="middle">APT</text><rect x="205" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="287" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Debian</text><text x="287" y="112" text-anchor="middle">contrib/backports</text><text x="287" y="140" text-anchor="middle">zfs-dkms</text><rect x="390" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="472" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Fedora</text><text x="472" y="112" text-anchor="middle">OpenZFS repo</text><text x="472" y="140" text-anchor="middle">kernel-devel</text><rect x="575" y="45" width="165" height="150" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">FreeBSD</text><text x="657" y="112" text-anchor="middle">ZFS trong base</text><text x="657" y="140" text-anchor="middle">rc.d, không systemd</text></g>
     </svg>
-    <figcaption>Hình 2 — Điểm lật của bài này: cột đỏ (FreeBSD) lần này lại <em>dễ nhất</em> — ZFS nằm sẵn trong hệ điều hành. Fedora mới là chỗ vất vả.</figcaption>
+    <figcaption>Hình 2 — Lệnh quản trị ZFS gần như cùng semantics trên OpenZFS; phần khác biệt lớn là đóng gói, module kernel và cơ chế service của từng hệ.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Cài / bật ZFS trên từng hệ điều hành</h2>
-    <p>Giả định bạn đã có (hoặc sẽ tạo) một pool tên <code>tank</code> và một dataset <code>tank/data</code>.</p>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span>
-    <pre><code>sudo apt update
-sudo apt install zfsutils-linux</code></pre>
-
-    <span class="code-label"><span class="dot"></span>Debian — cần contrib + DKMS</span>
-    <pre><code><span class="cmt"># Bật kho contrib (Debian 12+): thêm "contrib" vào dòng trong</span>
-<span class="cmt"># /etc/apt/sources.list rồi apt update.</span>
-sudo apt install linux-headers-$(uname -r) dkms
-sudo apt install zfs-dkms zfsutils-linux
-sudo modprobe zfs             <span class="cmt"># DKMS dựng module — mất chút thời gian</span></code></pre>
-
-    <span class="code-label"><span class="dot"></span>Fedora — kho ngoài + Secure Boot</span>
-    <pre><code>sudo dnf install \
-  https://zfsonlinux.org/fedora/zfs-release-2-4$(rpm -E %dist).noarch.rpm
-sudo dnf install kernel-devel zfs
+  <section><h2><span class="num">03</span> Cài đặt và kiểm tra theo distro</h2>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span><pre><code>sudo apt update
+sudo apt install -y zfsutils-linux
+zfs version</code></pre>
+    <span class="code-label"><span class="dot"></span>Debian</span><pre><code><span class="cmt"># Bật contrib/backports theo release hiện hành trước khi cài.</span>
+sudo apt update
+sudo apt install -y zfs-dkms zfsutils-linux
 sudo modprobe zfs
-<span class="cmt"># Nếu bật Secure Boot: module DKMS chưa ký sẽ bị chặn — phải ghi danh</span>
-<span class="cmt"># khóa MOK hoặc tắt Secure Boot thì modprobe mới thành công.</span></code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — có sẵn trong base (tách riêng)</span>
-    <pre class="bsd"><code><span class="cmt"># Không cần cài gì. Chỉ bật để pool tự import khi khởi động:</span>
-sudo sysrc zfs_enable=YES
-sudo service zfs start        <span class="cmt"># hoặc kldload zfs cho phiên hiện tại</span></code></pre>
+zfs version</code></pre>
+    <span class="code-label"><span class="dot"></span>Fedora — repo OpenZFS hiện hành</span><pre><code>sudo dnf install -y \
+  https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval "%{dist}").noarch.rpm
+sudo dnf install -y kernel-devel-$(uname -r | awk -F'-' '{print $1}')
+sudo dnf install -y zfs
+sudo modprobe zfs</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — ZFS trong base</span><pre class="bsd"><code>sysrc zfs_enable="YES"
+service zfs start
+zfs version
+zpool status</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Dùng snapshot — giống hệt nhau mọi nơi</h2>
-    <p>Từ đây trở đi <strong>không còn phân biệt hệ điều hành</strong>: các lệnh dưới chạy y như nhau trên Ubuntu, Debian, Fedora và FreeBSD.</p>
-    <span class="code-label"><span class="dot"></span>Chung cho mọi HĐH</span>
-    <pre><code><span class="cmt"># Chụp trước khi làm việc rủi ro:</span>
-sudo zfs snapshot tank/data@before-upgrade
+  <section><h2><span class="num">04</span> Ví dụ thực hành</h2><pre><code><span class="cmt"># Dùng một dataset thử, không thực hành rollback trên production.</span>
+sudo zfs snapshot tank/data@before-change
+zfs list -t snapshot -r tank/data
 
-<span class="cmt"># Xem các snapshot:</span>
-zfs list -t snapshot
+<span class="cmt"># Lấy lại một file mà không rollback toàn dataset:</span>
+cp /tank/data/.zfs/snapshot/before-change/example.conf /tmp/example.conf.old
 
-<span class="cmt"># Lấy lại MỘT file cũ mà KHÔNG rollback — duyệt thư mục ẩn .zfs:</span>
-ls /tank/data/.zfs/snapshot/before-upgrade/
+<span class="cmt"># Xem trước snapshot nào mới hơn trước khi cân nhắc rollback:</span>
+zfs list -t snapshot -o name,creation -s creation tank/data</code></pre></section>
 
-<span class="cmt"># Khôi phục toàn bộ dataset về snapshot (xem cảnh báo ở mục 5):</span>
-sudo zfs rollback tank/data@before-upgrade
+  <section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2><ul class="clean"><li><strong>Dùng rollback như undo vô hại:</strong> sai; rollback loại bỏ thay đổi mới hơn. Với snapshot cũ hơn, <code>-r</code> còn xóa snapshot/bookmark trung gian.</li><li><strong>Nhầm snapshot với backup:</strong> snapshot cùng pool không bảo vệ khỏi mất pool.</li><li><strong>Hard-code repo Fedora cũ:</strong> repo release của OpenZFS thay đổi theo thời gian; dùng hướng dẫn upstream hiện hành.</li><li><strong>DKMS không khớp kernel:</strong> Debian/Fedora cần module build được cho kernel đang chạy; kiểm <code>modprobe zfs</code> sau cập nhật kernel.</li></ul></section>
 
-<span class="cmt"># Sao lưu snapshot sang pool/máy khác:</span>
-sudo zfs send tank/data@before-upgrade | ssh backup "zfs recv tank/data"</code></pre>
-  </section>
+  <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean"><li>Trước rollback, xác nhận đúng dataset và snapshot bằng <code>zfs list -t snapshot</code>; không copy-paste tên từ môi trường khác.</li><li>Ưu tiên restore file đơn lẻ hoặc clone snapshot để kiểm thử trước khi rollback dataset production.</li><li>Giữ bản sao ngoài pool: <code>zfs send</code> sang pool/máy khác hoặc dùng hệ backup độc lập.</li></ul></section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
-    <ul class="clean">
-      <li><strong>Rollback phá hủy dữ liệu mới hơn:</strong> <code>zfs rollback</code> xóa mọi thay đổi <em>sau</em> snapshot. Nếu có snapshot trung gian mới hơn, lệnh sẽ báo lỗi cho tới khi bạn thêm <code>-r</code> để xóa chúng. Nhầm là mất dữ liệu — hãy chắc trước khi gõ.</li>
-      <li><strong>Debian/Fedora quên kernel headers:</strong> DKMS không dựng được module. Nguy hiểm hơn: sau mỗi lần cập nhật kernel, DKMS phải dựng lại — thiếu headers thì ZFS "biến mất" sau khi reboot và pool không import.</li>
-      <li><strong>Fedora + Secure Boot:</strong> <code>modprobe zfs</code> bị chặn vì module chưa ký. Đây là lý do phổ biến nhất khiến ZFS "cài xong mà không chạy".</li>
-      <li><strong>FreeBSD:</strong> quên <code>zfs_enable=YES</code> thì pool không tự import khi khởi động. Và đừng tìm <code>apt</code>/<code>dnf</code> — ZFS đã ở sẵn trong base.</li>
-    </ul>
-    <div class="callout">
-      <span class="k">Snapshot ≠ Backup</span>
-      Snapshot nằm ngay trong pool: đĩa hỏng là mất cả dataset lẫn mọi snapshot. Nó cứu bạn khỏi lỗi thao tác, không cứu khỏi hỏng phần cứng. Muốn an toàn thật thì <code>zfs send</code> sang một pool khác, tốt nhất là máy khác.
-    </div>
-  </section>
+  <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo một dataset thử, snapshot nó, thay đổi ba file rồi khôi phục một file qua <code>.zfs/snapshot</code>. Sau đó liệt kê các snapshot theo thời gian và giải thích chính xác dữ liệu nào sẽ mất nếu rollback về snapshot cũ hơn.</p></div>
 
-  <section>
-    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <div class="callout tip">
-      <span class="k">Tự động &amp; sao lưu chéo</span>
-      Đừng chụp thủ công mãi. Dùng <code>sanoid</code>/<code>zfs-auto-snapshot</code> (Linux) hoặc <code>zfsnap</code>/cơ chế <code>periodic</code> (FreeBSD) để chụp và dọn theo lịch, rồi <code>zfs send</code> định kỳ sang một pool dự phòng.
-    </div>
-    <ul class="clean">
-      <li>Đặt tên snapshot có ý nghĩa kèm thời gian (ví dụ <code>@2026-07-05-pre-deploy</code>) để dễ truy vết.</li>
-      <li>Dọn snapshot cũ để pool không phình: snapshot giữ lại mọi khối đã bị xóa/ghi đè, để lâu sẽ ăn dung lượng.</li>
-      <li>Giữ ít nhất một bản gửi ra ngoài pool chính — snapshot cùng pool không phải là điểm an toàn cuối cùng.</li>
-    </ul>
-  </section>
+  <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Tài liệu chính thức/upstream dùng để kiểm chứng semantics snapshot, rollback và cách cài ZFS.</p><ul class="clean"><li><a href="https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html" rel="noopener noreferrer">Fedora — OpenZFS documentation</a> — upstream.</li><li><a href="https://openzfs.github.io/openzfs-docs/man/v2.3/8/zfs-rollback.8.html" rel="noopener noreferrer">zfs-rollback.8 — OpenZFS documentation</a> — upstream.</li><li><a href="https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Datasets/Snapshots%20and%20Clones.html" rel="noopener noreferrer">Snapshots, Clones and Bookmarks — OpenZFS documentation</a> — upstream.</li><li><a href="https://docs.freebsd.org/en/books/handbook/zfs/" rel="noopener noreferrer">Chapter 23. The Z File System (ZFS) — FreeBSD Handbook</a> — official.</li></ul></section>
 
-  <div class="exercise">
-    <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Ubuntu</strong> và một máy <strong>FreeBSD</strong>: tạo dataset thử, chụp một snapshot, rồi sửa và xóa vài file. Sau đó (a) khôi phục đúng một file từ <code>.zfs/snapshot/</code> mà không rollback, và (b) rollback toàn bộ dataset về snapshot. Câu hỏi: trong hai bước đó, có bất kỳ lệnh nào khác nhau giữa Ubuntu và FreeBSD không — và vì sao?</p>
-  </div>
-
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #003 · Storage</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #ZFS</span>
-    </div>
-  </footer>
-
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #003 · Storage</span><span class="hashtags">#LinuxDaily #ZFS #Storage #FreeBSD</span></div></footer>
 </div>
 </body>
 </html>
