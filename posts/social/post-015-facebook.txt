@@ -1,16 +1,16 @@
-🔐 Muốn nối hai máy qua Internet như thể chúng ở cùng LAN — an toàn, không phơi SSH/CSDL ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình.
+🔐 WireGuard dễ dựng, nhưng AllowedIPs là chỗ rất dễ hiểu sai.
 
-Nó nằm ngay trong nhân (Linux từ 5.6, FreeBSD có if_wg), dùng mật mã hiện đại cố định, toàn bộ cấu hình gói trong một file nhỏ. Dựng xong, hai máy "thấy" nhau qua một dải IP riêng, lưu lượng mã hoá đầu-cuối.
+Bài #015 đã được source-review theo upstream:
+• Khi gửi: AllowedIPs tham gia chọn peer/route theo destination.
+• Khi nhận: source IP sau giải mã phải thuộc dải được phép của peer.
+Đó là mô hình cryptokey routing.
 
-Bài #015 (Networking): file wg0.conf GIỐNG NHAU trên cả 4 HĐH — khác biệt chỉ ở cách bật dịch vụ và đường dẫn config:
-• Ubuntu/Xubuntu & Debian → apt install wireguard, bật bằng systemctl enable --now wg-quick@wg0, config ở /etc/wireguard
-• Fedora → dnf install wireguard-tools, cũng systemd
-• FreeBSD → pkg install wireguard-tools, bật qua rc.conf (wireguard_interfaces="wg0" + service wireguard start), config ở /usr/local/etc/wireguard
+Thay đổi quan trọng khác: upstream hiện hướng dẫn FreeBSD bằng `pkg install wireguard`. Sau cài nên kiểm package/rc script thực tế thay vì giả định package/path từ bài cũ.
 
-Khái niệm dễ hiểu sai nhất: AllowedIPs vừa lọc vừa định tuyến. Để 0.0.0.0/0 = toàn bộ lưu lượng đi qua peer (full tunnel); chỉ nối hai máy thì để dải nhỏ. Và đừng quên mở cổng UDP 51820 trên tường lửa (bài #007), thiếu là handshake không bao giờ xảy ra.
+Về vận hành: đừng bắt đầu bằng 0.0.0.0/0 trên máy đang quản trị từ xa. Dựng tunnel /32 nhỏ trước, kiểm handshake + route, giữ console/đường lui rồi mới cân nhắc full tunnel.
 
-👉 Đọc đầy đủ: {{LINK}}
+👉 Bài #015 + nguồn WireGuard upstream/FreeBSD: {{LINK}}
 
-#LinuxDaily #SysAdmin #WireGuard #FreeBSD #VPN
+#LinuxDaily #WireGuard #VPN #FreeBSD
 
 [Đính kèm ảnh: post-015-code.png]
