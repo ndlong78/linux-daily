@@ -36,8 +36,11 @@ jobs:
       - name: Pytest
         run: pytest -q
 
-      - name: Build + quality gate (index đồng bộ, meta, topics, posts, social, state)
+      - name: Build + quality gate (index, meta, sources, internal links)
         run: python tools/build.py --check
+
+      - name: External link check (retry + non-flaky network policy)
+        run: python tools/check_links.py --external --workers 8
 
       - name: Smoke test cadence (state.json)
         run: |
