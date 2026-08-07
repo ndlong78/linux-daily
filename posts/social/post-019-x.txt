@@ -1,0 +1,35 @@
+[Tweet 1] — đính kèm post-019-code.png
+📊 “Server chậm” chưa phải chẩn đoán. Triage tốt cần phân loại: CPU đang xếp hàng, RAM chịu áp lực, hay disk I/O có độ trễ? Workflow 5 phút với vmstat + iostat. Thread 🧵
+
+[Tweet 2]
+Bắt đầu bằng nhiều mẫu, không bằng cảm giác:
+uptime
+vmstat 1 5
+Trên Linux, mẫu đầu vmstat thường là trung bình từ boot; chú ý các mẫu sau theo interval.
+
+[Tweet 3]
+CPU: xem run queue r cùng us/sy/id.
+Memory: đừng chỉ nhìn “free RAM thấp”; xem paging/swap và xu hướng. Cache dùng RAM là bình thường.
+
+[Tweet 4]
+Linux disk I/O:
+iostat -xz 1 5
+Đọc latency + queue + throughput cùng nhau. iowait hay %util đơn lẻ không đủ để kết luận mọi HDD/SSD/NVMe “đã nghẽn”.
+
+[Tweet 5] — distro
+Ubuntu/Xubuntu + Debian:
+apt install sysstat
+Fedora:
+dnf install sysstat
+vmstat thường thuộc procps/procps-ng; iostat thuộc sysstat.
+
+[Tweet 6] — FreeBSD
+FreeBSD không dùng systemd/sysstat kiểu Linux:
+vmstat -w 1 -c 5
+iostat -x -w 1 -c 5
+systat -vmstat 1
+Cùng tư duy triage, nhưng option/cột là BSD riêng.
+
+[Tweet 7]
+Nguyên tắc: lấy nhiều mẫu + timestamp + workload + baseline trước khi kết luận. Full bài và workflow copy-paste: {{LINK}}
+#LinuxDaily #Performance #Monitoring #FreeBSD

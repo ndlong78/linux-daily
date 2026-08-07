@@ -1,0 +1,16 @@
+📊 “Server chậm” chưa phải là chẩn đoán. Trước khi chỉnh sysctl, tăng CPU hay đổ lỗi cho storage, hãy dành 5 phút để phân loại đúng nút thắt.
+
+Linux Daily #019 đi theo workflow thực chiến:
+• uptime → nhìn load và thời gian máy đã chạy.
+• vmstat → xem run queue, CPU, paging/swap và block I/O theo nhiều mẫu.
+• iostat -xz → đi xuống từng block device, đối chiếu latency, queue và throughput.
+
+Ubuntu/Xubuntu và Debian cài iostat qua gói sysstat bằng APT; Fedora dùng DNF. FreeBSD tách riêng: vmstat, iostat và systat là bộ công cụ BSD, cú pháp/cột không được giả định giống Linux.
+
+Điểm quan trọng nhất: đừng kết luận từ một con số. RAM free thấp không tự động nghĩa thiếu RAM; iowait cao không tự động nghĩa disk hỏng; %util cao cũng cần đặt trong ngữ cảnh loại thiết bị và workload. Lấy nhiều mẫu, ghi timestamp, so với baseline rồi mới đi sâu.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Performance #Monitoring #FreeBSD
+
+[Đính kèm ảnh: post-019-code.png]
