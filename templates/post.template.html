@@ -13,6 +13,16 @@
 <meta property="og:url" content="{{CANONICAL_URL}}">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="{{SOCIAL_IMAGE_URL}}">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="{{SOCIAL_IMAGE_WIDTH}}">
+<meta property="og:image:height" content="{{SOCIAL_IMAGE_HEIGHT}}">
+<meta property="og:image:alt" content="{{SOCIAL_IMAGE_ALT}}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{TITLE}} — Linux Daily {{ISSUE}}">
+<meta name="twitter:description" content="{{META_DESCRIPTION}}">
+<meta name="twitter:image" content="{{SOCIAL_IMAGE_URL}}">
+<meta name="twitter:image:alt" content="{{SOCIAL_IMAGE_ALT}}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -20,7 +30,8 @@
 <!-- Metadata có cấu trúc: nguồn duy nhất cho trang chủ & quality gate. Các trường
      phải KHỚP đúng phần hiển thị bên dưới và topics.md. Từ bài #019 còn bắt buộc
      review_status + sources; sources là JSON array các object title/url/kind.
-     CANONICAL_URL và FEED_URL phải được lấy từ site.json, không hard-code domain khác. -->
+     CANONICAL_URL, FEED_URL và SOCIAL_IMAGE_* phải được derive từ site.json +
+     posts/social/post-NNN-code.png, không hard-code domain hay kích thước ảnh. -->
 <script type="application/json" id="ld-meta">
 {
   "issue": {{ISSUE_N}},
