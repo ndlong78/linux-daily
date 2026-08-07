@@ -11,7 +11,6 @@ import argparse
 import glob
 import json
 import os
-import socket
 import ssl
 import sys
 import time
@@ -142,7 +141,7 @@ def check_internal() -> list[str]:
         if not os.path.isfile(full):
             errors.append(f"{ref.source}: link nội bộ không tồn tại: {ref.url} -> {target}")
             continue
-        if fragment and target.lower().endswith(('.html', '.htm')):
+        if fragment and target.lower().endswith((".html", ".htm")):
             key = f"{target}#{fragment}"
             if key not in all_ids:
                 errors.append(f"{ref.source}: fragment không tồn tại: {ref.url}")
@@ -198,7 +197,7 @@ def check_external_url(url: str, timeout: float = 6.0, retries: int = 2) -> Exte
             result = classify_status(url, status)
             if status not in TRANSIENT_STATUSES or attempt == retries:
                 return result
-        except (URLError, TimeoutError, socket.timeout, ssl.SSLError) as exc:
+        except (URLError, TimeoutError, ssl.SSLError) as exc:
             last_error = str(exc)
             if attempt == retries:
                 break
