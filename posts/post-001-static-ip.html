@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Đặt IP tĩnh trên Ubuntu, Debian, Fedora & FreeBSD — Linux Daily #001</title>
-<meta name="description" content="Cùng một mục tiêu, bốn cách làm khác nhau: cấu hình IP tĩnh và cặp DNS dự phòng trên Ubuntu/Xubuntu (netplan), Debian (interfaces), Fedora (nmcli) và FreeBSD (rc.conf).">
+<title>Đặt IP tĩnh trên Ubuntu, Debian, Fedora &amp; FreeBSD — Linux Daily #001</title>
+<meta name="description" content="Cấu hình IP tĩnh đa hệ điều hành với quy trình rollback an toàn khi thao tác từ xa.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
@@ -17,143 +17,74 @@
   "eyebrow": "Networking · Kết nối",
   "slug": "static-ip",
   "title": "Một IP tĩnh, bốn cách khai báo",
-  "lede": "Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc."
+  "lede": "Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Netplan CLI — try/apply và rollback", "url": "https://netplan.readthedocs.io/en/stable/cli/", "kind": "official"},
+    {"title": "NetworkManager — nmcli Device Checkpoint and Restore", "url": "https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli-examples.html", "kind": "upstream"},
+    {"title": "Debian Reference — Chapter 5. Network setup", "url": "https://www.debian.org/doc/manuals/debian-reference/ch05", "kind": "official"},
+    {"title": "FreeBSD Handbook — Network", "url": "https://docs.freebsd.org/en/books/handbook/network/", "kind": "official"}
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#001 · 01·07·2026</span>
-    </div>
-  </div>
-
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#001 · 01·07·2026</span></div></div>
   <header class="post">
     <p class="eyebrow">Networking · Kết nối</p>
     <h1>Một IP tĩnh, bốn cách khai báo</h1>
     <p class="lede">Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · NETWORKING</span>
-      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
-      <span class="tag">~8 PHÚT</span>
-    </div>
+    <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: sơ đồ mạng LAN gán IP tĩnh + cặp DNS -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ máy chủ nhận IP tĩnh 192.168.10.20/24, gateway .1 và cặp DNS .2/.3 trên cùng một mạng LAN">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <!-- LAN bus -->
-      <line x1="80" y1="150" x2="680" y2="150" stroke="#0C6E61" stroke-width="2.5"/>
-      <text x="380" y="140" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="1">LAN · 192.168.10.0/24</text>
-
-      <!-- HOST -->
-      <g>
-        <rect x="60" y="196" width="150" height="66" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="135" y="222" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">HOST</text>
-        <text x="135" y="243" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="13">.20/24</text>
-        <line x1="135" y1="196" x2="135" y2="150" stroke="#14201D" stroke-width="2"/>
-        <circle cx="135" cy="150" r="4" fill="#14201D"/>
-      </g>
-
-      <!-- GATEWAY -->
-      <g>
-        <rect x="305" y="38" width="150" height="66" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="380" y="64" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">GATEWAY</text>
-        <text x="380" y="85" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="13">.1</text>
-        <line x1="380" y1="104" x2="380" y2="150" stroke="#14201D" stroke-width="2" marker-end="url(#arw)"/>
-        <circle cx="380" cy="150" r="4" fill="#14201D"/>
-      </g>
-
-      <!-- DNS PAIR -->
-      <g>
-        <rect x="540" y="196" width="86" height="66" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
-        <text x="583" y="222" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">DNS</text>
-        <text x="583" y="243" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="13">.2</text>
-        <rect x="632" y="196" width="86" height="66" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
-        <text x="675" y="222" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">DNS</text>
-        <text x="675" y="243" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="13">.3</text>
-        <line x1="583" y1="196" x2="583" y2="150" stroke="#0C6E61" stroke-width="2"/>
-        <line x1="675" y1="196" x2="675" y2="150" stroke="#0C6E61" stroke-width="2"/>
-        <circle cx="583" cy="150" r="4" fill="#0C6E61"/>
-        <circle cx="675" cy="150" r="4" fill="#0C6E61"/>
-        <path d="M540 285 h178" stroke="#0C6E61" stroke-width="1" stroke-dasharray="3 3"/>
-        <text x="629" y="298" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">luôn khai theo cặp</text>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Quy trình thay IP tĩnh từ xa: ghi nhận cấu hình cũ, áp dụng có rollback, kiểm tra gateway DNS SSH rồi mới xác nhận">
+      <rect width="760" height="250" fill="#fff"/><g font-family="JetBrains Mono, monospace" font-size="12">
+      <rect x="30" y="85" width="150" height="70" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="105" y="114" text-anchor="middle">1 · lưu trạng thái</text><text x="105" y="136" text-anchor="middle">IP · route · DNS</text>
+      <rect x="220" y="85" width="150" height="70" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="295" y="114" text-anchor="middle">2 · thử thay đổi</text><text x="295" y="136" text-anchor="middle">có rollback</text>
+      <rect x="410" y="85" width="150" height="70" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="485" y="114" text-anchor="middle">3 · kiểm chứng</text><text x="485" y="136" text-anchor="middle">GW · DNS · SSH</text>
+      <rect x="600" y="85" width="130" height="70" rx="7" fill="#14201D"/><text x="665" y="114" text-anchor="middle" fill="#7FE0D2">4 · xác nhận</text><text x="665" y="136" text-anchor="middle" fill="#fff">persist</text>
+      <path d="M180 120H220M370 120H410M560 120H600" stroke="#0C6E61" stroke-width="2"/>
+      <text x="380" y="45" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="16">Đổi mạng từ xa: rollback trước, apply sau</text>
       </g>
     </svg>
-    <figcaption>Hình 1 — Nguyên tắc: một địa chỉ tĩnh, một gateway, và DNS luôn khai đủ cặp để dự phòng.</figcaption>
+    <figcaption>Hình 1 — Thay địa chỉ mạng từ xa phải có đường lui. Netplan và NetworkManager đều có cơ chế thử/checkpoint để tự hoàn tác khi phiên quản trị bị mất.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">01</span> Bối cảnh</h2>
-    <p>Máy chủ, thiết bị hạ tầng hay máy trạm cố định thì không nên để DHCP cấp địa chỉ đổi tới đổi lui. Bạn cần gán IP tĩnh. Nghe đơn giản, nhưng khi quản trị nhiều hệ điều hành trong cùng một hệ thống, cái bẫy nằm ở chỗ: <strong>mỗi họ HĐH đặt cấu hình mạng ở một nơi và bằng một công cụ khác nhau</strong>. Nhớ sai chỗ là mất cả buổi.</p>
+  <section><h2><span class="num">01</span> Bối cảnh</h2>
+    <p>IP tĩnh không khó; điều nguy hiểm là đổi IP, gateway hoặc DNS trên một máy đang được quản trị qua SSH rồi mất kết nối trước khi kịp sửa. Vì vậy mục tiêu của bài không chỉ là “đặt đúng địa chỉ”, mà là <strong>đặt đúng và có rollback</strong>.</p>
   </section>
 
-  <section>
-    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>Ba họ cần phân biệt rõ. Nhóm <strong>Debian/Ubuntu</strong> dùng <code>systemd</code> nhưng lại tách đôi công cụ mạng: Ubuntu đi qua <em>netplan</em>, còn Debian truyền thống dùng file <code>interfaces</code>. <strong>Fedora</strong> giao toàn quyền cho <em>NetworkManager</em>, thao tác chuẩn qua <code>nmcli</code>. Còn <strong>FreeBSD</strong> thì ở một thế giới riêng — không có <code>systemd</code>, không có NetworkManager; mọi thứ khai trong <code>/etc/rc.conf</code>.</p>
+  <section><h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li><strong>Ubuntu/Xubuntu:</strong> Netplan là lớp khai báo; backend có thể là <code>systemd-networkd</code> hoặc NetworkManager. <code>netplan try</code> có timeout và tự rollback nếu không xác nhận.</li>
+      <li><strong>Debian:</strong> không nên khẳng định mọi máy đều dùng <code>/etc/network/interfaces</code>. Server có thể dùng ifupdown hoặc systemd-networkd; desktop thường dùng NetworkManager. Hãy xác định ai đang quản lý interface trước khi sửa.</li>
+      <li><strong>Fedora:</strong> NetworkManager là mặc định. Tên connection profile không nhất thiết trùng tên interface; lấy profile thật bằng <code>nmcli</code>.</li>
+      <li><strong>FreeBSD:</strong> cấu hình persistent thường nằm trong <code>/etc/rc.conf</code>; DNS nằm trong <code>/etc/resolv.conf</code> tùy cơ chế quản lý resolver.</li>
+    </ul>
   </section>
 
   <figure>
-    <!-- Bản đồ nơi lưu cấu hình -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bản đồ nơi mỗi hệ điều hành lưu cấu hình mạng: Ubuntu dùng netplan, Debian dùng interfaces, Fedora dùng nmcli, FreeBSD dùng rc.conf">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <!-- 4 cột -->
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="112" text-anchor="middle" font-size="12" fill="#0C6E61">netplan</text>
-        <text x="104" y="140" text-anchor="middle" font-size="10.5" fill="#566661">/etc/netplan/</text>
-        <text x="104" y="156" text-anchor="middle" font-size="10.5" fill="#566661">*.yaml</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="112" text-anchor="middle" font-size="12" fill="#0C6E61">ifupdown</text>
-        <text x="284" y="140" text-anchor="middle" font-size="10.5" fill="#566661">/etc/network/</text>
-        <text x="284" y="156" text-anchor="middle" font-size="10.5" fill="#566661">interfaces</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="112" text-anchor="middle" font-size="12" fill="#0C6E61">nmcli</text>
-        <text x="464" y="140" text-anchor="middle" font-size="10.5" fill="#566661">NetworkManager</text>
-        <text x="464" y="156" text-anchor="middle" font-size="10.5" fill="#566661">keyfile</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="150" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="112" text-anchor="middle" font-size="12" fill="#B23A2E">rc.conf</text>
-        <text x="650" y="140" text-anchor="middle" font-size="10.5" fill="#7A4A44">/etc/rc.conf</text>
-        <text x="650" y="156" text-anchor="middle" font-size="10.5" fill="#7A4A44">+ resolv.conf</text>
-        <text x="650" y="210" text-anchor="middle" font-size="10.5" fill="#B23A2E" letter-spacing="1">— thế giới riêng —</text>
+    <svg viewBox="0 0 760 245" role="img" aria-label="So sánh công cụ đặt IP tĩnh trên Ubuntu, Debian, Fedora và FreeBSD, nhấn mạnh cơ chế rollback">
+      <rect width="760" height="245" fill="#fff"/><g font-family="JetBrains Mono, monospace" font-size="11">
+      <rect x="20" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="102" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="110" text-anchor="middle">netplan</text><text x="102" y="135" text-anchor="middle">netplan try</text><text x="102" y="160" text-anchor="middle">auto rollback</text>
+      <rect x="205" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="287" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Debian</text><text x="287" y="110" text-anchor="middle">xác định manager</text><text x="287" y="135" text-anchor="middle">ifupdown / NM</text><text x="287" y="160" text-anchor="middle">networkd</text>
+      <rect x="390" y="45" width="165" height="150" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="472" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Fedora</text><text x="472" y="110" text-anchor="middle">NetworkManager</text><text x="472" y="135" text-anchor="middle">nmcli checkpoint</text><text x="472" y="160" text-anchor="middle">auto rollback</text>
+      <rect x="575" y="45" width="165" height="150" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700" fill="#B23A2E">FreeBSD</text><text x="657" y="110" text-anchor="middle">rc.conf</text><text x="657" y="135" text-anchor="middle">ifconfig / route</text><text x="657" y="160" text-anchor="middle">giữ console cứu hộ</text>
       </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG MỤC TIÊU · NƠI LƯU KHÁC NHAU</text>
     </svg>
-    <figcaption>Hình 2 — Nhớ cột này là xong một nửa bài. Cột đỏ (FreeBSD) không dùng chung công cụ với ba cột còn lại.</figcaption>
+    <figcaption>Hình 2 — Không có một lệnh chung cho bốn hệ. Điểm chung là phải biết công cụ quản lý interface và chuẩn bị rollback trước khi thay đổi.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Cấu hình trên từng hệ điều hành</h2>
-    <p>Giả định chung: interface tên <code>ens33</code> (Linux) / <code>em0</code> (FreeBSD), địa chỉ <code>192.168.10.20/24</code>, gateway <code>192.168.10.1</code>, cặp DNS <code>192.168.10.2</code> và <code>192.168.10.3</code>.</p>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — netplan</span>
-    <pre><code><span class="cmt"># /etc/netplan/01-static.yaml  (YAML: chỉ dùng dấu cách, KHÔNG tab)</span>
+  <section><h2><span class="num">03</span> Cấu hình an toàn trên từng hệ</h2>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — Netplan</span>
+    <pre><code># /etc/netplan/01-static.yaml
 network:
   version: 2
-  renderer: networkd        <span class="cmt"># Xubuntu/desktop: đổi thành NetworkManager</span>
   ethernets:
     ens33:
+      dhcp4: false
       addresses: [192.168.10.20/24]
       routes:
         - to: default
@@ -161,94 +92,76 @@ network:
       nameservers:
         addresses: [192.168.10.2, 192.168.10.3]
 
-<span class="cmt"># Kiểm thử an toàn rồi mới áp dụng:</span>
-sudo netplan try
-sudo netplan apply</code></pre>
+sudo netplan try          # xác nhận khi SSH vẫn hoạt động
+sudo netplan status --all</code></pre>
 
-    <span class="code-label"><span class="dot"></span>Debian — /etc/network/interfaces</span>
-    <pre><code><span class="cmt"># /etc/network/interfaces</span>
+    <span class="code-label"><span class="dot"></span>Debian — ví dụ khi interface thật sự do ifupdown quản lý</span>
+    <pre><code>grep -v '^#' /etc/network/interfaces
+# chỉ dùng block dưới nếu ens33 thuộc ifupdown
 auto ens33
 iface ens33 inet static
-    address 192.168.10.20/24
-    gateway 192.168.10.1
-    dns-nameservers 192.168.10.2 192.168.10.3
+  address 192.168.10.20/24
+  gateway 192.168.10.1
 
-<span class="cmt"># Áp dụng:</span>
-sudo systemctl restart networking</code></pre>
+# áp lại đúng interface thay vì restart toàn networking service
+sudo ifdown ens33 &amp;&amp; sudo ifup ens33</code></pre>
 
-    <span class="code-label"><span class="dot"></span>Fedora — nmcli</span>
-    <pre><code>sudo nmcli con mod ens33 \
-  ipv4.addresses 192.168.10.20/24 \
-  ipv4.gateway 192.168.10.1 \
-  ipv4.dns "192.168.10.2 192.168.10.3" \
-  ipv4.method manual
+    <span class="code-label"><span class="dot"></span>Fedora — NetworkManager checkpoint</span>
+    <pre><code>nmcli -f NAME,DEVICE con show --active
+# giả sử profile thật là "Wired connection 1"
+sudo nmcli dev checkpoint --timeout 60 ens33 -- \
+  nmcli con mod "Wired connection 1" \
+    ipv4.addresses 192.168.10.20/24 \
+    ipv4.gateway 192.168.10.1 \
+    ipv4.dns "192.168.10.2 192.168.10.3" \
+    ipv4.method manual
+# checkpoint yêu cầu xác nhận; mất SSH thì NetworkManager rollback</code></pre>
 
-sudo nmcli con up ens33</code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — rc.conf (tách riêng)</span>
-    <pre class="bsd"><code><span class="cmt"># /etc/rc.conf</span>
-ifconfig_em0="inet 192.168.10.20 netmask 255.255.255.0"
-defaultrouter="192.168.10.1"
-
-<span class="cmt"># /etc/resolv.conf  — DNS khai riêng, mỗi dòng một địa chỉ</span>
-nameserver 192.168.10.2
-nameserver 192.168.10.3
-
-<span class="cmt"># Áp dụng:</span>
-service netif restart &amp;&amp; service routing restart</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — rc.conf, giữ console/phiên cứu hộ</span>
+    <pre class="bsd"><code>ifconfig em0
+sysrc ifconfig_em0="inet 192.168.10.20 netmask 255.255.255.0"
+sysrc defaultrouter="192.168.10.1"
+# thử runtime trong cửa sổ bảo trì trước khi reboot
+ifconfig em0 inet 192.168.10.20/24
+route -n get default</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
-    <pre><code>ip addr show ens33
-ip route
-resolvectl status        <span class="cmt"># hoặc: cat /etc/resolv.conf</span></code></pre>
+  <section><h2><span class="num">04</span> Kiểm chứng trước khi đóng phiên quản trị</h2>
+    <pre><code>ip addr; ip route                 # Linux
+getent hosts example.com          # kiểm resolver qua NSS
+ping -c3 192.168.10.1             # gateway có trả lời?
+# mở một SSH thứ hai từ máy quản trị trước khi xác nhận thay đổi</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
     <pre class="bsd"><code>ifconfig em0
-netstat -rn              <span class="cmt"># FreeBSD dùng netstat -rn, KHÔNG có "ip route"</span>
-cat /etc/resolv.conf</code></pre>
+netstat -rn | grep default
+getent hosts example.com</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
     <ul class="clean">
-      <li><strong>Ubuntu:</strong> file YAML kỵ tab — thụt lề sai một dấu là hỏng. Khóa <code>gateway4:</code> đã lỗi thời, dùng <code>routes:</code> như trên.</li>
-      <li><strong>Debian:</strong> <code>dns-nameservers</code> chỉ có tác dụng khi có gói <code>resolvconf</code>; nếu không, DNS sẽ bị bỏ qua — hãy kiểm tra lại <code>/etc/resolv.conf</code>.</li>
-      <li><strong>Fedora:</strong> đừng sửa file <code>ifcfg-*</code> cũ (đã bị loại bỏ). Thiếu <code>ipv4.method manual</code> thì máy vẫn đi xin DHCP dù bạn đã đặt địa chỉ.</li>
-      <li><strong>FreeBSD:</strong> tên interface theo driver (<code>em0</code>, <code>igb0</code>, <code>re0</code>, <code>vtnet0</code>) — luôn chạy <code>ifconfig</code> xem trước. Sai cú pháp trong <code>rc.conf</code> có thể khiến máy mất mạng sau khi khởi động lại.</li>
-    </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Đây là chỗ dễ sai nhất khi chuyển ngữ cảnh: trên FreeBSD <em>không</em> có <code>netplan</code>, <code>systemctl restart networking</code> hay <code>ip route</code>. Gõ nhầm lệnh Linux vào FreeBSD sẽ báo "command not found" — hoặc tệ hơn, im lặng không làm gì.
-    </div>
-  </section>
-
-  <section>
-    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <div class="callout tip">
-      <span class="k">Nguyên tắc cặp DNS</span>
-      Luôn khai đủ <strong>hai máy chủ DNS</strong>. Cấu hình chỉ có một địa chỉ nên bị coi là lỗi: khi máy DNS đó chết, cả host mất phân giải tên và kéo theo hàng loạt dịch vụ.
-    </div>
-    <ul class="clean">
-      <li>Chỉ <code>root</code> được sửa các file cấu hình mạng — kiểm tra lại quyền sau khi chỉnh.</li>
-      <li>Sau mỗi thay đổi, xác nhận bằng một lượt <code>ping</code> gateway và phân giải một tên miền nội bộ, đừng tin "chắc là được".</li>
+      <li>Giả định tên connection profile của NetworkManager bằng tên NIC.</li>
+      <li>Restart toàn bộ networking trên Debian dù chỉ cần đưa một interface xuống/lên.</li>
+      <li>Chỉnh Netplan bằng SSH rồi dùng <code>netplan apply</code> ngay, bỏ qua <code>netplan try</code>.</li>
+      <li>Ghi persistent config FreeBSD rồi reboot mà chưa thử runtime hoặc chưa có console cứu hộ.</li>
     </ul>
   </section>
 
-  <div class="exercise">
-    <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Dựng hai máy ảo cùng subnet: một <strong>Debian</strong> và một <strong>FreeBSD</strong>. Gán IP tĩnh cho cả hai với cùng cặp DNS ở trên, rồi cho chúng <code>ping</code> lẫn nhau và phân giải một tên miền nội bộ. Câu hỏi: lệnh nào cho bạn xem bảng định tuyến trên mỗi bên, và output khác nhau ở điểm gì?</p>
+  <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+    <p>Đổi network control-plane là thay đổi có khả năng tự cắt đường quản trị. Luôn lưu cấu hình cũ, giữ ít nhất một phiên/console độc lập, đặt timeout rollback khi công cụ hỗ trợ và chỉ persist sau khi kiểm tra route, DNS và một phiên SSH mới.</p>
+  </section>
+
+  <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Trong lab, đổi IP của một VM Ubuntu bằng <code>netplan try</code> rồi cố tình không xác nhận để quan sát rollback. Sau đó làm tương tự trên Fedora bằng <code>nmcli dev checkpoint</code>. Ghi lại trạng thái IP, route và DNS trước/sau mỗi lần.</p>
   </div>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #001 · Networking</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #FreeBSD</span>
-    </div>
-  </footer>
+  <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean">
+    <li><a href="https://netplan.readthedocs.io/en/stable/cli/">Netplan CLI — try/apply và rollback</a></li>
+    <li><a href="https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli-examples.html">NetworkManager — nmcli Device Checkpoint and Restore</a></li>
+    <li><a href="https://www.debian.org/doc/manuals/debian-reference/ch05">Debian Reference — Chapter 5. Network setup</a></li>
+    <li><a href="https://docs.freebsd.org/en/books/handbook/network/">FreeBSD Handbook — Network</a></li>
+  </ul></section>
 
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #001 · Networking</span><span class="hashtags">#LinuxDaily #SysAdmin #Networking</span></div></footer>
 </div>
 </body>
 </html>
