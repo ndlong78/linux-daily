@@ -3,8 +3,8 @@
 
 The transformation is deterministic and idempotent: public URLs come from site.json,
 post title/description come from ld-meta, legacy broken source URLs are replaced with
-verified live official equivalents, and old HTML fragments missing the common document
-shell are normalized back to the shared site structure.
+live stable sources, and old HTML fragments missing the common document shell are
+normalized back to the shared site structure.
 """
 from __future__ import annotations
 
@@ -22,13 +22,23 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 
+FEDORA_SUDO_URL = "https://fedoramagazine.org/howto-use-sudo/"
+FEDORA_OPENSSH_URL = "https://packages.fedoraproject.org/pkgs/openssh/openssh-server/"
+DEBIAN_GETENT_URL = "https://manpages.debian.org/bookworm/manpages/getent.1.en.html"
+
 LEGACY_LINK_REPLACEMENTS = {
-    "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/":
-        "https://docs.fedoraproject.org/ko/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/",
-    "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/":
-        "https://docs.fedoraproject.org/cs/fedora/f30/system-administrators-guide/infrastructure-services/OpenSSH/",
-    "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html":
-        "https://manpages.debian.org/bookworm/manpages/getent.1.en.html",
+    # Original URLs found by PR #36.
+    "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
+    "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
+    "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html": DEBIAN_GETENT_URL,
+    # Intermediate localized Fedora URLs tried during PR #37 also return 404 in Actions.
+    "https://docs.fedoraproject.org/ko/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
+    "https://docs.fedoraproject.org/cs/fedora/f30/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
+}
+
+LEGACY_TITLE_REPLACEMENTS = {
+    "Fedora Docs — Gaining Privileges": "Fedora Magazine — Configure sudo",
+    "Fedora Docs — OpenSSH": "Fedora Packages — openssh-server",
 }
 
 
@@ -84,6 +94,8 @@ def render_post(path: str) -> str:
         text = f.read()
 
     for old, new in LEGACY_LINK_REPLACEMENTS.items():
+        text = text.replace(old, new)
+    for old, new in LEGACY_TITLE_REPLACEMENTS.items():
         text = text.replace(old, new)
 
     text = _ensure_document_shell(text, meta)
