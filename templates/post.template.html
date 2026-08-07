@@ -10,9 +10,8 @@
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <!-- Metadata có cấu trúc: nguồn duy nhất cho trang chủ & quality gate. Các trường
-     phải KHỚP đúng phần hiển thị bên dưới (eyebrow/h1/lede) và topics.md. issue là
-     số nguyên; date là YYYY-MM-DD; axis là tên trục trong topics.md; eyebrow/title/
-     lede là text thuần (không thẻ) đúng như hiển thị. -->
+     phải KHỚP đúng phần hiển thị bên dưới và topics.md. Từ bài #019 còn bắt buộc
+     review_status + sources; sources là JSON array các object title/url/kind. -->
 <script type="application/json" id="ld-meta">
 {
   "issue": {{ISSUE_N}},
@@ -21,7 +20,9 @@
   "eyebrow": "{{EYEBROW_AXIS}}",
   "slug": "{{SLUG}}",
   "title": "{{TITLE}}",
-  "lede": "{{LEDE_PLAIN}}"
+  "lede": "{{LEDE_PLAIN}}",
+  "review_status": "{{REVIEW_STATUS}}",
+  "sources": {{SOURCES_JSON}}
 }
 </script>
 </head>
@@ -65,6 +66,15 @@
 
   <!-- MỤC 03–06 (mục 07 dùng <div class="exercise">) -->
   {{SECTIONS_03_07}}
+
+  <!-- Không đánh số: đây là bằng chứng kỹ thuật cho các claim/lệnh trong bài. -->
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <p>Ưu tiên tài liệu chính thức của upstream hoặc từng hệ điều hành; title và URL phải khớp <code>ld-meta.sources</code>.</p>
+    <ul class="clean">
+      {{SOURCES_LIST}}
+    </ul>
+  </section>
 
   <footer>
     <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
