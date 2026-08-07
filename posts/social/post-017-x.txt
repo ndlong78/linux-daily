@@ -1,34 +1,21 @@
 [Tweet 1] — đính kèm post-017-code.png
-📦 Tăng đĩa VM 20→50GB, reboot, mà df -h vẫn báo 20GB? Không hỏng đâu — chỗ mới nằm cuối đĩa, phân vùng + filesystem vẫn giữ ranh giới cũ. Cách nới đúng. Thread 🧵
+📦 Tăng virtual disk xong mà df vẫn đầy? Trước khi resize, hãy vẽ đúng storage stack. Linux thường không chỉ có “2 lớp”: disk → partition → PV → LV → filesystem. Thread 🧵
 
 [Tweet 2]
-Nới LẦN LƯỢT hai lớp, từ dưới lên:
-1 volume/phân vùng chiếm chỗ trống mới
-2 filesystem nới theo
-Sai thứ tự (fs trước) = không ăn. Cả hai thường nới ONLINE, không cần umount.
+Đừng mặc định pvresize /dev/sdb. Kiểm pvs + lsblk. Nếu PV thực tế là /dev/sdb1 thì phải nới partition trước, rồi pvresize /dev/sdb1.
 
 [Tweet 3]
-Linux — LVM (Ubuntu/Debian, ext4):
-pvresize /dev/sdb
-lvextend -r -l +100%FREE /dev/vg0/data
-(-r nới luôn resize2fs). Ext4 tăng/giảm được.
+Đừng mặc định lvextend +100%FREE trong production. Nó dùng hết VG free space. Ví dụ rõ ràng hơn: lvextend --size +10G --resizefs /dev/vg0/data.
 
 [Tweet 4]
-Fedora — LVM + xfs:
-lvextend -l +100%FREE /dev/vg0/data
-xfs_growfs /data   (nới theo ĐIỂM MOUNT)
-⚠️ xfs CHỈ tăng, không thu nhỏ.
+FreeBSD: gpart show để xác định đúng partition index. Không hard-code -i 1. Có thể gpart recover rồi gpart resize khi layout phù hợp.
 
-[Tweet 5] — FreeBSD
-FreeBSD KHÔNG có LVM:
-gpart recover ada0     ← BẮT BUỘC trước
-gpart resize -i 1 ada0
-growfs /dev/ada0p1
-ZFS: zpool set autoexpand=on && zpool online -e tank ada0p1
+[Tweet 5]
+UFS: growfs -N là test mode. Mounted UFS có thể grow; write bị tạm dừng trong lúc mở rộng. Backup + console path vẫn cần trước change.
 
 [Tweet 6]
-⚠️ FreeBSD: quên gpart recover thì gpart resize báo lỗi (GPT backup ở cuối đĩa sai chỗ sau khi lớn thêm). ⚠️ ZFS: autoexpand mặc định TẮT — quên bật là pool giữ dung lượng cũ.
+ZFS: zpool online -e mở rộng device. Với mirror/RAIDZ, tất cả member liên quan phải được expand trước khi pool thấy toàn bộ space mới.
 
 [Tweet 7]
-Full bài + sơ đồ 2 lớp: {{LINK}}
-#LinuxDaily #LVM #FreeBSD #Storage
+Full bài + nguồn Red Hat/FreeBSD/OpenZFS: {{LINK}}
+#LinuxDaily #LVM #ZFS #FreeBSD
