@@ -10,6 +10,7 @@ sys.path.insert(0, str(TOOLS))
 
 import build_index  # noqa: E402
 import postmeta  # noqa: E402
+import socialmeta  # noqa: E402
 
 
 class HeadMetaParser(HTMLParser):
@@ -32,7 +33,23 @@ def _parse(text: str) -> HeadMetaParser:
     return parser
 
 
-def test_homepage_has_canonical_og_and_rss_autodiscovery():
+def _properties(parser: HeadMetaParser) -> dict[str, str | None]:
+    return {
+        item.get("property"): item.get("content")
+        for item in parser.meta
+        if item.get("property")
+    }
+
+
+def _named(parser: HeadMetaParser) -> dict[str, str | None]:
+    return {
+        item.get("name"): item.get("content")
+        for item in parser.meta
+        if item.get("name")
+    }
+
+
+def test_homepage_has_canonical_og_rss_and_social_preview():
     rendered, count = build_index.render_index()
     assert count == 19
     parser = _parse(rendered)
@@ -45,7 +62,7 @@ def test_homepage_has_canonical_og_and_rss_autodiscovery():
         "href": "https://linux.no.id.vn/feed.xml",
     } in parser.links
 
-    props = {m.get("property"): m.get("content") for m in parser.meta if m.get("property")}
+    props = _properties(parser)
     assert props["og:type"] == "website"
     assert props["og:url"] == "https://linux.no.id.vn/"
     assert props["og:site_name"] == "Linux Daily"
@@ -53,8 +70,21 @@ def test_homepage_has_canonical_og_and_rss_autodiscovery():
     assert props["og:title"]
     assert props["og:description"]
 
+    latest = postmeta.read_meta(str(ROOT / "posts" / "post-019-triage-hieu-nang-vmstat-iostat.html"))
+    social = socialmeta.image_info(19, latest["title"], "https://linux.no.id.vn/")
+    assert props["og:image"] == social["url"]
+    assert props["og:image:type"] == "image/png"
+    assert props["og:image:width"] == str(social["width"])
+    assert props["og:image:height"] == str(social["height"])
+    assert props["og:image:alt"] == social["alt"]
 
-def test_all_historical_posts_have_canonical_og_and_rss_autodiscovery():
+    named = _named(parser)
+    assert named["twitter:card"] == "summary_large_image"
+    assert named["twitter:image"] == social["url"]
+    assert named["twitter:image:alt"] == social["alt"]
+
+
+def test_all_historical_posts_have_canonical_og_rss_and_social_preview():
     posts = sorted((ROOT / "posts").glob("post-*.html"))
     assert len(posts) == 19
 
@@ -62,7 +92,9 @@ def test_all_historical_posts_have_canonical_og_and_rss_autodiscovery():
         text = path.read_text(encoding="utf-8")
         parser = _parse(text)
         meta = postmeta.read_meta(str(path))
+        issue = int(meta["issue"])
         canonical = f"https://linux.no.id.vn/posts/{path.name}"
+        social = socialmeta.image_info(issue, meta["title"], "https://linux.no.id.vn/")
 
         canonicals = [link for link in parser.links if link.get("rel") == "canonical"]
         assert canonicals == [{"rel": "canonical", "href": canonical}], path.name
@@ -81,28 +113,40 @@ def test_all_historical_posts_have_canonical_og_and_rss_autodiscovery():
             }
         ], path.name
 
-        props = {
-            item.get("property"): item.get("content")
-            for item in parser.meta
-            if item.get("property")
-        }
+        props = _properties(parser)
         assert props["og:type"] == "article", path.name
         assert props["og:url"] == canonical, path.name
         assert props["og:site_name"] == "Linux Daily", path.name
         assert props["og:locale"] == "vi_VN", path.name
         assert props["og:title"] == meta["title"], path.name
         assert props["og:description"] == meta["lede"], path.name
+        assert props["og:image"] == social["url"], path.name
+        assert props["og:image:type"] == "image/png", path.name
+        assert props["og:image:width"] == str(social["width"]), path.name
+        assert props["og:image:height"] == str(social["height"]), path.name
+        assert props["og:image:alt"] == social["alt"], path.name
+
+        named = _named(parser)
+        assert named["twitter:card"] == "summary_large_image", path.name
+        assert named["twitter:title"] == meta["title"], path.name
+        assert named["twitter:description"] == meta["lede"], path.name
+        assert named["twitter:image"] == social["url"], path.name
+        assert named["twitter:image:alt"] == social["alt"], path.name
 
 
-def test_post_template_requires_discovery_metadata_placeholders():
+def test_post_template_requires_discovery_and_social_metadata_placeholders():
     template = (ROOT / "templates" / "post.template.html").read_text(encoding="utf-8")
     assert 'rel="canonical" href="{{CANONICAL_URL}}"' in template
     assert 'type="application/rss+xml"' in template
     assert 'href="{{FEED_URL}}"' in template
     assert 'property="og:type" content="article"' in template
     assert 'property="og:url" content="{{CANONICAL_URL}}"' in template
-    assert 'property="og:title"' in template
-    assert 'property="og:description"' in template
+    assert 'property="og:image" content="{{SOCIAL_IMAGE_URL}}"' in template
+    assert 'property="og:image:width" content="{{SOCIAL_IMAGE_WIDTH}}"' in template
+    assert 'property="og:image:height" content="{{SOCIAL_IMAGE_HEIGHT}}"' in template
+    assert 'property="og:image:alt" content="{{SOCIAL_IMAGE_ALT}}"' in template
+    assert 'name="twitter:card" content="summary_large_image"' in template
+    assert 'name="twitter:image" content="{{SOCIAL_IMAGE_URL}}"' in template
 
 
 def test_committed_homepage_matches_generator():
