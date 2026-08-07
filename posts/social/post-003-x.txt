@@ -1,27 +1,22 @@
 [Tweet 1] — đính kèm post-003-code.png
-💾 Snapshot ZFS: nút UNDO cho hệ thống của bạn.
-Điểm lật: lệnh giống hệt nhau mọi HĐH — chỉ việc CÀI được ZFS mới khác nhau. Thread 🧵
+💾 ZFS snapshot không phải một bản copy đầy đủ. Lúc mới tạo nó rất rẻ, nhưng khi dataset thay đổi, snapshot phải giữ lại block cũ nên dung lượng có thể tăng đáng kể. Thread 🧵
 
 [Tweet 2]
-Dùng snapshot — y hệt trên Ubuntu/Debian/Fedora/FreeBSD:
-zfs snapshot tank/data@before
-zfs list -t snapshot
-zfs rollback tank/data@before
-Lấy lại 1 file cũ không cần rollback: /tank/data/.zfs/snapshot/before/
+Snapshot ≠ backup. Snapshot nằm cùng pool: mất pool thì mất cả dataset lẫn snapshot. Dùng snapshot cho rollback nhanh; muốn chống hỏng pool thì gửi/backup sang failure domain khác.
 
 [Tweet 3]
-Cái khác nhau là CÀI ZFS:
-• Ubuntu: apt install zfsutils-linux
-• Debian: contrib + zfs-dkms (cần headers)
-• Fedora: kho OpenZFS + DKMS + Secure Boot
-• FreeBSD: có sẵn trong base ✓
+Khôi phục 1 file không cần rollback toàn dataset:
+cp /tank/data/.zfs/snapshot/before-change/example.conf /tmp/example.conf.old
 
 [Tweet 4]
-⚠️ rollback XÓA mọi thay đổi sau snapshot. Có snapshot mới hơn thì cần -r để xóa chúng. Nhầm là mất dữ liệu.
+⚠️ zfs rollback là destructive: mọi thay đổi sau snapshot bị bỏ. Muốn rollback về snapshot không phải mới nhất, -r còn xóa snapshot/bookmark trung gian mới hơn.
 
 [Tweet 5]
-⚠️ Snapshot ≠ backup. Nó nằm cùng pool — đĩa chết là mất cả. Muốn an toàn: zfs send sang pool/máy khác.
+Fedora: hướng dẫn OpenZFS hiện hành dùng zfs-release-3-1... và kernel-devel phù hợp kernel đang chạy. Đừng hard-code repo RPM cũ trong runbook.
 
 [Tweet 6]
-Full bài + sơ đồ copy-on-write: {{LINK}}
-#LinuxDaily #ZFS #FreeBSD
+Ubuntu/Debian/Fedora dùng OpenZFS package/module; FreeBSD có ZFS trong base và dùng rc.d. Lệnh zfs/zpool gần như cùng semantics, packaging/service mới là phần khác.
+
+[Tweet 7]
+Full bài + nguồn upstream/FreeBSD: {{LINK}}
+#LinuxDaily #ZFS #Storage #FreeBSD
