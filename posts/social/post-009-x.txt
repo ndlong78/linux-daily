@@ -1,21 +1,26 @@
 [Tweet 1] — đính kèm post-009-code.png
-🔑 PR #28 sửa một lỗi logic rất hay gặp: nếu đã cho user vào nhóm admin toàn quyền rồi, rule “chỉ được chạy 1 lệnh” không còn là least privilege nữa. Thread 🧵
+🔑 Least privilege: đừng vừa cho user quyền admin toàn phần vừa thêm rule “chỉ một lệnh”. Rule hẹp không thu hồi quyền rộng đã có. Thread 🧵
 
 [Tweet 2]
-Phải tách 2 role: Administrator → sudo/wheel, quyền rộng. Operator → KHÔNG vào admin group, chỉ có sudoers/doas rule command-specific.
+Tách hai vai trò:
+• Administrator → Ubuntu/Debian: sudo; Fedora: wheel
+• Limited operator → KHÔNG vào admin group, chỉ có command-specific sudoers/doas rule.
 
 [Tweet 3]
-Ubuntu thường dùng nhóm sudo. Debian thì không nên giả định sudo luôn có: nếu installer đặt root password, sudo có thể chưa cài và user không tự vào nhóm sudo.
+Debian nuance: nếu installer đã đặt mật khẩu root, sudo có thể chưa được cài và user ban đầu không tự động thuộc nhóm sudo. Đừng giả định mọi Debian giống Ubuntu.
 
-[Tweet 4]
-Fedora dùng wheel cho quyền admin rộng qua sudo. Vì vậy operator chỉ restart nginx không nên thuộc wheel; dùng /etc/sudoers.d/ với command + arguments chính xác.
+[Tweet 4] — FreeBSD
+FreeBSD: wheel cần cho `su` lên root. Nhưng doas là package riêng và policy có thể cấp trực tiếp theo user/group/command — không bắt buộc user phải vào wheel.
 
-[Tweet 5]
-FreeBSD: wheel liên quan su lên root. doas là package riêng và có thể cấp trực tiếp theo user + cmd + args; operator doas không bắt buộc phải vào wheel.
+[Tweet 5] — FreeBSD
+Rule operator ví dụ:
+permit deploy as root cmd /usr/sbin/service args nginx restart
+Kiểm mà không chạy:
+doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart
 
 [Tweet 6]
-Kiểm policy trước khi dùng thật: Linux dùng visudo -c và sudo -l -U alice. FreeBSD dùng doas -C để parse + command-match mà không thực thi lệnh.
+Linux operator tương đương dùng sudoers.d + visudo. Luôn kiểm `sudo -l -U deploy`; nếu user còn có ALL qua sudo/wheel thì command-specific rule không còn là least privilege.
 
 [Tweet 7]
-Full bài source-backed: {{LINK}}
-#LinuxDaily #sudo #doas #FreeBSD
+Full bài #009: {{LINK}}
+#LinuxDaily #sudo #doas #FreeBSD #Security
