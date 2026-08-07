@@ -1,36 +1,27 @@
 [Tweet 1] — đính kèm post-008-code.png
-🔧 "Máy không vào được mạng" là mô tả vô dụng. Hỏng có thể ở 5 tầng khác nhau. Người có nghề đi theo tầng, từ dưới lên — bằng đúng bộ lệnh. Thread 🧵
+🔧 “Mạng không chạy” không phải một lỗi. Bài #008 giờ dùng thang 6 tầng: link → IP → route → listener → packet path → name resolution. Thread 🧵
 
 [Tweet 2]
-Thang chẩn đoán, leo từ dưới lên, dừng ở tầng đầu tiên sai:
-1 interface up? → 2 có IP? → 3 route/gateway? → 4 cổng nghe? → 5 gói tin tới?
-Đừng đổ lỗi DNS khi thực ra thiếu route mặc định.
+Linux: ip + ss. FreeBSD: ifconfig + netstat + sockstat. Điểm quan trọng mới: DNS/name resolution là một tầng riêng, không nên đổ lỗi DNS khi default route còn sai.
 
 [Tweet 3]
-Linux (Ubuntu/Debian/Fedora) — iproute2:
-ip link / ip addr
-ip route
-ss -tlnp
-Bộ ifconfig/netstat cũ đã lỗi thời, Fedora còn không cài sẵn.
+Kiểm resolver theo NSS:
+getent hosts example.com
+Lệnh này hữu ích hơn việc chỉ nhìn /etc/resolv.conf, vì nó phản ánh đường lookup mà nhiều ứng dụng thực sự dùng.
 
 [Tweet 4] — FreeBSD
-FreeBSD giữ bộ BSD gốc, KHÔNG có ip/ss:
-ifconfig            # interface + IP
-netstat -rn         # route
-sockstat -4 -l      # cổng nghe
-arp -a              # bảng ARP
+Kiểm listener cả IPv4 + IPv6:
+sockstat -46 -l
+Chỉ dùng -4 có thể bỏ sót service chỉ bind IPv6.
 
 [Tweet 5]
-Ánh xạ nhanh khi đổi ngữ cảnh:
-ip addr → ifconfig
-ip route → netstat -rn
-ss -tlnp → sockstat -4 -l
-ip neigh → arp -a
-Riêng ping/traceroute/tcpdump: hai bên y hệt.
+Ping thất bại KHÔNG tự chứng minh host chết: ICMP có thể bị lọc. Hãy đối chiếu route, TCP listener/connection và packet capture trước khi kết luận.
 
 [Tweet 6]
-⚠️ tcpdump thấy nội dung gói không mã hoá + cần root. Chạy có mục đích, giới hạn bộ lọc, đừng lưu bừa file bắt gói chứa dữ liệu nhạy cảm.
+tcpdump trong lab nên có bộ lọc + giới hạn:
+tcpdump -ni em0 -c 20 'port 53 or port 443'
+Capture có thể chứa dữ liệu nhạy cảm, đừng lưu bừa.
 
 [Tweet 7]
-Full bài + sơ đồ thang 5 tầng: {{LINK}}
-#LinuxDaily #Networking #FreeBSD
+Bài #008 + nguồn iproute2/FreeBSD manuals: {{LINK}}
+#LinuxDaily #Networking #Troubleshooting
