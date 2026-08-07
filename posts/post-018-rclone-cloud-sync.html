@@ -43,7 +43,9 @@
 }
 </script>
 </head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#018 · 05·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · Cloud sync</p><h1>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h1><p class="lede">Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi <code>aws s3 cp</code> tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. <strong>rclone</strong> là "rsync cho cloud": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp <em>crypt</em> mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
 
@@ -90,4 +92,5 @@ rclone about secure: 2&gt;/dev/null || true</code></pre><p><code>cryptcheck</cod
 
 <section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://rclone.org/crypt/">rclone — Crypt</a></li><li><a href="https://rclone.org/commands/rclone_cryptcheck/">rclone — cryptcheck</a></li><li><a href="https://rclone.org/commands/rclone_sync/">rclone — sync</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/filesystems/">FreeBSD Handbook — Other File Systems</a></li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
-</div></body></html>
+</div></main>
+</body></html>

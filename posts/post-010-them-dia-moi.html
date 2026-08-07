@@ -41,7 +41,9 @@
   ]
 }
 </script></head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#010 · 20·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Storage · Hệ thống tệp</p><h1>Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</h1><p class="lede">Bài #003 nói về snapshot khi đã có sẵn pool; bài này lùi về bước cơ bản hơn — gắn một ổ đĩa trống và đưa nó vào dùng. Quy trình bốn bước giống nhau ở mọi hệ: nhận diện đĩa, phân vùng, tạo filesystem, mount vĩnh viễn. Nhưng công cụ thì rẽ nhánh: Linux dùng parted/mkfs, FreeBSD dùng gpart/newfs — và cách định danh đĩa để mount cho bền cũng khác.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div></header>
 
@@ -93,4 +95,5 @@ mount | grep ' /data '</code></pre></section>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn dùng để kiểm chứng GPT alignment, fstab semantics và validation.</p><ul class="clean"><li><a href="https://docs.freebsd.org/en/books/handbook/disks/" rel="noopener noreferrer">Chapter 21. Storage — FreeBSD Handbook</a> — official.</li><li><a href="https://www.man7.org/linux/man-pages/man8/findmnt.8.html" rel="noopener noreferrer">findmnt(8) — Linux manual page</a> — upstream.</li><li><a href="https://www.man7.org/linux/man-pages/man5/fstab.5.html" rel="noopener noreferrer">fstab(5) — Linux manual page</a> — upstream.</li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #010 · Storage</span><span class="hashtags">#LinuxDaily #Storage #FreeBSD</span></div></footer>
-</div></body></html>
+</div></main>
+</body></html>

@@ -42,7 +42,9 @@
 }
 </script>
 </head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#008 · 16·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · Chẩn đoán</p><h1>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</h1><p class="lede">Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có "up" không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div></header>
 
@@ -79,4 +81,5 @@ sockstat -46 -l</code></pre></section>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/iproute2/iproute2">iproute2 — upstream project</a></li><li><a href="https://manpages.debian.org/bookworm/manpages/getent.1.en.html">Debian Manpages — getent(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=sockstat&amp;sektion=1">FreeBSD Manual — sockstat(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=getent&amp;sektion=1">FreeBSD Manual — getent(1)</a></li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #008 · Networking</span><span class="hashtags">#LinuxDaily #Networking #Troubleshooting</span></div></footer>
-</div></body></html>
+</div></main>
+</body></html>
