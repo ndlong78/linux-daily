@@ -1,31 +1,31 @@
 [Tweet 1] — đính kèm post-015-code.png
-🔐 Nối hai máy qua Internet như cùng một LAN, mã hoá đầu-cuối, không phơi SSH ra ngoài — không cần vật lộn với IPsec. WireGuard: một cặp khoá, vài dòng config. Thread 🧵
+🔐 WireGuard dễ cấu hình, nhưng AllowedIPs hay bị hiểu sai. Bài #015 đã được source-review lại theo upstream và bổ sung rollback khi đổi route. Thread 🧵
 
 [Tweet 2]
-WireGuard nằm trong nhân (Linux 5.6+, FreeBSD if_wg), mật mã hiện đại cố định. Mỗi peer có private key (giữ kín) + public key (chia cho bên kia). Không mật khẩu, không CA.
+AllowedIPs có 2 vai trò:
+• gửi: chọn peer/route theo DESTINATION
+• nhận: SOURCE IP sau giải mã phải thuộc dải được phép của peer
+Đó là “cryptokey routing”.
 
 [Tweet 3]
-wg0.conf gói gọn tất cả:
-[Interface] Address=10.10.0.1/24
-ListenPort=51820, PrivateKey=...
-[Peer] PublicKey=..., AllowedIPs=10.10.0.2/32
-File này GIỐNG NHAU mọi HĐH.
+Đừng bắt đầu bằng 0.0.0.0/0 trên máy đang quản trị từ xa. Dựng split tunnel /32 trước, kiểm handshake + route, rồi mới cân nhắc full tunnel khi đã có console/đường lui.
 
 [Tweet 4]
-Bật dịch vụ — Linux (Ubuntu/Debian/Fedora):
-apt/dnf install wireguard(-tools)
-systemctl enable --now wg-quick@wg0
-Config ở /etc/wireguard.
+Linux:
+apt/dnf install wireguard...
+wg-quick up wg0
+wg show
+ip route get 10.10.0.2
+Mục tiêu là xác nhận tunnel nhỏ hoạt động trước khi thay default route.
 
 [Tweet 5] — FreeBSD
-FreeBSD: pkg install wireguard-tools. KHÔNG có systemd:
-sysrc wireguard_interfaces=wg0
-service wireguard start
-Config ở /usr/local/etc/wireguard (khác Linux). Kiểm: ifconfig wg0.
+Upstream hiện hướng dẫn:
+pkg install wireguard
+Sau cài, kiểm layout package/rc script thật bằng pkg info -l thay vì giả định package/path từ bài cũ.
 
 [Tweet 6]
-⚠️ AllowedIPs vừa lọc vừa định tuyến. 0.0.0.0/0 = full tunnel (mọi lưu lượng qua peer). Nối 2 máy thì để dải nhỏ. Và nhớ mở cổng UDP 51820 trên tường lửa, thiếu là không handshake.
+Nếu peer nhận kết nối, nhớ UDP ListenPort trên firewall/NAT. Private key phải giữ kín và file config cần permission chặt. Rollback route quan trọng ngang với handshake.
 
 [Tweet 7]
-Full bài + sơ đồ peer↔peer: {{LINK}}
-#LinuxDaily #WireGuard #FreeBSD #VPN
+Bài #015 + nguồn WireGuard upstream/FreeBSD: {{LINK}}
+#LinuxDaily #WireGuard #VPN #FreeBSD
