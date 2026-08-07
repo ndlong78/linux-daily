@@ -21,6 +21,7 @@ from jinja2 import Environment, FileSystemLoader
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import postmeta  # noqa: E402
+import socialmeta  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
@@ -84,20 +85,34 @@ def render_index(posts_dir=POSTS_DIR, site_config=SITE_CONFIG):
         "title": html.escape(p["title"]),
         "lede": html.escape(p["lede"]),
     } for p in posts]
+
+    social = None
+    if posts:
+        latest = posts[0]
+        social = socialmeta.image_info(latest["n"], latest["title"], site["url"])
+
     out = _env().get_template(INDEX_TEMPLATE).render(
         posts=ctx,
         count=len(posts),
         canonical_url=html.escape(site["url"], quote=True),
         feed_url=html.escape(urljoin(site["url"], site["feed_path"]), quote=True),
         site_title=html.escape(site["title"], quote=True),
+        social_image_url=html.escape(str(social["url"]), quote=True) if social else "",
+        social_image_width=social["width"] if social else 0,
+        social_image_height=social["height"] if social else 0,
+        social_image_alt=html.escape(str(social["alt"]), quote=True) if social else "",
+        social_image_mime=html.escape(str(social["mime"]), quote=True) if social else "",
     )
     return out, len(posts)
 
 
 def main():
     ap = argparse.ArgumentParser(description="Dựng hoặc kiểm tra index.html.")
-    ap.add_argument("--check", action="store_true",
-                    help="Không ghi; báo lỗi nếu index.html chưa được dựng lại từ posts/ hiện tại.")
+    ap.add_argument(
+        "--check",
+        action="store_true",
+        help="Không ghi; báo lỗi nếu index.html chưa được dựng lại từ posts/ hiện tại.",
+    )
     args = ap.parse_args()
 
     out, n = render_index()
@@ -108,8 +123,11 @@ def main():
             with open(INDEX_PATH, encoding="utf-8") as f:
                 current = f.read()
         if current != out:
-            print("LỖI: index.html chưa đồng bộ với posts/. "
-                  "Chạy `python3 tools/build_index.py` rồi commit lại.", file=sys.stderr)
+            print(
+                "LỖI: index.html chưa đồng bộ với posts/. "
+                "Chạy `python3 tools/build_index.py` rồi commit lại.",
+                file=sys.stderr,
+            )
             return 1
         print(f"OK: index.html đã đồng bộ ({n} bài).")
         return 0
