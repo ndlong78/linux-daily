@@ -1,6 +1,6 @@
 # Nhật ký chủ đề Linux Daily
 # Định dạng: #số | YYYY-MM-DD | trục | tên chủ đề
-# Skill đọc dòng bài MỚI NHẤT để giữ nhịp 2 ngày, và toàn bộ danh sách để tránh trùng.
+# state.json giữ clock cadence; danh sách này dùng để giữ thứ tự series và tránh trùng chủ đề.
 
 #001 | 2026-07-01 | Networking | Đặt IP tĩnh + cặp DNS trên Ubuntu/Debian/Fedora/FreeBSD
 #002 | 2026-07-03 | Bảo mật | Gia cố SSH (key-only, cấm root, AllowUsers) trên Ubuntu/Debian/Fedora/FreeBSD
@@ -17,6 +17,6 @@
 #013 | 2026-07-23 | Automation | Viết bash script vững: /bin/sh (dash/bash/sh) khác nhau, shebang env bash, set -euo pipefail + trap trên Ubuntu/Debian/Fedora/FreeBSD
 #014 | 2026-07-25 | Ôn tập | Lab end-to-end: hệ backup tự động có kiểm chứng bằng restore thật (restic + systemd timer trên Linux / cron trên FreeBSD)
 #015 | 2026-07-27 | Networking | WireGuard: đường hầm VPN mã hoá — cùng wg0.conf, bật bằng systemd wg-quick trên Linux vs rc.conf trên FreeBSD
-#016 | 2026-07-29 | Bảo mật | fail2ban: chặn brute-force tự động — nguồn log (journald vs auth.log) và backend cấm (nftables/firewalld vs pf), FreeBSD còn có blacklistd/sshguard
+#016 | 2026-07-29 | Bảo mật | fail2ban: chặn brute-force tự động — nguồn log (journald vs auth.log) và backend cấm (nftables/firewalld vs pf); FreeBSD có blocklistd trong base, sshguard là lựa chọn ngoài base
 #017 | 2026-07-31 | Storage | Mở rộng dung lượng online: LVM (lvextend+resize2fs/xfs_growfs) trên Linux vs gpart resize+growfs / ZFS autoexpand trên FreeBSD
 #018 | 2026-08-07 | Công cụ mới | rclone: đồng bộ & mã hoá dữ liệu lên cloud storage (S3/B2/Drive), remote crypt trên Ubuntu/Debian/Fedora/FreeBSD
