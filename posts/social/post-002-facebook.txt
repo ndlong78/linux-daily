@@ -1,14 +1,20 @@
-🔒 Cổng SSH mở ra mạng là bị bot dò mật khẩu trong vài phút. Tin tốt: gia cố SSH làm MỘT lần là chặn được phần lớn.
+🔒 SSH hardening an toàn không bắt đầu bằng việc tắt mật khẩu ngay lập tức. Trình tự đúng khi quản trị từ xa là: public key đã đăng nhập được → giữ phiên SSH hiện tại làm đường cứu hộ → validate cấu hình → reload → mở một phiên MỚI để xác nhận.
 
-Điều thú vị — file /etc/ssh/sshd_config gần như GIỐNG NHAU trên Ubuntu, Debian, Fedora, FreeBSD. Khác nhau nằm ở ngoài file:
-• Tên service: ssh (Ubuntu/Debian) vs sshd (Fedora/FreeBSD)
-• Nạp lại: systemctl vs service (FreeBSD)
-• Tường lửa: UFW / nftables / firewalld vs pf
-• Fedora đổi cổng SSH còn phải khai với SELinux
+PR #28 sửa một điểm kỹ thuật quan trọng trong bài #002: OpenSSH dùng nguyên tắc “first value wins” cho phần lớn directive. Trên Ubuntu/Debian, sshd_config.d thường được Include ở đầu file chính, vì vậy drop-in đọc trước có thể override dòng nằm sau trong /etc/ssh/sshd_config.
 
-Ba lớp đem lại hiệu quả lớn nhất: chỉ dùng khóa, cấm root, giới hạn AllowUsers. Đổi cổng chỉ là phụ.
+Key-only cũng không chỉ là PasswordAuthentication no. Bài mới kiểm cả:
+• PubkeyAuthentication yes
+• PasswordAuthentication no
+• KbdInteractiveAuthentication no
+• AuthenticationMethods publickey
 
-Bài #002 có đủ lệnh cho cả bốn HĐH + cạm bẫy tự-khóa-mình + file drop-in sshd_config.d hay ghi đè.
+Validate hai lớp:
+• sshd -t → cú pháp
+• sshd -T → effective config
+
+Ubuntu/Debian dùng service ssh; Fedora/FreeBSD dùng sshd. FreeBSD dùng rc.d/service, không systemd. Nếu đổi port trên Fedora, phải chuẩn bị SELinux + firewalld cho port mới trước khi bỏ port cũ.
+
+Nguyên tắc quan trọng nhất: đừng đóng phiên cứu hộ cho đến khi một terminal mới đăng nhập bằng key thành công.
 
 👉 Đọc đầy đủ: {{LINK}}
 
