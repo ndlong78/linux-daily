@@ -1,16 +1,21 @@
-🔧 "Máy không vào được mạng" là mô tả vô dụng — hỏng có thể ở bất kỳ tầng nào: interface chưa up, chưa nhận IP, thiếu route, DNS chết, hay dịch vụ đích không nghe. Người mới đoán mò và restart lung tung. Người có nghề đi theo tầng, từ dưới lên.
+🔧 “Mạng không chạy” không phải một lỗi duy nhất.
 
-Bài #008 (Networking): bộ công cụ chẩn đoán theo 5 tầng, và điểm rẽ nhánh giữa hai trường phái:
-• Ubuntu/Xubuntu, Debian, Fedora → iproute2: ip + ss (bộ ifconfig/netstat cũ đã lỗi thời, Fedora còn không cài sẵn)
-• FreeBSD → giữ bộ BSD gốc: ifconfig, netstat -rn, sockstat — KHÔNG có ip hay ss
+Bài #008 giờ dùng thang chẩn đoán 6 tầng:
+1) link/interface
+2) địa chỉ
+3) route/gateway
+4) service listener
+5) packet path
+6) name resolution
 
-Ánh xạ nhanh khi đổi ngữ cảnh:
-ip link/ip addr → ifconfig · ip route → netstat -rn · ip neigh → arp -a · ss -tlnp → sockstat -4 -l. Riêng ping, traceroute, tcpdump thì hai bên y hệt.
+Linux ưu tiên ip + ss; FreeBSD dùng ifconfig + netstat + sockstat. Điểm mới quan trọng: DNS là một tầng riêng, kiểm bằng getent hosts; đừng đổ lỗi DNS khi default route còn sai.
 
-Bí quyết: leo từ tầng 1 (interface) lên, dừng ở tầng đầu tiên thấy sai — đừng đổ lỗi DNS trong khi thực ra chưa có route mặc định.
+FreeBSD nên dùng sockstat -46 -l nếu muốn thấy cả listener IPv4 lẫn IPv6. Và ping thất bại không tự chứng minh host chết — ICMP có thể bị lọc.
 
-👉 Đọc đầy đủ: {{LINK}}
+tcpdump trong lab nên có filter + -c để tự dừng; file capture có thể chứa dữ liệu nhạy cảm.
 
-#LinuxDaily #SysAdmin #Networking #FreeBSD #Troubleshooting
+👉 Bài #008 + nguồn kỹ thuật: {{LINK}}
+
+#LinuxDaily #Networking #Troubleshooting #FreeBSD
 
 [Đính kèm ảnh: post-008-code.png]

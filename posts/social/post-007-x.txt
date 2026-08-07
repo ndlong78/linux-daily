@@ -1,32 +1,28 @@
 [Tweet 1] — đính kèm post-007-code.png
-🧱 Cài nginx, thấy trang "Welcome" là tưởng xong? SSH vẫn cho mật khẩu, tường lửa mở toang, không backup. Bài ôn tập #007: dựng web server AN TOÀN từ máy mới, end-to-end. Thread 🧵
+🧱 Firewall từ xa: rule đúng nhưng áp sai thứ tự vẫn có thể làm mất quyền truy cập server. Bài #007 được sửa theo workflow rollback-first. Thread 🧵
 
 [Tweet 2]
-Quy trình 6 bước, ghép lại cả chuỗi:
-1 IP tĩnh (#001) → 2 gia cố SSH (#002) → 3 cài nginx → 4 tường lửa → 5 backup cấu hình (#004) → 6 kiểm chứng. Mảng mới: tường lửa.
+Ubuntu/Debian + UFW: allow SSH trước, sau đó mới enable. Có thể dùng ufw --dry-run để xem thay đổi trước khi áp.
 
 [Tweet 3]
-Mở đúng 22/80/443, chặn còn lại:
-Ubuntu/Debian — ufw:
-ufw allow OpenSSH
-ufw allow 80/tcp && ufw allow 443/tcp
-ufw enable
-(Debian tối giản: apt install ufw trước)
+Fedora + firewalld: thử ở RUNTIME trước:
+firewall-cmd --add-service=ssh
+--add-service=http
+--add-service=https
+Kiểm truy cập xong mới:
+firewall-cmd --runtime-to-permanent
 
-[Tweet 4]
-Fedora — firewalld:
-firewall-cmd --permanent --add-service={ssh,http,https}
-firewall-cmd --reload
-⚠️ Quên --permanent là luật bay sau reboot.
+[Tweet 4] — FreeBSD
+PF: trước khi load ruleset mới, chạy:
+pfctl -vnf /etc/pf.conf
+Chỉ khi parse sạch mới pfctl -f. Ruleset hợp lệ cũ vẫn chạy cho đến khi ruleset mới được nạp.
 
-[Tweet 5] — FreeBSD
-FreeBSD dùng pf, KHÔNG có ufw/firewalld. /etc/pf.conf:
-pass in on em0 proto tcp to port { 22 80 443 } keep state
-Bật: sysrc pf_enable=YES && service pf start
+[Tweet 5]
+Đừng chỉ curl localhost. Giữ phiên SSH hiện tại và mở thêm một phiên SSH mới từ máy khác; kiểm HTTP/HTTPS từ ngoài server. Firewall ingress phải được test từ phía client thật.
 
 [Tweet 6]
-⚠️ Cạm bẫy chết người: LUÔN mở SSH (22) TRƯỚC khi bật tường lửa. Bật trước, mở sau = tự khoá mình ra khỏi máy từ xa ngay lập tức.
+Nguyên tắc chung: đường quản trị → rule thử/syntax check → verify → persist. Không cần làm firewall yếu đi; cần làm thay đổi có thể phục hồi khi cấu hình sai.
 
 [Tweet 7]
-Full lab + sơ đồ 6 bước end-to-end: {{LINK}}
-#LinuxDaily #Firewall #FreeBSD #Nginx
+Full lab + nguồn UFW/firewalld/PF: {{LINK}}
+#LinuxDaily #Firewall #FreeBSD

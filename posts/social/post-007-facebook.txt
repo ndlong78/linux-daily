@@ -1,16 +1,16 @@
-🧱 Cài nginx, thấy trang "Welcome" là tưởng xong? Chưa đâu. SSH vẫn cho mật khẩu, tường lửa mở toang, không có bản backup nào. Đó không phải "dựng server", đó là để cửa mở mời khách lạ.
+🧱 Firewall từ xa: rule đúng nhưng áp sai thứ tự vẫn có thể tự khoá bạn khỏi server.
 
-Bài #007 là bài ôn tập ghép cả chuỗi thành một quy trình thật: từ máy mới → IP tĩnh (bài #001) → gia cố SSH (bài #002) → cài nginx → khoá tất cả trừ đúng 3 cổng → backup cấu hình (bài #004) → kiểm chứng.
+Bài #007 đã được sửa theo workflow rollback-first:
+• UFW: mở SSH trước, có thể dry-run rồi mới enable.
+• firewalld: cấu hình RUNTIME trước → kiểm SSH/HTTP/HTTPS → chỉ khi ổn mới --runtime-to-permanent.
+• FreeBSD PF: pfctl -vnf /etc/pf.conf để parse mà chưa load; chỉ pfctl -f khi ruleset sạch.
 
-Mảng mới của lab là tường lửa — và đây là chỗ 4 HĐH rẽ nhánh rõ nhất:
-• Ubuntu/Xubuntu & Debian → ufw (Debian tối giản cần apt install ufw)
-• Fedora → firewalld, thao tác qua firewall-cmd, nhớ --permanent kẻo bay sau reboot
-• FreeBSD → pf: luật trong /etc/pf.conf, bật qua rc.conf (KHÔNG có ufw/firewalld)
+Một thay đổi firewall tốt phải kiểm từ phía client thật, không chỉ curl localhost. Giữ phiên SSH hiện tại và mở thêm một phiên mới trước khi persist.
 
-Nguyên tắc sống còn: LUÔN mở SSH (cổng 22) TRƯỚC khi bật tường lửa — nếu không bạn tự khoá mình ra khỏi máy từ xa ngay lập tức.
+Nguyên tắc: đường quản trị → rule thử/syntax check → verify → persist.
 
-👉 Đọc đầy đủ: {{LINK}}
+👉 Full lab + nguồn UFW/firewalld/PF: {{LINK}}
 
-#LinuxDaily #SysAdmin #Firewall #FreeBSD #Nginx
+#LinuxDaily #Firewall #SysAdmin #FreeBSD
 
 [Đính kèm ảnh: post-007-code.png]

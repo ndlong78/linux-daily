@@ -1,15 +1,15 @@
-🖧 IP tĩnh nghe đơn giản — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình mạng ở BỐN nơi hoàn toàn khác nhau.
+🖧 Đổi IP tĩnh từ xa không chỉ là “đặt đúng địa chỉ” — quan trọng hơn là không tự cắt đường SSH.
 
-Cùng một mục tiêu (gán địa chỉ cố định + cặp DNS dự phòng), khác nhau ở chỗ lưu:
-• Ubuntu/Xubuntu → netplan (YAML trong /etc/netplan)
-• Debian → /etc/network/interfaces
-• Fedora → nmcli (NetworkManager)
-• FreeBSD → /etc/rc.conf (thế giới riêng: không netplan, không systemctl)
+Bài #001 đã được technical-review lại theo nguyên tắc rollback-first:
+• Ubuntu/Xubuntu → dùng netplan try để có timeout + rollback tự động.
+• Debian → không giả định máy nào cũng dùng /etc/network/interfaces; xác định ifupdown / NetworkManager / systemd-networkd trước khi sửa.
+• Fedora → lấy đúng NetworkManager connection profile và dùng nmcli device checkpoint khi thay đổi qua SSH.
+• FreeBSD → persistent config ở rc.conf, nhưng nên thử runtime và giữ console/phiên cứu hộ trước khi reboot.
 
-Nhớ sai chỗ là mất cả buổi. Bài mở màn series Linux Daily mổ xẻ đủ bốn HĐH, kèm lệnh copy-paste, cạm bẫy hay gặp (YAML kỵ tab, Debian cần resolvconf, Fedora đã bỏ ifcfg…) và một quy tắc vàng: DNS luôn khai đủ CẶP.
+Checklist trước khi chốt: IP → default route → resolver → mở một phiên SSH MỚI từ máy quản trị. Chỉ persist khi cả chuỗi ổn.
 
-👉 Đọc đầy đủ (có sơ đồ): {{LINK}}
+👉 Bài #001 + nguồn chính thức: {{LINK}}
 
-#LinuxDaily #SysAdmin #Linux #FreeBSD #Networking
+#LinuxDaily #Networking #SysAdmin #FreeBSD
 
 [Đính kèm ảnh: post-001-code.png]
