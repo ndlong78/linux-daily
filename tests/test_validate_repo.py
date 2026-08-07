@@ -1,4 +1,6 @@
 """Unit test cho validate_repo: từng quy tắc phải bắt đúng lỗi."""
+import json
+
 import validate_repo
 from validate_repo import (
     Report,
@@ -6,6 +8,7 @@ from validate_repo import (
     tweet_length,
     validate_post_file,
     validate_social,
+    validate_state,
     validate_topics,
 )
 
@@ -269,3 +272,69 @@ def test_social_missing_x_file(tmp_path, monkeypatch):
     r = Report()
     validate_social(1, r)
     assert any("x.txt" in e for e in r.errors)
+
+
+# --- validate_state: state.json phải đồng bộ với topics.md ---
+
+def _state_entries():
+    return make_entries([
+        (1, "2026-01-01", "Networking", "a"),
+        (2, "2026-01-03", "Bảo mật", "b"),
+    ])
+
+
+def _write_state(tmp_path, monkeypatch, state):
+    p = tmp_path / "state.json"
+    p.write_text(json.dumps(state), encoding="utf-8")
+    monkeypatch.setattr(validate_repo, "STATE_PATH", str(p))
+
+
+def test_state_in_sync_passes(tmp_path, monkeypatch):
+    _write_state(tmp_path, monkeypatch, {
+        "last_issue": 2,
+        "last_published_date": "2026-01-03",
+        "last_generated_at": "2026-01-03T00:00:00+00:00",
+    })
+    r = Report()
+    validate_state(_state_entries(), r)
+    assert r.errors == []
+
+
+def test_state_missing_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(validate_repo, "STATE_PATH", str(tmp_path / "nope.json"))
+    r = Report()
+    validate_state(_state_entries(), r)
+    assert any("state.json không tồn tại" in e for e in r.errors)
+
+
+def test_state_stale_last_issue(tmp_path, monkeypatch):
+    _write_state(tmp_path, monkeypatch, {
+        "last_issue": 1,  # topics mới nhất là #002
+        "last_published_date": "2026-01-03",
+        "last_generated_at": "2026-01-03T00:00:00+00:00",
+    })
+    r = Report()
+    validate_state(_state_entries(), r)
+    assert any("last_issue" in e for e in r.errors)
+
+
+def test_state_wrong_published_date(tmp_path, monkeypatch):
+    _write_state(tmp_path, monkeypatch, {
+        "last_issue": 2,
+        "last_published_date": "2026-01-01",  # sai, phải là 2026-01-03
+        "last_generated_at": "2026-01-03T00:00:00+00:00",
+    })
+    r = Report()
+    validate_state(_state_entries(), r)
+    assert any("last_published_date" in e for e in r.errors)
+
+
+def test_state_bad_generated_at(tmp_path, monkeypatch):
+    _write_state(tmp_path, monkeypatch, {
+        "last_issue": 2,
+        "last_published_date": "2026-01-03",
+        "last_generated_at": "hôm qua",  # không phải ISO
+    })
+    r = Report()
+    validate_state(_state_entries(), r)
+    assert any("last_generated_at" in e for e in r.errors)

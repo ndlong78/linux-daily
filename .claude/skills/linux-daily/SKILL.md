@@ -18,16 +18,28 @@ mục `posts/` ở gốc repo. Nhật ký chủ đề là `topics.md` ở gốc 
 đã điền đầy đủ: `posts/post-001-static-ip.html`.
 
 ## Bước 0 — Cổng nhịp 2 ngày (kiểm tra TRƯỚC)
-Đọc `topics.md` ở gốc repo, lấy ngày của bài mới nhất.
-- Nếu bài mới nhất cách hôm nay **dưới 2 ngày**: DỪNG, không tạo gì, không commit.
-  Ghi một dòng log ngắn "Chưa đến nhịp, bỏ qua hôm nay" rồi kết thúc.
-- Nếu **≥ 2 ngày** (hoặc `topics.md` chỉ có mỗi #001 và đã qua ≥ 2 ngày): tiếp tục.
+Chạy cổng nhịp bằng công cụ, **dựa vào `state.json` (mốc `last_generated_at` do máy
+ghi)** chứ không dựa ngày AI tự điền trong bài:
+
+```
+python3 tools/cadence.py gate      # exit 0 = tới nhịp; exit 10 = chưa tới
+```
+
+- **exit 10 (chưa tới nhịp):** DỪNG, không tạo gì, không commit. Ghi một dòng log
+  ngắn "Chưa đến nhịp, bỏ qua hôm nay" rồi kết thúc.
+- **exit 0 (tới nhịp):** tiếp tục.
 
 Nhờ cổng này, routine cứ đặt chạy **Daily** là đủ — skill tự giữ nhịp 2 ngày/bài
-và tự bù nếu lỡ một hôm.
+và tự bù nếu lỡ một hôm. Cổng đọc `last_generated_at` (thời điểm THỰC lần trước sinh
+bài), nên không bị đánh lừa nếu ngày trong bài bị ghi sai.
+
+**Chống trùng (idempotency):** trước khi sinh, kiểm tra đã có nhánh `claude/linux-daily-<NNN>-*`
+hoặc PR đang mở cho **đúng số bài kế tiếp** (`python3 tools/cadence.py next`) chưa. Nếu
+có rồi thì một tiến trình khác đang làm bài đó — DỪNG để khỏi tạo trùng.
 
 ## Bước 1 — Xác định số bài và trục
-- Số bài kế tiếp = (số dòng bài trong `topics.md`) + 1. Ví dụ có #001 → tạo #002.
+- Số bài kế tiếp = `python3 tools/cadence.py next` (= số bài mới nhất + 1). Ví dụ có
+  #001 → tạo #002.
 - Trục xoay **tuần tự theo số bài** (không theo thứ), lấy theo chu kỳ 7:
 
   `index = (số_bài − 1) mod 7`
@@ -97,12 +109,17 @@ bài trước đó — validator sẽ chặn nếu lùi ngày (backdate). `<YYYY
 Rồi dựng lại trang chủ để nó liệt kê bài mới:
 `python3 tools/build_index.py`   (cập nhật `index.html` ở gốc repo)
 
+Cập nhật `state.json` (ghi lại số bài, ngày, và mốc sinh THỰC — dùng cho cổng nhịp
+lần sau):
+`python3 tools/cadence.py record`
+
 ## Bước 5b — Kiểm định trước khi commit (BẮT BUỘC)
 Chạy quality gate; **không commit nếu còn lỗi** — sửa cho đến khi sạch:
 
 ```
 python3 tools/validate_repo.py     # số bài liên tục, trục đúng chu kỳ, ngày hợp lệ,
-                                    # 2 SVG + aria, đủ 7 mục, khối FreeBSD, tweet ≤ 280…
+                                    # 2 SVG + aria, đủ 7 mục, khối FreeBSD, tweet ≤ 280,
+                                    # state.json đồng bộ với topics.md…
 python3 tools/build_index.py --check   # index.html đã dựng lại chưa
 ```
 
@@ -110,9 +127,14 @@ CI cũng chạy đúng các lệnh này trên PR (xem `.github/workflows/ci.yml`
 là cùng một cổng chất lượng — chạy trước để khỏi phải sửa vòng hai.
 
 ## Bước 6 — Commit (KHÔNG tự đăng)
-- Tạo/chuyển sang nhánh `claude/linux-daily-<YYYY-MM-DD>`.
-- `git add` file bài mới trong `posts/`, thư mục `posts/social/`, `index.html`
-  (trang chủ vừa dựng lại) và `topics.md`.
+- Tạo/chuyển sang nhánh `claude/linux-daily-<NNN>-<YYYYMMDD>` (kèm **số bài** cho rõ,
+  ví dụ `claude/linux-daily-019-20260809`) — giúp chống trùng ở Bước 0.
+- **Stage chính xác từng file mới**, KHÔNG `git add posts/social/` cả thư mục (tránh
+  kéo theo file rác/của bài khác). Cụ thể:
+  - `posts/post-<NNN>-<slug>.html`
+  - `posts/social/post-<NNN>-facebook.txt`, `posts/social/post-<NNN>-x.txt`,
+    `posts/social/post-<NNN>-code.png`
+  - `index.html`, `topics.md`, `state.json`
 - Commit message: `Linux Daily #<số>: <tên chủ đề>`.
 - Push nhánh đó (chỉ nhánh tiền tố `claude/`). KHÔNG push thẳng vào `main`.
 - Mở Pull Request nếu connector GitHub cho phép; nếu không, chỉ để lại nhánh để
