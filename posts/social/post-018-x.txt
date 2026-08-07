@@ -1,29 +1,33 @@
 [Tweet 1] — đính kèm post-018-code.png
-☁️ Backup lên cloud bằng kéo-thả tay hoặc access key dán thẳng vào script? rclone làm đúng việc đó bằng 1 lệnh, có mã hoá sẵn, trên 70+ backend. Thread 🧵
+☁️ rclone mạnh, nhưng sync có thể xoá ở đích và crypt không biến cloud thành “không thấy gì”. Bài #018 được backfill lại theo upstream. Thread 🧵
 
 [Tweet 2]
-rclone = "rsync cho cloud". Một binary Go tĩnh nói chuyện với S3, Backblaze B2, Google Drive, SFTP… Remote "crypt" bọc lên remote thật, mã hoá cả TÊN FILE lẫn nội dung ngay trên máy nguồn.
+crypt hiện dùng:
+• content: XSalsa20 + Poly1305 (NaCl SecretBox)
+• file/dir names: AES-256 EME
+Không phải AES-SIV/AES-256 như bản cũ.
 
 [Tweet 3]
-Ubuntu/Xubuntu & Debian:
-apt install rclone
-(kho có thể cũ → script cài chính chủ nếu cần bản mới nhất: rclone.org/install.sh)
-
-Fedora:
-dnf install rclone
+crypt che plaintext nội dung + tên, nhưng KHÔNG che hoàn toàn metadata như kích thước và modification time. Vì vậy đừng mô tả remote nền là “không đọc/không thấy gì”.
 
 [Tweet 4] — FreeBSD
-pkg install rclone fusefs-libs
-kldload fusefs        ← bắt buộc nếu dùng rclone mount
-sysrc -f /etc/rc.conf fusefs_load="YES"
-sync/copy thuần thì KHÔNG cần fusefs.
+pkg install rclone
+# chỉ khi mount:
+kldload fusefs
+sysrc kld_list+=fusefs
+sync/copy/check thuần KHÔNG cần FUSE.
 
 [Tweet 5]
-⚠️ rclone sync làm đích khớp TUYỆT ĐỐI với nguồn — file thừa ở đích sẽ bị XOÁ. Luôn chạy --dry-run trước một lần sync quan trọng.
+⚠️ rclone sync làm destination khớp source và có thể xoá file thừa. Trước production:
+rclone sync SRC DST --dry-run
+hoặc --interactive
+Cân nhắc --max-delete/--backup-dir theo policy.
 
 [Tweet 6]
-⚠️ crypt không thay IAM: khoá bị lộ vẫn xoá được dữ liệu đã mã hoá dù không đọc được nội dung. Dùng access key riêng, giới hạn đúng 1 bucket, mã hoá cả rclone.conf bằng RCLONE_CONFIG_PASS.
+Verify crypt remote bằng:
+rclone cryptcheck /srv/data secure:
+Khi backend không có checksum phù hợp, cần chọn cách verify khác có đọc dữ liệu; “sync chạy xong” không phải bằng chứng toàn vẹn.
 
 [Tweet 7]
-Full bài + sơ đồ remote crypt: {{LINK}}
+Full bài + nguồn rclone/FreeBSD: {{LINK}}
 #LinuxDaily #Rclone #Cloud #FreeBSD

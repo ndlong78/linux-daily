@@ -1,11 +1,18 @@
-☁️ Bạn đang backup lên Google Drive bằng kéo-thả tay, hay dán access key S3 thẳng vào script rồi aws s3 cp? Cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy.
+☁️ rclone rất mạnh, nhưng có ba điểm cần nhớ để dùng an toàn: sync có thể xoá ở đích, crypt không thay IAM/backup, và verify encrypted remote phải dùng đúng công cụ.
 
-Bài #018 (Công cụ mới): rclone — "rsync cho cloud". Một binary Go tĩnh nói chuyện được với hơn 70 backend (S3, Backblaze B2, Google Drive, SFTP…), và có sẵn remote "crypt" mã hoá cả tên file lẫn nội dung ngay trên máy nguồn:
-• Ubuntu/Xubuntu & Debian → apt install rclone (cần bản mới hơn thì dùng script cài chính chủ)
+Bài #018 được cập nhật theo upstream:
+• crypt mã hoá nội dung bằng NaCl SecretBox (XSalsa20 + Poly1305)
+• tên file/directory mặc định dùng AES-256 EME
+• crypt KHÔNG che hoàn toàn metadata như kích thước/modification time
+• rclone cryptcheck dùng để đối chiếu local plaintext với encrypted remote khi backend có checksum phù hợp
+
+Cài đặt:
+• Ubuntu/Xubuntu & Debian → apt install rclone
 • Fedora → dnf install rclone
-• FreeBSD → pkg install rclone, cần nạp thêm module fusefs để dùng rclone mount
+• FreeBSD → pkg install rclone
+• Chỉ khi dùng rclone mount trên FreeBSD mới cần kldload fusefs + sysrc kld_list+=fusefs; sync/copy/check không cần FUSE.
 
-Cạm bẫy chết người nhất: rclone sync làm đích khớp tuyệt đối với nguồn — quên --dry-run là xoá sạch remote không kịp trở tay. Và mã hoá crypt không thay thế IAM: khoá bị lộ vẫn xoá được dữ liệu dù không đọc được nội dung.
+Guardrail: luôn preview sync bằng --dry-run hoặc --interactive, kiểm đúng source/destination và dùng credential least-privilege. bisync là workflow nâng cao, không nên xem như “sync hai chiều đơn giản”.
 
 👉 Đọc đầy đủ: {{LINK}}
 

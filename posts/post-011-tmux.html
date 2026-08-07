@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>tmux: phiên terminal không chết khi SSH rớt — Linux Daily #011</title>
 <meta name="description" content="tmux giữ phiên làm việc sống trên máy chủ dù SSH rớt, và chia một cửa sổ thành nhiều khung. Cách dùng giống hệt trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD — chỉ khác lệnh cài đặt.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
@@ -17,212 +14,84 @@
   "eyebrow": "Công cụ mới · CLI",
   "slug": "tmux",
   "title": "tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên",
-  "lede": "Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài."
+  "lede": "Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "tmux Wiki — Getting Started", "url": "https://github.com/tmux/tmux/wiki/Getting-Started", "kind": "upstream"},
+    {"title": "tmux Wiki — FAQ", "url": "https://github.com/tmux/tmux/wiki/FAQ", "kind": "upstream"},
+    {"title": "OpenBSD manual — tmux(1)", "url": "https://man.openbsd.org/tmux", "kind": "upstream"}
+  ]
 }
 </script>
 </head>
-<body class="post">
-<div class="wrap">
+<body class="post"><div class="wrap">
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#011 · 19·07·2026</span></div></div>
+<header class="post">
+<p class="eyebrow">Công cụ mới · CLI</p>
+<h1>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</h1>
+<p class="lede">Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. <strong>tmux</strong> gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</p>
+<div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~8 PHÚT</span></div>
+</header>
 
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#011 · 19·07·2026</span>
-    </div>
-  </div>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="SSH client có thể rớt trong khi tmux server trên máy chủ tiếp tục giữ session, window và pane">
+<rect width="760" height="240" fill="#F7FAF9"/>
+<rect x="35" y="80" width="165" height="80" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="117" y="112" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">SSH client</text><text x="117" y="138" text-anchor="middle" font-family="JetBrains Mono" font-size="11">có thể disconnect</text>
+<line x1="200" y1="120" x2="285" y2="120" stroke="#B23A2E" stroke-width="2" stroke-dasharray="5 4"/>
+<rect x="290" y="45" width="430" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="505" y="76" text-anchor="middle" font-family="Be Vietnam Pro" font-size="15" font-weight="700">tmux server trên máy chủ</text><rect x="320" y="96" width="170" height="65" rx="5" fill="#fff" stroke="#0C6E61"/><text x="405" y="123" text-anchor="middle" font-family="JetBrains Mono" font-size="11">session: work</text><text x="405" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="10">window · pane · process</text><rect x="515" y="96" width="170" height="65" rx="5" fill="#fff" stroke="#0C6E61"/><text x="600" y="123" text-anchor="middle" font-family="JetBrains Mono" font-size="11">attach lại</text><text x="600" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="10">tmux attach -t work</text>
+</svg>
+<figcaption>Hình 1 — tmux tách terminal làm việc khỏi vòng đời của SSH client; session còn khi tmux server còn sống.</figcaption>
+</figure>
 
-  <header class="post">
-    <p class="eyebrow">Công cụ mới · CLI</p>
-    <h1>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</h1>
-    <p class="lede">Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. <strong>tmux</strong> gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · CÔNG CỤ MỚI</span>
-      <span class="tag">ĐỘ KHÓ · CƠ BẢN</span>
-      <span class="tag">~8 PHÚT</span>
-    </div>
-  </header>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Một job foreground chạy trực tiếp trong SSH có thể bị gián đoạn khi terminal/kết nối mất, tùy shell và chương trình. Đừng dựa vào giả định mọi process đều nhận cùng một tín hiệu. Với tmux, shell và job nằm trong session do tmux server quản lý trên máy chủ; SSH client chỉ attach/detach.</p></section>
 
-  <figure>
-    <!-- Hero: SSH client rớt, tmux server trên máy chủ giữ session sống với nhiều pane -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ tmux: client SSH kết nối tới máy chủ, tmux server trên máy chủ giữ một phiên gồm nhiều cửa sổ và khung; khi SSH rớt, phiên vẫn chạy tiếp và client đăng nhập lại rồi attach vào đúng phiên cũ">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+<ul class="clean"><li><strong>Session:</strong> workspace sống trong tmux server.</li><li><strong>Window/Pane:</strong> tab và vùng terminal trong session.</li><li><strong>Prefix mặc định:</strong> <code>Ctrl-b</code>.</li><li><strong>Boundary:</strong> tmux chịu được client disconnect; không tự sống qua reboot hoặc khi tmux server bị kill.</li><li><strong>Version:</strong> core workflow rất ổn định, nhưng option mới có thể khác theo gói distro; kiểm <code>tmux -V</code> khi dùng tính năng theo phiên bản.</li></ul></section>
 
-      <!-- CLIENT -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="30" y="118" width="140" height="70" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="100" y="146" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">CLIENT</text>
-        <text x="100" y="167" text-anchor="middle" fill="#566661" font-size="11">laptop · SSH</text>
-      </g>
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="Bảng cài tmux trên Ubuntu Debian Fedora và FreeBSD, sau đó dùng chung lệnh tmux new attach ls">
+<rect width="760" height="245" fill="#fff"/><g font-family="JetBrains Mono" font-size="10.5">
+<rect x="20" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="105" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="105" y="105" text-anchor="middle">apt install tmux</text><text x="105" y="135" text-anchor="middle">tmux -V</text><text x="105" y="165" text-anchor="middle">Ctrl-b</text>
+<rect x="205" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="290" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text><text x="290" y="105" text-anchor="middle">apt install tmux</text><text x="290" y="135" text-anchor="middle">tmux -V</text><text x="290" y="165" text-anchor="middle">Ctrl-b</text>
+<rect x="390" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="475" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text><text x="475" y="105" text-anchor="middle">dnf install tmux</text><text x="475" y="135" text-anchor="middle">tmux -V</text><text x="475" y="165" text-anchor="middle">Ctrl-b</text>
+<rect x="575" y="35" width="165" height="165" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="105" text-anchor="middle">pkg install tmux</text><text x="657" y="135" text-anchor="middle">không nằm trong base</text><text x="657" y="165" text-anchor="middle">Ctrl-b</text></g>
+</svg>
+<figcaption>Hình 2 — Cài đặt khác theo hệ; workflow tmux cốt lõi giống nhau.</figcaption>
+</figure>
 
-      <!-- SSH link, bị rớt -->
-      <line x1="170" y1="153" x2="250" y2="153" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      <text x="210" y="140" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="18" font-weight="700">✕</text>
-      <text x="210" y="176" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="10">SSH rớt</text>
+<section><h2><span class="num">03</span> Thực hành từng bước</h2>
+<span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span><pre><code>sudo apt update
+sudo apt install -y tmux
+tmux -V</code></pre>
+<span class="code-label"><span class="dot"></span>Fedora</span><pre><code>sudo dnf install -y tmux
+tmux -V</code></pre>
+<span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg, không dùng systemd</span><pre class="bsd"><code>pkg install -y tmux
+tmux -V</code></pre>
+<p>Workflow dùng chung:</p><pre><code>tmux new -As work        # attach nếu có, tạo nếu chưa có
+# Ctrl-b rồi d           # detach
+tmux ls
+tmux attach -t work</code></pre></section>
 
-      <!-- SERVER + tmux server -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="256" y="52" width="470" height="200" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
-        <text x="276" y="78" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">MÁY CHỦ · tmux server</text>
-        <text x="276" y="96" fill="#566661" font-size="10.5">phiên "work" vẫn chạy dù client rớt</text>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<pre><code>tmux new -s test
+# trong tmux: while true; do date; sleep 2; done
+# Ctrl-b rồi d
 
-        <!-- window/session box -->
-        <rect x="276" y="110" width="430" height="122" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.4"/>
-        <text x="286" y="128" fill="#0C6E61" font-size="10.5">session: work</text>
-        <!-- pane 1 -->
-        <rect x="288" y="136" width="200" height="42" rx="4" fill="rgba(12,110,97,.07)" stroke="#0C6E61" stroke-width="1"/>
-        <text x="388" y="162" text-anchor="middle" fill="#14201D" font-size="11">pane 1 · apt upgrade</text>
-        <!-- pane 2 -->
-        <rect x="496" y="136" width="198" height="42" rx="4" fill="rgba(12,110,97,.07)" stroke="#0C6E61" stroke-width="1"/>
-        <text x="595" y="162" text-anchor="middle" fill="#14201D" font-size="11">pane 2 · tail -f log</text>
-        <!-- pane 3 -->
-        <rect x="288" y="184" width="406" height="38" rx="4" fill="rgba(12,110,97,.07)" stroke="#0C6E61" stroke-width="1"/>
-        <text x="491" y="208" text-anchor="middle" fill="#14201D" font-size="11">window 2 · shell rảnh</text>
-      </g>
+tmux has-session -t test && echo "session còn"
+tmux attach -t test
+# dọn khi xong:
+tmux kill-session -t test</code></pre>
+<p>Muốn kiểm đúng tình huống remote, detach hoặc ngắt SSH rồi đăng nhập lại và attach; đừng dùng reboot để test vì reboot cũng dừng tmux server.</p></section>
 
-      <!-- reattach -->
-      <path d="M100 188 v58 h150" fill="none" stroke="#0C6E61" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arw)"/>
-      <text x="150" y="266" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="10.5">đăng nhập lại → tmux attach</text>
-    </svg>
-    <figcaption>Hình 1 — tmux server chạy trên máy chủ, giữ phiên (session) gồm nhiều cửa sổ/khung. SSH rớt chỉ <em>detach</em> client; tiến trình bên trong vẫn chạy, đăng nhập lại rồi <code>tmux attach</code> là về đúng chỗ.</figcaption>
-  </figure>
+<section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+<ul class="clean"><li><strong>Nhầm tmux với service manager:</strong> job cần tự khởi động sau reboot phải dùng systemd service trên Linux hoặc rc.d/rc.conf trên FreeBSD.</li><li><strong>Nested tmux:</strong> prefix có thể bị lớp ngoài giữ; gửi prefix vào lớp trong bằng prefix hai lần hoặc đổi cấu hình có chủ đích.</li><li><strong>Socket mất:</strong> session có thể vẫn còn nếu server còn chạy; upstream FAQ mô tả cách tmux server tạo lại socket khi nhận <code>SIGUSR1</code>. Đừng vội kết luận dữ liệu session mất chỉ vì socket path biến mất.</li><li><strong>Khác version:</strong> kiểm <code>tmux -V</code> trước khi copy option từ blog mới vào máy có package cũ.</li></ul></section>
 
-  <section>
-    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Ai quản trị máy từ xa qua SSH đều từng dính: đang <code>apt upgrade</code>, đang chạy migration, đang copy vài trăm GB — thì Wi-Fi chớp, VPN rớt, hoặc laptop ngủ. Kết nối đứt kéo theo shell chết, tiến trình foreground nhận SIGHUP và dừng, để lại hệ thống dở dang. <strong>tmux</strong> (terminal multiplexer) tách phiên làm việc ra khỏi kết nối SSH: mọi thứ chạy trong một tiến trình <em>tmux server</em> nằm trên máy chủ, nên client rớt không đụng gì tới công việc đang chạy.</p>
-  </section>
+<section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
+<ul class="clean"><li>Chạy tmux dưới user thường, chỉ leo quyền cho lệnh cần thiết.</li><li>Session có thể chứa shell, output và secret trong scrollback; khóa màn hình máy quản trị và giới hạn account có thể attach.</li><li>Không chia sẻ socket/session giữa user nếu chưa hiểu ownership và quyền truy cập.</li><li>tmux tăng độ bền thao tác, không thay SSH hardening, audit log hay service supervision.</li></ul></section>
 
-  <section>
-    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>Ba khái niệm, một phím điều khiển:</p>
-    <ul class="clean">
-      <li><strong>Session (phiên):</strong> một không gian làm việc sống trên máy chủ; detach rồi attach lại tuỳ ý, không mất trạng thái.</li>
-      <li><strong>Window (cửa sổ) &amp; Pane (khung):</strong> mỗi session có nhiều window (như tab), mỗi window chia được nhiều pane (nhiều shell cạnh nhau).</li>
-      <li><strong>Prefix:</strong> mọi lệnh tmux bắt đầu bằng phím dẫn <code>Ctrl-b</code> rồi mới tới phím thao tác (ví dụ <code>Ctrl-b</code> sau đó <code>d</code> để detach).</li>
-      <li><strong>Không nằm trong base:</strong> tmux là gói cài thêm trên <em>cả bốn</em> hệ điều hành; cấu hình cá nhân ở <code>~/.tmux.conf</code>, giống nhau mọi nơi.</li>
-    </ul>
-  </section>
+<div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo session <code>lab</code> bằng <code>tmux new -As lab</code>, chạy một vòng lặp timestamp, detach, đăng nhập SSH lại và attach. Sau đó kiểm <code>tmux -V</code> trên Linux và FreeBSD rồi ghi lại điểm giống/khác của package version.</p></div>
 
-  <figure>
-    <!-- So sánh cài tmux 4 HĐH -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh cài tmux: Ubuntu và Xubuntu cùng Debian dùng apt install tmux, Fedora dùng dnf install tmux, FreeBSD dùng pkg install tmux; cả bốn đều dùng chung phím prefix Ctrl-b và file cấu hình ~/.tmux.conf">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="106" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install tmux</text>
-        <text x="104" y="140" text-anchor="middle" font-size="10.5" fill="#566661">prefix: Ctrl-b</text>
-        <text x="104" y="162" text-anchor="middle" font-size="10.5" fill="#566661">~/.tmux.conf</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="106" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install tmux</text>
-        <text x="284" y="140" text-anchor="middle" font-size="10.5" fill="#566661">prefix: Ctrl-b</text>
-        <text x="284" y="162" text-anchor="middle" font-size="10.5" fill="#566661">~/.tmux.conf</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="106" text-anchor="middle" font-size="11.5" fill="#0C6E61">dnf install tmux</text>
-        <text x="464" y="140" text-anchor="middle" font-size="10.5" fill="#566661">prefix: Ctrl-b</text>
-        <text x="464" y="162" text-anchor="middle" font-size="10.5" fill="#566661">~/.tmux.conf</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="150" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="106" text-anchor="middle" font-size="11.5" fill="#B23A2E">pkg install tmux</text>
-        <text x="650" y="140" text-anchor="middle" font-size="10.5" fill="#7A4A44">prefix: Ctrl-b</text>
-        <text x="650" y="162" text-anchor="middle" font-size="10.5" fill="#7A4A44">~/.tmux.conf</text>
-      </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">KHÁC LỆNH CÀI · GIỐNG HỆT CÁCH DÙNG</text>
-    </svg>
-    <figcaption>Hình 2 — Khác biệt duy nhất là lệnh cài (apt/dnf/pkg). Sau khi cài, prefix <code>Ctrl-b</code>, cách dùng và file <code>~/.tmux.conf</code> giống hệt nhau — kể cả FreeBSD.</figcaption>
-  </figure>
-
-  <section>
-    <h2><span class="num">03</span> Cài đặt &amp; dùng trên từng hệ điều hành</h2>
-    <p>Chỉ bước cài là khác nhau. Cách dùng bên dưới áp cho cả bốn hệ.</p>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
-    <pre><code>sudo apt update &amp;&amp; sudo apt install -y tmux</code></pre>
-
-    <span class="code-label"><span class="dot"></span>Fedora</span>
-    <pre><code>sudo dnf install -y tmux</code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD (tách riêng — không có trong base)</span>
-    <pre class="bsd"><code>pkg install -y tmux</code></pre>
-
-    <p>Cách dùng cốt lõi — giống hệt trên mọi hệ. (Ký hiệu <code>C-b</code> nghĩa là nhấn <code>Ctrl-b</code>, thả ra, rồi nhấn phím sau.)</p>
-    <pre><code>tmux new -s work         <span class="cmt"># tạo phiên tên "work"</span>
-<span class="cmt"># ... chạy lệnh dài trong đó ...</span>
-C-b  d                    <span class="cmt"># detach: rời phiên, việc vẫn chạy tiếp</span>
-
-tmux ls                   <span class="cmt"># liệt kê phiên đang sống</span>
-tmux attach -t work       <span class="cmt"># quay lại phiên (sau khi SSH lại)</span>
-
-<span class="cmt"># Bên trong phiên — chia màn hình &amp; cửa sổ:</span>
-C-b  %                    <span class="cmt"># chia khung dọc (trái | phải)</span>
-C-b  "                    <span class="cmt"># chia khung ngang (trên / dưới)</span>
-C-b  c                    <span class="cmt"># cửa sổ mới (như tab)</span>
-C-b  n  /  C-b  p         <span class="cmt"># chuyển cửa sổ kế / trước</span>
-C-b  mũi-tên              <span class="cmt"># di chuyển giữa các khung</span></code></pre>
-  </section>
-
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <p>Bài kiểm quyết định: một tiến trình có thật sự sống qua khi mất kết nối không? Cách thử an toàn ngay trên một máy:</p>
-    <span class="code-label"><span class="dot"></span>Mọi hệ (Ubuntu / Debian / Fedora / FreeBSD)</span>
-    <pre><code>tmux new -s test          <span class="cmt"># trong phiên, chạy một đồng hồ:</span>
-<span class="cmt">#   ( trong phiên )  while true; do date; sleep 2; done</span>
-C-b  d                    <span class="cmt"># detach</span>
-tmux ls                   <span class="cmt"># thấy: test (1 windows) ...</span>
-tmux attach -t test       <span class="cmt"># attach lại → đồng hồ vẫn đang đếm</span>
-tmux kill-session -t test <span class="cmt"># dọn khi xong</span></code></pre>
-  </section>
-
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
-    <ul class="clean">
-      <li><strong>tmux ≠ dịch vụ nền:</strong> phiên sống qua khi SSH rớt, nhưng <em>không</em> sống qua khi máy chủ reboot — tmux server cũng bị tắt. Việc cần chạy bền vững qua khởi động lại thì phải là systemd unit/rc service (bài #006), không phải tmux.</li>
-      <li><strong>tmux lồng tmux:</strong> nếu bạn chạy tmux trên laptop <em>và</em> trên máy chủ, phím <code>C-b</code> sẽ do lớp ngoài "ăn". Gửi prefix vào lớp trong bằng cách nhấn <code>C-b</code> hai lần.</li>
-      <li><strong>Cuộn màn hình:</strong> chuột cuộn không phải lúc nào cũng chạy. Vào chế độ copy bằng <code>C-b [</code> rồi dùng PageUp/mũi tên; nhấn <code>q</code> để thoát.</li>
-      <li><strong>Nhầm với screen:</strong> <code>screen</code> là công cụ tương tự nhưng phím và cú pháp khác (<code>C-a</code>). Đừng trộn thói quen hai bên; và cả hai đều <em>không</em> có sẵn trong FreeBSD base.</li>
-    </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Cách <em>dùng</em> tmux không khác gì giữa FreeBSD và Linux — cùng prefix <code>Ctrl-b</code>, cùng lệnh, cùng <code>~/.tmux.conf</code>. Khác biệt chỉ ở bước cài (<code>pkg install tmux</code>) và việc nó không nằm trong base. Đây là kiểu công cụ "học một lần, dùng mọi nơi".
-    </div>
-  </section>
-
-  <section>
-    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <ul class="clean">
-      <li>Ghép với SSH đã gia cố (bài #002): tmux giúp thao tác từ xa an toàn hơn — lệnh dài không đứt gánh khi mạng chập chờn, không cần để phiên root mở lâu trên laptop.</li>
-      <li>Chạy tmux dưới <em>user thường</em> rồi mới leo quyền khi cần (bài #009), thay vì mở nguyên một phiên root — giảm rủi ro nếu lỡ để phiên attach.</li>
-      <li>Socket của tmux nằm trong thư mục riêng của user (thường dưới <code>/tmp</code>); đừng chia sẻ session cho user khác trừ khi hiểu rõ hệ quả về quyền.</li>
-      <li>Đặt một <code>~/.tmux.conf</code> tối giản nhất quán (ví dụ bật chuột, tăng lịch sử cuộn) và mang theo giữa các máy để trải nghiệm đồng nhất.</li>
-    </ul>
-  </section>
-
-  <div class="exercise">
-    <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Debian</strong> và một máy <strong>FreeBSD</strong> (truy cập qua SSH): tạo một phiên tmux, chạy một tiến trình đếm dài, rồi <em>cố tình ngắt</em> kết nối SSH (đóng cửa sổ terminal). Đăng nhập lại và attach vào phiên — xác nhận tiến trình vẫn chạy. Sau đó thử reboot máy và attach lại. Câu hỏi: vì sao lần ngắt SSH thì phiên còn, nhưng lần reboot thì mất — và nếu cần một tác vụ chạy bền vững qua cả reboot thì bạn dùng cơ chế nào thay cho tmux?</p>
-  </div>
-
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #011 · Công cụ mới</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #tmux</span>
-    </div>
-  </footer>
-
-</div>
-</body>
-</html>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/tmux/tmux/wiki/Getting-Started">tmux Wiki — Getting Started</a></li><li><a href="https://github.com/tmux/tmux/wiki/FAQ">tmux Wiki — FAQ</a></li><li><a href="https://man.openbsd.org/tmux">OpenBSD manual — tmux(1)</a></li></ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
+</div></body></html>

@@ -13,7 +13,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 #013/#016, Networking/Firewall, Storage/Backup và Auth/Permissions đã merge; Monitoring/Automation trong PR #29
+- Historical source backfill: 🟡 các nhóm rủi ro #001–#017 đã merge; #011/#018 là backfill cuối trong PR #30
 
 ## Các mốc đã hoàn thành
 
@@ -40,54 +40,53 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 ### PR #24 — Source-backed Technical Review ✅
 
 - Bài #019+ bắt buộc `review_status`, tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và khớp section hiển thị.
-- `tools/build.py --check` chạy source-backed gate cùng structural gate.
-- Historical post chưa backfill được grandfather; post lịch sử đã opt-in source review phải tiếp tục vượt gate.
+- Historical post đã opt-in source review cũng phải tiếp tục vượt gate.
 
 ### PR #25 — Historical Technical Backfill #013 + #016 ✅
 
-- #013 Bash: làm rõ `#!/usr/bin/env bash` phụ thuộc `PATH`, giới hạn của `set -e`, bỏ global `IFS=$'\n\t'`, dùng `command -v`, sửa destructive-path claim.
-- #016 FreeBSD/Fail2Ban: `blocklistd` đúng tên hiện hành, phân biệt `sshguard`, cập nhật `security/py-fail2ban` + `bsd-sshd-session`, bổ sung firewall rollback.
+- #013 Bash: sửa shebang/PATH, `set -e`, IFS và destructive-path claims.
+- #016 FreeBSD/Fail2Ban: `blocklistd`, `sshguard`, package/jail hiện hành và firewall rollback.
 - PR #25 đã merge 2026-08-07.
 
 ### PR #26 — Historical Technical Backfill: Networking & Firewall ✅
 
-- #001 Static IP: `netplan try`, Debian network manager nuance, NetworkManager checkpoint, FreeBSD runtime/console rollback path.
-- #007 Firewall: UFW mở SSH trước; firewalld runtime-first; PF parse bằng `pfctl -vnf` trước khi load.
-- #008 Diagnostics: thêm name resolution, ping nuance, `sockstat -46 -l`, bounded tcpdump.
-- #015 WireGuard: cập nhật FreeBSD package, semantics `AllowedIPs`, split-tunnel-first + rollback route.
+- #001 Static IP, #007 Firewall, #008 Diagnostics, #015 WireGuard được source-review và bổ sung rollback/verification.
 - PR #26 đã merge 2026-08-07.
 
 ### PR #27 — Historical Technical Backfill: Storage & Backup ✅
 
-- #003 ZFS: sửa semantics dung lượng snapshot; snapshot ≠ backup; destructive rollback; cập nhật Fedora OpenZFS repo.
-- #004 restic: nhiều key/password; encryption design; preview retention; phân biệt `check` với data verification.
-- #010 Add disk: verify device trước write; FreeBSD GPT alignment; Linux verify fstab; `nofail` chỉ cho mount optional.
-- #014 Backup lab: subset/full read verification; restore chọn đúng snapshot; canary + checksum làm bằng chứng.
-- #017 Grow storage: đúng stack disk→partition→PV→LV→filesystem; FreeBSD `growfs -N`; ZFS expansion nuance.
+- #003 ZFS, #004 restic, #010 Add disk, #014 Backup lab, #017 Grow storage được source-review và bổ sung guardrail/restore evidence.
 - PR #27 đã merge 2026-08-07.
 
 ### PR #28 — Historical Technical Backfill: Auth & Permissions ✅
 
-- #002 SSH: sửa precedence OpenSSH thành “first obtained value wins”; key-only gồm keyboard-interactive nuance; thêm `AuthenticationMethods publickey`, `sshd -T` và kiểm phiên SSH mới trước khi đóng phiên cứu hộ.
-- #009: tách administrator khỏi limited operator; Debian sudo installer nuance; FreeBSD `wheel` cho `su`, doas không bắt buộc wheel; bỏ `persist`; dùng `doas -C` để validate policy.
-- #002/#009 có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
+- #002 SSH và #009 sudo/doas được sửa effective-policy/least-privilege semantics.
 - PR #28 đã merge 2026-08-07.
 
-## PR #29 — Monitoring & Automation Backfill
+### PR #29 — Monitoring & Automation Backfill ✅
 
-Mục tiêu: rà #005, #006 và #012 theo nguyên tắc **kiểm effective runtime thay vì đoán theo distro** và **scheduler/automation phải được kiểm chứng bằng hành vi thực tế**.
+- #005 Logging: bỏ distro-default assumptions; kiểm effective journald storage và đúng SSH unit.
+- #006 Ansible: Python bootstrap, ansible-core vs community.general, check-mode capability.
+- #012 Scheduling: `Persistent=true`, `AccuracySec`, cron environment và FreeBSD periodic semantics.
+- #005/#006/#012 có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
+- PR #29 đã merge 2026-08-07.
 
-- [x] #005 Logging: bỏ claim Debian luôn volatile; mô tả đúng `Storage=auto`; tách `ssh`/`sshd`; quyền đọc journal theo ACL/group thực tế; FreeBSD dùng syslogd + newsyslog.
-- [x] #006 Ansible: làm rõ phần lớn module POSIX cần Python nhưng `raw` có thể bootstrap; ưu tiên `package`/`service`; phân biệt ansible-core với `community.general.pkgng`/`doas`; check mode chỉ là preview theo capability module.
-- [x] #012 Scheduling: sửa semantics `Persistent=true` thành catch-up activation thay vì replay mọi lần lỡ; bổ sung `AccuracySec`/`systemd-analyze calendar`; FreeBSD cron environment + periodic output policy.
-- [x] #005/#006/#012 có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
-- [x] Đồng bộ Facebook/X cho cả ba bài.
+## PR #30 — Final Historical Tool Backfill
+
+Mục tiêu: hoàn tất source-backed coverage cho hai bài grandfathered cuối #011 và #018.
+
+- [x] #011 tmux: bỏ claim tuyệt đối về SIGHUP/process khi SSH mất; mô tả đúng client/server attach-detach model.
+- [x] #011: thêm `tmux new -As`, `tmux -V`, boundary reboot/tmux-server và socket recovery nuance.
+- [x] #018 rclone: sửa crypt algorithm thành XSalsa20+Poly1305 cho content và AES-256 EME cho names; ghi rõ metadata leakage.
+- [x] #018: dùng `rclone cryptcheck` cho encrypted remote; tăng guardrail cho `sync`/`bisync`.
+- [x] #018 FreeBSD: FUSE chỉ cần cho mount; dùng `kldload fusefs` + `sysrc kld_list+=fusefs`.
+- [x] #011/#018 có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
+- [x] Đồng bộ Facebook/X cho cả hai bài.
 - [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
 
-## Mốc kế tiếp — Historical Technical Backfill cuối
+## Mốc kế tiếp — P2 Repository & Website
 
-- [ ] Rà các bài lịch sử còn grandfather: #011 tmux và #018 rclone; xác định claim phụ thuộc version/upstream và source backfill cuối.
-- [ ] Sau khi historical coverage hoàn tất, chuyển trọng tâm sang P2 repository/website.
+Sau khi PR #30 merge, historical source backfill #001–#018 hoàn tất. Trọng tâm chuyển sang repository/website hardening theo các PR nhỏ.
 
 ## P2 — Repository & website
 
@@ -113,5 +112,6 @@ Mục tiêu: rà #005, #006 và #012 theo nguyên tắc **kiểm effective runti
 6. Thao tác storage phá huỷ/resize phải xác minh đúng device/layer trước khi ghi; backup phải có restore evidence định kỳ.
 7. Hardening auth/permissions phải kiểm effective policy; least privilege không được suy luận từ file cấu hình hoặc group membership đơn lẻ.
 8. Monitoring/automation phải kiểm effective runtime, dependency/collection và scheduler semantics thay vì hard-code theo tên distro.
-9. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
-10. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
+9. Tool sync/encryption phải tách rõ confidentiality, destructive sync semantics, verification và backend access control.
+10. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
+11. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.

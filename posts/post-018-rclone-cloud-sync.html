@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>rclone: đồng bộ &amp; mã hoá dữ liệu lên cloud storage — Linux Daily #018</title>
 <meta name="description" content="Giới thiệu rclone — công cụ đồng bộ dữ liệu lên hơn 70 backend cloud (S3, Backblaze B2, Google Drive…) với lớp mã hoá crypt phía client, cùng một bộ lệnh trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
@@ -17,230 +14,62 @@
   "eyebrow": "Công cụ mới · Cloud sync",
   "slug": "rclone-cloud-sync",
   "title": "rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud",
-  "lede": "Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là \"rsync cho cloud\": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành."
+  "lede": "Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là \"rsync cho cloud\": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "rclone — Crypt", "url": "https://rclone.org/crypt/", "kind": "upstream"},
+    {"title": "rclone — cryptcheck", "url": "https://rclone.org/commands/rclone_cryptcheck/", "kind": "upstream"},
+    {"title": "rclone — sync", "url": "https://rclone.org/commands/rclone_sync/", "kind": "upstream"},
+    {"title": "FreeBSD Handbook — Other File Systems", "url": "https://docs.freebsd.org/en/books/handbook/filesystems/", "kind": "official"}
+  ]
 }
 </script>
 </head>
-<body class="post">
-<div class="wrap">
+<body class="post"><div class="wrap">
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#018 · 07·08·2026</span></div></div>
+<header class="post"><p class="eyebrow">Công cụ mới · Cloud sync</p><h1>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h1><p class="lede">Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi <code>aws s3 cp</code> tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. <strong>rclone</strong> là "rsync cho cloud": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp <em>crypt</em> mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
 
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#018 · 07·08·2026</span>
-    </div>
-  </div>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="rclone crypt mã hoá nội dung bằng XSalsa20 Poly1305 và tên bằng AES EME trước khi ghi lên remote nền, nhưng một số metadata như kích thước và thời gian vẫn có thể lộ"><rect width="760" height="250" fill="#F7FAF9"/><rect x="30" y="85" width="150" height="80" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="105" y="118" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">Local source</text><text x="105" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="11">/srv/data</text><line x1="180" y1="125" x2="255" y2="125" stroke="#0C6E61" stroke-width="2"/><rect x="260" y="55" width="250" height="140" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="385" y="85" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">crypt:</text><text x="385" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">content: XSalsa20 + Poly1305</text><text x="385" y="140" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">names: AES-256 EME</text><text x="385" y="167" text-anchor="middle" font-family="JetBrains Mono" font-size="10">size/mtime: không được che hoàn toàn</text><line x1="510" y1="125" x2="575" y2="125" stroke="#0C6E61" stroke-width="2"/><rect x="580" y="85" width="150" height="80" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="655" y="118" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">Remote nền</text><text x="655" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">S3/B2/Drive/SFTP</text></svg><figcaption>Hình 1 — crypt bảo vệ plaintext nội dung và tên, nhưng không biến cloud thành nơi không quan sát được metadata.</figcaption></figure>
 
-  <header class="post">
-    <p class="eyebrow">Công cụ mới · Cloud sync</p>
-    <h1>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h1>
-    <p class="lede">Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi <code>aws s3 cp</code> tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. <strong>rclone</strong> là "rsync cho cloud": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp <em>crypt</em> mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · CÔNG CỤ MỚI</span>
-      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
-      <span class="tag">~9 PHÚT</span>
-    </div>
-  </header>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>rclone phù hợp khi cần một CLI thống nhất cho object/cloud storage và muốn mã hoá phía client. Nhưng <code>sync</code> có quyền xoá ở đích, còn <code>crypt</code> không thay IAM, versioning hay backup độc lập. Vì vậy workflow phải có preview, giới hạn quyền và bước verify.</p></section>
 
-  <figure>
-    <!-- Hero: luồng rclone — nguồn local -> lớp crypt mã hoá tên file + nội dung -> nhiều backend cloud -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ luồng rclone: dữ liệu local đi qua remote crypt được mã hoá tên file và nội dung bằng AES-256 ngay trên máy nguồn, rồi rclone sync đẩy lên một remote nền — có thể là S3, Backblaze B2, Google Drive hoặc SFTP — nơi chỉ nhìn thấy dữ liệu đã mã hoá">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Remote:</strong> backend được khai trong <code>rclone.conf</code>.</li><li><strong>crypt:</strong> nội dung dùng NaCl SecretBox (XSalsa20 + Poly1305); tên file/directory mặc định dùng AES-256 EME. Không phải AES-SIV/AES-CBC.</li><li><strong>Metadata:</strong> kích thước và modification time không được crypt che hoàn toàn; đừng nói nhà cung cấp “không thấy gì”.</li><li><strong>copy:</strong> không xoá file chỉ có ở đích. <strong>sync:</strong> làm đích khớp nguồn và có thể xoá. <strong>bisync:</strong> workflow hai chiều nâng cao, có state/resync và rủi ro data loss nếu dùng sai.</li><li><strong>mount:</strong> cần FUSE; <code>copy/sync/check</code> không cần FUSE.</li></ul></section>
 
-      <!-- NGUỒN -->
-      <g>
-        <rect x="30" y="112" width="140" height="76" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="100" y="145" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">NGUỒN</text>
-        <text x="100" y="166" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11.5">/home, /srv/data…</text>
-        <line x1="170" y1="150" x2="252" y2="150" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      </g>
+<figure><svg viewBox="0 0 760 245" role="img" aria-label="Bảng cài rclone trên Ubuntu Debian Fedora và FreeBSD, FreeBSD chỉ cần fusefs khi dùng mount"><rect width="760" height="245" fill="#fff"/><g font-family="JetBrains Mono" font-size="10.5"><rect x="20" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="105" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="105" y="105" text-anchor="middle">apt install rclone</text><text x="105" y="135" text-anchor="middle">rclone version</text><text x="105" y="165" text-anchor="middle">FUSE chỉ cho mount</text><rect x="205" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="290" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text><text x="290" y="105" text-anchor="middle">apt install rclone</text><text x="290" y="135" text-anchor="middle">kho stable có thể cũ</text><text x="290" y="165" text-anchor="middle">kiểm version trước</text><rect x="390" y="35" width="170" height="165" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="475" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text><text x="475" y="105" text-anchor="middle">dnf install rclone</text><text x="475" y="135" text-anchor="middle">SELinux vẫn áp dụng</text><text x="475" y="165" text-anchor="middle">cho mount/path</text><rect x="575" y="35" width="165" height="165" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="105" text-anchor="middle">pkg install rclone</text><text x="657" y="135" text-anchor="middle">kldload fusefs</text><text x="657" y="165" text-anchor="middle">kld_list+=fusefs</text></g></svg><figcaption>Hình 2 — Core CLI giống nhau; FreeBSD tách riêng FUSE vì chỉ <code>mount</code> cần kernel module.</figcaption></figure>
 
-      <!-- LỚP CRYPT -->
-      <g>
-        <rect x="256" y="82" width="234" height="136" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
-        <text x="373" y="108" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="15" font-weight="700">remote "crypt:"</text>
-        <line x1="280" y1="122" x2="466" y2="122" stroke="#D5DEDA" stroke-width="1"/>
-        <text x="373" y="146" text-anchor="middle" fill="#14201D" font-family="JetBrains Mono, monospace" font-size="12">mã hoá tên file (AES-SIV)</text>
-        <text x="373" y="168" text-anchor="middle" fill="#14201D" font-family="JetBrains Mono, monospace" font-size="12">mã hoá nội dung (AES-256)</text>
-        <text x="373" y="193" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10.5">rclone sync — chỉ đẩy phần đã đổi</text>
-        <line x1="490" y1="150" x2="558" y2="150" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      </g>
-
-      <!-- REMOTE NỀN -->
-      <g>
-        <rect x="562" y="48" width="164" height="204" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <text x="644" y="72" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">REMOTE NỀN</text>
-        <rect x="578" y="86" width="132" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
-        <text x="644" y="103" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">s3:bucket</text>
-        <rect x="578" y="120" width="132" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
-        <text x="644" y="137" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">b2:bucket</text>
-        <rect x="578" y="154" width="132" height="26" rx="4" fill="rgba(12,110,97,.10)" stroke="#0C6E61" stroke-width="1.2"/>
-        <text x="644" y="171" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">drive:folder</text>
-        <text x="644" y="200" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10">+ sftp / webdav</text>
-        <text x="644" y="216" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="10">/ 70+ backend khác</text>
-        <text x="644" y="240" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="10" letter-spacing=".5">chỉ thấy tên &amp; nội dung đã mã hoá</text>
-      </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">MỘT LỆNH SYNC · MỘT LỚP MÃ HOÁ · NHIỀU BACKEND</text>
-    </svg>
-    <figcaption>Hình 1 — rclone bọc remote thật (S3, B2, Drive…) trong một remote "crypt" mã hoá cả tên file lẫn nội dung ngay trên máy nguồn; phía kho cloud không đọc được gì nếu không có mật khẩu remote.</figcaption>
-  </figure>
-
-  <section>
-    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Rất nhiều nơi "backup lên cloud" chỉ là kéo thả tay vào một thư mục Drive dùng chung, hoặc một dòng <code>aws s3 cp</code> viết vội với access key nằm thẳng trong script. Không ai kiểm soát nổi bản nào mới nhất, và nếu bucket bị lộ quyền đọc thì dữ liệu gốc — hợp đồng, log khách hàng, cấu hình — nằm trần trụi cho bất kỳ ai xem được. <strong>rclone</strong> giải quyết cả hai vế: đồng bộ có kiểm soát (biết chính xác cái gì đổi, cái gì bị xoá) và mã hoá phía client trước khi rời máy, bất kể phía sau là backend nào.</p>
-  </section>
-
-  <section>
-    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p><strong>rclone</strong> là công cụ mã nguồn mở viết bằng Go, phân phối dưới dạng một binary tĩnh nói chuyện được với hơn 70 backend lưu trữ — từ S3-compatible, Backblaze B2, Google Drive, đến SFTP và WebDAV. Vài khái niệm cần nắm trước khi dùng:</p>
-    <ul class="clean">
-      <li><strong>Remote:</strong> một mục cấu hình trong <code>rclone.conf</code> (ví dụ <code>s3:</code>, <code>b2:</code>) trỏ tới một backend cụ thể kèm khoá truy cập.</li>
-      <li><strong>Remote crypt:</strong> một remote "ảo" bọc lên trên remote thật — mọi thứ ghi qua <code>crypt:</code> được mã hoá trước khi rclone thật sự gửi tới remote nền; đọc lại cũng phải qua đúng remote crypt và đúng mật khẩu.</li>
-      <li><strong><code>sync</code> vs <code>copy</code> vs <code>bisync</code>:</strong> <code>copy</code> chỉ thêm/ghi đè, không xoá gì ở đích; <code>sync</code> làm đích <em>khớp tuyệt đối</em> với nguồn — kể cả xoá file thừa ở đích; <code>bisync</code> đồng bộ hai chiều cho nhu cầu làm việc trên nhiều máy.</li>
-      <li><strong>rclone mount:</strong> gắn một remote (kể cả remote crypt) thành một thư mục cục bộ qua FUSE, dùng như ổ đĩa bình thường — không phải lúc nào cũng cần, nhưng tiện khi cần truy cập tức thời.</li>
-    </ul>
-  </section>
-
-  <figure>
-    <!-- So sánh cài đặt rclone trên 4 hệ điều hành -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng cài đặt rclone: Ubuntu và Xubuntu dùng apt install rclone hoặc script cài chính chủ, Debian dùng apt install rclone hoặc script cài chính chủ nếu cần bản mới, Fedora dùng dnf install rclone, FreeBSD dùng pkg install rclone và cần nạp thêm module fusefs để dùng rclone mount">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install</text>
-        <text x="104" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">rclone</text>
-        <text x="104" y="152" text-anchor="middle" font-size="10" fill="#566661">kho có thể hơi cũ</text>
-        <text x="104" y="167" text-anchor="middle" font-size="10" fill="#566661">→ script cài chính chủ</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">apt install</text>
-        <text x="284" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">rclone</text>
-        <text x="284" y="152" text-anchor="middle" font-size="10" fill="#566661">bản trong kho ổn định</text>
-        <text x="284" y="167" text-anchor="middle" font-size="10" fill="#566661">nhưng thường chậm cập nhật</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="150" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="108" text-anchor="middle" font-size="11.5" fill="#0C6E61">dnf install</text>
-        <text x="464" y="124" text-anchor="middle" font-size="11.5" fill="#0C6E61">rclone</text>
-        <text x="464" y="152" text-anchor="middle" font-size="10" fill="#566661">kho mặc định</text>
-        <text x="464" y="167" text-anchor="middle" font-size="10" fill="#566661">SELinux: xem mục 05</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="150" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="108" text-anchor="middle" font-size="11.5" fill="#B23A2E">pkg install</text>
-        <text x="650" y="124" text-anchor="middle" font-size="11.5" fill="#B23A2E">rclone</text>
-        <text x="650" y="152" text-anchor="middle" font-size="10" fill="#7A4A44">net/rclone</text>
-        <text x="650" y="210" text-anchor="middle" font-size="10.5" fill="#B23A2E" letter-spacing="1">— mount cần nạp fusefs —</text>
-      </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG BINARY · KHÁC NGUỒN GÓI</text>
-    </svg>
-    <figcaption>Hình 2 — Bốn hệ điều hành lấy gói rclone ở bốn nơi khác nhau; sau khi cài xong thì lệnh <code>rclone</code> giống hệt nhau, chỉ riêng FreeBSD cần thêm một bước nạp module trước khi dùng <code>rclone mount</code>.</figcaption>
-  </figure>
-
-  <section>
-    <h2><span class="num">03</span> Cài đặt &amp; cấu hình trên từng hệ điều hành</h2>
-    <p>Giả định chung: đồng bộ thư mục <code>/srv/data</code> lên bucket S3-compatible tên <code>backup-bucket</code>, đi qua một remote crypt tên <code>secure</code>.</p>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span>
-    <pre><code>sudo apt update
+<section><h2><span class="num">03</span> Thực hành từng bước</h2><span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span><pre><code>sudo apt update
 sudo apt install -y rclone
-<span class="cmt"># Cần bản mới hơn (tính năng bisync, mount...)? Dùng script cài chính chủ:</span>
-<span class="cmt"># curl https://rclone.org/install.sh | sudo bash</span>
+rclone version
+rclone config</code></pre><span class="code-label"><span class="dot"></span>Fedora</span><pre><code>sudo dnf install -y rclone
+rclone version
+rclone config</code></pre><span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg; FUSE chỉ khi mount</span><pre class="bsd"><code>pkg install -y rclone
+rclone version
+rclone config
 
-rclone config   <span class="cmt"># hỏi-đáp tương tác: tạo remote "s3", rồi remote "secure" (type=crypt, bọc s3:backup-bucket)</span></code></pre>
-
-    <span class="code-label"><span class="dot"></span>Debian</span>
-    <pre><code>sudo apt update
-sudo apt install -y rclone
-<span class="cmt"># Debian ổn định thường giữ phiên bản khá lâu; nếu thiếu tính năng mới, dùng</span>
-<span class="cmt"># script cài chính chủ như trên hoặc tải binary tĩnh từ trang phát hành.</span>
-
-rclone config</code></pre>
-
-    <span class="code-label"><span class="dot"></span>Fedora — dnf</span>
-    <pre><code>sudo dnf install -y rclone
-
-rclone config</code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg (tách riêng)</span>
-    <pre class="bsd"><code>pkg install -y rclone fusefs-libs
-<span class="cmt"># Cần module fusefs để dùng rclone mount (không bắt buộc cho sync/copy):</span>
+# Chỉ nếu dùng rclone mount:
 kldload fusefs
-sysrc -f /etc/rc.conf fusefs_load="YES"   <span class="cmt"># tự nạp lại sau khi khởi động</span>
-
-rclone config</code></pre>
-
-    <p>Sau khi cấu hình xong remote <code>secure</code> (crypt bọc <code>s3</code>), lệnh đồng bộ giống hệt nhau trên cả bốn hệ điều hành:</p>
-    <pre><code><span class="cmt"># LUÔN --dry-run trước, xem trước rclone sẽ xoá/ghi đè gì:</span>
+sysrc kld_list+=fusefs</code></pre><p>Với remote crypt tên <code>secure:</code>:</p><pre><code># Preview trước:
 rclone sync /srv/data secure: --dry-run
 
-<span class="cmt"># Ổn rồi mới chạy thật:</span>
-rclone sync /srv/data secure: --transfers 8 --checkers 16</code></pre>
-  </section>
+# Có thể dùng interactive cho thay đổi nhạy cảm:
+rclone sync /srv/data secure: --interactive
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <p>Vì cùng một binary, các lệnh kiểm tra dưới đây chạy giống hệt trên cả Linux lẫn FreeBSD — khác biệt duy nhất là bước chuẩn bị FUSE nếu bạn dùng <code>rclone mount</code> (xem mục 05).</p>
-    <span class="code-label"><span class="dot"></span>Linux &amp; FreeBSD — như nhau</span>
-    <pre><code>rclone lsd secure:                     <span class="cmt"># liệt kê thư mục trên remote (tên đã giải mã khi xem qua crypt)</span>
-rclone check /srv/data secure:         <span class="cmt"># so khớp checksum nguồn với remote, không truyền lại dữ liệu</span>
-rclone size secure:                    <span class="cmt"># tổng dung lượng đã đồng bộ</span></code></pre>
-  </section>
+# Khi policy đã rõ mới chạy non-interactive:
+rclone sync /srv/data secure:</code></pre></section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
-    <ul class="clean">
-      <li><strong>Chạy <code>sync</code> mà quên <code>--dry-run</code>:</strong> <code>rclone sync</code> làm đích khớp tuyệt đối với nguồn — file nào có ở đích mà không có ở nguồn sẽ bị <em>xoá</em>. Đảo ngược thứ tự tham số một lần là xoá sạch remote.</li>
-      <li><strong>Quên đặt kiểu mã hoá tên file:</strong> remote crypt mặc định mã hoá tên (<code>standard</code>), nhưng nếu chọn <code>off</code> lúc <code>rclone config</code> thì nội dung được mã hoá còn tên file thì không — dò tên vẫn lộ cấu trúc dữ liệu.</li>
-      <li><strong>Ubuntu/Debian:</strong> bản trong kho có thể chậm hơn thượng nguồn nhiều tháng, thiếu backend mới hoặc bản vá bảo mật — kiểm tra <code>rclone version</code> rồi cân nhắc script cài chính chủ.</li>
-      <li><strong>Fedora:</strong> SELinux có thể chặn tiến trình <code>rclone mount</code> truy cập thư mục ngoài ngữ cảnh quen thuộc — xem <code>journalctl</code>/<code>audit.log</code> nếu mount báo lỗi quyền dù <code>ls</code> tay vẫn được.</li>
-      <li><strong>FreeBSD:</strong> thiếu <code>kldload fusefs</code> thì <code>rclone mount</code> báo lỗi không tìm thấy <code>/dev/fuse</code>; lệnh <code>sync</code>/<code>copy</code> thuần thì không cần FUSE, chạy bình thường.</li>
-      <li><strong>Quá nhiều <code>--transfers</code>:</strong> đẩy song song quá cao dễ chạm rate limit của backend (S3/B2 trả lỗi 429) — tăng dần và theo dõi log thay vì đặt số lớn ngay từ đầu.</li>
-    </ul>
-    <div class="callout">
-      <span class="k">crypt không thay thế IAM</span>
-      Mã hoá phía client giúp phía kho không đọc được nội dung, nhưng nếu access key bị lộ thì kẻ tấn công vẫn <em>xoá được</em> toàn bộ dữ liệu đã mã hoá (không cần đọc được nội dung để xoá file). Giới hạn quyền của access key ở mức tối thiểu cần thiết — xem mục 06.
-    </div>
-  </section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><pre><code># Kiểm local plaintext với crypt remote:
+rclone cryptcheck /srv/data secure:
 
-  <section>
-    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <div class="callout tip">
-      <span class="k">Mã hoá cả file cấu hình</span>
-      <code>rclone.conf</code> mặc định lưu access key ở dạng gần như plaintext (obscure, không phải mã hoá thật). Đặt mật khẩu cho file cấu hình bằng <code>rclone config</code> → set password, rồi cung cấp lúc chạy qua <code>RCLONE_CONFIG_PASS</code> hoặc <code>--password-command</code> thay vì gõ tay mỗi lần.
-    </div>
-    <ul class="clean">
-      <li>Access key dùng cho rclone nên là một IAM user/khoá riêng, chỉ có quyền ghi/đọc đúng một bucket — không dùng khoá quản trị toàn tài khoản.</li>
-      <li>Luôn thử lệnh với <code>--dry-run</code> trước một lần <code>sync</code> quan trọng, đặc biệt khi đổi đường dẫn nguồn hoặc remote.</li>
-      <li>Lên lịch: Ubuntu/Debian/Fedora dùng <strong>systemd timer</strong>; FreeBSD dùng <strong>cron</strong> hoặc <strong>periodic(8)</strong> — cùng một câu lệnh <code>rclone sync</code>, chỉ khác cách gọi định kỳ.</li>
-      <li>Kiểm tra định kỳ bằng <code>rclone check</code> để phát hiện lệch dữ liệu sớm, đừng chỉ tin tưởng sync chạy xong là dữ liệu còn nguyên vẹn.</li>
-    </ul>
-  </section>
+# Xem cấu hình và backend mà không in secret:
+rclone listremotes
+rclone about secure: 2&gt;/dev/null || true</code></pre><p><code>cryptcheck</code> so plaintext với encrypted remote khi backend có checksum phù hợp. Nếu backend không hỗ trợ kiểu hash cần thiết, chọn phương án verify khác có đọc dữ liệu thay vì suy luận “sync xong = toàn vẹn”.</p></section>
 
-  <div class="exercise">
-    <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Fedora</strong>, tạo một remote crypt bọc một remote local (thư mục bất kỳ đóng vai "cloud" giả lập). Đồng bộ một thư mục thử bằng <code>rclone sync --dry-run</code>, đọc kỹ output xem những gì <em>sẽ</em> bị xoá/ghi đè, rồi mới chạy thật. Sau đó thử <code>rclone lsd</code> thẳng vào remote nền (không qua crypt) để xem tên file đã bị mã hoá thế nào. Câu hỏi: nếu bạn mất mật khẩu remote crypt nhưng vẫn còn access key remote nền, bạn phục hồi lại dữ liệu gốc được không — vì sao?</p>
-  </div>
+<section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2><ul class="clean"><li><strong><code>sync</code> đảo nguồn/đích:</strong> có thể xoá dữ liệu ở phía không mong muốn. Luôn kiểm path, dùng <code>--dry-run</code>/<code>--interactive</code>; cân nhắc <code>--max-delete</code> hoặc <code>--backup-dir</code> theo policy.</li><li><strong>Đồng nhất crypt với backup:</strong> attacker có credential ghi/xoá vẫn có thể phá ciphertext. Bật versioning/object lock ở backend nếu use case yêu cầu chống xoá.</li><li><strong>bisync:</strong> là command nâng cao; đọc quy trình <code>--resync</code>, check-access và recovery trước production.</li><li><strong>FreeBSD:</strong> không cần FUSE cho <code>sync/copy/check</code>; chỉ nạp <code>fusefs</code> khi mount.</li><li><strong>Metadata leakage:</strong> crypt không che hoàn toàn size/mtime.</li></ul></section>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #018 · Công cụ mới</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #Rclone #Cloud</span>
-    </div>
-  </footer>
+<section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean"><li>Credential backend phải least privilege, tách khỏi tài khoản quản trị toàn cục.</li><li><code>rclone.conf</code> chứa credential đã obscure chứ không phải secret storage mạnh. Dùng <code>rclone config encryption set</code> và kiểm bằng <code>rclone config encryption check</code>.</li><li>Cho automation, ưu tiên <code>--password-command</code>/<code>RCLONE_PASSWORD_COMMAND</code> hoặc secret manager thay vì hard-code password vào script.</li><li>Đặt rate/concurrency phù hợp backend; retry không thay thế monitoring.</li></ul></section>
 
-</div>
-</body>
-</html>
+<div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo một local remote giả lập cloud, bọc bằng <code>crypt:</code>, sync một thư mục thử với <code>--dry-run</code>, chạy thật rồi dùng <code>rclone cryptcheck</code>. Sau đó xem trực tiếp remote nền và ghi lại những gì bị mã hoá, những metadata nào vẫn có thể suy ra.</p></div>
+
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://rclone.org/crypt/">rclone — Crypt</a></li><li><a href="https://rclone.org/commands/rclone_cryptcheck/">rclone — cryptcheck</a></li><li><a href="https://rclone.org/commands/rclone_sync/">rclone — sync</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/filesystems/">FreeBSD Handbook — Other File Systems</a></li></ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
+</div></body></html>
