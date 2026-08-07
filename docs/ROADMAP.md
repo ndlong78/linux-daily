@@ -13,7 +13,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 #013/#016 + #001/#007/#008/#015 đã merge; Storage/Backup trong PR #27
+- Historical source backfill: 🟡 #013/#016 + Networking/Firewall + Storage/Backup đã merge; Auth/Permissions trong PR #28
 
 ## Các mốc đã hoàn thành
 
@@ -59,22 +59,34 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - 4 bài có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
 - PR #26 đã merge 2026-08-07.
 
-## PR #27 — Historical Technical Backfill: Storage & Backup
+### PR #27 — Historical Technical Backfill: Storage & Backup ✅
 
-Mục tiêu: rà #003, #004, #010, #014 và #017 theo nguyên tắc **verify-before-destructive-change** và **restore evidence over backup-success logs**.
+- #003 ZFS: sửa semantics dung lượng snapshot; snapshot ≠ backup; destructive rollback; cập nhật Fedora OpenZFS repo.
+- #004 restic: nhiều key/password; encryption design; preview retention trước prune; phân biệt `check` với data verification.
+- #010 Add disk: xác minh device trước write; GPT alignment; verify fstab; `nofail` chỉ cho mount optional.
+- #014 Backup lab: subset/full data check; restore chọn đúng snapshot/host/path; canary + checksum làm bằng chứng restore.
+- #017 Grow storage: đúng stack disk→partition→PV→LV→filesystem; không mặc định whole-disk PV hay `+100%FREE`; FreeBSD partition index + `growfs -N`; ZFS expansion nuance.
+- 5 bài có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
+- PR #27 đã merge 2026-08-07.
 
-- [x] #003 ZFS: sửa semantics dung lượng snapshot; nhấn mạnh snapshot ≠ backup; làm rõ destructive rollback và `-r`; cập nhật Fedora OpenZFS repo hiện hành.
-- [x] #004 restic: làm rõ repository có nhiều key/password; cập nhật encryption design; preview retention trước prune; phân biệt `check` với data verification.
-- [x] #010 Add disk: bắt buộc discovery size/model/serial/mount state trước write; FreeBSD GPT alignment `-a 1M`; Linux verify fstab trước reboot; `nofail` chỉ cho mount optional.
-- [x] #014 Backup lab: `restic check` không được mô tả như full data read; thêm subset/full read schedule; restore chọn đúng snapshot/host/path; canary + checksum làm bằng chứng restore.
-- [x] #017 Grow storage: mô hình đúng stack disk→partition→PV→LV→filesystem; không mặc định PV là whole disk hay dùng `+100%FREE`; FreeBSD xác định đúng partition index + `growfs -N`; ZFS mirror/RAIDZ expansion nuance.
-- [x] 5 bài có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
-- [x] Đồng bộ Facebook/X cho cả 5 bài.
+## PR #28 — Historical Technical Backfill: Auth & Permissions
+
+Mục tiêu: rà #002 và #009 theo hai nguyên tắc **remote-access changes require a tested rollback path** và **least privilege must not be bypassed by broader group membership**.
+
+- [x] #002 SSH: sửa precedence thành first-value-wins; làm rõ drop-in đọc sớm có thể override file chính.
+- [x] #002 SSH: key-only kiểm `PasswordAuthentication`, `KbdInteractiveAuthentication` và `AuthenticationMethods`; thêm `sshd -T` để xem effective config.
+- [x] #002 SSH: workflow remote = key login → giữ phiên cứu hộ → validate → reload → kiểm bằng phiên mới; không coi service active là đủ.
+- [x] #002 Fedora/FreeBSD: giữ khác biệt service/systemd-vs-rc.d và yêu cầu chuẩn bị SELinux/firewall trước khi chuyển SSH port.
+- [x] #009 sudo/doas: tách administrator toàn quyền khỏi command-specific operator; operator không được đồng thời nằm trong admin group.
+- [x] #009 Debian: không giả định sudo luôn được cài/cấu hình sau installer.
+- [x] #009 FreeBSD: wheel dành cho `su`; doas có thể cấp trực tiếp theo user/group + command; dùng `doas -C` để parse/match policy mà không chạy command.
+- [x] #009: rule least-privilege match executable path + arguments; validate sudoers/doas trước khi áp.
+- [x] 2 bài có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
+- [x] Đồng bộ Facebook/X cho cả 2 bài.
 - [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
 
 ## Mốc kế tiếp — Historical Technical Backfill theo nhóm rủi ro
 
-- [ ] Auth/permissions (#002, #009): OpenSSH/sudo/doas hiện hành, đường rollback khi hardening remote access.
 - [ ] Monitoring/automation còn lại: rà các claim phụ thuộc distro/version và thêm nguồn theo mức rủi ro.
 - [ ] Tiếp tục backfill theo PR nhỏ; không thay đổi ngày xuất bản lịch sử.
 
@@ -100,5 +112,6 @@ Mục tiêu: rà #003, #004, #010, #014 và #017 theo nguyên tắc **verify-bef
 4. Không bypass quality gate.
 5. Thay đổi mạng/firewall/remote access phải có rollback path trước khi persist.
 6. Thao tác storage phá huỷ/resize phải xác minh đúng device/layer trước khi ghi; backup phải có restore evidence định kỳ.
-7. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
-8. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
+7. Phân quyền least-privilege không được đồng thời cấp một admin-group path rộng hơn; policy phải validate trước khi áp.
+8. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
+9. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
