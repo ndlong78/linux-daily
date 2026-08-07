@@ -1,30 +1,33 @@
 [Tweet 1] — đính kèm post-010-code.png
-💽 mount /dev/sdb1 /data rồi tưởng xong? Reboot phát là /data trống trơn — mount tay không sống qua khởi động. Muốn đĩa ở lại phải khai fstab. Thread thêm đĩa đúng cách 🧵
+💽 Thêm disk mới: lệnh đầu tiên KHÔNG nên là parted/gpart. Trước hết phải chứng minh đúng thiết bị bằng size/model/serial/mount state. Thread 🧵
 
 [Tweet 2]
-Quy trình 4 bước, chung mọi HĐH:
-1 nhận diện đĩa → 2 phân vùng GPT → 3 tạo filesystem → 4 mount vĩnh viễn qua fstab.
-Khác nhau ở công cụ + cách định danh bền.
+Linux discovery:
+lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,MOUNTPOINTS
+blkid
+findmnt --real
+Chỉ khi khớp change request mới chạy lệnh ghi.
 
 [Tweet 3]
-Linux (Ubuntu/Debian):
-parted /dev/sdb --script mklabel gpt mkpart primary 0% 100%
-mkfs.ext4 /dev/sdb1
-(Fedora: mkfs.xfs). fstab khai theo UUID (blkid).
+FreeBSD discovery:
+geom disk list
+gpart show
+mount
+Khi tạo GPT partition mới, FreeBSD Handbook minh hoạ alignment -a 1M.
 
-[Tweet 4] — FreeBSD
-FreeBSD dùng bộ khác hẳn:
-gpart create -s gpt ada1
-gpart add -t freebsd-ufs -l data0 ada1
-newfs -U /dev/gpt/data0
-Mount theo NHÃN GPT: /dev/gpt/data0, không có mkfs.ext4.
+[Tweet 4]
+fstab Linux: ưu tiên UUID. Trước reboot:
+findmnt --verify --verbose
+mount -a
+findmnt /data
+Đừng sửa fstab xong rồi reboot ngay.
 
 [Tweet 5]
-⚠️ Đừng khai fstab bằng /dev/sdb1 — cắm thêm ổ khác là thứ tự đổi (sdb→sdc), mount nhầm. Dùng UUID (Linux) hoặc nhãn GPT (FreeBSD): ổn định bất kể thứ tự.
+nofail KHÔNG phải option mặc định cho mọi /data. Chỉ dùng khi mount thực sự optional; với disk bắt buộc, lỗi mount nên được phát hiện rõ.
 
 [Tweet 6]
-⚠️ fstab sai = treo boot. LUÔN chạy mount -a để thử TRƯỚC khi reboot. Linux thêm nofail để hệ không treo nếu đĩa vắng mặt.
+FreeBSD: gpart + newfs UFS, có thể dùng nhãn GPT /dev/gpt/data0 trong fstab. Không áp parted/mkfs.ext4 của Linux sang FreeBSD.
 
 [Tweet 7]
-Full bài + sơ đồ 4 bước: {{LINK}}
+Full bài + checklist destructive-operation: {{LINK}}
 #LinuxDaily #Storage #FreeBSD
