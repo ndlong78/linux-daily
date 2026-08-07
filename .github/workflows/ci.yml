@@ -52,3 +52,50 @@ jobs:
           printf 'sudo systemctl restart nginx  # khởi động lại\npkg install nginx\n' > /tmp/snippet.txt
           python tools/render_code.py --in /tmp/snippet.txt --out /tmp/ci-code.png --title "CI smoke"
           test -s /tmp/ci-code.png
+
+  vendor-pr43-fonts:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.ref == 'chatgpt/pr43-complete-self-host-fonts' && github.actor != 'github-actions[bot]'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr43-complete-self-host-fonts
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Vendor upstream OFL fonts as WOFF2
+        run: |
+          set -euo pipefail
+          pip install 'fonttools[woff]'
+          mkdir -p assets/fonts/licenses /tmp/fonts
+          base='https://raw.githubusercontent.com/google/fonts/main/ofl'
+          curl -fsSL "$base/bevietnampro/BeVietnamPro-Regular.ttf" -o /tmp/fonts/be-vietnam-pro-400.ttf
+          curl -fsSL "$base/bevietnampro/BeVietnamPro-Medium.ttf" -o /tmp/fonts/be-vietnam-pro-500.ttf
+          curl -fsSL "$base/bevietnampro/BeVietnamPro-SemiBold.ttf" -o /tmp/fonts/be-vietnam-pro-600.ttf
+          curl -fsSL "$base/bevietnampro/BeVietnamPro-Bold.ttf" -o /tmp/fonts/be-vietnam-pro-700.ttf
+          curl -fsSL "$base/bevietnampro/BeVietnamPro-ExtraBold.ttf" -o /tmp/fonts/be-vietnam-pro-800.ttf
+          curl -fsSL "$base/bevietnampro/OFL.txt" -o assets/fonts/licenses/Be-Vietnam-Pro-OFL.txt
+          curl -fsSL "$base/jetbrainsmono/JetBrainsMono%5Bwght%5D.ttf" -o /tmp/fonts/jetbrains-mono.ttf
+          curl -fsSL "$base/jetbrainsmono/OFL.txt" -o assets/fonts/licenses/JetBrains-Mono-OFL.txt
+          curl -fsSL "$base/notoserif/NotoSerif%5Bwdth%2Cwght%5D.ttf" -o /tmp/fonts/noto-serif.ttf
+          curl -fsSL "$base/notoserif/NotoSerif-Italic%5Bwdth%2Cwght%5D.ttf" -o /tmp/fonts/noto-serif-italic.ttf
+          curl -fsSL "$base/notoserif/OFL.txt" -o assets/fonts/licenses/Noto-Serif-OFL.txt
+          python - <<'PY'
+          from pathlib import Path
+          from fontTools.ttLib import TTFont
+          for src in Path('/tmp/fonts').glob('*.ttf'):
+              font = TTFont(src)
+              font.flavor = 'woff2'
+              font.save(Path('assets/fonts') / f'{src.stem}.woff2')
+          PY
+          test "$(find assets/fonts -maxdepth 1 -name '*.woff2' | wc -l)" -eq 8
+      - name: Commit font assets to PR branch
+        run: |
+          if git diff --quiet -- assets/fonts; then exit 0; fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add assets/fonts
+          git commit -m 'PR #43: vendor self-hosted WOFF2 font assets'
+          git push origin HEAD:chatgpt/pr43-complete-self-host-fonts
