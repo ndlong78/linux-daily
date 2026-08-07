@@ -6,9 +6,9 @@ build.py — Một lệnh duy nhất: dựng website output rồi chạy quality
   python3 tools/build.py --check    # không ghi; chỉ kiểm tra mọi artifact/post đã đồng bộ
 
 Gộp index, RSS, sitemap/robots, historical discovery + social preview metadata,
-structural/source-backed validation và deterministic internal-link gate vào một luồng.
-External HTTP checks chạy riêng trong CI để lỗi mạng/website bên thứ ba không che mất
-quality gate local.
+structural/source-backed validation, website/SEO consistency và deterministic internal-link
+gate vào một luồng. External HTTP checks chạy riêng trong CI để lỗi mạng/website bên thứ ba
+không che mất quality gate local.
 """
 import argparse
 import os
@@ -21,6 +21,7 @@ import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
 import check_links  # noqa: E402
 import validate_repo  # noqa: E402
+import validate_site  # noqa: E402
 import validate_sources  # noqa: E402
 
 
@@ -97,14 +98,19 @@ def main(argv=None) -> int:
         _print_errors("Source-backed gate", source_report.errors)
         return 1
 
+    site_report = validate_site.run()
+    if site_report.errors:
+        _print_errors("Website/SEO gate", site_report.errors)
+        return 1
+
     link_errors = check_links.check_internal()
     if link_errors:
         _print_errors("Internal-link gate", link_errors)
         return 1
 
     print(
-        "✓ Build + RSS + sitemap/robots + historical canonical/OG/RSS/social preview + "
-        "quality gate + source-backed review + internal links: tất cả kiểm tra đều đạt."
+        "✓ Build + RSS + sitemap/robots + canonical/OG/social + website/SEO + "
+        "source-backed review + internal links: tất cả kiểm tra đều đạt."
     )
     return 0
 
