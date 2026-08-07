@@ -15,7 +15,8 @@ Kiểm tra:
                 không còn placeholder {{...}}, đúng 2 <svg> (đều role="img"+aria-label),
                 2 <figcaption>, đủ 7 mục 01–07, có khối FreeBSD (code-label bsd),
                 giữ link CSS chung và hai link "về trang chủ", body.post, lang="vi".
-  social/     — mỗi bài có facebook.txt và x.txt; mỗi tweet trong x.txt ≤ 280 ký tự.
+  social/     — mỗi bài có facebook.txt và x.txt; mỗi tweet trong x.txt ≤ 280 ký tự
+                (tính {{LINK}} = 23 ký tự như t.co của X).
   index.html  — đồng bộ với posts/ (gọi build_index.render_index).
 """
 from __future__ import annotations
@@ -45,7 +46,17 @@ AXIS_CYCLE = [
 ]
 
 TWEET_LIMIT = 280
+# X bọc MỌI URL qua t.co thành đúng 23 ký tự, bất kể độ dài thật. Placeholder
+# {{LINK}} (8 ký tự) sẽ được thay bằng URL bài khi đăng, nên phải đếm theo 23 để
+# không "đạt" nhầm một tweet thực chất vượt 280 sau khi thay link.
+TWEET_URL_LEN = 23
+LINK_PLACEHOLDER = "{{LINK}}"
 TOPIC_LINE_RE = re.compile(r"^#(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(.+?)\s*$")
+
+
+def tweet_length(text: str) -> int:
+    """Độ dài tweet như X đếm: mỗi {{LINK}} tính bằng 23 ký tự (t.co), không phải 8."""
+    return len(text) + text.count(LINK_PLACEHOLDER) * (TWEET_URL_LEN - len(LINK_PLACEHOLDER))
 
 
 class Report:
@@ -226,8 +237,9 @@ def validate_social(expected_n: int, report: Report) -> None:
         parts = [p.strip() for p in re.split(r"\[Tweet \d+\]", txt) if p.strip()]
         report.check(len(parts) >= 1, f"social: {os.path.basename(x)} không có tweet nào đánh dấu [Tweet n].")
         for i, p in enumerate(parts, 1):
-            if len(p) > TWEET_LIMIT:
-                report.fail(f"social: {os.path.basename(x)} tweet {i} dài {len(p)} ký tự (> {TWEET_LIMIT}).")
+            n = tweet_length(p)
+            if n > TWEET_LIMIT:
+                report.fail(f"social: {os.path.basename(x)} tweet {i} dài {n} ký tự (> {TWEET_LIMIT}, đã tính {LINK_PLACEHOLDER} = {TWEET_URL_LEN}).")
     else:
         report.fail(f"social: thiếu {os.path.basename(x)}.")
 
