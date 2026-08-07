@@ -1,21 +1,31 @@
 [Tweet 1] — đính kèm post-002-code.png
-🔒 SSH hardening an toàn không bắt đầu bằng “tắt password”. Trình tự đúng: key login đã hoạt động → giữ phiên cứu hộ → kiểm sshd_config → reload → đăng nhập bằng một phiên MỚI. Thread 🧵
+🔒 SSH hardening từ xa: mục tiêu không chỉ là “tắt password”, mà là chuyển sang key-only mà vẫn giữ được đường quản trị. Thread 🧵
 
 [Tweet 2]
-OpenSSH dùng nguyên tắc “first value wins” cho phần lớn directive. Trên Ubuntu/Debian, sshd_config.d thường được Include ở đầu file chính, nên drop-in đọc sớm có thể override cấu hình nằm sau.
+Key-only thật sự cần nhìn nhiều hơn một directive:
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
+Chỉ làm sau khi public key đã đăng nhập thành công.
 
 [Tweet 3]
-Key-only nên kiểm cả các method liên quan: PubkeyAuthentication yes, PasswordAuthentication no, KbdInteractiveAuthentication no. Có thể dùng AuthenticationMethods publickey để yêu cầu public key.
+OpenSSH không dùng quy tắc “dòng sau cùng thắng” cho phần lớn directive. Giá trị ĐẦU TIÊN đọc được mới thắng. Vì vậy drop-in sshd_config.d đọc sớm có thể override file chính.
 
 [Tweet 4]
-Validate 2 lớp: sshd -t kiểm cú pháp; sshd -T in effective config. Có Match thì thêm -C user=...,host=...,addr=... để kiểm đúng ngữ cảnh.
+Validate hai lớp:
+• sshd -t → cú pháp
+• sshd -T → effective config
+Có Match block thì dùng thêm -C để kiểm đúng user/host/address.
 
 [Tweet 5]
-Tên service: Ubuntu/Debian → ssh; Fedora/FreeBSD → sshd. FreeBSD dùng rc.d/service, không systemd. Đổi port Fedora thì xử lý SELinux + firewalld cho port mới trước khi bỏ port cũ.
+Làm máy remote: giữ phiên SSH hiện tại, reload, rồi mở một terminal MỚI. Chỉ khi phiên mới đăng nhập bằng key thành công mới đóng phiên cứu hộ.
 
 [Tweet 6]
-Quan trọng nhất khi làm từ xa: đừng đóng phiên SSH hiện tại cho tới khi một terminal mới đăng nhập bằng key thành công. Service “active” không chứng minh bạn vẫn vào được máy.
+Distro khác nhau ở lớp vận hành:
+• Ubuntu/Debian: systemctl reload ssh
+• Fedora: systemctl reload sshd + SELinux/firewalld nếu đổi port
+• FreeBSD: service sshd reload, không systemd
 
 [Tweet 7]
-Full bài source-backed: {{LINK}}
-#LinuxDaily #SysAdmin #SSH #FreeBSD
+Full bài #002: {{LINK}}
+#LinuxDaily #SSH #SysAdmin #FreeBSD #Security
