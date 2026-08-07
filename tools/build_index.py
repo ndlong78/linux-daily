@@ -12,8 +12,10 @@ Dùng:
 import argparse
 import glob
 import html
+import json
 import os
 import sys
+from urllib.parse import urljoin
 
 from jinja2 import Environment, FileSystemLoader
 
@@ -23,6 +25,7 @@ import postmeta  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+SITE_CONFIG = os.path.join(ROOT, "site.json")
 TEMPLATES_DIR = os.path.join(ROOT, "templates")
 INDEX_TEMPLATE = "index.template.html"
 
@@ -31,6 +34,13 @@ def _fmt_date(iso: str) -> str:
     """2026-08-07 -> 07·08·2026 (định dạng hiển thị trên thẻ)."""
     y, m, d = iso.split("-")
     return f"{int(d):02d}·{int(m):02d}·{int(y):04d}"
+
+
+def _load_site(path=SITE_CONFIG):
+    with open(path, encoding="utf-8") as f:
+        site = json.load(f)
+    site["url"] = site["url"].rstrip("/") + "/"
+    return site
 
 
 def collect_posts(posts_dir=POSTS_DIR):
@@ -44,7 +54,7 @@ def collect_posts(posts_dir=POSTS_DIR):
             "href": "posts/" + os.path.basename(path),
             "num": f"#{n:03d}",
             "date": _fmt_date(meta["date"]),
-            "axis": meta["eyebrow"],  # thẻ dùng eyebrow (trục · phụ đề)
+            "axis": meta["eyebrow"],
             "title": meta["title"],
             "lede": meta["lede"],
         })
@@ -53,8 +63,6 @@ def collect_posts(posts_dir=POSTS_DIR):
 
 
 def _env() -> Environment:
-    # autoescape=False: tự html.escape trong Python để khớp byte với bản cũ
-    # (html.escape dùng &#x27;/&quot;, khác markupsafe của Jinja).
     return Environment(
         loader=FileSystemLoader(TEMPLATES_DIR),
         autoescape=False,
@@ -64,9 +72,10 @@ def _env() -> Environment:
     )
 
 
-def render_index(posts_dir=POSTS_DIR):
-    """Dựng nội dung HTML của trang chủ (không ghi ra đĩa) — dùng chung cho build và --check."""
+def render_index(posts_dir=POSTS_DIR, site_config=SITE_CONFIG):
+    """Dựng nội dung HTML của trang chủ (không ghi ra đĩa)."""
     posts = collect_posts(posts_dir)
+    site = _load_site(site_config)
     ctx = [{
         "href": html.escape(p["href"]),
         "num": html.escape(p["num"]),
@@ -75,7 +84,13 @@ def render_index(posts_dir=POSTS_DIR):
         "title": html.escape(p["title"]),
         "lede": html.escape(p["lede"]),
     } for p in posts]
-    out = _env().get_template(INDEX_TEMPLATE).render(posts=ctx, count=len(posts))
+    out = _env().get_template(INDEX_TEMPLATE).render(
+        posts=ctx,
+        count=len(posts),
+        canonical_url=html.escape(site["url"], quote=True),
+        feed_url=html.escape(urljoin(site["url"], site["feed_path"]), quote=True),
+        site_title=html.escape(site["title"], quote=True),
+    )
     return out, len(posts)
 
 
