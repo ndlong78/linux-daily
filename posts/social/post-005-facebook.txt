@@ -1,12 +1,13 @@
-🔎 Dịch vụ chết lúc 3 giờ sáng. Câu đầu tiên luôn là: "log nói gì?" — nhưng câu trả lời "log ở đâu, đọc bằng gì" lại khác nhau tuỳ hệ điều hành.
+🔎 Khi có sự cố, đừng đoán “distro này log bền, distro kia volatile”. Với systemd-journald, hãy kiểm cấu hình hiệu lực và sự tồn tại của /var/log/journal.
 
-Có hai mô hình log, và biết mình đang ở mô hình nào là kỹ năng vận hành nền tảng:
-• Ubuntu/Xubuntu → journald + journalctl, journal lưu bền sẵn
-• Debian → cũng journalctl, NHƯNG mặc định journal nằm trong RAM, mất sạch sau reboot (⚠ dễ mất chứng cứ khi điều tra sự cố)
-• Fedora → journald + journalctl, lưu bền sẵn (không dùng /var/log/syslog)
-• FreeBSD → syslog truyền thống: log là file text trong /var/log, đọc bằng grep/tail, xoay vòng bằng newsyslog (KHÔNG có journalctl, KHÔNG có logrotate)
+Bài #005 được rà lại:
+• Ubuntu/Debian thường lọc SSH bằng journalctl -u ssh; Fedora là -u sshd.
+• Storage=auto chỉ persistent khi /var/log/journal tồn tại; không hard-code theo distro.
+• journalctl -u/-b/-p/-f vẫn là bộ lọc chính trên Linux.
+• FreeBSD không có journald: syslogd ghi file text, newsyslog xoay vòng.
+• Quyền đọc journal phụ thuộc ACL/group của distro/site, không chỉ một nhóm duy nhất.
 
-Bài #005 chỉ cách lọc log theo dịch vụ + mức ưu tiên bằng journalctl (gọn hơn ghép grep nhiều), cách bật journal lưu bền cho Debian, và bản đồ /var/log của FreeBSD — kèm cảnh báo đồng bộ NTP trước khi tin vào mốc thời gian trong log.
+Điểm vận hành quan trọng: đo dung lượng và retention trước khi vacuum/rotate, đồng bộ NTP trước khi ghép timeline nhiều máy.
 
 👉 Đọc đầy đủ: {{LINK}}
 
