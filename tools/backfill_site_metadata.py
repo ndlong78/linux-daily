@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Backfill canonical/Open Graph/RSS metadata for historical post HTML.
+"""Backfill discovery metadata and repair small historical HTML drift.
 
 The transformation is deterministic and idempotent: public URLs come from site.json,
-post title/description come from ld-meta, and legacy broken source URLs are replaced
-with verified live official equivalents.
+post title/description come from ld-meta, legacy broken source URLs are replaced with
+verified live official equivalents, and old HTML fragments missing the common document
+shell are normalized back to the shared site structure.
 """
 from __future__ import annotations
 
@@ -36,6 +37,33 @@ def _load_site() -> dict:
         return json.load(f)
 
 
+def _ensure_document_shell(text: str, meta: dict) -> str:
+    """Repair historical fragments that have </head>/<body> but no opening document shell."""
+    prefix_probe = text[:1000].lower()
+    if "<html" in prefix_probe:
+        return text
+
+    issue = int(meta["issue"])
+    title = html.escape(str(meta["title"]), quote=True)
+    lede = html.escape(str(meta["lede"]), quote=True)
+    shell = "\n".join(
+        [
+            "<!DOCTYPE html>",
+            '<html lang="vi">',
+            "<head>",
+            '<meta charset="UTF-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            f"<title>{title} — Linux Daily #{issue:03d}</title>",
+            f'<meta name="description" content="{lede}">',
+            '<link rel="preconnect" href="https://fonts.googleapis.com">',
+            '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+            '<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">',
+            '<link rel="stylesheet" href="../assets/style.css">',
+        ]
+    )
+    return shell + "\n" + text
+
+
 def _strip_discovery_lines(text: str) -> str:
     kept: list[str] = []
     for line in text.splitlines():
@@ -58,6 +86,7 @@ def render_post(path: str) -> str:
     for old, new in LEGACY_LINK_REPLACEMENTS.items():
         text = text.replace(old, new)
 
+    text = _ensure_document_shell(text, meta)
     text = _strip_discovery_lines(text)
     basename = os.path.basename(path)
     canonical = urljoin(site["url"], f"posts/{basename}")
@@ -102,7 +131,10 @@ def run(check: bool = False) -> int:
         for path in changed:
             print(f"LỖI: metadata/link backfill chưa đồng bộ: {path}", file=sys.stderr)
         return 1
-    print(f"OK: historical metadata/link backfill {'đồng bộ' if check else 'đã cập nhật'} ({len(changed)} file thay đổi).")
+    print(
+        f"OK: historical metadata/link backfill "
+        f"{'đồng bộ' if check else 'đã cập nhật'} ({len(changed)} file thay đổi)."
+    )
     return 0
 
 
