@@ -5,6 +5,14 @@
 <title>Chẩn đoán mạng: ip/ss trên Linux, ifconfig/netstat trên FreeBSD — Linux Daily #008</title>
 <meta name="description" content="Chẩn đoán mạng theo tầng: interface, IP, route, listener, packet path và name resolution; Linux iproute2, FreeBSD BSD tools.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet"><link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-008-chan-doan-mang.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh">
+<meta property="og:description" content="Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có &quot;up&quot; không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-008-chan-doan-mang.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
 <script type="application/json" id="ld-meta">
 {
   "issue": 8,
@@ -17,7 +25,7 @@
   "review_status": "reviewed",
   "sources": [
     {"title": "iproute2 — upstream project", "url": "https://github.com/iproute2/iproute2", "kind": "upstream"},
-    {"title": "Debian Manpages — getent(1)", "url": "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html", "kind": "official"},
+    {"title": "Debian Manpages — getent(1)", "url": "https://manpages.debian.org/bookworm/manpages/getent.1.en.html", "kind": "official"},
     {"title": "FreeBSD Manual — sockstat(1)", "url": "https://man.freebsd.org/cgi/man.cgi?query=sockstat&sektion=1", "kind": "official"},
     {"title": "FreeBSD Manual — getent(1)", "url": "https://man.freebsd.org/cgi/man.cgi?query=getent&sektion=1", "kind": "official"}
   ]
@@ -59,6 +67,6 @@ sockstat -46 -l</code></pre></section>
 <section><h2><span class="num">06</span> Lưu ý vận hành</h2><p>Ưu tiên lệnh quan sát không phá huỷ. Ghi lại output trước khi restart network service, firewall hoặc daemon. Khi cần thay đổi, thay đúng tầng đang lỗi và có rollback nếu đang thao tác từ xa.</p></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo ba lỗi độc lập trong lab: xoá default route, dừng web service và đổi DNS sai. Với mỗi lỗi, chỉ dùng thang sáu tầng để xác định tầng đầu tiên sai; không restart dịch vụ cho đến khi có bằng chứng.</p></div>
 
-<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/iproute2/iproute2">iproute2 — upstream project</a></li><li><a href="https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html">Debian Manpages — getent(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=sockstat&amp;sektion=1">FreeBSD Manual — sockstat(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=getent&amp;sektion=1">FreeBSD Manual — getent(1)</a></li></ul></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/iproute2/iproute2">iproute2 — upstream project</a></li><li><a href="https://manpages.debian.org/bookworm/manpages/getent.1.en.html">Debian Manpages — getent(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=sockstat&amp;sektion=1">FreeBSD Manual — sockstat(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=getent&amp;sektion=1">FreeBSD Manual — getent(1)</a></li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #008 · Networking</span><span class="hashtags">#LinuxDaily #Networking #Troubleshooting</span></div></footer>
 </div></body></html>
