@@ -2,6 +2,7 @@
 import validate_repo
 from validate_repo import (
     Report,
+    parse_tweets,
     tweet_length,
     validate_post_file,
     validate_social,
@@ -172,7 +173,35 @@ def test_tweet_length_counts_multiple_links():
     assert tweet_length(two) == 2 * validate_repo.TWEET_URL_LEN
 
 
-def _write_social(tmp_path, monkeypatch, n, fb="cap", x="[Tweet 1]\nhi"):
+def thread(bodies, leading=""):
+    """Dựng nội dung x.txt: mỗi phần tử bodies là nội dung một tweet, đánh số 1..N."""
+    parts = [f"[Tweet {i}]\n{b}" for i, b in enumerate(bodies, 1)]
+    return (leading + "\n\n" if leading else "") + "\n\n".join(parts) + "\n"
+
+
+# --- parse_tweets ---
+
+def test_parse_tweets_basic():
+    leading, tweets = parse_tweets("[Tweet 1]\naa\n\n[Tweet 2]\nbb\n")
+    assert leading == ""
+    assert tweets == [(1, "aa"), (2, "bb")]
+
+
+def test_parse_tweets_captures_leading():
+    leading, tweets = parse_tweets("giới thiệu\n[Tweet 1]\naa\n")
+    assert leading == "giới thiệu"
+    assert tweets == [(1, "aa")]
+
+
+def test_parse_tweets_no_marker():
+    leading, tweets = parse_tweets("chỉ là văn bản")
+    assert tweets == []
+    assert leading == "chỉ là văn bản"
+
+
+def _write_social(tmp_path, monkeypatch, n, fb="cap", x=None):
+    if x is None:
+        x = thread([f"tweet {i}" for i in range(1, 6)])  # 5 tweet hợp lệ
     monkeypatch.setattr(validate_repo, "SOCIAL_DIR", str(tmp_path))
     (tmp_path / f"post-{n:03d}-facebook.txt").write_text(fb, encoding="utf-8")
     (tmp_path / f"post-{n:03d}-x.txt").write_text(x, encoding="utf-8")
@@ -187,20 +216,51 @@ def test_social_valid_passes(tmp_path, monkeypatch):
 
 def test_social_tweet_over_limit_with_link(tmp_path, monkeypatch):
     # 265 ký tự thô + {{LINK}} → 265 + 23 = 288 > 280, phải bị bắt.
-    body = "a" * 265 + " " + validate_repo.LINK_PLACEHOLDER
-    _write_social(tmp_path, monkeypatch, 1, x=f"[Tweet 1]\n{body}")
+    bodies = ["ok"] * 4 + ["a" * 265 + " " + validate_repo.LINK_PLACEHOLDER]
+    _write_social(tmp_path, monkeypatch, 1, x=thread(bodies))
     r = Report()
     validate_social(1, r)
     assert any("> 280" in e for e in r.errors)
 
 
 def test_social_tweet_under_limit_without_link_ok(tmp_path, monkeypatch):
-    # Cùng độ dài thô nhưng không có {{LINK}} → 266 ≤ 280, không được báo lỗi.
-    body = "a" * 266
-    _write_social(tmp_path, monkeypatch, 1, x=f"[Tweet 1]\n{body}")
+    # Cùng độ dài thô nhưng không có {{LINK}} → 266 ≤ 280, không được báo lỗi độ dài.
+    bodies = ["ok"] * 4 + ["a" * 266]
+    _write_social(tmp_path, monkeypatch, 1, x=thread(bodies))
     r = Report()
     validate_social(1, r)
     assert not any("> 280" in e for e in r.errors)
+
+
+def test_social_too_few_tweets(tmp_path, monkeypatch):
+    _write_social(tmp_path, monkeypatch, 1, x=thread(["a", "b", "c", "d"]))  # 4 < 5
+    r = Report()
+    validate_social(1, r)
+    assert any("cần 5–7" in e for e in r.errors)
+
+
+def test_social_too_many_tweets(tmp_path, monkeypatch):
+    _write_social(tmp_path, monkeypatch, 1, x=thread([str(i) for i in range(8)]))  # 8 > 7
+    r = Report()
+    validate_social(1, r)
+    assert any("cần 5–7" in e for e in r.errors)
+
+
+def test_social_non_sequential_numbering(tmp_path, monkeypatch):
+    # Đúng số lượng (5) nhưng đánh số nhảy cóc 1,2,3,4,6.
+    x = "\n\n".join(f"[Tweet {i}]\nx" for i in [1, 2, 3, 4, 6]) + "\n"
+    _write_social(tmp_path, monkeypatch, 1, x=x)
+    r = Report()
+    validate_social(1, r)
+    assert any("không liên tục" in e for e in r.errors)
+
+
+def test_social_intro_before_tweet1(tmp_path, monkeypatch):
+    x = thread([f"t{i}" for i in range(1, 6)], leading="Mở đầu lạc chỗ")
+    _write_social(tmp_path, monkeypatch, 1, x=x)
+    r = Report()
+    validate_social(1, r)
+    assert any("trước [Tweet 1]" in e for e in r.errors)
 
 
 def test_social_missing_x_file(tmp_path, monkeypatch):
