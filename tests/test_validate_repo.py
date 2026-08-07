@@ -80,14 +80,27 @@ def _svg(label):
     return f'<svg viewBox="0 0 10 10" role="img" aria-label="{label}"><rect/></svg>'
 
 
-def valid_post_html(n=12, date_disp="06·08·2026"):
+def _meta_block(n, date_iso, slug, eyebrow, title, lede):
+    meta = {"issue": n, "date": date_iso, "axis": "Networking",
+            "eyebrow": eyebrow, "slug": slug, "title": title, "lede": lede}
+    return ('<script type="application/json" id="ld-meta">\n'
+            + json.dumps(meta, ensure_ascii=False) + "\n</script>")
+
+
+def valid_post_html(n=12, date_disp="06·08·2026", date_iso="2026-08-06", slug="demo",
+                    eyebrow="Networking · Demo", title="Tiêu đề demo", lede="Lede demo."):
     nums = "".join(f'<h2><span class="num">{i:02d}</span> Mục</h2>' for i in range(1, 8))
     return f"""<!DOCTYPE html>
 <html lang="vi">
-<head><link rel="stylesheet" href="../assets/style.css"></head>
+<head><link rel="stylesheet" href="../assets/style.css">
+{_meta_block(n, date_iso, slug, eyebrow, title, lede)}
+</head>
 <body class="post"><div class="wrap">
   <a class="brand-home" href="../index.html">home</a>
   <span class="issue">#{n:03d} · {date_disp}</span>
+  <p class="eyebrow">{eyebrow}</p>
+  <h1>{title}</h1>
+  <p class="lede">{lede}</p>
   <figure>{_svg("hero")}<figcaption>Hình 1</figcaption></figure>
   {nums}
   <div class="code-label bsd">FreeBSD</div>
@@ -147,13 +160,42 @@ def test_post_issue_number_mismatch(tmp_path):
 
 
 def test_post_date_mismatch(tmp_path):
+    # Ngày hiển thị trong <span class="issue"> lệch với ngày suy từ topics.md.
     out = check_post(tmp_path, valid_post_html(date_disp="01·01·2026"))
-    assert any("ngày trong HTML" in e for e in out)
+    assert any("01·01·2026" in e and "issue" in e for e in out)
 
 
 def test_post_bad_filename(tmp_path):
     out = check_post(tmp_path, valid_post_html(), name="post-12-Demo.html")
     assert any("tên file" in e for e in out)
+
+
+def test_post_missing_meta_block(tmp_path):
+    html = valid_post_html()
+    # Bỏ khối meta.
+    import re as _re
+    html = _re.sub(r'<script type="application/json" id="ld-meta">.*?</script>', "",
+                   html, flags=_re.S)
+    out = check_post(tmp_path, html)
+    assert any("ld-meta" in e for e in out)
+
+
+def test_post_meta_slug_mismatch(tmp_path):
+    # meta.slug ('demo') khác slug trong tên file ('khac').
+    out = check_post(tmp_path, valid_post_html(slug="demo"), name="post-012-khac.html")
+    assert any("meta.slug" in e for e in out)
+
+
+def test_post_meta_issue_mismatch(tmp_path):
+    out = check_post(tmp_path, valid_post_html(n=11), n=12, name="post-012-demo.html")
+    assert any("meta.issue" in e for e in out)
+
+
+def test_post_meta_title_drift_from_visible(tmp_path):
+    # Đổi <h1> hiển thị nhưng để nguyên meta.title → phải bắt lệch.
+    html = valid_post_html().replace("<h1>Tiêu đề demo</h1>", "<h1>Tiêu đề KHÁC</h1>")
+    out = check_post(tmp_path, html)
+    assert any("meta.title" in e for e in out)
 
 
 def test_axis_cycle_constant_length():

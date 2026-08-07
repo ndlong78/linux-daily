@@ -1,64 +1,55 @@
-"""Unit test cho build_index: parse_post và render_index dùng dữ liệu giả."""
+"""Unit test cho build_index: đọc metadata có cấu trúc + render Jinja2 (dữ liệu giả)."""
+import json
+
 import build_index
 
-POST_HTML = """<!DOCTYPE html>
-<html lang="vi"><body class="post"><div class="wrap">
-  <div class="masthead"><div class="brand">
-    <a class="brand-home" href="../index.html">← Linux Daily</a>
-    <span class="issue">#012 · 06·08·2026</span>
-  </div></div>
-  <header class="post">
-    <p class="eyebrow">Networking · Kết nối</p>
-    <h1>Tiêu đề <em>thử</em></h1>
-    <p class="lede">Đây là lede &amp; mô tả.</p>
-  </header>
-</div></body></html>
-"""
 
-
-def _write_post(posts_dir, name, html):
-    p = posts_dir / name
+def _post(posts_dir, n, slug="demo", eyebrow="Networking · Demo",
+          title="Tiêu đề demo", lede="Lede demo.", date="2026-08-06"):
+    meta = {"issue": n, "date": date, "axis": "Networking",
+            "eyebrow": eyebrow, "slug": slug, "title": title, "lede": lede}
+    html = (
+        "<!DOCTYPE html>\n<html lang=\"vi\">\n<head>\n"
+        '<script type="application/json" id="ld-meta">\n'
+        + json.dumps(meta, ensure_ascii=False)
+        + "\n</script>\n</head>\n<body class=\"post\"></body></html>\n"
+    )
+    p = posts_dir / f"post-{n:03d}-{slug}.html"
     p.write_text(html, encoding="utf-8")
     return str(p)
 
 
-def test_parse_post_extracts_fields(tmp_path):
-    path = _write_post(tmp_path, "post-012-demo.html", POST_HTML)
-    p = build_index.parse_post(path)
-    assert p["n"] == 12
-    assert p["num"] == "#012"
-    assert p["date"] == "06·08·2026"
-    assert p["axis"] == "Networking · Kết nối"
-    assert p["title"] == "Tiêu đề thử"  # tag <em> bị strip
-    assert "lede" in p["lede"]
+def test_collect_posts_reads_meta_and_sorts(tmp_path):
+    _post(tmp_path, 3)
+    _post(tmp_path, 12)
+    posts = build_index.collect_posts(str(tmp_path))
+    assert [p["n"] for p in posts] == [12, 3]  # mới nhất lên đầu
+    assert posts[0]["num"] == "#012"
+    assert posts[0]["date"] == "06·08·2026"  # ISO -> DD·MM·YYYY
 
 
 def test_render_index_sorts_desc_and_counts(tmp_path):
-    _write_post(tmp_path, "post-012-demo.html", POST_HTML)
-    _write_post(tmp_path, "post-003-demo.html", POST_HTML.replace("#012", "#003"))
+    _post(tmp_path, 12)
+    _post(tmp_path, 3)
     out, n = build_index.render_index(str(tmp_path))
     assert n == 2
-    # Bài số lớn hơn (#012) phải đứng trước #003.
     assert out.index("#012") < out.index("#003")
     assert "2 BÀI" in out
 
 
-def test_render_index_strips_wellformed_tags(tmp_path):
-    # Tag đóng đầy đủ bị strip_tags loại bỏ trước khi vào index.
-    evil = POST_HTML.replace("Tiêu đề <em>thử</em>", "Tiêu đề<script>alert(1)</script>")
-    _write_post(tmp_path, "post-012-demo.html", evil)
+def test_render_index_escapes_meta_title(tmp_path):
+    # Tiêu đề trong meta có ký tự đặc biệt (< > &) phải được html.escape khi vào index.
+    _post(tmp_path, 5, title="A <b>tag</b> & co")
     out, _ = build_index.render_index(str(tmp_path))
-    assert "<script>" not in out
-    assert "alert(1)" in out  # phần văn bản còn lại, nhưng đã trơ (không phải tag)
+    assert "<b>tag</b>" not in out
+    assert "&lt;b&gt;tag&lt;/b&gt; &amp; co" in out
 
 
-def test_render_index_escapes_broken_tag(tmp_path):
-    # Tag hỏng (thiếu '>') không bị strip; html.escape phải escape dấu '<'.
-    evil = POST_HTML.replace("Tiêu đề <em>thử</em>", "<img src=x onerror=alert(1)")
-    _write_post(tmp_path, "post-012-demo.html", evil)
+def test_render_index_escapes_quotes_like_htmlescape(tmp_path):
+    # Dấu " -> &quot; (html.escape), không phải &#34; (markupsafe) — giữ byte cũ.
+    _post(tmp_path, 5, lede='He said "hi"')
     out, _ = build_index.render_index(str(tmp_path))
-    assert "<img src=x" not in out
-    assert "&lt;img src=x" in out
+    assert "&quot;hi&quot;" in out
 
 
 def test_render_index_empty(tmp_path):

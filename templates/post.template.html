@@ -9,6 +9,21 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
+<!-- Metadata có cấu trúc: nguồn duy nhất cho trang chủ & quality gate. Các trường
+     phải KHỚP đúng phần hiển thị bên dưới (eyebrow/h1/lede) và topics.md. issue là
+     số nguyên; date là YYYY-MM-DD; axis là tên trục trong topics.md; eyebrow/title/
+     lede là text thuần (không thẻ) đúng như hiển thị. -->
+<script type="application/json" id="ld-meta">
+{
+  "issue": {{ISSUE_N}},
+  "date": "{{DATE_ISO}}",
+  "axis": "{{AXIS}}",
+  "eyebrow": "{{EYEBROW_AXIS}}",
+  "slug": "{{SLUG}}",
+  "title": "{{TITLE}}",
+  "lede": "{{LEDE_PLAIN}}"
+}
+</script>
 </head>
 <body class="post">
 <div class="wrap">

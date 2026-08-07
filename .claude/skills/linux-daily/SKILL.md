@@ -67,6 +67,15 @@ Theo "Quy tắc nội dung" bên dưới. Tiếng Việt, giọng chuyên nghi�
 - Copy `templates/post.template.html` thành `posts/post-<số>-<slug>.html` rồi điền
   các placeholder `{{...}}` (tiêu đề, ISSUE, DATE, trục, lede, độ khó, thời lượng,
   hashtag, hai SVG + figcaption, các mục nội dung).
+- **Điền khối metadata `<script id="ld-meta">` trong `<head>`** — đây là nguồn duy
+  nhất để dựng trang chủ và để quality gate kiểm tra. Các trường phải **khớp đúng**
+  phần hiển thị và `topics.md`:
+  - `issue` (số nguyên, ví dụ `18`), `date` (`YYYY-MM-DD` = ngày hôm nay), `axis`
+    (tên trục trong `topics.md`), `slug` (đúng phần slug trong tên file).
+  - `eyebrow`, `title`, `lede` là **text thuần** (bỏ hết thẻ HTML) đúng y như
+    `<p class="eyebrow">`, `<h1>`, `<p class="lede">` hiển thị. Validator sẽ chặn nếu
+    meta lệch với nội dung người đọc thấy. (Lưu ý: đừng để chuỗi `</script>` trong các
+    trường này — nó sẽ cắt sớm khối JSON.)
 - **KHÔNG** thêm CSS nội tuyến và **KHÔNG** sửa `assets/style.css`. Trang phải giữ
   hai dòng liên kết `../assets/style.css`, `../index.html` và `<body class="post">`
   cùng hai link "về trang chủ" (header `.brand-home`, footer `.foot-home`) như trong
@@ -106,7 +115,8 @@ Thêm dòng vào `topics.md`:
 bài trước đó — validator sẽ chặn nếu lùi ngày (backdate). `<YYYY-MM-DD>` trong
 `topics.md` và ngày `DD·MM·YYYY` hiển thị trong HTML bài phải khớp nhau.
 
-Rồi dựng lại trang chủ để nó liệt kê bài mới:
+Rồi dựng lại trang chủ để nó liệt kê bài mới. Trang chủ render từ khối `ld-meta` của
+mỗi bài qua template `templates/index.template.html` (Jinja2) — **không** bới HTML:
 `python3 tools/build_index.py`   (cập nhật `index.html` ở gốc repo)
 
 Cập nhật `state.json` (ghi lại số bài, ngày, và mốc sinh THỰC — dùng cho cổng nhịp
@@ -114,17 +124,19 @@ lần sau):
 `python3 tools/cadence.py record`
 
 ## Bước 5b — Kiểm định trước khi commit (BẮT BUỘC)
-Chạy quality gate; **không commit nếu còn lỗi** — sửa cho đến khi sạch:
+Chạy **một lệnh build duy nhất** (dựng lại `index.html` + chạy quality gate);
+**không commit nếu còn lỗi** — sửa cho đến khi sạch:
 
 ```
-python3 tools/validate_repo.py     # số bài liên tục, trục đúng chu kỳ, ngày hợp lệ,
-                                    # 2 SVG + aria, đủ 7 mục, khối FreeBSD, tweet ≤ 280,
-                                    # state.json đồng bộ với topics.md…
-python3 tools/build_index.py --check   # index.html đã dựng lại chưa
+python3 tools/build.py             # dựng index.html + kiểm định toàn bộ
+# hoặc chỉ kiểm tra, không ghi:
+python3 tools/build.py --check     # meta khớp topics.md & hiển thị, số bài liên tục,
+                                    # trục đúng chu kỳ, 2 SVG + aria, đủ 7 mục, FreeBSD,
+                                    # tweet ≤ 280, state.json đồng bộ, index.html đã dựng…
 ```
 
-CI cũng chạy đúng các lệnh này trên PR (xem `.github/workflows/ci.yml`), nên đây
-là cùng một cổng chất lượng — chạy trước để khỏi phải sửa vòng hai.
+CI cũng chạy cùng cổng chất lượng này trên PR (xem `.github/workflows/ci.yml`), nên
+chạy trước để khỏi phải sửa vòng hai.
 
 ## Bước 6 — Commit (KHÔNG tự đăng)
 - Tạo/chuyển sang nhánh `claude/linux-daily-<NNN>-<YYYYMMDD>` (kèm **số bài** cho rõ,
