@@ -13,7 +13,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 #013/#016, Networking/Firewall và Storage/Backup đã merge; Auth/Permissions trong PR #28
+- Historical source backfill: 🟡 #013/#016, Networking/Firewall, Storage/Backup và Auth/Permissions đã merge; Monitoring/Automation trong PR #29
 
 ## Các mốc đã hoàn thành
 
@@ -47,7 +47,6 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 
 - #013 Bash: làm rõ `#!/usr/bin/env bash` phụ thuộc `PATH`, giới hạn của `set -e`, bỏ global `IFS=$'\n\t'`, dùng `command -v`, sửa destructive-path claim.
 - #016 FreeBSD/Fail2Ban: `blocklistd` đúng tên hiện hành, phân biệt `sshguard`, cập nhật `security/py-fail2ban` + `bsd-sshd-session`, bổ sung firewall rollback.
-- Hai bài có `review_status="reviewed"` và nguồn kỹ thuật có cấu trúc.
 - PR #25 đã merge 2026-08-07.
 
 ### PR #26 — Historical Technical Backfill: Networking & Firewall ✅
@@ -56,7 +55,6 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - #007 Firewall: UFW mở SSH trước; firewalld runtime-first; PF parse bằng `pfctl -vnf` trước khi load.
 - #008 Diagnostics: thêm name resolution, ping nuance, `sockstat -46 -l`, bounded tcpdump.
 - #015 WireGuard: cập nhật FreeBSD package, semantics `AllowedIPs`, split-tunnel-first + rollback route.
-- 4 bài có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
 - PR #26 đã merge 2026-08-07.
 
 ### PR #27 — Historical Technical Backfill: Storage & Backup ✅
@@ -66,28 +64,30 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - #010 Add disk: verify device trước write; FreeBSD GPT alignment; Linux verify fstab; `nofail` chỉ cho mount optional.
 - #014 Backup lab: subset/full read verification; restore chọn đúng snapshot; canary + checksum làm bằng chứng.
 - #017 Grow storage: đúng stack disk→partition→PV→LV→filesystem; FreeBSD `growfs -N`; ZFS expansion nuance.
-- 5 bài có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
 - PR #27 đã merge 2026-08-07.
 
-## PR #28 — Historical Technical Backfill: Auth & Permissions
+### PR #28 — Historical Technical Backfill: Auth & Permissions ✅
 
-Mục tiêu: rà #002 và #009 theo nguyên tắc **effective-policy verification** và **least privilege phải được chứng minh bằng policy thực tế**.
+- #002 SSH: sửa precedence OpenSSH thành “first obtained value wins”; key-only gồm keyboard-interactive nuance; thêm `AuthenticationMethods publickey`, `sshd -T` và kiểm phiên SSH mới trước khi đóng phiên cứu hộ.
+- #009: tách administrator khỏi limited operator; Debian sudo installer nuance; FreeBSD `wheel` cho `su`, doas không bắt buộc wheel; bỏ `persist`; dùng `doas -C` để validate policy.
+- #002/#009 có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
+- PR #28 đã merge 2026-08-07.
 
-- [x] #002 SSH: sửa precedence OpenSSH thành “first obtained value wins”; giải thích drop-in đọc sớm có thể override file chính.
-- [x] #002: key-only gồm password + keyboard-interactive nuance; thêm `AuthenticationMethods publickey`, `sshd -T` và kiểm theo phiên SSH mới trước khi đóng phiên cứu hộ.
-- [x] #002 Fedora/FreeBSD: giữ khác biệt service/SELinux/firewall/rc.d và rollback path khi hardening remote access.
-- [x] #009: tách administrator khỏi limited operator; không thêm operator vào nhóm admin rồi kỳ vọng command-specific rule giới hạn quyền.
-- [x] #009 Debian: ghi rõ sudo có thể chưa cài nếu installer đã đặt mật khẩu root.
-- [x] #009 FreeBSD: `wheel` là điều kiện cho `su`, không phải điều kiện bắt buộc của doas; bỏ `persist`; dùng `doas -C` để parse + command-match mà không thực thi.
-- [x] #002/#009 có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
-- [x] Đồng bộ Facebook/X cho cả hai bài.
+## PR #29 — Monitoring & Automation Backfill
+
+Mục tiêu: rà #005, #006 và #012 theo nguyên tắc **kiểm effective runtime thay vì đoán theo distro** và **scheduler/automation phải được kiểm chứng bằng hành vi thực tế**.
+
+- [x] #005 Logging: bỏ claim Debian luôn volatile; mô tả đúng `Storage=auto`; tách `ssh`/`sshd`; quyền đọc journal theo ACL/group thực tế; FreeBSD dùng syslogd + newsyslog.
+- [x] #006 Ansible: làm rõ phần lớn module POSIX cần Python nhưng `raw` có thể bootstrap; ưu tiên `package`/`service`; phân biệt ansible-core với `community.general.pkgng`/`doas`; check mode chỉ là preview theo capability module.
+- [x] #012 Scheduling: sửa semantics `Persistent=true` thành catch-up activation thay vì replay mọi lần lỡ; bổ sung `AccuracySec`/`systemd-analyze calendar`; FreeBSD cron environment + periodic output policy.
+- [x] #005/#006/#012 có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
+- [x] Đồng bộ Facebook/X cho cả ba bài.
 - [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
 
-## Mốc kế tiếp — Historical Technical Backfill theo nhóm rủi ro
+## Mốc kế tiếp — Historical Technical Backfill cuối
 
-- [ ] Monitoring/automation còn lại: rà các claim phụ thuộc distro/version và thêm nguồn theo mức rủi ro.
-- [ ] Rà các bài lịch sử còn grandfather để xác định nhóm backfill cuối.
-- [ ] Tiếp tục backfill theo PR nhỏ; không thay đổi ngày xuất bản lịch sử.
+- [ ] Rà các bài lịch sử còn grandfather: #011 tmux và #018 rclone; xác định claim phụ thuộc version/upstream và source backfill cuối.
+- [ ] Sau khi historical coverage hoàn tất, chuyển trọng tâm sang P2 repository/website.
 
 ## P2 — Repository & website
 
@@ -112,5 +112,6 @@ Mục tiêu: rà #002 và #009 theo nguyên tắc **effective-policy verificatio
 5. Thay đổi mạng/firewall/remote access phải có rollback path trước khi persist.
 6. Thao tác storage phá huỷ/resize phải xác minh đúng device/layer trước khi ghi; backup phải có restore evidence định kỳ.
 7. Hardening auth/permissions phải kiểm effective policy; least privilege không được suy luận từ file cấu hình hoặc group membership đơn lẻ.
-8. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
-9. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
+8. Monitoring/automation phải kiểm effective runtime, dependency/collection và scheduler semantics thay vì hard-code theo tên distro.
+9. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
+10. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
