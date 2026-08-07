@@ -41,7 +41,9 @@
   ]
 }
 </script></head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#014 · 28·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Lab end-to-end</p><h1>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h1><p class="lede">Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div></header>
 
@@ -97,4 +99,5 @@ restic restore latest --host "$(hostname)" --path /etc/backup-canary.txt \
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn upstream dùng để kiểm chứng check/read-data, restore selection và retention.</p><ul class="clean"><li><a href="https://restic.readthedocs.io/en/stable/010_introduction.html" rel="noopener noreferrer">Introduction — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/050_restore.html" rel="noopener noreferrer">Restoring from backup — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/060_forget.html" rel="noopener noreferrer">Removing backup snapshots — restic documentation</a> — upstream.</li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #014 · Ôn tập</span><span class="hashtags">#LinuxDaily #Backup #restic #FreeBSD</span></div></footer>
-</div></body></html>
+</div></main>
+</body></html>

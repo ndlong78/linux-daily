@@ -42,7 +42,9 @@
 }
 </script>
 </head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#007 · 14·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Lab end-to-end</p><h1>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</h1><p class="lede">Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div></header>
 
@@ -91,4 +93,5 @@ pfctl -s states</code></pre></section>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://manpages.ubuntu.com/manpages/noble/man8/ufw.8.html">Ubuntu Manpage — ufw(8)</a></li><li><a href="https://firewalld.org/documentation/configuration/runtime-versus-permanent.html">firewalld — Runtime versus Permanent</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/firewalls/">FreeBSD Handbook — Firewalls / PF</a></li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #007 · Ôn tập</span><span class="hashtags">#LinuxDaily #Firewall #SysAdmin</span></div></footer>
-</div></body></html>
+</div></main>
+</body></html>

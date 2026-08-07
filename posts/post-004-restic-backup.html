@@ -46,7 +46,9 @@
 }
 </script>
 </head>
-<body class="post"><div class="wrap">
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#004 · 08·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · Backup</p><h1>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h1><p class="lede">Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
 
@@ -93,4 +95,5 @@ restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune</code></pr
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Tài liệu upstream dùng để kiểm chứng encryption, key management, repository và retention.</p><ul class="clean"><li><a href="https://restic.readthedocs.io/en/stable/070_encryption.html" rel="noopener noreferrer">Encryption — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" rel="noopener noreferrer">Preparing a new repository — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/060_forget.html" rel="noopener noreferrer">Removing backup snapshots — restic documentation</a> — upstream.</li><li><a href="https://github.com/restic/restic/blob/master/doc/design.rst" rel="noopener noreferrer">restic repository design</a> — upstream.</li></ul></section>
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #004 · Công cụ mới</span><span class="hashtags">#LinuxDaily #restic #Backup #FreeBSD</span></div></footer>
-</div></body></html>
+</div></main>
+</body></html>
