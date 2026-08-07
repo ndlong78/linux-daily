@@ -1,15 +1,14 @@
-💾 Bạn đang "backup" bằng một dòng rsync chạy tay trong cron? Đến lúc đổi sang thứ đúng nghĩa là backup: mã hoá sẵn, không trùng lặp, và khôi phục đúng ngày bạn muốn.
+💾 restic rất gọn cho backup đa nền tảng, nhưng có vài chi tiết vận hành dễ hiểu sai.
 
-restic là một binary Go tĩnh — cài xong ở đâu cũng chạy y hệt một bộ lệnh, kể cả giữa Linux và FreeBSD. Khác biệt thật sự chỉ nằm ở chỗ lấy gói:
-• Ubuntu/Xubuntu → apt install restic (kho universe, khá mới)
-• Debian → apt install restic (có từ bookworm; bản cũ hơn cần backports)
-• Fedora → dnf install restic (chú ý SELinux nếu bị "Permission denied")
-• FreeBSD → pkg install restic (sysutils/restic, không có systemd/cron kiểu Linux)
+Bản review #004 cập nhật ba điểm chính:
+• Một repository có thể có nhiều key/password qua restic key add/list/remove/passwd. Nếu một password không còn dùng được nhưng vẫn còn key hợp lệ khác, repository vẫn có thể được truy cập.
+• restic dùng AES-256-CTR và Poly1305-AES theo thiết kế upstream; mã hoá bảo vệ tính bí mật và toàn vẹn, nhưng không thay thế chính sách bảo vệ repository khỏi thay đổi ngoài ý muốn.
+• Retention nên được preview bằng forget ... --dry-run trước khi thực thi prune.
 
-Còn lại — init repo, backup, snapshots, restore, forget --prune — giống hệt nhau trên cả bốn hệ điều hành. Bài #004 đi từ khởi tạo repo SFTP, lịch trình bằng systemd timer/cron, đến cạm bẫy chết người nhất: mất mật khẩu repo là mất trắng, không có "quên mật khẩu, bấm vào đây".
+Ngoài ra restic check chủ yếu kiểm cấu trúc/meta. Muốn đọc verify pack data cần --read-data hoặc subset theo lịch, và vẫn nên diễn tập restore thật.
 
-👉 Đọc đầy đủ: {{LINK}}
+👉 Đọc đầy đủ + nguồn upstream: {{LINK}}
 
-#LinuxDaily #SysAdmin #Restic #Backup #FreeBSD
+#LinuxDaily #restic #Backup #FreeBSD
 
 [Đính kèm ảnh: post-004-code.png]
