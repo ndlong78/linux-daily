@@ -36,11 +36,16 @@ jobs:
       - name: Pytest
         run: pytest -q
 
-      - name: Validator (topics, posts, social, index)
+      - name: Validator (topics, posts, social, index, state)
         run: python tools/validate_repo.py
 
       - name: index.html đã đồng bộ
         run: python tools/build_index.py --check
+
+      - name: Smoke test cadence (state.json)
+        run: |
+          python tools/cadence.py status
+          test "$(python tools/cadence.py next)" -gt 0
 
       - name: Smoke test render_code
         run: |

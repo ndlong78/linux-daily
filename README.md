@@ -23,8 +23,10 @@ Bài mới được commit vào nhánh `claude/…` để bạn duyệt rồi me
 ├── tools/
 │   ├── build_index.py      # dựng lại trang chủ
 │   ├── render_code.py      # tạo ảnh code cho FB/X
+│   ├── cadence.py          # cổng nhịp + state.json (số bài, mốc sinh thực)
 │   └── fonts/              # JetBrains Mono (Vietnamese)
 ├── topics.md               # nhật ký chủ đề + mốc giữ nhịp 2 ngày
+├── state.json              # trạng thái nhịp (last_issue, last_generated_at…)
 ├── routine-prompt.txt      # câu lệnh dán vào Routine
 ├── .nojekyll               # phục vụ HTML nguyên trạng trên Pages
 └── README.md
@@ -64,11 +66,12 @@ git push -u origin main
 
 > Vì sao Daily mà lại ra 2 ngày/bài? Lịch của Routines chỉ có hourly/daily/
 > weekday/weekly, không có "2 ngày". Nên skill tự đặt **cổng nhịp 2 ngày** trong
-> `SKILL.md` (Bước 0): mỗi ngày routine chạy, nhưng chỉ thực sự tạo bài nếu bài
-> gần nhất trong `topics.md` đã cách ≥ 2 ngày. Cách này giữ nhịp chuẩn và tự bù
-> nếu lỡ một hôm. (Nếu giao diện cho nhập cron tùy chỉnh, có thể thử
-> `0 7 */2 * *`, nhưng nó lệch ở ranh giới cuối tháng — nên cổng trong skill vẫn
-> là cách chắc ăn.)
+> `SKILL.md` (Bước 0): mỗi ngày routine chạy, nhưng chỉ thực sự tạo bài nếu lần
+> sinh gần nhất đã cách ≥ 2 ngày. Cổng này đọc `state.json` (`last_generated_at` —
+> mốc THỰC do máy ghi, không phải ngày AI tự điền) qua `tools/cadence.py gate`, nên
+> quyết định nhịp đáng tin hơn. Cách này giữ nhịp chuẩn và tự bù nếu lỡ một hôm.
+> (Nếu giao diện cho nhập cron tùy chỉnh, có thể thử `0 7 */2 * *`, nhưng nó lệch ở
+> ranh giới cuối tháng — nên cổng trong skill vẫn là cách chắc ăn.)
 
 ## 3. Sau mỗi lần chạy
 - Bài mới nằm ở `posts/post-<số>-<slug>.html`, trên nhánh `claude/linux-daily-<ngày>`.

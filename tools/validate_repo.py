@@ -18,12 +18,15 @@ Kiểm tra:
   social/     — mỗi bài có facebook.txt và x.txt; mỗi tweet trong x.txt ≤ 280 ký tự
                 (tính {{LINK}} = 23 ký tự như t.co của X).
   index.html  — đồng bộ với posts/ (gọi build_index.render_index).
+  state.json  — last_issue & last_published_date khớp bài mới nhất trong topics.md;
+                last_generated_at là mốc ISO 8601 hợp lệ.
 """
 from __future__ import annotations
 
 import argparse
 import datetime as dt
 import glob
+import json
 import os
 import re
 import sys
@@ -33,6 +36,7 @@ POSTS_DIR = os.path.join(ROOT, "posts")
 SOCIAL_DIR = os.path.join(POSTS_DIR, "social")
 TOPICS_PATH = os.path.join(ROOT, "topics.md")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+STATE_PATH = os.path.join(ROOT, "state.json")
 
 # Trục xoay tuần tự theo số bài (chu kỳ 7). Tên khớp cột "trục" trong topics.md.
 AXIS_CYCLE = [
@@ -284,12 +288,53 @@ def validate_index(report: Report) -> None:
     )
 
 
+def validate_state(entries: list[dict], report: Report) -> None:
+    """state.json phải đồng bộ với topics.md (bài mới nhất & ngày của nó).
+
+    last_generated_at chỉ cần là mốc ISO hợp lệ — không so với nội dung, vì đó là
+    thời điểm thực routine sinh bài (dùng cho cổng nhịp), không suy được từ repo.
+    """
+    if not os.path.exists(STATE_PATH):
+        report.fail("state.json không tồn tại. Chạy `python3 tools/cadence.py init` rồi commit lại.")
+        return
+    try:
+        with open(STATE_PATH, encoding="utf-8") as f:
+            state = json.load(f)
+    except (OSError, ValueError) as exc:
+        report.fail(f"state.json không đọc được / không phải JSON hợp lệ ({exc}).")
+        return
+
+    if not entries:
+        return  # topics.md rỗng đã có lỗi riêng ở validate_topics.
+    last = max(entries, key=lambda e: e["n"])
+
+    report.check(
+        state.get("last_issue") == last["n"],
+        f"state.json: last_issue ({state.get('last_issue')}) khác bài mới nhất trong topics.md (#{last['n']:03d}). "
+        "Chạy `python3 tools/cadence.py record` rồi commit lại.",
+    )
+    report.check(
+        state.get("last_published_date") == last["date_s"],
+        f"state.json: last_published_date ('{state.get('last_published_date')}') khác ngày bài mới nhất trong topics.md ('{last['date_s']}').",
+    )
+    gen = state.get("last_generated_at")
+    ok_gen = False
+    if isinstance(gen, str):
+        try:
+            dt.datetime.fromisoformat(gen)
+            ok_gen = True
+        except ValueError:
+            ok_gen = False
+    report.check(ok_gen, f"state.json: last_generated_at ('{gen}') không phải mốc ISO 8601 hợp lệ.")
+
+
 def run() -> Report:
     report = Report()
     entries = parse_topics(report)
     validate_topics(entries, report)
     validate_posts(entries, report)
     validate_index(report)
+    validate_state(entries, report)
     return report
 
 
