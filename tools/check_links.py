@@ -27,7 +27,6 @@ POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
 TRANSIENT_STATUSES = {408, 425, 429, 500, 502, 503, 504}
 BLOCKED_STATUSES = {401, 403}
-HEAD_FALLBACK_STATUSES = {405, 501}
 IGNORED_LINK_RELS = {"preconnect", "dns-prefetch"}
 
 
@@ -168,16 +167,19 @@ def collect_external_urls() -> list[str]:
 
 def _request_once(url: str, timeout: float) -> int:
     headers = {"User-Agent": USER_AGENT, "Accept": "text/html,application/xhtml+xml,*/*;q=0.8"}
-    req = Request(url, headers=headers, method="HEAD")
+    head_req = Request(url, headers=headers, method="HEAD")
     try:
-        with urlopen(req, timeout=timeout) as response:
+        with urlopen(head_req, timeout=timeout) as response:
             return int(response.status)
-    except HTTPError as exc:
-        if exc.code not in HEAD_FALLBACK_STATUSES:
-            return int(exc.code)
-    req = Request(url, headers={**headers, "Range": "bytes=0-0"}, method="GET")
+    except HTTPError:
+        # HEAD is only an optimization. Some documentation/CDN endpoints reject or
+        # mis-handle HEAD while the user-visible GET works, so never declare a link
+        # broken until GET has been tried as well.
+        pass
+
+    get_req = Request(url, headers={**headers, "Range": "bytes=0-0"}, method="GET")
     try:
-        with urlopen(req, timeout=timeout) as response:
+        with urlopen(get_req, timeout=timeout) as response:
             return int(response.status)
     except HTTPError as exc:
         return int(exc.code)
