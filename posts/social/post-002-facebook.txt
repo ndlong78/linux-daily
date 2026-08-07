@@ -1,23 +1,18 @@
-🔒 SSH hardening an toàn không bắt đầu bằng việc tắt mật khẩu ngay lập tức. Trình tự đúng khi quản trị từ xa là: public key đã đăng nhập được → giữ phiên SSH hiện tại làm đường cứu hộ → validate cấu hình → reload → mở một phiên MỚI để xác nhận.
+🔒 SSH hardening an toàn không bắt đầu bằng “tắt password”, mà bắt đầu bằng việc chứng minh public key đã đăng nhập được và luôn có đường rollback.
 
-PR #28 sửa một điểm kỹ thuật quan trọng trong bài #002: OpenSSH dùng nguyên tắc “first value wins” cho phần lớn directive. Trên Ubuntu/Debian, sshd_config.d thường được Include ở đầu file chính, vì vậy drop-in đọc trước có thể override dòng nằm sau trong /etc/ssh/sshd_config.
+Bài #002 đã được technical backfill với vài điểm quan trọng:
+• `PasswordAuthentication no` chưa đủ để gọi là key-only nếu keyboard-interactive vẫn còn; cấu hình mẫu tắt thêm `KbdInteractiveAuthentication` và dùng `AuthenticationMethods publickey` khi mục tiêu là chỉ nhận public key.
+• Với OpenSSH, phần lớn directive dùng GIÁ TRỊ ĐẦU TIÊN đọc được. Vì vậy file trong `sshd_config.d` đọc sớm có thể thắng cấu hình nằm sau trong file chính — không phải “dòng sau cùng thắng”.
+• `sshd -t` kiểm cú pháp; `sshd -T` giúp xem effective config thực tế.
+• Làm từ xa: giữ phiên SSH hiện tại, reload, rồi mở một phiên MỚI. Chỉ khi phiên mới vào được mới coi rollout thành công.
 
-Key-only cũng không chỉ là PasswordAuthentication no. Bài mới kiểm cả:
-• PubkeyAuthentication yes
-• PasswordAuthentication no
-• KbdInteractiveAuthentication no
-• AuthenticationMethods publickey
-
-Validate hai lớp:
-• sshd -t → cú pháp
-• sshd -T → effective config
-
-Ubuntu/Debian dùng service ssh; Fedora/FreeBSD dùng sshd. FreeBSD dùng rc.d/service, không systemd. Nếu đổi port trên Fedora, phải chuẩn bị SELinux + firewalld cho port mới trước khi bỏ port cũ.
-
-Nguyên tắc quan trọng nhất: đừng đóng phiên cứu hộ cho đến khi một terminal mới đăng nhập bằng key thành công.
+Khác biệt distro vẫn giữ rõ:
+• Ubuntu/Debian: service `ssh`
+• Fedora: service `sshd`, chú ý SELinux/firewalld nếu đổi port
+• FreeBSD: rc.d với `service sshd reload`, không systemd
 
 👉 Đọc đầy đủ: {{LINK}}
 
-#LinuxDaily #SysAdmin #SSH #Linux #FreeBSD
+#LinuxDaily #SysAdmin #SSH #Linux #FreeBSD #Security
 
 [Đính kèm ảnh: post-002-code.png]
