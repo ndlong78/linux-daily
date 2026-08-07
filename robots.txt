@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://linux.no.id.vn/sitemap.xml

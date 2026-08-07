@@ -2,6 +2,8 @@
 
 Linux Daily là website tự sinh bài học Linux/Unix system administration bằng tiếng Việt theo **nhịp 2 ngày/bài**. Workflow hiện tại dùng **ChatGPT Plus Scheduled Task** để điều phối, GitHub để lưu mã nguồn/PR và GitHub Actions làm quality gate.
 
+Website public được phục vụ qua **Cloudflare Worker** tại `https://linux.no.id.vn/`. Repository không dùng GitHub Pages làm lớp hosting public.
+
 ## Kiến trúc vận hành
 
 ```text
@@ -34,7 +36,10 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                    người dùng merge
                          │
                          ▼
-                      website
+                Cloudflare Worker
+                         │
+                         ▼
+                https://linux.no.id.vn/
 ```
 
 **GitHub Actions là cổng kỹ thuật cuối cùng; ChatGPT không được bypass CI hoặc push thẳng vào `main`.**
@@ -44,6 +49,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 - `AGENTS.md` — hợp đồng vận hành cho ChatGPT/AI agent.
 - `state.json` — trạng thái cadence (`last_issue`, `last_generated_at`, `last_published_date`).
 - `topics.md` — lịch sử chủ đề và thứ tự series.
+- `site.json` — metadata website và public base URL `https://linux.no.id.vn/`.
 - `templates/post.template.html` — khung bài.
 - `templates/index.template.html` — khung trang chủ.
 - `tools/build.py` — build + quality gate local.
@@ -59,9 +65,13 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ├── LICENSE
 ├── CONTRIBUTING.md
 ├── SECURITY.md
+├── site.json
 ├── state.json
 ├── topics.md
 ├── index.html
+├── feed.xml
+├── sitemap.xml
+├── robots.txt
 ├── assets/
 │   └── style.css
 ├── templates/
@@ -74,6 +84,8 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 │   ├── cadence.py
 │   ├── build.py
 │   ├── build_index.py
+│   ├── build_feed.py
+│   ├── build_sitemap.py
 │   ├── postmeta.py
 │   ├── validate_sources.py
 │   └── render_code.py
@@ -113,7 +125,7 @@ python3 tools/cadence.py next
 Sau khi sinh bài hoàn chỉnh:
 
 ```bash
-python3 tools/build_index.py
+python3 tools/build.py
 python3 tools/cadence.py record
 python3 tools/build.py --check
 ```
@@ -149,15 +161,16 @@ Bài #001–#018 được grandfather để không phải backfill toàn bộ se
 3. Chọn trục theo chu kỳ 7 và tránh chủ đề trùng.
 4. Tạo HTML theo template, metadata `ld-meta`, 2 SVG và bộ social Facebook/X + ảnh code.
 5. Kiểm tra claim kỹ thuật bằng tài liệu official/upstream hiện hành; ghi `sources` và `review_status`.
-6. Cập nhật `topics.md`, `index.html`, `state.json`.
-7. Chạy `python3 tools/build.py --check` — lệnh này gồm cả structural gate và source-backed gate.
-8. Dùng branch:
+6. Cập nhật `topics.md`, `state.json`.
+7. Chạy `python3 tools/build.py` để regenerate `index.html`, `feed.xml`, `sitemap.xml`, `robots.txt`.
+8. Chạy `python3 tools/build.py --check`.
+9. Dùng branch:
 
 ```text
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-9. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
+10. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
 
 Trong thời gian migration, agent vẫn phải phát hiện prefix cũ `claude/linux-daily-...` để tránh sinh trùng, nhưng **không tạo branch Claude mới**.
 
@@ -201,15 +214,13 @@ python3 tools/render_code.py --in snippet.txt \
 
 ## Website
 
-Repo là static site. Có thể phục vụ bằng GitHub Pages hoặc nền tảng static hosting khác từ branch `main`.
+Repo là source của static site; lớp public hosting nằm trên **Cloudflare Worker**. Public URL chuẩn được khai báo duy nhất trong `site.json`:
 
-Với GitHub Pages:
+```text
+https://linux.no.id.vn/
+```
 
-1. Repo → **Settings → Pages**.
-2. Source: **Deploy from a branch**.
-3. Chọn `main` và `/ (root)`.
-
-`index.html` được dựng từ metadata có cấu trúc của các bài qua `templates/index.template.html` + Jinja2.
+`index.html`, `feed.xml`, `sitemap.xml` và `robots.txt` đều được build từ metadata trong repo. Không dùng file `CNAME` và không phụ thuộc GitHub Pages để phục vụ domain public.
 
 ## An toàn vận hành
 
