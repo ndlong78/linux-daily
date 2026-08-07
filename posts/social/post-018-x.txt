@@ -1,0 +1,29 @@
+[Tweet 1] — đính kèm post-018-code.png
+☁️ Backup lên cloud bằng kéo-thả tay hoặc access key dán thẳng vào script? rclone làm đúng việc đó bằng 1 lệnh, có mã hoá sẵn, trên 70+ backend. Thread 🧵
+
+[Tweet 2]
+rclone = "rsync cho cloud". Một binary Go tĩnh nói chuyện với S3, Backblaze B2, Google Drive, SFTP… Remote "crypt" bọc lên remote thật, mã hoá cả TÊN FILE lẫn nội dung ngay trên máy nguồn.
+
+[Tweet 3]
+Ubuntu/Xubuntu & Debian:
+apt install rclone
+(kho có thể cũ → script cài chính chủ nếu cần bản mới nhất: rclone.org/install.sh)
+
+Fedora:
+dnf install rclone
+
+[Tweet 4] — FreeBSD
+pkg install rclone fusefs-libs
+kldload fusefs        ← bắt buộc nếu dùng rclone mount
+sysrc -f /etc/rc.conf fusefs_load="YES"
+sync/copy thuần thì KHÔNG cần fusefs.
+
+[Tweet 5]
+⚠️ rclone sync làm đích khớp TUYỆT ĐỐI với nguồn — file thừa ở đích sẽ bị XOÁ. Luôn chạy --dry-run trước một lần sync quan trọng.
+
+[Tweet 6]
+⚠️ crypt không thay IAM: khoá bị lộ vẫn xoá được dữ liệu đã mã hoá dù không đọc được nội dung. Dùng access key riêng, giới hạn đúng 1 bucket, mã hoá cả rclone.conf bằng RCLONE_CONFIG_PASS.
+
+[Tweet 7]
+Full bài + sơ đồ remote crypt: {{LINK}}
+#LinuxDaily #Rclone #Cloud #FreeBSD
