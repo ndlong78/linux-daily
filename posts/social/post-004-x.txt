@@ -1,27 +1,23 @@
 [Tweet 1] — đính kèm post-004-code.png
-💾 restic: một binary Go tĩnh thay thế "rsync chạy tay trong cron" bằng backup mã hoá sẵn, không trùng lặp, tăng dần. Điểm lật: cùng một bộ lệnh trên mọi HĐH — chỉ CÀI là khác nhau. Thread 🧵
+💾 restic: backup mã hoá + dedup + snapshot history trên Linux và FreeBSD. Nhưng có 3 chi tiết vận hành dễ hiểu sai: repository key, retention và check dữ liệu. Thread 🧵
 
 [Tweet 2]
-Sau khi cài, lệnh dùng giống hệt mọi nơi:
-restic backup /etc /var/www
-restic snapshots
-restic forget --keep-daily 7 --prune
+Một repository có thể có NHIỀU key/password. restic key add/list/remove/passwd quản lý chúng. Nếu một password không còn dùng được nhưng vẫn còn key hợp lệ khác, repo vẫn truy cập được.
 
 [Tweet 3]
-Cài đặt — đây mới là chỗ khác nhau:
-• Ubuntu/Xubuntu: apt install restic
-• Debian: apt install restic (từ bookworm; bản cũ hơn cần backports)
-• Fedora: dnf install restic (coi chừng SELinux chặn)
+restic mã hoá data bằng AES-256-CTR và xác thực bằng Poly1305-AES theo thiết kế upstream. Encryption không thay thế chính sách bảo vệ repository khỏi thay đổi ngoài ý muốn.
 
-[Tweet 4] — FreeBSD
-FreeBSD: pkg install restic (sysutils/restic). Không có systemd — lên lịch bằng cron truyền thống hoặc periodic(8), không phải systemd timer.
+[Tweet 4]
+Retention nên preview trước:
+restic forget --keep-daily 7 --keep-weekly 4 --dry-run
+Review output rồi mới thực thi prune.
 
 [Tweet 5]
-⚠️ Mật khẩu repo KHÔNG lưu trong repo. Mất mật khẩu = mất trắng dữ liệu, không có "quên mật khẩu, bấm vào đây".
+restic check kiểm cấu trúc/meta. Muốn đọc verify pack data dùng restic check --read-data hoặc subset theo lịch. Và vẫn nên restore thử định kỳ.
 
 [Tweet 6]
-⚠️ Không forget --prune định kỳ thì repo phình vô hạn — snapshot cũ giữ mọi khối đã xoá/ghi đè.
+FreeBSD dùng pkg install restic + cron/periodic; Linux dùng apt/dnf và có thể schedule bằng systemd timer. Bộ lệnh restic giống nhau.
 
 [Tweet 7]
-Full bài + sơ đồ luồng mã hoá/dedup: {{LINK}}
-#LinuxDaily #Restic #Backup #FreeBSD
+Full bài + nguồn upstream: {{LINK}}
+#LinuxDaily #restic #Backup #FreeBSD
