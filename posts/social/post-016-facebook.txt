@@ -1,0 +1,16 @@
+🚫 Mở log một server có SSH ra Internet mà xem: hàng nghìn dòng "Failed password" từ đủ mọi IP, ngày này qua ngày khác. Ngay cả khi bạn đã tắt đăng nhập mật khẩu, luồng dò vẫn quấy nhiễu và rình mọi sơ hở.
+
+Gia cố tĩnh (bài #002) chặn được CÁCH vào, nhưng không làm KẺ gõ cửa ngừng lại. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại quá nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng, rồi tự gỡ.
+
+Bài #016 (Bảo mật): cùng ý tưởng, 4 hệ đọc log và cấm IP khác nhau:
+• Ubuntu/Xubuntu & Debian → đọc journald, cấm qua nftables/ufw
+• Fedora → đọc journald, cấm qua firewalld (để ý SELinux)
+• FreeBSD → đọc /var/log/auth.log (không có journald), cấm qua pf, bật bằng rc.conf. Base còn sẵn blacklistd & sshguard, khỏi cài fail2ban
+
+Cạm bẫy số 1: TỰ KHOÁ CHÍNH MÌNH. Gõ sai mật khẩu vài lần từ IP của bạn là bị cấm — luôn khai ignoreip cho IP quản trị TRƯỚC khi bật. Và nhớ: fail2ban là lớp bổ sung, không thay cho SSH key-only + cấm root.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #fail2ban #FreeBSD #Security
+
+[Đính kèm ảnh: post-016-code.png]

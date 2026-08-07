@@ -1,0 +1,25 @@
+[Tweet 1] — đính kèm post-016-code.png
+🚫 Server có SSH ra Internet = hàng nghìn dòng "Failed password" mỗi ngày. Tắt mật khẩu vẫn bị quấy. fail2ban: thấy IP dò nhiều lần thì tự cấm qua tường lửa. Thread 🧵
+
+[Tweet 2]
+Cơ chế: fail2ban đọc log xác thực → filter đếm số lần thất bại theo IP → quá maxretry trong findtime thì ra lệnh cho tường lửa cấm IP đó bantime phút, rồi tự gỡ.
+
+[Tweet 3]
+Cấu hình: tạo jail.local (đừng sửa jail.conf gốc):
+[sshd]
+enabled=true
+maxretry=5, findtime=10m, bantime=1h
+ignoreip=127.0.0.1/8 <IP-của-bạn>
+
+[Tweet 4]
+Linux — Ubuntu/Debian đọc journald, cấm qua nftables/ufw; Fedora đọc journald, cấm qua firewalld (banaction=firewallcmd-rich-rules). Bật: systemctl enable --now fail2ban.
+
+[Tweet 5] — FreeBSD
+FreeBSD: đọc /var/log/auth.log (KHÔNG journald), banaction=pf, bật qua rc.conf (fail2ban_enable=YES). Base còn có blacklistd & sshguard — công cụ bản địa, khỏi cài fail2ban.
+
+[Tweet 6]
+⚠️ Cạm bẫy số 1: TỰ KHOÁ MÌNH. Gõ sai vài lần từ IP của bạn là bị cấm. Khai ignoreip TRƯỚC khi bật. Và fail2ban là lớp bổ sung, không thay SSH key-only + cấm root (#002).
+
+[Tweet 7]
+Full bài + sơ đồ log→ban: {{LINK}}
+#LinuxDaily #fail2ban #FreeBSD #Security
