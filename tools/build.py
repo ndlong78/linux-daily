@@ -5,8 +5,9 @@ build.py — Một lệnh duy nhất: dựng index.html + feed.xml + sitemap/rob
   python3 tools/build.py            # dựng output + kiểm định (exit != 0 nếu có lỗi)
   python3 tools/build.py --check     # không ghi; chỉ kiểm tra output đồng bộ + quality gate
 
-Gộp build_index, build_feed, build_sitemap, validate_repo và source-backed technical gate
-vào một luồng, để người dùng và CI chỉ cần nhớ một lệnh.
+Gộp build_index, build_feed, build_sitemap, validate_repo, source-backed technical gate
+và deterministic internal-link gate vào một luồng. External HTTP checks chạy riêng trong CI
+để lỗi mạng/website bên thứ ba không che mất quality gate local.
 """
 import argparse
 import os
@@ -16,6 +17,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import build_feed  # noqa: E402
 import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
+import check_links  # noqa: E402
 import validate_repo  # noqa: E402
 import validate_sources  # noqa: E402
 
@@ -89,7 +91,15 @@ def main(argv=None) -> int:
         _print_errors("Source-backed gate", source_report.errors)
         return 1
 
-    print("✓ Build + RSS + sitemap/robots + quality gate + source-backed review: tất cả kiểm tra đều đạt.")
+    link_errors = check_links.check_internal()
+    if link_errors:
+        _print_errors("Internal-link gate", link_errors)
+        return 1
+
+    print(
+        "✓ Build + RSS + sitemap/robots + quality gate + source-backed review + "
+        "internal links: tất cả kiểm tra đều đạt."
+    )
     return 0
 
 
