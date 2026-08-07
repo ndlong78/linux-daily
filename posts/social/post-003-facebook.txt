@@ -1,15 +1,16 @@
-💾 Trước khi nâng cấp hay chạy script "một lần rồi thôi", bạn muốn có nút UNDO. Snapshot của ZFS chính là nút đó — chụp tức thời, gần như không tốn dung lượng, khôi phục trong vài giây.
+💾 ZFS snapshot là nút rollback rất mạnh — nhưng không phải một bản copy miễn phí mãi mãi.
 
-Điểm lật của bài này: vì là OpenZFS thống nhất, lệnh zfs/zpool GIỐNG HỆT nhau trên Linux lẫn FreeBSD. Phần khác nhau là… cách CÀI được ZFS:
-• Ubuntu → apt install zfsutils-linux (dễ)
-• Debian → contrib + zfs-dkms (cần kernel headers)
-• Fedora → kho ngoài + DKMS + để ý Secure Boot (khó nhất)
-• FreeBSD → có sẵn trong base (dễ nhất!)
+Snapshot mới tạo gần như không cần sao chép toàn bộ dataset. Khi dữ liệu sống thay đổi, snapshot phải giữ lại các block cũ nên dung lượng snapshot sẽ tăng theo lượng dữ liệu bị thay đổi/xoá.
 
-Lần này cột FreeBSD lại nhẹ nhất. Bài #003 kèm cảnh báo quan trọng: rollback phá hủy dữ liệu mới hơn, và "snapshot KHÔNG phải backup".
+Ba điểm quan trọng trong bản review #003:
+• Snapshot ≠ backup: mất pool thì snapshot trong pool cũng mất.
+• Khôi phục 1 file có thể đọc qua .zfs/snapshot mà không rollback toàn dataset.
+• zfs rollback là destructive; rollback về snapshot cũ với -r còn xoá snapshot/bookmark trung gian mới hơn.
 
-👉 Đọc đầy đủ: {{LINK}}
+Fedora cũng đã cập nhật theo repo OpenZFS hiện hành; FreeBSD vẫn có ZFS trong base và dùng rc.d thay vì systemd.
 
-#LinuxDaily #SysAdmin #ZFS #FreeBSD #Storage
+👉 Đọc đầy đủ + nguồn OpenZFS/FreeBSD: {{LINK}}
+
+#LinuxDaily #ZFS #Storage #FreeBSD
 
 [Đính kèm ảnh: post-003-code.png]

@@ -1,14 +1,21 @@
-💽 Gắn thêm ổ đĩa, gõ mount /dev/sdb1 /data một phát rồi tưởng xong? Lần khởi động sau, /data trống trơn — vì mount tay không sống qua reboot. Muốn đĩa Ở LẠI, phải khai fstab. Và khai sai kiểu là máy không boot.
+💽 Thêm disk mới là thao tác đơn giản về cú pháp nhưng rủi ro cao nếu chọn nhầm thiết bị.
 
-Bài #010 (Storage) đi trọn quy trình 4 bước thêm đĩa: nhận diện → phân vùng GPT → tạo filesystem → mount vĩnh viễn. Cùng quy trình, nhưng công cụ và cách định danh bền rẽ nhánh:
-• Ubuntu/Xubuntu & Debian → parted + mkfs.ext4, fstab theo UUID
-• Fedora → parted + mkfs.xfs (hoặc btrfs), fstab theo UUID
-• FreeBSD → gpart + newfs (UFS), mount theo NHÃN GPT /dev/gpt/... (không có mkfs.ext4, tên đĩa kiểu ada1/da1)
+Bản review #010 đổi thứ tự ưu tiên: lệnh đầu tiên KHÔNG phải parted/gpart, mà là xác minh đúng disk bằng size/model/serial và trạng thái mount.
 
-Hai cạm bẫy chết người: (1) khai fstab bằng /dev/sdb1 — cắm thêm ổ khác là thứ tự đổi, mount nhầm; dùng UUID/nhãn GPT thay thế. (2) fstab sai làm treo boot — LUÔN chạy mount -a để thử trước khi reboot.
+Linux:
+• lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,MOUNTPOINTS
+• UUID trong /etc/fstab
+• findmnt --verify --verbose + mount -a trước reboot
 
-👉 Đọc đầy đủ: {{LINK}}
+FreeBSD:
+• geom disk list + gpart show
+• GPT partition căn 1M theo Handbook
+• gpart + newfs UFS, có thể mount bền bằng /dev/gpt/<label>
 
-#LinuxDaily #SysAdmin #Storage #FreeBSD #Filesystem
+Một chỉnh sửa quan trọng nữa: nofail không phải option mặc định cho mọi /data. Chỉ dùng khi disk thực sự optional; với storage bắt buộc, lỗi mount nên được phát hiện rõ.
+
+👉 Đọc đầy đủ + checklist: {{LINK}}
+
+#LinuxDaily #Storage #FreeBSD #SysAdmin
 
 [Đính kèm ảnh: post-010-code.png]

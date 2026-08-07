@@ -13,7 +13,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 #013/#016 đã merge; #001/#007/#008/#015 trong PR #26
+- Historical source backfill: 🟡 #013/#016 + #001/#007/#008/#015 đã merge; Storage/Backup trong PR #27
 
 ## Các mốc đã hoàn thành
 
@@ -50,23 +50,30 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Hai bài có `review_status="reviewed"` và nguồn kỹ thuật có cấu trúc.
 - PR #25 đã merge 2026-08-07.
 
-## PR #26 — Historical Technical Backfill: Networking & Firewall
+### PR #26 — Historical Technical Backfill: Networking & Firewall ✅
 
-Mục tiêu: rà #001, #007, #008 và #015 theo nguyên tắc **rollback-first** cho mọi thay đổi có thể làm mất đường quản trị từ xa.
+- #001 Static IP: `netplan try`, Debian network manager nuance, NetworkManager checkpoint, FreeBSD runtime/console rollback path.
+- #007 Firewall: UFW mở SSH trước; firewalld runtime-first; PF parse bằng `pfctl -vnf` trước khi load.
+- #008 Diagnostics: thêm name resolution, ping nuance, `sockstat -46 -l`, bounded tcpdump.
+- #015 WireGuard: cập nhật FreeBSD package, semantics `AllowedIPs`, split-tunnel-first + rollback route.
+- 4 bài có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
+- PR #26 đã merge 2026-08-07.
 
-- [x] #001 Static IP: giữ `netplan try`; làm rõ Debian có nhiều network manager; Fedora dùng đúng connection profile + NetworkManager checkpoint; FreeBSD thử runtime/giữ console trước khi persist.
-- [x] #001: bỏ hướng dẫn restart toàn `networking` khi chỉ cần áp lại interface do ifupdown quản lý.
-- [x] #007 Firewall: UFW mở SSH trước khi enable; firewalld runtime-first → verify → `--runtime-to-permanent`.
-- [x] #007 FreeBSD PF: bắt buộc `pfctl -vnf /etc/pf.conf` trước `pfctl -f`; kiểm từ client thật, không chỉ localhost.
-- [x] #008 Diagnostics: thêm tầng name resolution; `getent hosts`; giải thích ping thất bại không phải kết luận cuối; `sockstat -46 -l`; tcpdump có `-c`.
-- [x] #015 WireGuard: cập nhật FreeBSD theo upstream `pkg install wireguard`; mô tả đúng hai vai trò của `AllowedIPs`; dựng split tunnel nhỏ trước full tunnel và chuẩn bị rollback route.
-- [x] 4 bài có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
-- [x] Đồng bộ Facebook/X cho cả 4 bài.
+## PR #27 — Historical Technical Backfill: Storage & Backup
+
+Mục tiêu: rà #003, #004, #010, #014 và #017 theo nguyên tắc **verify-before-destructive-change** và **restore evidence over backup-success logs**.
+
+- [x] #003 ZFS: sửa semantics dung lượng snapshot; nhấn mạnh snapshot ≠ backup; làm rõ destructive rollback và `-r`; cập nhật Fedora OpenZFS repo hiện hành.
+- [x] #004 restic: làm rõ repository có nhiều key/password; cập nhật encryption design; preview retention trước prune; phân biệt `check` với data verification.
+- [x] #010 Add disk: bắt buộc discovery size/model/serial/mount state trước write; FreeBSD GPT alignment `-a 1M`; Linux verify fstab trước reboot; `nofail` chỉ cho mount optional.
+- [x] #014 Backup lab: `restic check` không được mô tả như full data read; thêm subset/full read schedule; restore chọn đúng snapshot/host/path; canary + checksum làm bằng chứng restore.
+- [x] #017 Grow storage: mô hình đúng stack disk→partition→PV→LV→filesystem; không mặc định PV là whole disk hay dùng `+100%FREE`; FreeBSD xác định đúng partition index + `growfs -N`; ZFS mirror/RAIDZ expansion nuance.
+- [x] 5 bài có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
+- [x] Đồng bộ Facebook/X cho cả 5 bài.
 - [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
 
 ## Mốc kế tiếp — Historical Technical Backfill theo nhóm rủi ro
 
-- [ ] Storage/backup (#003, #004, #010, #014, #017): destructive operations, snapshot/restore semantics, restore verification.
 - [ ] Auth/permissions (#002, #009): OpenSSH/sudo/doas hiện hành, đường rollback khi hardening remote access.
 - [ ] Monitoring/automation còn lại: rà các claim phụ thuộc distro/version và thêm nguồn theo mức rủi ro.
 - [ ] Tiếp tục backfill theo PR nhỏ; không thay đổi ngày xuất bản lịch sử.
@@ -92,5 +99,6 @@ Mục tiêu: rà #001, #007, #008 và #015 theo nguyên tắc **rollback-first**
 3. Không push trực tiếp `main`.
 4. Không bypass quality gate.
 5. Thay đổi mạng/firewall/remote access phải có rollback path trước khi persist.
-6. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
-7. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
+6. Thao tác storage phá huỷ/resize phải xác minh đúng device/layer trước khi ghi; backup phải có restore evidence định kỳ.
+7. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
+8. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
