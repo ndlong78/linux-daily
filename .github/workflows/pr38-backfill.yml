@@ -24,6 +24,7 @@ jobs:
         run: python tools/build.py
       - name: Commit generated HTML
         run: |
+          # One-shot branch-only backfill; workflow is removed before PR review.
           if git diff --quiet -- index.html posts/post-*.html; then
             echo 'No generated HTML changes to commit.'
             exit 0
