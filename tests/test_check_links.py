@@ -48,12 +48,13 @@ def test_external_status_policy_is_strict_only_for_definite_client_errors():
     assert check_links.classify_status("https://example.test", 503).outcome == "warning"
 
 
-def test_legacy_broken_allowlist_is_exact_and_small():
-    assert check_links.LEGACY_BROKEN_URLS == {
+def test_legacy_broken_urls_have_been_removed_from_repository():
+    urls = set(check_links.collect_external_urls())
+    assert not {
         "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/",
         "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/",
         "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html",
-    }
+    } & urls
 
 
 def test_repository_internal_links_are_valid():
