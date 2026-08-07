@@ -11,8 +11,9 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Cadence qua `state.json`: ✅
 - Idempotency/duplicate check ở agent workflow: ✅
 - Structured metadata + Jinja2 index pipeline: ✅
-- ChatGPT Plus Scheduled Task làm scheduler chính: ✅ migration đang triển khai
-- Source-backed technical review: ⏳ kế tiếp
+- ChatGPT Plus Scheduled Task làm scheduler chính: ✅
+- Source-backed technical review cho bài mới (#019+): ✅ PR #24
+- Backfill nguồn cho bài lịch sử #001–#018: ⏳ mốc riêng
 
 ## Các mốc đã hoàn thành
 
@@ -36,7 +37,7 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - `tools/cadence.py` quyết định cadence từ `last_generated_at`, không dựa ngày do bài tự ghi.
 - Validator buộc state khớp bài mới nhất.
 - Agent phải kiểm tra branch/PR trùng cho issue kế tiếp.
-- Prefix branch chuẩn mới sau migration:
+- Prefix branch chuẩn:
 
 ```text
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
@@ -51,26 +52,39 @@ chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 - `templates/index.template.html` + Jinja2 dựng trang chủ.
 - `tools/build.py` là entrypoint build/quality gate chính.
 
-### Migration Claude Routine → ChatGPT Plus ✅ / đang merge
+### Migration Claude Routine → ChatGPT Plus ✅
 
-- `AGENTS.md` trở thành hợp đồng vận hành AI chính trong repository.
+- PR #23 đã merge 2026-08-07.
+- `AGENTS.md` là hợp đồng vận hành AI chính trong repository.
 - `docs/CHATGPT-OPERATIONS.md` mô tả scheduler, quyền ghi GitHub và failure/rollback path.
 - Scheduled Task `Linux Daily Operator` chạy 07:00 hằng ngày theo `Asia/Ho_Chi_Minh`.
-- README chuyển hoàn toàn sang kiến trúc ChatGPT Plus + GitHub + GitHub Actions.
-- Xóa `.claude/skills/linux-daily/SKILL.md` và `routine-prompt.txt` sau khi migration PR merge.
-- Không thay đổi `state.json`, cadence logic, structured pipeline hay CI khi chuyển scheduler.
-- Việc thủ công sau merge: **tắt Claude Routine cũ** để chỉ còn một scheduler.
+- README dùng hoàn toàn kiến trúc ChatGPT Plus + GitHub + GitHub Actions.
+- `.claude/skills/linux-daily/SKILL.md` và `routine-prompt.txt` đã bị loại bỏ.
+- `state.json`, cadence logic, structured pipeline và CI không phụ thuộc vendor AI.
 
-## Mốc kế tiếp — Source-backed Technical Review
+### PR #24 — Source-backed Technical Review ✅
 
-Mục tiêu: nâng chất lượng từ “đúng cấu trúc” sang “claim kỹ thuật có bằng chứng”.
+Mục tiêu: nâng chất lượng từ “đúng cấu trúc” sang “claim kỹ thuật có bằng chứng” cho mọi bài mới.
 
-- [ ] Mỗi bài có mục **Nguồn kỹ thuật**.
-- [ ] Tối thiểu 2 nguồn chính thức phù hợp với claim chính; ưu tiên upstream, Ubuntu, Debian, Fedora và FreeBSD docs.
-- [ ] Metadata có trạng thái `draft` → `reviewed` → `published` nếu cần.
-- [ ] Validator kiểm tra số nguồn và cấu trúc citation/source section.
-- [ ] Checklist review cho command/config có rủi ro cao: firewall, storage, backup/restore, auth/permissions, networking.
-- [ ] Rà lại các bài cũ có khẳng định tuyệt đối hoặc phụ thuộc phiên bản.
+- [x] `templates/post.template.html` có `review_status`, `sources` và section **Nguồn kỹ thuật**.
+- [x] `tools/validate_sources.py` bắt buộc từ #019: tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và metadata khớp link hiển thị.
+- [x] `review_status="draft"` không qua merge gate; chỉ `reviewed`/`published` được chấp nhận.
+- [x] `tools/build.py --check` chạy source-backed gate cùng structural quality gate.
+- [x] Test riêng cho historical grandfather, status, số nguồn, HTTPS, duplicate và metadata↔HTML drift.
+- [x] `AGENTS.md` có checklist kỹ thuật cho networking/firewall, storage, backup/restore, auth/permissions và shell automation.
+- [x] Bài #001–#018 được grandfather có chủ đích để PR pipeline không biến thành một đợt backfill lớn.
+
+## Mốc kế tiếp — Historical Technical Backfill
+
+Mục tiêu: rà những claim rủi ro/phiên bản trong #001–#018 và thêm nguồn dần, ưu tiên theo mức ảnh hưởng thay vì sửa tất cả cùng lúc.
+
+Ưu tiên đầu:
+
+- [ ] #016 fail2ban/FreeBSD: dùng thuật ngữ hiện hành **blocklistd**; phân biệt blocklistd trong FreeBSD base với `sshguard` là lựa chọn ngoài base/Ports-package.
+- [ ] #013 bash scripting: làm rõ `#!/usr/bin/env bash` phụ thuộc `PATH`; `set -e` có ngoại lệ; không khuyến nghị global `IFS=$'\n\t'` như mặc định; dùng `command -v` thay cho `which` khi kiểm command availability.
+- [ ] Rà các bài firewall/networking để bảo đảm có rollback khi thao tác remote.
+- [ ] Rà storage/backup để bảo đảm destructive operations và restore verification được nêu rõ.
+- [ ] Chọn chiến lược backfill nguồn: theo bài hoặc theo nhóm rủi ro, không thay đổi ngày xuất bản lịch sử.
 
 ## P2 — Repository & website
 
@@ -93,3 +107,4 @@ Mục tiêu: nâng chất lượng từ “đúng cấu trúc” sang “claim k
 3. Không push trực tiếp `main`.
 4. Không bypass quality gate.
 5. Mọi thay đổi automation phải rollback được bằng cách disable scheduler mà không làm hỏng dữ liệu series.
+6. Pipeline mới áp nghiêm cho bài mới; backfill lịch sử làm theo mốc riêng để review nhỏ, dễ audit.
