@@ -1,25 +1,21 @@
 [Tweet 1] — đính kèm post-016-code.png
-🚫 Server có SSH ra Internet = hàng nghìn dòng "Failed password" mỗi ngày. Tắt mật khẩu vẫn bị quấy. fail2ban: thấy IP dò nhiều lần thì tự cấm qua tường lửa. Thread 🧵
+🚫 Bài #016 vừa được technical review lại: Fail2Ban là lớp phản ứng động sau SSH hardening, nhưng phần FreeBSD cũ có vài claim cần sửa. Thread 🧵
 
 [Tweet 2]
-Cơ chế: fail2ban đọc log xác thực → filter đếm số lần thất bại theo IP → quá maxretry trong findtime thì ra lệnh cho tường lửa cấm IP đó bantime phút, rồi tự gỡ.
+FreeBSD hiện dùng tên blocklistd, không phải blacklistd. Handbook mô tả blocklistd trong base và sshd có thể tích hợp bằng UseBlocklist yes.
 
 [Tweet 3]
-Cấu hình: tạo jail.local (đừng sửa jail.conf gốc):
-[sshd]
-enabled=true
-maxretry=5, findtime=10m, bantime=1h
-ignoreip=127.0.0.1/8 <IP-của-bạn>
+sshguard KHÔNG nằm trong base. Đây là port/package riêng. Vì vậy cần tách rõ: blocklistd = base; sshguard = lựa chọn ngoài base; Fail2Ban = security/py-fail2ban.
 
 [Tweet 4]
-Linux — Ubuntu/Debian đọc journald, cấm qua nftables/ufw; Fedora đọc journald, cấm qua firewalld (banaction=firewallcmd-rich-rules). Bật: systemctl enable --now fail2ban.
+Với Fail2Ban trên FreeBSD, port hiện có filter bsd-sshd-session cho log OpenSSH mới. Đừng giả định filter sshd mặc định luôn match đúng trên mọi phiên bản.
 
 [Tweet 5] — FreeBSD
-FreeBSD: đọc /var/log/auth.log (KHÔNG journald), banaction=pf, bật qua rc.conf (fail2ban_enable=YES). Base còn có blacklistd & sshguard — công cụ bản địa, khỏi cài fail2ban.
+Ví dụ jail: backend=polling, logpath=/var/log/auth.log, filter=bsd-sshd-session, banaction=pf. Luôn kiểm filter được package cài thực tế trước khi bật.
 
 [Tweet 6]
-⚠️ Cạm bẫy số 1: TỰ KHOÁ MÌNH. Gõ sai vài lần từ IP của bạn là bị cấm. Khai ignoreip TRƯỚC khi bật. Và fail2ban là lớp bổ sung, không thay SSH key-only + cấm root (#002).
+⚠️ Đổi firewall từ xa: giữ console/phiên SSH cứu hộ, whitelist đúng IP quản trị, kiểm rule/table thật sự xuất hiện và biết cách unban/rollback trước khi đóng phiên.
 
 [Tweet 7]
-Full bài + sơ đồ log→ban: {{LINK}}
+Bài #016 đã bổ sung nguồn Fail2Ban + FreeBSD Handbook/Ports: {{LINK}}
 #LinuxDaily #fail2ban #FreeBSD #Security
