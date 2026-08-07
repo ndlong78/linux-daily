@@ -1,38 +1,21 @@
 [Tweet 1] — đính kèm post-001-code.png
-🖧 Một IP tĩnh, bốn cách khai báo.
-Ubuntu · Debian · Fedora · FreeBSD — cùng mục tiêu, bốn nơi lưu cấu hình khác nhau. Nhớ sai là mất cả buổi. Thread 🧵
+🖧 Đổi IP tĩnh từ xa: mục tiêu không chỉ là “đúng IP”, mà là không làm mất phiên SSH. Bài #001 được cập nhật theo nguyên tắc rollback-first. Thread 🧵
 
 [Tweet 2]
-Ubuntu / Xubuntu → netplan
-/etc/netplan/*.yaml (YAML, KỴ tab):
-addresses: [192.168.10.20/24]
-routes → default via .1
-→ sudo netplan apply
-(gateway4: đã lỗi thời, dùng routes:)
+Ubuntu/Xubuntu: dùng netplan try thay vì apply ngay. Nếu không xác nhận trong timeout, Netplan tự rollback — rất hữu ích khi đổi IP/gateway qua SSH.
 
 [Tweet 3]
-Debian → /etc/network/interfaces
-iface ens33 inet static
- address 192.168.10.20/24
- gateway 192.168.10.1
- dns-nameservers .2 .3
-→ systemctl restart networking
-(cần gói resolvconf để DNS ăn)
+Debian không chỉ có /etc/network/interfaces. Hãy xác định interface do ifupdown, NetworkManager hay systemd-networkd quản lý trước. Nếu là ifupdown, ưu tiên ifdown/ifup đúng interface thay vì restart toàn networking.
 
 [Tweet 4]
-Fedora → nmcli
-nmcli con mod ens33 ipv4.addresses …/24 ipv4.gateway .1 ipv4.dns ".2 .3" ipv4.method manual
-Thiếu "manual" là máy vẫn xin DHCP. File ifcfg-* đã bị bỏ.
+Fedora: tên NetworkManager connection profile có thể khác tên NIC. Dùng nmcli con show --active để lấy đúng profile; nmcli device checkpoint giúp tự rollback nếu thay đổi làm rớt SSH.
 
-[Tweet 5]
-FreeBSD → /etc/rc.conf (thế giới riêng)
-ifconfig_em0="inet 192.168.10.20 netmask 255.255.255.0"
-defaultrouter="192.168.10.1"
-KHÔNG systemctl, KHÔNG netplan. DNS ở /etc/resolv.conf.
+[Tweet 5] — FreeBSD
+FreeBSD: persistent config thường ở /etc/rc.conf. Thử runtime + giữ console/phiên cứu hộ trước khi reboot; kiểm ifconfig, route và resolver rồi mới chốt.
 
 [Tweet 6]
-Quy tắc vàng: DNS luôn khai đủ CẶP (.2 và .3). Cấu hình một địa chỉ = lỗi chờ ngày xảy ra.
+Checklist trước khi đóng phiên: IP đúng → default route đúng → getent hosts phân giải được → mở một phiên SSH MỚI từ máy quản trị. Chỉ persist sau khi cả bốn bước ổn.
 
 [Tweet 7]
-Full bài + sơ đồ: {{LINK}}
-#LinuxDaily #SysAdmin #FreeBSD
+Bài #001 đã thêm source-backed review và nguồn chính thức: {{LINK}}
+#LinuxDaily #Networking #SysAdmin
