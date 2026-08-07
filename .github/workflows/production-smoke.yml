@@ -1,0 +1,31 @@
+name: Production Smoke
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    # 07:30 Asia/Ho_Chi_Minh — kiểm tra production hằng ngày sau nhịp operator 07:00.
+    - cron: "30 0 * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-smoke
+  cancel-in-progress: true
+
+jobs:
+  cloudflare-worker:
+    name: cloudflare-worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Smoke-test linux.no.id.vn
+        run: python tools/check_production.py --attempts 18 --delay 10 --timeout 12
