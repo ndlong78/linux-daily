@@ -1,18 +1,18 @@
-🔁 Câu hỏi phũ: bản backup gần nhất của bạn — đã bao giờ thử KHÔI PHỤC chưa? Nếu chưa, đó không phải backup, chỉ là hy vọng. Rất nhiều "hệ backup" là một script chạy tay thỉnh thoảng, không ai chắc lần cuối khi nào, và chưa ai từng restore.
+🔁 “Backup succeeded” chưa đủ để chứng minh hệ backup đáng tin.
 
-Bài ôn tập #014 ghép cả chu kỳ vừa học thành một thứ thực sự dùng được — hệ backup tự động, có kiểm chứng, gồm 5 mắt xích:
-• Đích lưu trên đĩa riêng (bài #010)
-• Script vững: restic + set -euo pipefail + trap (bài #013 + #004)
-• Chạy dưới user tối thiểu quyền (bài #009)
-• Lập lịch định kỳ: systemd timer (Linux) / cron (FreeBSD) (bài #012)
-• DIỄN TẬP KHÔI PHỤC — mắt xích hay bị bỏ, và là mắt xích quyết định
+Bản review #014 tách rõ 5 bước:
+1. Backup chạy thành công.
+2. restic check kiểm cấu trúc repository/metadata.
+3. Đọc dữ liệu theo lịch bằng --read-data-subset hoặc full --read-data.
+4. Restore đúng snapshot/host/path.
+5. Verify canary bằng checksum đã lưu trước backup.
 
-Điểm rẽ nhánh 4 HĐH: Ubuntu/Debian/Fedora lập lịch bằng systemd timer + log qua journald; FreeBSD dùng cron + log ở /var/log (không có systemd timer). Script backup thì giống hệt.
+Điểm sửa quan trọng: restic check mặc định KHÔNG đọc toàn bộ pack data. Và restore latest không filter có thể chọn nhầm khi repo chứa nhiều host/path.
 
-Mắt xích số 5: restic check + restic restore latest ra thư mục tạm rồi so file. Khớp = backup dùng được. Đây là bước biến "đống snapshot" thành "backup đáng tin".
+Restore drill cũng không nên diff với file live hiện tại, vì file live có thể đã thay đổi hợp lệ. Dùng canary + checksum kỳ vọng mới là bằng chứng rõ ràng.
 
-👉 Đọc đầy đủ: {{LINK}}
+👉 Full lab + nguồn upstream: {{LINK}}
 
-#LinuxDaily #SysAdmin #Backup #FreeBSD #restic
+#LinuxDaily #Backup #restic #FreeBSD
 
 [Đính kèm ảnh: post-014-code.png]
