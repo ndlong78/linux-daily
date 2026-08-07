@@ -1,13 +1,13 @@
-🚫 Mở log một server có SSH ra Internet mà xem: hàng nghìn dòng "Failed password" từ đủ mọi IP, ngày này qua ngày khác. Ngay cả khi bạn đã tắt đăng nhập mật khẩu, luồng dò vẫn quấy nhiễu và rình mọi sơ hở.
+🚫 Bài #016 vừa được technical review lại vì phần FreeBSD cũ có vài claim cần sửa.
 
-Gia cố tĩnh (bài #002) chặn được CÁCH vào, nhưng không làm KẺ gõ cửa ngừng lại. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại quá nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng, rồi tự gỡ.
+Fail2Ban vẫn là lớp phòng thủ động hữu ích sau SSH hardening: đọc log, nhận diện nhiều lần xác thực thất bại rồi gọi firewall action để ban IP theo thời gian. Nhưng trên FreeBSD cần tách đúng ba lựa chọn:
+• `blocklistd` — thành phần có trong FreeBSD base; Handbook mô tả tích hợp với sshd qua `UseBlocklist yes`.
+• `sshguard` — port/package riêng, KHÔNG nằm trong base.
+• Fail2Ban — dùng port/package `security/py-fail2ban`.
 
-Bài #016 (Bảo mật): cùng ý tưởng, 4 hệ đọc log và cấm IP khác nhau:
-• Ubuntu/Xubuntu & Debian → đọc journald, cấm qua nftables/ufw
-• Fedora → đọc journald, cấm qua firewalld (để ý SELinux)
-• FreeBSD → đọc /var/log/auth.log (không có journald), cấm qua pf, bật bằng rc.conf. Base còn sẵn blacklistd & sshguard, khỏi cài fail2ban
+Một cập nhật đáng chú ý: FreeBSD Ports đã bổ sung filter `bsd-sshd-session` cho OpenSSH mới, nơi `sshd-session` phát sinh log xác thực. Vì vậy không nên giả định filter `sshd` mặc định luôn đúng trên mọi phiên bản.
 
-Cạm bẫy số 1: TỰ KHOÁ CHÍNH MÌNH. Gõ sai mật khẩu vài lần từ IP của bạn là bị cấm — luôn khai ignoreip cho IP quản trị TRƯỚC khi bật. Và nhớ: fail2ban là lớp bổ sung, không thay cho SSH key-only + cấm root.
+Và khi đổi firewall từ xa: giữ console/phiên SSH cứu hộ, khai đúng `ignoreip`, kiểm rule/table thật sự xuất hiện và biết cách unban/rollback trước khi đóng phiên.
 
 👉 Đọc đầy đủ: {{LINK}}
 
