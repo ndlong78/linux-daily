@@ -1,14 +1,14 @@
-⏰ Backup quên chạy thì lúc cần không có. Log không dọn thì đầy đĩa. Chứng chỉ TLS không gia hạn thì website "hết hạn bảo mật" giữa đêm. Những việc lặp lại này phải tự động — đừng để trí nhớ con người lo.
+⏰ Cron, systemd timer và FreeBSD periodic đều chạy việc định kỳ — nhưng semantics khác nhau ở chỗ dễ gây hiểu nhầm nhất.
 
-Bài #012 (Monitoring) so sánh ba cơ chế lập lịch, và điểm rẽ nhánh giữa Linux và FreeBSD:
-• cron → có ở MỌI HĐH, đơn giản: 5 trường thời gian + lệnh. Nhưng log nghèo và không tự bù lần lỡ.
-• systemd timers (Ubuntu/Debian/Fedora) → cách hiện đại: output vào journald, systemctl list-timers xem lần chạy kế, và Persistent=true để BÙ lần chạy bị lỡ khi máy tắt.
-• FreeBSD → cron cho lịch tuỳ ý + periodic(8) cho bảo trì hệ (cấu hình /etc/periodic.conf). KHÔNG có systemd timers.
-
-Vài cạm bẫy hay dính: (1) cron chạy với PATH tối giản — dùng đường dẫn tuyệt đối. (2) Tạo .timer nhưng quên systemctl enable --now (hoặc enable nhầm .service). (3) Máy tắt đúng giờ → cron bỏ qua luôn; muốn bù phải dùng systemd timer Persistent=true.
+Bài #012 được rà lại:
+• cron: phổ quát, môi trường tối giản, không tự replay job đã lỡ khi máy tắt.
+• systemd timer: Persistent=true với calendar timer có thể tạo một catch-up activation khi có lần bị lỡ; KHÔNG replay từng lần đã bỏ qua.
+• OnCalendar không mặc định chính xác tới từng giây; kiểm AccuracySec và dùng systemd-analyze calendar để validate lịch.
+• FreeBSD: cron cho lịch tùy ý; periodic là framework daily/weekly/monthly do cron gọi.
+• periodic output có thể gửi mail root hoặc chuyển sang daily/weekly/monthly log.
 
 👉 Đọc đầy đủ: {{LINK}}
 
-#LinuxDaily #SysAdmin #cron #FreeBSD #systemd
+#LinuxDaily #SysAdmin #cron #systemd #FreeBSD
 
 [Đính kèm ảnh: post-012-code.png]

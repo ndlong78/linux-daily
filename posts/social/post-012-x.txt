@@ -1,30 +1,30 @@
 [Tweet 1] — đính kèm post-012-code.png
-⏰ Backup quên chạy = lúc cần không có. Log không dọn = đầy đĩa. Việc lặp lại phải tự động. Nhưng dùng cron, systemd timer, hay periodic? Thread 🧵
+⏰ “Persistent=true sẽ bù mọi lần timer bị lỡ” là cách hiểu sai. PR #29 sửa lại semantics cron/systemd timer/FreeBSD periodic. Thread 🧵
 
 [Tweet 2]
-cron — có ở MỌI HĐH, đơn giản nhất:
-crontab -e
-# phút giờ ngày tháng thứ  lệnh
-0 2 * * *  /usr/local/bin/backup.sh   # 02:00 mỗi ngày
-Nhược: log nghèo, không tự bù lần lỡ.
+cron:
+0 2 * * * /usr/local/bin/backup.sh
+Đơn giản và phổ quát, nhưng máy tắt đúng mốc chạy thì job thường bị bỏ qua. Môi trường cron cũng tối giản hơn shell tương tác.
 
 [Tweet 3]
-systemd timers (Ubuntu/Debian/Fedora) — cách hiện đại. Cặp .service + .timer:
+systemd timer:
 OnCalendar=*-*-* 02:00:00
-Persistent=true          # BÙ lần lỡ nếu máy đã tắt
-systemctl enable --now backup.timer
+Persistent=true
+Nếu có một hay nhiều lần bị lỡ khi inactive, khi hoạt động lại timer có thể tạo một catch-up activation — không replay từng lần.
 
 [Tweet 4]
-Ưu điểm timer: output vào journald, systemctl list-timers xem lần chạy kế/trước, RandomizedDelaySec để tránh dồn tải. Đáng đổi từ cron trên Linux.
+Đừng giả định “02:00:00” = chính xác từng giây. Timer có AccuracySec. Validate biểu thức trước:
+systemd-analyze calendar '*-*-* 02:00:00'
 
-[Tweet 5] — FreeBSD
-FreeBSD KHÔNG có systemd timers. Lịch tuỳ ý dùng cron (giống Linux); việc bảo trì hệ do periodic(8) lo:
-sysrc -f /etc/periodic.conf ...
-periodic daily   # chạy thử bộ script daily
+[Tweet 5]
+FreeBSD: không có systemd timer.
+• cron: lịch tùy ý
+• periodic: daily/weekly/monthly maintenance do cron gọi
+Base scripts ở /etc/periodic, third-party ở /usr/local/etc/periodic.
 
 [Tweet 6]
-⚠️ Cạm bẫy: cron chạy PATH tối giản → dùng đường dẫn tuyệt đối. Tạo .timer nhưng quên enable --now. Máy tắt đúng giờ → cron bỏ qua; muốn bù dùng Persistent=true.
+FreeBSD periodic mặc định có thể gửi output cho root; có thể cấu hình daily_output/weekly_output/monthly_output sang mailbox được theo dõi hoặc file log được rotate.
 
 [Tweet 7]
-Full bài + sơ đồ 3 cơ chế: {{LINK}}
-#LinuxDaily #cron #FreeBSD #systemd
+Full bài: {{LINK}}
+#LinuxDaily #cron #systemd #FreeBSD

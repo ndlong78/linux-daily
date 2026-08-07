@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Đọc log hệ thống: journald trên Linux, syslog trên FreeBSD — Linux Daily #005</title>
 <meta name="description" content="Khi có sự cố, log là nơi nhìn đầu tiên. Ubuntu, Debian và Fedora truy vấn journald bằng journalctl; FreeBSD giữ syslog truyền thống ghi text vào /var/log. Bốn hệ điều hành, hai mô hình log.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
@@ -17,230 +14,128 @@
   "eyebrow": "Monitoring · Hiệu năng",
   "slug": "doc-log-journald-syslog",
   "title": "Đọc log hệ thống: một journal nhị phân, một đống file text",
-  "lede": "Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi \"log ở đâu, đọc bằng gì\" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail."
+  "lede": "Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi \"log ở đâu, đọc bằng gì\" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "systemd — journald.conf", "url": "https://www.freedesktop.org/software/systemd/man/252/journald.conf.html", "kind": "upstream"},
+    {"title": "systemd — journalctl", "url": "https://www.freedesktop.org/software/systemd/man/255/journalctl.html", "kind": "upstream"},
+    {"title": "FreeBSD Handbook — Configuration, Services and Logging", "url": "https://docs.freebsd.org/en/books/handbook/config/", "kind": "official"}
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#005 · 07·07·2026</span>
-    </div>
-  </div>
-
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#005 · 07·07·2026</span></div></div>
   <header class="post">
     <p class="eyebrow">Monitoring · Hiệu năng</p>
     <h1>Đọc log hệ thống: một journal nhị phân, một đống file text</h1>
     <p class="lede">Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi "log ở đâu, đọc bằng gì" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào <code>journald</code> và truy vấn qua <code>journalctl</code>. FreeBSD giữ nguyên <code>syslog</code> truyền thống: log là các file text trong <code>/var/log</code>, đọc bằng <code>grep</code> và <code>tail</code>.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · MONITORING</span>
-      <span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span>
-      <span class="tag">~9 PHÚT</span>
-    </div>
+    <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: hai mô hình log — journald nhị phân (Linux) vs syslog text (FreeBSD) -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ hai mô hình log: cùng các nguồn kernel, dịch vụ và ứng dụng, Linux gom vào journald nhị phân truy vấn bằng journalctl, còn FreeBSD dùng syslogd ghi ra các file text trong /var/log đọc bằng grep và tail">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-        <marker id="arwr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#B23A2E"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <!-- NGUỒN LOG -->
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="30" y="60" width="120" height="34" rx="5" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
-        <text x="90" y="82" text-anchor="middle" fill="#14201D" font-size="12">kernel</text>
-        <rect x="30" y="128" width="120" height="34" rx="5" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
-        <text x="90" y="150" text-anchor="middle" fill="#14201D" font-size="12">dịch vụ</text>
-        <rect x="30" y="196" width="120" height="34" rx="5" fill="#FFFFFF" stroke="#14201D" stroke-width="1.6"/>
-        <text x="90" y="218" text-anchor="middle" fill="#14201D" font-size="12">ứng dụng</text>
-        <text x="30" y="46" fill="#566661" font-size="11" letter-spacing="1">NGUỒN</text>
-      </g>
-
-      <!-- gộp về một điểm -->
-      <line x1="150" y1="77"  x2="230" y2="130" stroke="#566661" stroke-width="1.6"/>
-      <line x1="150" y1="145" x2="230" y2="145" stroke="#566661" stroke-width="1.6"/>
-      <line x1="150" y1="213" x2="230" y2="160" stroke="#566661" stroke-width="1.6"/>
-      <circle cx="232" cy="145" r="4" fill="#14201D"/>
-
-      <!-- nhánh Linux (teal, trên) -->
-      <line x1="236" y1="140" x2="300" y2="96" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="304" y="60" width="180" height="70" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
-        <text x="394" y="86" text-anchor="middle" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">journald</text>
-        <text x="394" y="108" text-anchor="middle" fill="#566661" font-size="11">journal nhị phân</text>
-        <line x1="484" y1="95" x2="548" y2="95" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-        <rect x="552" y="62" width="180" height="66" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="1.6"/>
-        <text x="642" y="88" text-anchor="middle" fill="#14201D" font-size="13">journalctl</text>
-        <text x="642" y="108" text-anchor="middle" fill="#566661" font-size="10.5">-u · -b · -p · -f</text>
-      </g>
-      <text x="304" y="150" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="10.5">Ubuntu · Debian · Fedora</text>
-
-      <!-- nhánh FreeBSD (đỏ, dưới) -->
-      <line x1="236" y1="150" x2="300" y2="206" stroke="#B23A2E" stroke-width="2.5" marker-end="url(#arwr)"/>
-      <g font-family="JetBrains Mono, monospace">
-        <rect x="304" y="176" width="180" height="70" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/>
-        <text x="394" y="202" text-anchor="middle" fill="#B23A2E" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">syslogd</text>
-        <text x="394" y="224" text-anchor="middle" fill="#7A4A44" font-size="11">file text thuần</text>
-        <line x1="484" y1="211" x2="548" y2="211" stroke="#B23A2E" stroke-width="2.5" marker-end="url(#arwr)"/>
-        <rect x="552" y="178" width="180" height="66" rx="6" fill="#FFFFFF" stroke="#B23A2E" stroke-width="1.6"/>
-        <text x="642" y="204" text-anchor="middle" fill="#14201D" font-size="13">/var/log/*.log</text>
-        <text x="642" y="224" text-anchor="middle" fill="#7A4A44" font-size="10.5">grep · tail · less</text>
-      </g>
-      <text x="304" y="266" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="10.5">FreeBSD — tách riêng</text>
+    <svg viewBox="0 0 760 240" role="img" aria-label="Linux dùng journald và journalctl; FreeBSD dùng syslogd ghi file text và newsyslog để xoay vòng">
+      <rect width="760" height="240" fill="#F7FAF9"/>
+      <rect x="40" y="72" width="280" height="105" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+      <text x="180" y="105" text-anchor="middle" font-family="Be Vietnam Pro" font-size="15" font-weight="700">Linux · systemd-journald</text>
+      <text x="180" y="135" text-anchor="middle" font-family="JetBrains Mono" font-size="12">journalctl -u/-b/-p/-f</text>
+      <text x="180" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="11">Storage=auto|persistent|volatile</text>
+      <rect x="440" y="72" width="280" height="105" rx="8" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/>
+      <text x="580" y="105" text-anchor="middle" font-family="Be Vietnam Pro" font-size="15" font-weight="700">FreeBSD · syslogd</text>
+      <text x="580" y="135" text-anchor="middle" font-family="JetBrains Mono" font-size="12">/var/log/* · grep · tail</text>
+      <text x="580" y="158" text-anchor="middle" font-family="JetBrains Mono" font-size="11">rotation: newsyslog</text>
     </svg>
-    <figcaption>Hình 1 — Cùng nguồn log, hai mô hình lưu: Linux gom vào journal nhị phân (truy vấn có cấu trúc), FreeBSD ghi ra file text (đọc bằng công cụ văn bản quen thuộc).</figcaption>
+    <figcaption>Hình 1 — Đừng suy luận log theo tên distro; trước hết xác định mô hình lưu và cấu hình hiệu lực.</figcaption>
   </figure>
 
   <section>
     <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Dịch vụ chết lúc 3 giờ sáng, tường lửa chặn nhầm, ổ đĩa đầy — câu đầu tiên luôn là "log nói gì?". Nhưng nếu bạn quản trị lẫn lộn Linux và FreeBSD, phản xạ gõ <code>journalctl</code> sẽ vô dụng trên FreeBSD, còn thói quen <code>tail -f /var/log/syslog</code> lại không tồn tại trên Fedora (không có file đó). Hiểu <em>log nằm ở đâu và đọc bằng gì</em> trên mỗi họ là kỹ năng vận hành nền tảng — quan trọng hơn nhớ vài tuỳ chọn lệnh.</p>
+    <p>Khi dịch vụ lỗi, câu hỏi đầu tiên là log ở đâu và còn giữ được qua reboot hay không. Trên Linux dùng systemd, <code>journalctl</code> là công cụ truy vấn chính; trên FreeBSD không có journald, log hệ thống đi qua <code>syslogd</code> và được xoay vòng bằng <code>newsyslog</code>.</p>
   </section>
 
   <section>
     <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>Có hai mô hình. Nhóm dùng <strong>systemd</strong> — Ubuntu/Xubuntu, Debian, Fedora — ghi log qua <code>systemd-journald</code> vào một <em>journal nhị phân</em> có cấu trúc (kèm metadata: đơn vị dịch vụ, PID, mức ưu tiên, lần khởi động…), và bạn truy vấn nó bằng <code>journalctl</code>. Nhóm <strong>FreeBSD</strong> giữ <code>syslogd</code> cổ điển: log là các <em>file text</em> trong <code>/var/log</code> (<code>messages</code>, <code>auth.log</code>, <code>cron</code>…), cấu hình định tuyến trong <code>/etc/syslog.conf</code>, xoay vòng bằng <code>newsyslog</code>.</p>
     <ul class="clean">
-      <li><strong>journald (Linux):</strong> lọc theo trường có sẵn — <code>journalctl -u sshd -p err -b</code> gọn hơn nhiều so với ghép <code>grep</code>.</li>
-      <li><strong>syslog (FreeBSD):</strong> đơn giản, minh bạch, ai cũng đọc được bằng công cụ văn bản; đổi lại không có truy vấn cấu trúc.</li>
-      <li><strong>Điểm dễ nhầm:</strong> nhiều bản Linux vẫn có <code>rsyslog</code> chạy song song, đẩy một phần journal ra <code>/var/log</code> — nhưng nguồn chân lý trên systemd vẫn là journal.</li>
+      <li><strong>Không hard-code “Debian volatile, Ubuntu/Fedora persistent”.</strong> Với journald, <code>Storage=auto</code> hoạt động như persistent khi <code>/var/log/journal</code> tồn tại và như volatile khi không tồn tại. Hãy kiểm máy thật.</li>
+      <li><strong>Unit name khác nhau:</strong> Ubuntu/Debian thường dùng <code>ssh.service</code>; Fedora dùng <code>sshd.service</code>. Lọc sai unit có thể cho kết quả rỗng dù log vẫn có.</li>
+      <li><strong>FreeBSD:</strong> <code>syslogd</code> ghi theo facility/priority vào các file text; <code>newsyslog</code> làm rotation và được cron gọi định kỳ.</li>
+      <li><strong>Retention phải đo được:</strong> xem dung lượng journal/file log trước khi vacuum/rotation; đừng xóa log chỉ vì thấy “to”.</li>
     </ul>
   </section>
 
   <figure>
-    <!-- So sánh mô hình log trên 4 hệ điều hành -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh log: Ubuntu và Xubuntu dùng journald với journal bền sẵn, Debian dùng journald nhưng mặc định volatile mất khi reboot, Fedora dùng journald bền sẵn, FreeBSD dùng syslogd ghi file text trong /var/log và xoay vòng bằng newsyslog">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">journalctl</text>
-        <text x="104" y="132" text-anchor="middle" font-size="10.5" fill="#566661">journald</text>
-        <text x="104" y="150" text-anchor="middle" font-size="10.5" fill="#566661">/var/log/journal</text>
-        <text x="104" y="176" text-anchor="middle" font-size="10" fill="#0C6E61">bền sẵn ✓</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">journalctl</text>
-        <text x="284" y="132" text-anchor="middle" font-size="10.5" fill="#566661">journald</text>
-        <text x="284" y="150" text-anchor="middle" font-size="10.5" fill="#566661">Storage=auto</text>
-        <text x="284" y="176" text-anchor="middle" font-size="10" fill="#B23A2E">volatile ⚠ (mục 05)</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="104" text-anchor="middle" font-size="12" fill="#0C6E61">journalctl</text>
-        <text x="464" y="132" text-anchor="middle" font-size="10.5" fill="#566661">journald</text>
-        <text x="464" y="150" text-anchor="middle" font-size="10.5" fill="#566661">/var/log/journal</text>
-        <text x="464" y="176" text-anchor="middle" font-size="10" fill="#0C6E61">bền sẵn ✓</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="66" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="104" text-anchor="middle" font-size="12" fill="#B23A2E">grep · tail</text>
-        <text x="650" y="132" text-anchor="middle" font-size="10.5" fill="#7A4A44">syslogd</text>
-        <text x="650" y="150" text-anchor="middle" font-size="10.5" fill="#7A4A44">/var/log/*.log</text>
-        <text x="650" y="176" text-anchor="middle" font-size="10" fill="#B23A2E">newsyslog xoay vòng</text>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng lệnh song song: Ubuntu Debian Fedora dùng journalctl nhưng service SSH khác; FreeBSD dùng auth.log messages và newsyslog">
+      <rect width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono" font-size="10.5">
+        <rect x="20" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="105" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="105" y="100" text-anchor="middle">journalctl -u ssh</text><text x="105" y="125" text-anchor="middle">journalctl -b -p err</text><text x="105" y="150" text-anchor="middle">journalctl --disk-usage</text>
+        <rect x="205" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="290" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text><text x="290" y="100" text-anchor="middle">journalctl -u ssh</text><text x="290" y="125" text-anchor="middle">Storage= effective?</text><text x="290" y="150" text-anchor="middle">/var/log/journal?</text>
+        <rect x="390" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="475" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text><text x="475" y="100" text-anchor="middle">journalctl -u sshd</text><text x="475" y="125" text-anchor="middle">journalctl -b -p err</text><text x="475" y="150" text-anchor="middle">journalctl -f</text>
+        <rect x="575" y="35" width="165" height="175" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="100" text-anchor="middle">/var/log/auth.log</text><text x="657" y="125" text-anchor="middle">/var/log/messages</text><text x="657" y="150" text-anchor="middle">newsyslog</text>
       </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG CÂU HỎI · HAI MÔ HÌNH LOG</text>
     </svg>
-    <figcaption>Hình 2 — Ba cột teal chung một công cụ (<code>journalctl</code>); cột đỏ (FreeBSD) đọc file text. Lưu ý Debian mặc định lưu journal trong RAM — mất sau khi khởi động lại.</figcaption>
+    <figcaption>Hình 2 — Cùng mục tiêu điều tra, Linux khác nhau ở unit name; FreeBSD dùng file text và công cụ BSD gốc.</figcaption>
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Thao tác trên từng hệ điều hành</h2>
-    <p>Tình huống chung: điều tra vì sao dịch vụ SSH có vấn đề trong lần khởi động này, và theo dõi log trực tiếp.</p>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — journalctl</span>
-    <pre><code><span class="cmt"># Log của một dịch vụ, chỉ lần khởi động hiện tại:</span>
-journalctl -u sshd -b
-
-<span class="cmt"># Chỉ mức lỗi trở lên, trong 1 giờ qua:</span>
+    <h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
+    <pre><code>journalctl -u ssh -b
 journalctl -p err --since "1 hour ago"
-
-<span class="cmt"># Theo dõi trực tiếp (như tail -f):</span>
+journalctl --disk-usage
+test -d /var/log/journal &amp;&amp; echo persistent-path-present || echo check-journald-config</code></pre>
+    <span class="code-label"><span class="dot"></span>Fedora</span>
+    <pre><code>journalctl -u sshd -b
+journalctl -p err --since "1 hour ago"
 journalctl -f
-
-<span class="cmt"># Dung lượng journal đang chiếm:</span>
 journalctl --disk-usage</code></pre>
-
-    <span class="code-label"><span class="dot"></span>Chỉ Debian — bật journal lưu bền (nếu cần)</span>
-    <pre><code><span class="cmt"># Debian mặc định để journal trong RAM → mất khi reboot.</span>
-<span class="cmt"># Tạo thư mục lưu bền rồi nạp lại journald:</span>
-sudo mkdir -p /var/log/journal
-sudo systemd-tmpfiles --create --prefix /var/log/journal
-sudo systemctl restart systemd-journald</code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — file text trong /var/log (tách riêng)</span>
-    <pre class="bsd"><code><span class="cmt"># KHÔNG có journalctl. Log là file text:</span>
-grep sshd /var/log/auth.log        <span class="cmt"># sự kiện đăng nhập/SSH</span>
-tail -f /var/log/messages          <span class="cmt"># theo dõi log chung trực tiếp</span>
-
-<span class="cmt"># Định tuyến log: /etc/syslog.conf</span>
-<span class="cmt"># Xoay vòng log:   /etc/newsyslog.conf  (KHÔNG phải logrotate)</span>
-service syslogd status</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — syslog/newsyslog</span>
+    <pre class="bsd"><code>grep sshd /var/log/auth.log
+tail -f /var/log/messages
+service syslogd status
+newsyslog -n                       # dry-run: xem file nào sẽ rotate
+grep -v '^[[:space:]]*#' /etc/newsyslog.conf</code></pre>
   </section>
 
   <section>
     <h2><span class="num">04</span> Kiểm chứng</h2>
-    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
-    <pre><code>journalctl --verify           <span class="cmt"># kiểm tra tính toàn vẹn journal</span>
-journalctl -b -p warning      <span class="cmt"># cảnh báo trở lên trong lần boot này</span>
-ls -ld /var/log/journal       <span class="cmt"># có thư mục này = journal lưu bền</span></code></pre>
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
-    <pre class="bsd"><code>ls -l /var/log/                <span class="cmt"># liệt kê các file log text</span>
-tail -n 50 /var/log/messages   <span class="cmt"># 50 dòng gần nhất</span>
-newsyslog -nv                  <span class="cmt"># xem newsyslog sẽ xoay file nào (không thực thi)</span></code></pre>
+    <p>Trên Linux, kiểm cả log hiện tại và khả năng giữ log qua reboot bằng cấu hình hiệu lực + sự tồn tại của persistent journal. Trên FreeBSD, kiểm file đích trong <code>/etc/syslog.conf</code> và chạy <code>newsyslog -n</code> trước khi thay đổi rule rotation.</p>
+    <pre><code>journalctl -b -n 20
+journalctl --list-boots
+journalctl --disk-usage</code></pre>
   </section>
 
   <section>
     <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
     <ul class="clean">
-      <li><strong>Debian — journal bay hơi:</strong> mặc định <code>Storage=auto</code> nhưng không tạo sẵn <code>/var/log/journal</code>, nên journal chỉ nằm trong RAM và <em>mất sạch sau mỗi lần reboot</em>. Điều tra sự cố kèm khởi động lại là mất chứng cứ — bật lưu bền như mục 03.</li>
-      <li><strong>Ubuntu/Fedora:</strong> journal lưu bền có thể ngốn dung lượng. Giới hạn bằng <code>journalctl --vacuum-time=7d</code> hoặc <code>--vacuum-size=500M</code>, hoặc đặt <code>SystemMaxUse=</code> trong <code>/etc/systemd/journald.conf</code>.</li>
-      <li><strong>FreeBSD:</strong> đừng dùng <code>logrotate</code> — không có. Xoay vòng do <code>newsyslog</code> lo, cấu hình ở <code>/etc/newsyslog.conf</code>; thêm dịch vụ mới thì khai luật xoay vòng ở đó.</li>
-      <li><strong>Nhầm mô hình:</strong> gõ <code>journalctl</code> trên FreeBSD sẽ "command not found"; tìm <code>/var/log/syslog</code> trên Fedora sẽ không thấy (Fedora không dùng rsyslog mặc định) — nhìn nhầm thành "máy không ghi log".</li>
+      <li>Không dùng claim “distro X luôn persistent/volatile”; package preset và cấu hình site có thể khác.</li>
+      <li><code>journalctl -u sshd</code> trên Ubuntu/Debian có thể lọc sai unit; kiểm <code>systemctl status ssh</code> trước.</li>
+      <li>Vacuum journal chỉ xử lý archived journal files theo semantics của journalctl; đừng coi nó là thay thế cho retention policy.</li>
+      <li>FreeBSD không dùng <code>logrotate</code> trong base; dùng <code>newsyslog</code>. Với cấu hình bổ sung, ưu tiên drop-in theo layout hệ thống/package thay vì sửa vendor file nếu có thể.</li>
     </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Trên FreeBSD không có <code>journald</code>, <code>journalctl</code> hay <code>logrotate</code>. Mô hình là <code>syslogd</code> → file text → <code>newsyslog</code>. Ngược lại, đừng trông đợi cùng một cấu trúc file <code>/var/log</code> giống nhau giữa hai họ — tên file và nội dung khác nhau.
-    </div>
   </section>
 
   <section>
     <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
     <ul class="clean">
-      <li>Log chứa thông tin nhạy cảm (IP, tên user, đôi khi cả dữ liệu app) — giới hạn quyền đọc; trên Linux, thành viên nhóm <code>systemd-journal</code> mới đọc được journal đầy đủ.</li>
-      <li>Với nhiều máy, hãy <strong>gom log tập trung</strong>: cấu hình cặp máy chủ log để dự phòng (một máy chết vẫn còn máy kia) thay vì đẩy về một đích duy nhất.</li>
-      <li>Đặt chính sách giữ log rõ ràng và có giới hạn dung lượng ở cả hai mô hình — journal không giới hạn hoặc <code>/var/log</code> không xoay vòng đều dẫn tới đầy đĩa.</li>
-      <li>Đồng bộ thời gian (NTP) trước khi tin vào mốc thời gian trong log — log lệch giờ giữa các máy làm việc truy vết gần như bất khả.</li>
+      <li>Log có thể chứa IP, username, path và dữ liệu ứng dụng; chỉ cấp quyền đọc theo nhu cầu vận hành.</li>
+      <li>Quyền đọc journal đầy đủ phụ thuộc ACL/group của distro/site; đừng giả định chỉ nhóm <code>systemd-journal</code>.</li>
+      <li>Đồng bộ NTP trước khi ghép timeline nhiều máy.</li>
+      <li>Đặt retention và giám sát dung lượng; rotation không thay thế centralized logging hoặc backup log quan trọng.</li>
     </ul>
   </section>
 
   <div class="exercise">
     <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Debian</strong> và một máy <strong>FreeBSD</strong>: gây ra vài lần đăng nhập SSH sai mật khẩu, rồi (a) trên Debian tìm đúng các sự kiện đó bằng <code>journalctl</code> lọc theo đơn vị <code>sshd</code> và mức ưu tiên, và (b) trên FreeBSD tìm cùng sự kiện trong <code>/var/log/auth.log</code>. Sau đó reboot cả hai và kiểm tra lại. Câu hỏi: sau khi khởi động lại, máy nào còn giữ được log các lần đăng nhập sai đó, máy nào mất — và bạn cần đổi cấu hình gì để cả hai đều giữ được?</p>
+    <p>Trên một VM Debian và một VM FreeBSD, tạo một sự kiện SSH thất bại trong lab, tìm đúng record, ghi lại file/unit nguồn, rồi chứng minh log còn hay mất sau reboot. Không thay đổi retention trước khi ghi lại baseline dung lượng.</p>
   </div>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #005 · Monitoring</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #journald</span>
-    </div>
-  </footer>
-
+  <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean">
+    <li><a href="https://www.freedesktop.org/software/systemd/man/252/journald.conf.html">systemd — journald.conf</a></li>
+    <li><a href="https://www.freedesktop.org/software/systemd/man/255/journalctl.html">systemd — journalctl</a></li>
+    <li><a href="https://docs.freebsd.org/en/books/handbook/config/">FreeBSD Handbook — Configuration, Services and Logging</a></li>
+  </ul></section>
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
 </div>
 </body>
 </html>
