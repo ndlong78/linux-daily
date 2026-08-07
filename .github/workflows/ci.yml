@@ -91,11 +91,15 @@ jobs:
               font.save(Path('assets/fonts') / f'{src.stem}.woff2')
           PY
           test "$(find assets/fonts -maxdepth 1 -name '*.woff2' | wc -l)" -eq 8
-      - name: Commit font assets to PR branch
+      - name: Build generated site with local fonts
         run: |
-          if test -z "$(git status --porcelain -- assets/fonts)"; then exit 0; fi
+          pip install -e ".[dev]"
+          python tools/build.py
+      - name: Commit font assets and generated HTML to PR branch
+        run: |
+          if test -z "$(git status --porcelain -- assets/fonts index.html posts)"; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add assets/fonts
-          git commit -m 'PR #43: vendor self-hosted WOFF2 font assets'
+          git add assets/fonts index.html posts
+          git commit -m 'PR #43: backfill self-hosted fonts across site'
           git push origin HEAD:chatgpt/pr43-complete-self-host-fonts
