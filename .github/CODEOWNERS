@@ -1,0 +1,8 @@
+# Default repository owner/reviewer.
+* @ndlong78
+
+# Governance and CI changes require the repository owner.
+/.github/ @ndlong78
+/SECURITY.md @ndlong78
+/CONTRIBUTING.md @ndlong78
+/LICENSE @ndlong78
