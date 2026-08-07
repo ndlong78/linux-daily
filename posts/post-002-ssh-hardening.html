@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Gia cố SSH trên Ubuntu, Debian, Fedora & FreeBSD — Linux Daily #002</title>
-<meta name="description" content="sshd_config gần như giống nhau ở mọi HĐH, nhưng tên service, lệnh nạp lại và tường lửa thì khác: gia cố SSH đúng cách trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<meta name="description" content="Gia cố SSH key-only an toàn trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD: hiểu precedence của sshd_config.d, kiểm effective config và luôn có rollback path khi làm từ xa.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
@@ -17,247 +17,186 @@
   "eyebrow": "Bảo mật · Phân quyền",
   "slug": "ssh-hardening",
   "title": "Gia cố SSH: khóa cửa trước khi có người gõ",
-  "lede": "Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn."
+  "lede": "Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "OpenSSH upstream — sshd_config(5)",
+      "url": "https://man.openbsd.org/sshd_config",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ubuntu manpage — sshd_config(5)",
+      "url": "https://manpages.ubuntu.com/manpages/questing/man5/sshd_config.5.html",
+      "kind": "official"
+    },
+    {
+      "title": "Fedora Docs — OpenSSH",
+      "url": "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Security",
+      "url": "https://docs.freebsd.org/en/books/handbook/security/",
+      "kind": "official"
+    }
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#002 · 03·07·2026</span>
-    </div>
-  </div>
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#002 · 03·07·2026</span></div></div>
 
   <header class="post">
     <p class="eyebrow">Bảo mật · Phân quyền</p>
     <h1>Gia cố SSH: khóa cửa trước khi có người gõ</h1>
     <p class="lede">Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân <code>sshd_config</code> gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · BẢO MẬT</span>
-      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
-      <span class="tag">~9 PHÚT</span>
-    </div>
+    <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: các lớp gia cố một kết nối SSH phải vượt qua -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Một kết nối SSH đi vào phải vượt qua bốn lớp: tường lửa giới hạn cổng, sshd chỉ nhận khóa và cấm root, danh sách AllowUsers, rồi mới tới shell. Đăng nhập bằng mật khẩu và bằng root bị chặn.">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-        <marker id="arwr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#B23A2E"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <!-- Client -->
-      <rect x="24" y="122" width="104" height="56" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-      <text x="76" y="147" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">CLIENT</text>
-      <text x="76" y="165" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">ssh + key</text>
-      <line x1="128" y1="150" x2="168" y2="150" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-
-      <!-- Layer 1: firewall -->
-      <rect x="170" y="112" width="118" height="76" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.6"/>
-      <text x="229" y="136" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">TƯỜNG LỬA</text>
-      <text x="229" y="155" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">limit :22</text>
-      <text x="229" y="172" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">rate-limit</text>
-      <line x1="288" y1="150" x2="320" y2="150" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-
-      <!-- Layer 2: sshd -->
-      <rect x="322" y="104" width="128" height="92" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.6"/>
-      <text x="386" y="127" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">sshd</text>
-      <text x="386" y="147" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">key-only</text>
-      <text x="386" y="164" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">no root</text>
-      <text x="386" y="181" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">MaxAuthTries 3</text>
-      <line x1="450" y1="150" x2="482" y2="150" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-
-      <!-- Layer 3: AllowUsers -->
-      <rect x="484" y="112" width="120" height="76" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.6"/>
-      <text x="544" y="136" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="12" font-weight="700">AllowUsers</text>
-      <text x="544" y="158" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">danh sách</text>
-      <text x="544" y="174" text-anchor="middle" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11">cho phép</text>
-      <line x1="604" y1="150" x2="636" y2="150" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-
-      <!-- Shell -->
-      <rect x="638" y="122" width="98" height="56" rx="6" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-      <text x="687" y="147" text-anchor="middle" fill="#14201D" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">SHELL</text>
-      <text x="687" y="165" text-anchor="middle" fill="#0C6E61" font-family="JetBrains Mono, monospace" font-size="11">✓ vào</text>
-
-      <!-- Blocked: password + root -->
-      <text x="386" y="238" text-anchor="middle" fill="#B23A2E" font-family="JetBrains Mono, monospace" font-size="12" letter-spacing="1">BỊ CHẶN</text>
-      <g font-family="JetBrains Mono, monospace" font-size="11" fill="#B23A2E">
-        <line x1="250" y1="258" x2="520" y2="258" stroke="#B23A2E" stroke-width="1" stroke-dasharray="4 3"/>
-        <text x="316" y="278" text-anchor="middle">✗ mật khẩu</text>
-        <text x="456" y="278" text-anchor="middle">✗ đăng nhập root</text>
-      </g>
-      <line x1="386" y1="196" x2="386" y2="224" stroke="#B23A2E" stroke-width="1.5" marker-end="url(#arwr)"/>
+    <svg viewBox="0 0 760 260" role="img" aria-label="Luồng hardening SSH an toàn: xác nhận khóa công khai, giữ phiên cứu hộ, kiểm cấu hình, reload rồi kiểm bằng phiên mới">
+      <rect width="760" height="260" fill="#F7FAF9"/>
+      <rect x="30" y="92" width="130" height="72" rx="7" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+      <text x="95" y="120" text-anchor="middle" font-family="Be Vietnam Pro" font-size="12" font-weight="700">KEY LOGIN</text>
+      <text x="95" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="10">đã kiểm thử</text>
+      <line x1="160" y1="128" x2="210" y2="128" stroke="#0C6E61" stroke-width="3"/>
+      <rect x="215" y="78" width="145" height="100" rx="7" fill="#EAF5F2" stroke="#0C6E61" stroke-width="2"/>
+      <text x="287" y="108" text-anchor="middle" font-family="Be Vietnam Pro" font-size="12" font-weight="700">PHIÊN CỨU HỘ</text>
+      <text x="287" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="10">giữ nguyên</text>
+      <text x="287" y="153" text-anchor="middle" font-family="JetBrains Mono" font-size="10">đến khi test xong</text>
+      <line x1="360" y1="128" x2="410" y2="128" stroke="#0C6E61" stroke-width="3"/>
+      <rect x="415" y="78" width="145" height="100" rx="7" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+      <text x="487" y="108" text-anchor="middle" font-family="Be Vietnam Pro" font-size="12" font-weight="700">VALIDATE</text>
+      <text x="487" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="10">sshd -t</text>
+      <text x="487" y="153" text-anchor="middle" font-family="JetBrains Mono" font-size="10">sshd -T</text>
+      <line x1="560" y1="128" x2="610" y2="128" stroke="#0C6E61" stroke-width="3"/>
+      <rect x="615" y="92" width="115" height="72" rx="7" fill="#14201D"/>
+      <text x="672" y="120" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro" font-size="12" font-weight="700">PHIÊN MỚI</text>
+      <text x="672" y="143" text-anchor="middle" fill="#9FE9DC" font-family="JetBrains Mono" font-size="10">thành công</text>
     </svg>
-    <figcaption>Hình 1 — Gia cố SSH là xếp lớp: tường lửa giới hạn, sshd chỉ nhận khóa và cấm root, rồi danh sách người dùng được phép. Mật khẩu và root bị chặn ngay từ đầu.</figcaption>
+    <figcaption>Hình 1 — Hardening từ xa phải có rollback path: xác nhận key trước, giữ phiên hiện tại, validate cấu hình, reload và chỉ kết thúc khi một phiên SSH mới đăng nhập được.</figcaption>
   </figure>
 
   <section>
-    <h2><span class="num">01</span> Bối cảnh</h2>
-    <p>Bất kỳ máy nào mở cổng SSH ra mạng — kể cả mạng nội bộ — đều liên tục bị các bot dò tài khoản và mật khẩu. Một máy chủ mới dựng, để nguyên mặc định, có thể hứng hàng nghìn lượt thử đăng nhập mỗi ngày. Gia cố SSH là việc <strong>làm một lần, chặn được phần lớn rủi ro</strong>: chuyển sang xác thực bằng khóa, cấm đăng nhập <code>root</code>, và giới hạn ai được vào.</p>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Mục tiêu không chỉ là “tắt password”, mà là chuyển sang public key mà không tự cắt đường quản trị. Với máy ở xa, thứ tự thao tác quan trọng ngang với nội dung cấu hình: key phải hoạt động trước, luôn giữ một phiên/console cứu hộ và kiểm bằng một kết nối mới sau khi reload.</p>
   </section>
 
   <section>
     <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <p>Trung tâm của mọi thứ là file <code>/etc/ssh/sshd_config</code>, và tin tốt là <strong>các directive gia cố giống nhau trên cả bốn hệ điều hành</strong>. Khác biệt nằm ở ba chỗ ngoài file cấu hình: <strong>tên service</strong> (Debian/Ubuntu gọi là <code>ssh</code>, Fedora/FreeBSD gọi là <code>sshd</code>), <strong>lệnh nạp lại</strong> (<code>systemctl</code> trên Linux, <code>service</code> trên FreeBSD), và <strong>tường lửa</strong> (UFW/nftables/firewalld so với pf). Trên Fedora còn thêm SELinux nếu bạn đổi cổng.</p>
+    <ul class="clean">
+      <li><strong>Key-only thật sự:</strong> <code>PasswordAuthentication no</code> chưa nói hết câu chuyện. Keyboard-interactive là một authentication method riêng; nếu mục tiêu chỉ nhận public key, tắt cả <code>KbdInteractiveAuthentication</code> và có thể dùng <code>AuthenticationMethods publickey</code>.</li>
+      <li><strong>Precedence:</strong> OpenSSH lấy <em>giá trị đầu tiên</em> đọc được cho hầu hết directive. Trên Ubuntu/Debian, thư mục <code>sshd_config.d</code> thường được include ở đầu file chính; vì vậy drop-in đọc trước có thể thắng cấu hình nằm sau trong <code>sshd_config</code>.</li>
+      <li><strong>Validate hai lớp:</strong> <code>sshd -t</code> kiểm cú pháp; <code>sshd -T</code> in effective config. Có <code>Match</code> thì dùng thêm <code>-C user=...,host=...,addr=...</code> để xem cấu hình theo ngữ cảnh.</li>
+      <li><strong>Reload ≠ restart:</strong> ưu tiên reload để hạn chế gián đoạn phiên đang mở; tên service là <code>ssh</code> trên Ubuntu/Debian và <code>sshd</code> trên Fedora/FreeBSD.</li>
+    </ul>
   </section>
 
   <figure>
-    <!-- So sánh tên service / lệnh nạp lại / tường lửa giữa 4 HĐH -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh: Ubuntu/Xubuntu và Debian dùng service tên ssh, systemctl reload ssh, tường lửa UFW hoặc nftables; Fedora dùng service sshd, systemctl reload sshd, firewalld kèm SELinux; FreeBSD dùng service sshd, service sshd reload, tường lửa pf và sysrc.">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG sshd_config · KHÁC CÁCH ÁP DỤNG</text>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="98" text-anchor="middle" font-size="11" fill="#566661">service:</text>
-        <text x="104" y="114" text-anchor="middle" font-size="12" fill="#0C6E61">ssh</text>
-        <text x="104" y="142" text-anchor="middle" font-size="11" fill="#566661">reload:</text>
-        <text x="104" y="158" text-anchor="middle" font-size="10.5" fill="#0C6E61">systemctl</text>
-        <text x="104" y="184" text-anchor="middle" font-size="11" fill="#566661">fw: UFW</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Debian</text>
-        <text x="284" y="98" text-anchor="middle" font-size="11" fill="#566661">service:</text>
-        <text x="284" y="114" text-anchor="middle" font-size="12" fill="#0C6E61">ssh</text>
-        <text x="284" y="142" text-anchor="middle" font-size="11" fill="#566661">reload:</text>
-        <text x="284" y="158" text-anchor="middle" font-size="10.5" fill="#0C6E61">systemctl</text>
-        <text x="284" y="184" text-anchor="middle" font-size="11" fill="#566661">fw: nftables</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="160" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#14201D">Fedora</text>
-        <text x="464" y="98" text-anchor="middle" font-size="11" fill="#566661">service:</text>
-        <text x="464" y="114" text-anchor="middle" font-size="12" fill="#0C6E61">sshd</text>
-        <text x="464" y="142" text-anchor="middle" font-size="11" fill="#566661">reload:</text>
-        <text x="464" y="158" text-anchor="middle" font-size="10.5" fill="#0C6E61">systemctl</text>
-        <text x="464" y="184" text-anchor="middle" font-size="10.5" fill="#566661">fw: firewalld</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="160" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="98" text-anchor="middle" font-size="11" fill="#7A4A44">service:</text>
-        <text x="650" y="114" text-anchor="middle" font-size="12" fill="#B23A2E">sshd</text>
-        <text x="650" y="142" text-anchor="middle" font-size="11" fill="#7A4A44">reload:</text>
-        <text x="650" y="158" text-anchor="middle" font-size="10.5" fill="#B23A2E">service + sysrc</text>
-        <text x="650" y="184" text-anchor="middle" font-size="11" fill="#7A4A44">fw: pf</text>
+    <svg viewBox="0 0 760 250" role="img" aria-label="So sánh cách áp dụng SSH hardening trên Ubuntu Debian Fedora và FreeBSD">
+      <rect width="760" height="250" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono" font-size="10.5">
+        <rect x="25" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="105" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text>
+        <text x="105" y="105" text-anchor="middle">drop-in đọc sớm</text><text x="105" y="130" text-anchor="middle">service ssh</text><text x="105" y="155" text-anchor="middle">systemctl reload ssh</text>
+        <rect x="205" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="285" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text>
+        <text x="285" y="105" text-anchor="middle">drop-in đọc sớm</text><text x="285" y="130" text-anchor="middle">service ssh</text><text x="285" y="155" text-anchor="middle">systemctl reload ssh</text>
+        <rect x="385" y="45" width="160" height="160" rx="7" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="465" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text>
+        <text x="465" y="105" text-anchor="middle">drop-in trước default</text><text x="465" y="130" text-anchor="middle">service sshd</text><text x="465" y="155" text-anchor="middle">SELinux nếu đổi port</text>
+        <rect x="565" y="45" width="170" height="160" rx="7" fill="#FBF1F0" stroke="#B23A2E"/>
+        <text x="650" y="70" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700" fill="#B23A2E">FreeBSD</text>
+        <text x="650" y="105" text-anchor="middle">rc.d, không systemd</text><text x="650" y="130" text-anchor="middle">service sshd reload</text><text x="650" y="155" text-anchor="middle">pf/ipfw nếu dùng firewall</text>
       </g>
     </svg>
-    <figcaption>Hình 2 — Cùng một <code>sshd_config</code>, nhưng tên service, lệnh nạp lại và tường lửa khác nhau. Cột đỏ (FreeBSD) không dùng systemctl/UFW.</figcaption>
+    <figcaption>Hình 2 — Directive OpenSSH gần như chung, nhưng cách nạp dịch vụ và lớp tích hợp hệ điều hành khác nhau. FreeBSD dùng rc.d, không dùng systemd.</figcaption>
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Cấu hình trên từng hệ điều hành</h2>
-    <p>Trước hết là khối directive gia cố dùng chung — dán vào <code>sshd_config</code> ở HĐH nào cũng đúng:</p>
-
-    <span class="code-label"><span class="dot"></span>Chung cho mọi HĐH — /etc/ssh/sshd_config</span>
+    <h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+    <p>Trước khi thay đổi, mở một phiên SSH thứ hai bằng key và giữ phiên hiện tại. Khối hardening tham chiếu:</p>
     <pre><code>PermitRootLogin no
-PasswordAuthentication no      <span class="cmt"># chỉ sau khi khóa công khai đã hoạt động!</span>
 PubkeyAuthentication yes
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+AuthenticationMethods publickey
 MaxAuthTries 3
-LoginGraceTime 20
-AllowUsers longnd deploy       <span class="cmt"># chỉ những user này được vào SSH</span>
+AllowUsers longnd deploy
 X11Forwarding no</code></pre>
 
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu &amp; Debian — service tên "ssh"</span>
-    <pre><code><span class="cmt"># Cảnh báo: Ubuntu nạp thêm /etc/ssh/sshd_config.d/*.conf — kiểm tra cả thư mục</span>
-<span class="cmt"># đó, một file có thể bật lại PasswordAuthentication.</span>
-sudo sshd -t                   <span class="cmt"># kiểm tra cú pháp TRƯỚC khi nạp lại</span>
-sudo systemctl reload ssh
-
-<span class="cmt"># Tường lửa (Ubuntu dùng UFW):</span>
-sudo ufw limit OpenSSH         <span class="cmt"># "limit" tự rate-limit chống dò mật khẩu</span></code></pre>
-
-    <span class="code-label"><span class="dot"></span>Fedora — service tên "sshd"</span>
-    <pre><code>sudo sshd -t
-sudo systemctl reload sshd
-
-<span class="cmt"># Tường lửa (firewalld):</span>
-sudo firewall-cmd --permanent --add-service=ssh
-sudo firewall-cmd --reload
-
-<span class="cmt"># Nếu ĐỔI cổng SSH, phải khai với SELinux nếu không sshd không mở được cổng:</span>
-sudo semanage port -a -t ssh_port_t -p tcp 2222</code></pre>
-
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — sysrc + pf (tách riêng)</span>
-    <pre class="bsd"><code><span class="cmt"># Bật sshd khi khởi động:</span>
-sudo sysrc sshd_enable=YES
-
-<span class="cmt"># Sửa /etc/ssh/sshd_config (cùng directive như trên), rồi:</span>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
+    <pre><code>sudo install -d -m 0755 /etc/ssh/sshd_config.d
+sudo cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
+<span class="cmt"># Đặt local policy ở file lexicographically sớm, ví dụ 00-local-hardening.conf.</span>
 sudo sshd -t
-sudo service sshd reload        <span class="cmt"># KHÔNG có systemctl trên FreeBSD</span>
+sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods|pubkeyauthentication) '
+sudo systemctl reload ssh</code></pre>
 
-<span class="cmt"># Tường lửa pf — /etc/pf.conf:</span>
-<span class="cmt">#   pass in on egress proto tcp to port 22 keep state \</span>
-<span class="cmt">#     (max-src-conn-rate 5/30, overload &lt;bruteforce&gt; flush global)</span>
-sudo service pf reload</code></pre>
+    <span class="code-label"><span class="dot"></span>Fedora</span>
+    <pre><code>sudo cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
+<span class="cmt"># Nếu dùng drop-in, đặt local policy trước các default như 50-redhat.conf.</span>
+sudo sshd -t
+sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods|pubkeyauthentication) '
+sudo systemctl reload sshd
+<span class="cmt"># Chỉ khi đổi port: cập nhật SELinux + firewalld cho port mới trước khi bỏ port cũ.</span></code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — rc.d, không systemd</span>
+    <pre class="bsd"><code>cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
+<span class="cmt"># Sửa /etc/ssh/sshd_config; không giả định có drop-in mặc định.</span>
+sshd -t
+sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods|pubkeyauthentication) '
+service sshd reload</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <p>Quy tắc sống còn: <strong>luôn giữ một phiên SSH đang mở</strong> khi thử nghiệm, và chạy <code>sshd -t</code> trước mỗi lần nạp lại — sai một dòng là có thể tự khóa mình ra khỏi máy.</p>
-    <span class="code-label"><span class="dot"></span>Linux (Ubuntu / Debian / Fedora)</span>
-    <pre><code>sudo sshd -t &amp;&amp; echo "cú pháp OK"
-ss -tlnp | grep ':22'               <span class="cmt"># sshd đang lắng nghe?</span>
-journalctl -u ssh -e                <span class="cmt"># Fedora: -u sshd</span>
-ssh -v longnd@host                  <span class="cmt"># mở phiên MỚI, xác nhận vào được bằng key</span></code></pre>
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
-    <pre class="bsd"><code>sudo sshd -t &amp;&amp; echo "cú pháp OK"
-sockstat -4 -l | grep ssh           <span class="cmt"># FreeBSD dùng sockstat, không có ss</span>
-tail -f /var/log/auth.log</code></pre>
+    <h2><span class="num">04</span> Kiểm chứng và rollback</h2>
+    <p>Từ một terminal mới, buộc client chỉ thử public key:</p>
+    <pre><code>ssh -o PreferredAuthentications=publickey \
+    -o PasswordAuthentication=no \
+    longnd@server.example</code></pre>
+    <p>Nếu phiên mới không vào được, <strong>không đóng phiên cứu hộ</strong>. Khôi phục bản sao cấu hình, chạy lại <code>sshd -t</code> rồi reload đúng service. Nếu có <code>Match</code>, kiểm effective config theo user/IP trước khi kết luận policy đã áp đúng.</p>
   </section>
 
   <section>
     <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
     <ul class="clean">
-      <li><strong>Tự khóa mình ra:</strong> đừng tắt <code>PasswordAuthentication</code> khi chưa đăng nhập được bằng khóa. Giữ một phiên đang mở làm "phao cứu sinh" cho tới khi phiên mới thông.</li>
-      <li><strong>Nhầm tên service:</strong> gõ <code>systemctl reload sshd</code> trên Ubuntu/Debian sẽ báo lỗi — ở đó service tên <code>ssh</code>. Ngược lại Fedora/FreeBSD là <code>sshd</code>.</li>
-      <li><strong>File drop-in ghi đè (Ubuntu):</strong> sửa <code>sshd_config</code> nhưng một file trong <code>sshd_config.d/</code> lại bật lại mật khẩu. Luôn kiểm tra cả thư mục; dòng khai sau cùng thắng.</li>
-      <li><strong>Fedora đổi cổng mà quên SELinux:</strong> <code>sshd</code> sẽ không mở được cổng mới cho tới khi bạn khai <code>semanage port</code>.</li>
-      <li><strong>FreeBSD:</strong> đừng dùng <code>systemctl</code> hay <code>ufw</code> — không tồn tại. Dùng <code>service</code>, <code>sysrc</code>, và <code>pf</code>.</li>
+      <li><strong>Hiểu sai precedence:</strong> không phải “dòng cuối thắng”. Với phần lớn directive OpenSSH, giá trị đầu tiên đọc được thắng; file drop-in được include sớm có thể override file chính.</li>
+      <li><strong>Chỉ chạy <code>sshd -t</code>:</strong> cú pháp đúng chưa chắc effective policy đúng. Dùng thêm <code>sshd -T</code>.</li>
+      <li><strong>Tắt password trước khi test key:</strong> đây là cách nhanh nhất làm mất đường quản trị từ xa.</li>
+      <li><strong><code>AllowUsers</code> quá hẹp:</strong> một typo có thể chặn tài khoản vận hành. Xác nhận user thực tế trước reload.</li>
+      <li><strong>Đổi port trên Fedora:</strong> phải xử lý SELinux/firewalld cho port mới và test port mới trước khi gỡ port cũ.</li>
     </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Trên FreeBSD không có <code>systemctl</code>, <code>ufw</code>, <code>firewall-cmd</code> hay <code>journalctl</code>. Bật dịch vụ bằng <code>sysrc</code>, quản lý bằng <code>service</code>, đọc log tại <code>/var/log/auth.log</code>, tường lửa là <code>pf</code>.
-    </div>
   </section>
 
   <section>
     <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <div class="callout tip">
-      <span class="k">Ưu tiên đúng thứ tự</span>
-      Chỉ dùng khóa + cấm root + giới hạn <code>AllowUsers</code> là ba lớp đem lại phần lớn hiệu quả. Đổi cổng SSH chỉ làm giảm ồn log, <strong>không</strong> thay thế được ba lớp trên.
-    </div>
     <ul class="clean">
-      <li>Thêm một lớp chặn dò mật khẩu tự động: <code>fail2ban</code> (Ubuntu/Debian/Fedora) hoặc <code>sshguard</code> (có sẵn trong ports/base của FreeBSD).</li>
-      <li>Giữ khóa riêng có passphrase; xoay khóa định kỳ và gỡ khóa cũ khỏi <code>authorized_keys</code>.</li>
-      <li>Giám sát <code>auth.log</code> — nếu bạn có hệ thống log tập trung, đẩy log SSH về đó để phát hiện bất thường sớm.</li>
+      <li>Ưu tiên key có passphrase; quản lý lifecycle/revoke key thay vì dùng chung một khóa lâu dài cho nhiều người.</li>
+      <li>Không xem đổi cổng SSH là cơ chế bảo mật chính; authentication, authorization, firewall và logging mới là các lớp quan trọng.</li>
+      <li>Giữ console/out-of-band cho máy quan trọng; thay đổi remote-access phải có đường rollback trước khi persist.</li>
+      <li>Reload xong phải kiểm một phiên mới và log xác thực; trạng thái service “active” không chứng minh người quản trị vẫn đăng nhập được.</li>
     </ul>
   </section>
 
   <div class="exercise">
     <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Gia cố một VM <strong>Debian</strong> và một VM <strong>FreeBSD</strong>: cấm <code>root</code>, tắt mật khẩu, chỉ cho một user đăng nhập bằng khóa, và mở đúng cổng trên tường lửa của mỗi bên. Sau đó thử đăng nhập bằng khóa (phải vào được) và bằng mật khẩu (phải bị từ chối). Câu hỏi: lệnh nào kiểm tra cú pháp <code>sshd_config</code> trước khi nạp lại, và tên service SSH khác nhau ra sao giữa hai máy?</p>
+    <p>Trên một VM Ubuntu và một VM FreeBSD, cấu hình SSH chỉ nhận public key và cấm root. Ghi lại output của <code>sshd -t</code>, các dòng liên quan trong <code>sshd -T</code>, rồi reload và đăng nhập bằng một terminal mới. Cuối cùng tạo một thay đổi sai có kiểm soát trong lab, chứng minh rằng phiên cứu hộ/bản sao cấu hình cho phép rollback mà không reboot.</p>
   </div>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #002 · Bảo mật</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #SSH</span>
-    </div>
-  </footer>
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://man.openbsd.org/sshd_config">OpenSSH upstream — sshd_config(5)</a></li>
+      <li><a href="https://manpages.ubuntu.com/manpages/questing/man5/sshd_config.5.html">Ubuntu manpage — sshd_config(5)</a></li>
+      <li><a href="https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/">Fedora Docs — OpenSSH</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li>
+    </ul>
+  </section>
 
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #002 · Bảo mật</span><span class="hashtags">#LinuxDaily #SysAdmin #SSH #FreeBSD</span></div></footer>
 </div>
 </body>
 </html>
