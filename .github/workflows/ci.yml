@@ -93,7 +93,7 @@ jobs:
           test "$(find assets/fonts -maxdepth 1 -name '*.woff2' | wc -l)" -eq 8
       - name: Commit font assets to PR branch
         run: |
-          if git diff --quiet -- assets/fonts; then exit 0; fi
+          if test -z "$(git status --porcelain -- assets/fonts)"; then exit 0; fi
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add assets/fonts
