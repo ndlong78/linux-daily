@@ -19,6 +19,8 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
          dừng            ▼
                     chuẩn bị bài
                          │
+                  technical review
+                         │
                          ▼
                 chatgpt/... branch
                          │
@@ -45,6 +47,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 - `templates/post.template.html` — khung bài.
 - `templates/index.template.html` — khung trang chủ.
 - `tools/build.py` — build + quality gate local.
+- `tools/validate_sources.py` — source-backed technical gate cho bài mới.
 - `.github/workflows/ci.yml` — quality gate trên PR/push.
 
 ## Cấu trúc repo
@@ -69,6 +72,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 │   ├── build.py
 │   ├── build_index.py
 │   ├── postmeta.py
+│   ├── validate_sources.py
 │   └── render_code.py
 ├── tests/
 ├── docs/
@@ -80,8 +84,6 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ## Cadence 2 ngày
 
 Scheduler có thể chạy mỗi ngày nhưng **không dùng ngày trong bài làm clock**. Quyết định cadence dựa trên `state.json.last_generated_at`.
-
-Kiểm tra:
 
 ```bash
 python3 tools/cadence.py status
@@ -100,15 +102,39 @@ python3 tools/cadence.py record
 python3 tools/build.py --check
 ```
 
+## Source-backed Technical Review
+
+Từ **Linux Daily #019**, mỗi bài mới phải có tối thiểu **2 nguồn official/upstream**. Metadata `ld-meta` bổ sung:
+
+```json
+{
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Official documentation", "url": "https://...", "kind": "official"},
+    {"title": "Upstream documentation", "url": "https://...", "kind": "upstream"}
+  ]
+}
+```
+
+Cùng danh sách đó phải được hiển thị trong `<section class="sources">` với title/URL/thứ tự khớp metadata. `tools/validate_sources.py` kiểm tra:
+
+- ít nhất 2 nguồn primary;
+- URL HTTPS đầy đủ, không trùng;
+- `kind` là `official` hoặc `upstream`;
+- nguồn hiển thị khớp metadata;
+- `review_status` phải là `reviewed` hoặc `published` để qua merge gate.
+
+Bài #001–#018 được grandfather để không phải backfill toàn bộ series trong cùng một PR. Claim cũ không được sao chép sang bài mới nếu chưa kiểm chứng lại.
+
 ## Quy trình bài mới
 
 1. ChatGPT đọc `AGENTS.md`, `state.json`, `topics.md` và trạng thái GitHub hiện tại.
 2. Kiểm tra cadence và duplicate branch/PR cho issue kế tiếp.
 3. Chọn trục theo chu kỳ 7 và tránh chủ đề trùng.
 4. Tạo HTML theo template, metadata `ld-meta`, 2 SVG và bộ social Facebook/X + ảnh code.
-5. Kiểm tra claim kỹ thuật có thể thay đổi bằng tài liệu chính thức hiện hành.
+5. Kiểm tra claim kỹ thuật bằng tài liệu official/upstream hiện hành; ghi `sources` và `review_status`.
 6. Cập nhật `topics.md`, `index.html`, `state.json`.
-7. Chạy `python3 tools/build.py --check`.
+7. Chạy `python3 tools/build.py --check` — lệnh này gồm cả structural gate và source-backed gate.
 8. Dùng branch:
 
 ```text
@@ -123,7 +149,7 @@ Trong thời gian migration, agent vẫn phải phát hiện prefix cũ `claude/
 
 Task vận hành chính là **Linux Daily Operator**, chạy lúc **07:00 hằng ngày** theo giờ Việt Nam. Task đọc repository mỗi lần chạy; business rules lâu dài nằm trong `AGENTS.md`, không nằm duy nhất trong prompt của task.
 
-Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị gói thay đổi; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
+Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị gói thay đổi và technical review; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
 
 Chi tiết: `docs/CHATGPT-OPERATIONS.md`.
 
@@ -141,6 +167,12 @@ Chạy quality gate:
 ruff check tools/ tests/
 pytest -q
 python3 tools/build.py --check
+```
+
+Có thể chạy source gate riêng:
+
+```bash
+python3 tools/validate_sources.py
 ```
 
 Tạo ảnh code thủ công:
@@ -171,9 +203,8 @@ Với GitHub Pages:
 - Không dùng `topics.md` làm clock cadence.
 - Không tạo bài nếu branch/PR cho issue kế tiếp đã tồn tại.
 - FreeBSD luôn được xử lý riêng, không áp lệnh Linux cho FreeBSD.
+- Với networking, firewall, storage, backup/restore, auth/permissions và automation shell: luôn rà rollback, destructive flags và khác biệt phiên bản trước khi `reviewed`.
 
 ## Migration khỏi Claude Routine
 
-Từ 2026-08-07, Linux Daily chuyển sang ChatGPT Plus làm bộ điều phối. Các entrypoint Claude (`.claude/skills/...` và `routine-prompt.txt`) được loại bỏ; `AGENTS.md` trở thành hợp đồng vận hành trung lập trong repo.
-
-Sau khi PR migration được merge, **tắt Claude Routine cũ** để chỉ còn một scheduler.
+Từ 2026-08-07, Linux Daily đã chuyển sang ChatGPT Plus làm bộ điều phối. Các entrypoint Claude (`.claude/skills/...` và `routine-prompt.txt`) đã được loại bỏ; `AGENTS.md` là hợp đồng vận hành chính trong repo.
