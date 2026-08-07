@@ -1,15 +1,17 @@
-🧩 Đang apt upgrade qua SSH thì Wi-Fi chớp, VPN rớt, laptop ngủ — thế là tiến trình chết giữa chừng, để lại hệ thống dở dang. Ai quản trị máy từ xa cũng từng dính pha này ít nhất một lần.
+🧩 SSH rớt giữa một tác vụ dài không phải lúc nào mọi process cũng chết theo cùng một cách — hành vi phụ thuộc shell, PTY và chương trình. Cách vận hành đáng tin hơn là tách terminal làm việc khỏi SSH client bằng tmux.
 
-tmux gỡ đúng nỗi đau đó: nó tách phiên làm việc ra khỏi kết nối SSH. Mọi thứ chạy trong một tmux server nằm TRÊN MÁY CHỦ, nên client rớt chỉ "detach" chứ không đụng gì tới công việc đang chạy. Đăng nhập lại → tmux attach → về đúng chỗ, tiến trình vẫn đang chạy.
+tmux chạy server trên máy chủ. Client có thể detach/disconnect rồi đăng nhập lại và attach vào session cũ. Workflow gọn nhất:
+• tmux new -As work → attach nếu session đã có, tạo nếu chưa có
+• Ctrl-b d → detach
+• tmux ls → liệt kê session
+• tmux attach -t work → quay lại
 
-Bonus: chia một cửa sổ thành nhiều khung (vừa chạy lệnh vừa tail -f log), nhiều cửa sổ như tab.
-
-Điểm hay: cách dùng GIỐNG HỆT trên cả 4 HĐH — cùng phím prefix Ctrl-b, cùng lệnh, cùng ~/.tmux.conf. Chỉ khác lệnh cài:
+Cài đặt:
 • Ubuntu/Xubuntu & Debian → apt install tmux
 • Fedora → dnf install tmux
-• FreeBSD → pkg install tmux (không có trong base)
+• FreeBSD → pkg install tmux (không nằm trong base)
 
-Lưu ý quan trọng: tmux KHÔNG phải dịch vụ nền — phiên sống qua SSH rớt, nhưng mất khi máy reboot. Cần chạy bền qua khởi động lại thì dùng systemd unit/rc service.
+Boundary quan trọng: tmux giúp sống qua SSH disconnect, KHÔNG tự sống qua reboot hoặc khi tmux server bị kill. Kiểm tmux -V trước khi copy option mới giữa các distro có package version khác nhau.
 
 👉 Đọc đầy đủ: {{LINK}}
 
