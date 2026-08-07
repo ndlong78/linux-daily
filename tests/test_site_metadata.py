@@ -9,6 +9,7 @@ TOOLS = ROOT / "tools"
 sys.path.insert(0, str(TOOLS))
 
 import build_index  # noqa: E402
+import postmeta  # noqa: E402
 
 
 class HeadMetaParser(HTMLParser):
@@ -51,6 +52,46 @@ def test_homepage_has_canonical_og_and_rss_autodiscovery():
     assert props["og:locale"] == "vi_VN"
     assert props["og:title"]
     assert props["og:description"]
+
+
+def test_all_historical_posts_have_canonical_og_and_rss_autodiscovery():
+    posts = sorted((ROOT / "posts").glob("post-*.html"))
+    assert len(posts) == 19
+
+    for path in posts:
+        text = path.read_text(encoding="utf-8")
+        parser = _parse(text)
+        meta = postmeta.read_meta(str(path))
+        canonical = f"https://linux.no.id.vn/posts/{path.name}"
+
+        canonicals = [link for link in parser.links if link.get("rel") == "canonical"]
+        assert canonicals == [{"rel": "canonical", "href": canonical}], path.name
+
+        feeds = [
+            link
+            for link in parser.links
+            if link.get("rel") == "alternate" and link.get("type") == "application/rss+xml"
+        ]
+        assert feeds == [
+            {
+                "rel": "alternate",
+                "type": "application/rss+xml",
+                "title": "Linux Daily RSS",
+                "href": "https://linux.no.id.vn/feed.xml",
+            }
+        ], path.name
+
+        props = {
+            item.get("property"): item.get("content")
+            for item in parser.meta
+            if item.get("property")
+        }
+        assert props["og:type"] == "article", path.name
+        assert props["og:url"] == canonical, path.name
+        assert props["og:site_name"] == "Linux Daily", path.name
+        assert props["og:locale"] == "vi_VN", path.name
+        assert props["og:title"] == meta["title"], path.name
+        assert props["og:description"] == meta["lede"], path.name
 
 
 def test_post_template_requires_discovery_metadata_placeholders():
