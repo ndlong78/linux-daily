@@ -9,6 +9,7 @@ permissions:
 
 jobs:
   backfill:
+    # One-shot helper for PR #42; removed before merge.
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
