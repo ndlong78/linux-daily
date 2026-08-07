@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lập lịch định kỳ: cron, systemd timers, và periodic — Linux Daily #012</title>
 <meta name="description" content="Tự động chạy tác vụ định kỳ: cron cổ điển có ở mọi nơi, systemd timers là cách hiện đại trên Linux (ghi log journald, bù lần lỡ), còn FreeBSD dùng cron cộng periodic(8) — không có systemd timers.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
@@ -17,228 +14,118 @@
   "eyebrow": "Monitoring · Hiệu năng",
   "slug": "lap-lich-cron-timers",
   "title": "Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?",
-  "lede": "Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers."
+  "lede": "Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Debian manpages — systemd.timer(5)", "url": "https://manpages.debian.org/trixie/systemd/systemd.timer.5.en.html", "kind": "official"},
+    {"title": "Debian manpages — systemd-analyze(1)", "url": "https://manpages.debian.org/trixie/systemd/systemd-analyze.1.en.html", "kind": "official"},
+    {"title": "FreeBSD Handbook — Cron and Periodic", "url": "https://docs.freebsd.org/en/books/handbook/config/", "kind": "official"}
+  ]
 }
 </script>
 </head>
 <body class="post">
 <div class="wrap">
-
-  <div class="masthead">
-    <div class="brand">
-      <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#012 · 21·07·2026</span>
-    </div>
-  </div>
-
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#012 · 21·07·2026</span></div></div>
   <header class="post">
     <p class="eyebrow">Monitoring · Hiệu năng</p>
     <h1>Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?</h1>
     <p class="lede">Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: <code>cron</code> cổ điển (có ở mọi nơi) và <code>systemd timers</code> hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: <code>cron</code> cộng <code>periodic(8)</code> cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</p>
-    <div class="meta">
-      <span class="tag axis">TRỤC · MONITORING</span>
-      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
-      <span class="tag">~10 PHÚT</span>
-    </div>
+    <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div>
   </header>
 
   <figure>
-    <!-- Hero: một job định kỳ, ba cơ chế kích hoạt -->
-    <svg viewBox="0 0 760 300" role="img" aria-label="Sơ đồ: cùng một tác vụ định kỳ backup.sh, ba cơ chế kích hoạt — cron daemon và systemd timer trên Linux, cron cộng periodic trên FreeBSD — đều dẫn tới việc chạy job đúng giờ">
-      <defs>
-        <pattern id="grid" width="26" height="26" patternUnits="userSpaceOnUse">
-          <path d="M26 0H0V26" fill="none" stroke="#E3EAE7" stroke-width="1"/>
-        </pattern>
-        <marker id="arw" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#0C6E61"/>
-        </marker>
-        <marker id="arwr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
-          <path d="M0 0L9 4.5L0 9Z" fill="#B23A2E"/>
-        </marker>
-      </defs>
-      <rect x="0" y="0" width="760" height="300" fill="url(#grid)"/>
-
-      <text x="24" y="28" fill="#566661" font-family="JetBrains Mono, monospace" font-size="11" letter-spacing="1">MỘT TÁC VỤ ĐỊNH KỲ · BA CƠ CHẾ KÍCH HOẠT</text>
-
-      <!-- ba cơ chế -->
-      <g font-family="JetBrains Mono, monospace">
-        <!-- cron -->
-        <rect x="30" y="58" width="220" height="58" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
-        <text x="46" y="82" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">cron</text>
-        <text x="46" y="102" fill="#566661" font-size="10.5">crontab · có ở MỌI HĐH</text>
-        <!-- systemd timer -->
-        <rect x="30" y="128" width="220" height="58" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.8"/>
-        <text x="46" y="152" fill="#0C6E61" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">systemd timer</text>
-        <text x="46" y="172" fill="#566661" font-size="10.5">.timer + .service · chỉ Linux</text>
-        <!-- periodic -->
-        <rect x="30" y="198" width="220" height="58" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="46" y="222" fill="#B23A2E" font-family="Be Vietnam Pro, sans-serif" font-size="13" font-weight="700">periodic(8)</text>
-        <text x="46" y="242" fill="#7A4A44" font-size="10.5">bảo trì hệ · chỉ FreeBSD</text>
-
-        <!-- mũi tên tới bộ đếm giờ -->
-        <line x1="250" y1="87"  x2="330" y2="140" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-        <line x1="250" y1="157" x2="330" y2="150" stroke="#0C6E61" stroke-width="2" marker-end="url(#arw)"/>
-        <line x1="250" y1="227" x2="330" y2="162" stroke="#B23A2E" stroke-width="2" marker-end="url(#arwr)"/>
-
-        <!-- đồng hồ / bộ định thời -->
-        <circle cx="380" cy="150" r="40" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-        <line x1="380" y1="150" x2="380" y2="126" stroke="#14201D" stroke-width="2"/>
-        <line x1="380" y1="150" x2="398" y2="158" stroke="#14201D" stroke-width="2"/>
-        <text x="380" y="212" text-anchor="middle" fill="#566661" font-size="10.5">đúng giờ đã định</text>
-
-        <line x1="420" y1="150" x2="486" y2="150" stroke="#0C6E61" stroke-width="2.5" marker-end="url(#arw)"/>
-
-        <!-- job chạy -->
-        <rect x="490" y="118" width="236" height="64" rx="8" fill="#14201D"/>
-        <text x="608" y="146" text-anchor="middle" fill="#7FE0D2" font-family="Be Vietnam Pro, sans-serif" font-size="14" font-weight="700">CHẠY JOB</text>
-        <text x="608" y="166" text-anchor="middle" fill="#9FE9DC" font-size="11">backup.sh · dọn log · renew…</text>
-      </g>
+    <svg viewBox="0 0 760 240" role="img" aria-label="Cron chạy lịch phổ quát; systemd timer trên Linux có calendar timer và catch-up; FreeBSD dùng cron và periodic">
+      <rect width="760" height="240" fill="#F7FAF9"/><rect x="30" y="72" width="210" height="95" rx="7" fill="#FFFFFF" stroke="#14201D"/><text x="135" y="108" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">cron</text><text x="135" y="137" text-anchor="middle" font-family="JetBrains Mono" font-size="11">5 fields + command</text>
+      <rect x="275" y="72" width="210" height="95" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="108" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">systemd timer</text><text x="380" y="137" text-anchor="middle" font-family="JetBrains Mono" font-size="11">OnCalendar · Persistent</text>
+      <rect x="520" y="72" width="210" height="95" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="625" y="108" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">FreeBSD periodic</text><text x="625" y="137" text-anchor="middle" font-family="JetBrains Mono" font-size="11">daily · weekly · monthly</text>
     </svg>
-    <figcaption>Hình 1 — Cùng một tác vụ, ba cơ chế: <code>cron</code> chạy khắp nơi, <code>systemd timer</code> là cách hiện đại của Linux, <code>periodic(8)</code> lo việc bảo trì hệ trên FreeBSD.</figcaption>
+    <figcaption>Hình 1 — “Bù lần lỡ” của systemd timer là catch-up activation có điều kiện, không phải replay mọi lần cron đã bỏ qua.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
-    <p>Backup mà quên chạy thì lúc cần không có; log không dọn thì đầy đĩa; chứng chỉ TLS không gia hạn thì website "hết hạn bảo mật" giữa đêm. Những việc này phải chạy <em>tự động, đúng giờ, đều đặn</em>. Câu hỏi khi làm đa nền tảng: dùng cơ chế nào? <code>cron</code> có mặt khắp nơi và đủ dùng, nhưng <code>systemd timers</code> cho bạn log tập trung và khả năng bù lần chạy bị lỡ. Còn trên FreeBSD, một phần việc bảo trì đã có <code>periodic</code> lo sẵn.</p>
-  </section>
+  <section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Lịch chạy phải được kiểm chứng như một phần của hệ thống: biểu thức thời gian đúng, timezone đúng, job có log, và hành vi khi máy tắt được hiểu rõ. Chỉ nhìn thấy một dòng crontab hoặc một file <code>.timer</code> chưa đủ.</p></section>
 
-  <section>
-    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
-    <ul class="clean">
-      <li><strong>cron</strong> (mọi HĐH): mỗi user một <em>crontab</em>; một dòng gồm 5 trường thời gian + lệnh. Đơn giản, phổ quát, nhưng log nghèo nàn và không tự bù lần lỡ.</li>
-      <li><strong>systemd timers</strong> (Ubuntu/Debian/Fedora): một cặp unit — <code>.service</code> (việc cần làm) và <code>.timer</code> (khi nào chạy). Ưu điểm: output vào <code>journald</code> (bài #005), <code>systemctl list-timers</code> xem lần chạy kế, và <code>Persistent=true</code> để <em>bù</em> lần lỡ khi máy tắt.</li>
-      <li><strong>periodic(8)</strong> (FreeBSD): khung chạy các script bảo trì <em>daily/weekly/monthly</em> (kiểm tra bảo mật, xoay log…), cấu hình ở <code>/etc/periodic.conf</code>. Nó được <em>cron</em> gọi định kỳ, không thay thế cron cho lịch tuỳ ý.</li>
-      <li><strong>Điểm mấu chốt:</strong> FreeBSD <em>không</em> có systemd timers; lịch tuỳ chỉnh trên FreeBSD dùng cron, việc bảo trì hệ dùng periodic.</li>
-    </ul>
-  </section>
+  <section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+    <li><strong>cron:</strong> phổ quát và đơn giản, nhưng một lần đến hạn khi máy tắt thường bị bỏ qua; môi trường chạy tối giản.</li>
+    <li><strong>systemd timer:</strong> với calendar timer, <code>Persistent=true</code> ghi trạng thái lần trigger; nếu có một hay nhiều lần bị lỡ khi timer inactive, khi hoạt động lại sẽ có một catch-up activation phù hợp, không replay từng lần đã lỡ.</li>
+    <li><strong>Accuracy:</strong> timer có cửa sổ chính xác; mặc định <code>AccuracySec</code> không có nghĩa job phải chạy đúng tới giây đã ghi trong <code>OnCalendar</code>.</li>
+    <li><strong>FreeBSD periodic:</strong> framework bảo trì daily/weekly/monthly được cron gọi; không thay cron cho lịch tùy ý.</li>
+  </ul></section>
 
   <figure>
-    <!-- So sánh cơ chế lập lịch 4 HĐH -->
-    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng so sánh lập lịch: Ubuntu, Xubuntu, Debian và Fedora đều có cron và systemd timers; FreeBSD có cron và periodic nhưng không có systemd timers">
-      <rect x="0" y="0" width="760" height="250" fill="#FFFFFF"/>
-      <g font-family="JetBrains Mono, monospace">
-        <!-- Ubuntu -->
-        <rect x="24" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="104" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="13.5" fill="#14201D">Ubuntu / Xubuntu</text>
-        <text x="104" y="100" text-anchor="middle" font-size="11" fill="#0C6E61">cron</text>
-        <text x="104" y="124" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timers</text>
-        <text x="104" y="158" text-anchor="middle" font-size="10.5" fill="#566661">timer: nên dùng</text>
-        <text x="104" y="182" text-anchor="middle" font-size="10" fill="#566661">log → journald</text>
-        <!-- Debian -->
-        <rect x="204" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="284" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Debian</text>
-        <text x="284" y="100" text-anchor="middle" font-size="11" fill="#0C6E61">cron</text>
-        <text x="284" y="124" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timers</text>
-        <text x="284" y="158" text-anchor="middle" font-size="10.5" fill="#566661">cron: cài sẵn</text>
-        <text x="284" y="182" text-anchor="middle" font-size="10" fill="#566661">cả hai đều ổn</text>
-        <!-- Fedora -->
-        <rect x="384" y="40" width="160" height="170" rx="6" fill="#F4F8F6" stroke="#0C6E61" stroke-width="1.5"/>
-        <text x="464" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#14201D">Fedora</text>
-        <text x="464" y="100" text-anchor="middle" font-size="11" fill="#0C6E61">systemd timers</text>
-        <text x="464" y="124" text-anchor="middle" font-size="11" fill="#566661">cron: cronie</text>
-        <text x="464" y="158" text-anchor="middle" font-size="10.5" fill="#566661">ưu tiên timers</text>
-        <text x="464" y="182" text-anchor="middle" font-size="10" fill="#566661">cron có thể phải cài</text>
-        <!-- FreeBSD -->
-        <rect x="564" y="40" width="172" height="170" rx="6" fill="#FBF1F0" stroke="#B23A2E" stroke-width="1.8"/>
-        <text x="650" y="64" text-anchor="middle" font-family="Be Vietnam Pro, sans-serif" font-weight="700" font-size="14" fill="#B23A2E">FreeBSD</text>
-        <text x="650" y="100" text-anchor="middle" font-size="11" fill="#B23A2E">cron</text>
-        <text x="650" y="124" text-anchor="middle" font-size="11" fill="#B23A2E">periodic(8)</text>
-        <text x="650" y="158" text-anchor="middle" font-size="10.5" fill="#7A4A44">/etc/periodic.conf</text>
-        <text x="650" y="182" text-anchor="middle" font-size="10" fill="#B23A2E">KHÔNG có systemd timers</text>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Bảng lập lịch: Ubuntu Debian Fedora dùng cron và systemd timers; FreeBSD dùng cron và periodic, không có systemd">
+      <rect width="760" height="250" fill="#FFFFFF"/><g font-family="JetBrains Mono" font-size="10.5">
+        <rect x="20" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="105" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="105" y="100" text-anchor="middle">cron</text><text x="105" y="125" text-anchor="middle">systemd timer</text><text x="105" y="150" text-anchor="middle">journalctl</text>
+        <rect x="205" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="290" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text><text x="290" y="100" text-anchor="middle">cron</text><text x="290" y="125" text-anchor="middle">systemd timer</text><text x="290" y="150" text-anchor="middle">systemd-analyze</text>
+        <rect x="390" y="35" width="170" height="175" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="475" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text><text x="475" y="100" text-anchor="middle">cronie</text><text x="475" y="125" text-anchor="middle">systemd timer</text><text x="475" y="150" text-anchor="middle">list-timers</text>
+        <rect x="575" y="35" width="165" height="175" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="62" text-anchor="middle" font-family="Be Vietnam Pro" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="100" text-anchor="middle">cron</text><text x="657" y="125" text-anchor="middle">periodic</text><text x="657" y="150" text-anchor="middle">không systemd</text>
       </g>
-      <text x="24" y="26" font-family="JetBrains Mono, monospace" font-size="11" fill="#566661" letter-spacing="1">CÙNG MỤC TIÊU · CƠ CHẾ KHÁC NHAU</text>
     </svg>
-    <figcaption>Hình 2 — Ba cột teal có systemd timers (cách hiện đại); cột đỏ (FreeBSD) không có, dùng cron cho lịch tuỳ ý và periodic cho bảo trì hệ.</figcaption>
+    <figcaption>Hình 2 — FreeBSD tách riêng: cron cho lịch tùy ý, periodic cho maintenance framework.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Lập lịch trên từng hệ điều hành</h2>
-    <p>Mục tiêu: chạy <code>/usr/local/bin/backup.sh</code> mỗi ngày lúc 02:00.</p>
-
-    <span class="code-label"><span class="dot"></span>Cách phổ quát — cron (chạy trên cả Linux &amp; FreeBSD)</span>
-    <pre><code>crontab -e                      <span class="cmt"># sửa crontab của user hiện tại</span>
-<span class="cmt"># 5 trường:  phút  giờ  ngày-tháng  tháng  thứ   lệnh</span>
-0 2 * * *  /usr/local/bin/backup.sh   <span class="cmt"># 02:00 mỗi ngày</span>
-
-crontab -l                      <span class="cmt"># liệt kê để kiểm lại</span></code></pre>
-
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — systemd timer (khuyên dùng)</span>
-    <pre><code><span class="cmt"># /etc/systemd/system/backup.service</span>
+  <section><h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — systemd timer</span>
+    <pre><code># /etc/systemd/system/backup.service
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/backup.sh
 
-<span class="cmt"># /etc/systemd/system/backup.timer</span>
+# /etc/systemd/system/backup.timer
 [Timer]
 OnCalendar=*-*-* 02:00:00
-Persistent=true                 <span class="cmt"># bù lần lỡ nếu máy đã tắt lúc tới giờ</span>
+Persistent=true
+
 [Install]
 WantedBy=timers.target
 
-<span class="cmt"># Kích hoạt &amp; kiểm tra:</span>
+systemd-analyze calendar '*-*-* 02:00:00'
+sudo systemctl daemon-reload
 sudo systemctl enable --now backup.timer
 systemctl list-timers backup.timer</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — cron + periodic</span>
+    <pre class="bsd"><code>crontab -e
+0 2 * * * /usr/local/bin/backup.sh
 
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — cron cho lịch tuỳ ý, periodic cho bảo trì (tách riêng)</span>
-    <pre class="bsd"><code><span class="cmt"># Lịch tuỳ ý: y như cron ở trên</span>
-crontab -e
-0 2 * * *  /usr/local/bin/backup.sh
+# Kiểm cron environment gần giống thực tế trước khi lịch chạy:
+env -i SHELL=/bin/sh PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin \
+  HOME="$HOME" LOGNAME="$USER" /usr/local/bin/backup.sh
 
-<span class="cmt"># Bảo trì hệ đã có sẵn qua periodic — bật/tắt trong /etc/periodic.conf:</span>
-sysrc -f /etc/periodic.conf daily_clean_tmps_enable="YES"
-periodic daily                  <span class="cmt"># chạy thử bộ script "daily" ngay</span></code></pre>
+periodic daily
+# Base scripts: /etc/periodic/
+# Third-party:  /usr/local/etc/periodic/</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <span class="code-label"><span class="dot"></span>Ubuntu / Debian / Fedora (systemd timer)</span>
-    <pre><code>systemctl list-timers --all       <span class="cmt"># lần chạy kế + lần chạy trước</span>
-systemctl status backup.timer     <span class="cmt"># timer đã active/enabled chưa</span>
-journalctl -u backup.service      <span class="cmt"># output của job (nhờ journald)</span></code></pre>
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD (cron + periodic)</span>
-    <pre class="bsd"><code>crontab -l                        <span class="cmt"># dòng lịch đã khai</span>
-service cron status               <span class="cmt"># cron daemon đang chạy?</span>
-periodic daily 2&gt;&amp;1 | tail        <span class="cmt"># chạy thử &amp; xem kết quả</span></code></pre>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2>
+    <pre><code>systemctl status backup.timer
+systemctl list-timers backup.timer
+journalctl -u backup.service --since today
+systemd-analyze calendar '*-*-* 02:00:00'</code></pre>
+    <p>Với cron, kiểm <code>crontab -l</code>, exit status/log của script và chạy thử trong môi trường tối giản. Với FreeBSD periodic, kiểm output policy trong <code>/etc/periodic.conf</code> thay vì giả định output luôn nằm ở một file.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
-    <ul class="clean">
-      <li><strong>PATH tối giản trong cron:</strong> cron chạy với môi trường rất gọn, <code>PATH</code> không như shell của bạn. Dùng <em>đường dẫn tuyệt đối</em> cho mọi lệnh, hoặc khai <code>PATH=</code> ở đầu crontab.</li>
-      <li><strong>Múi giờ:</strong> lịch chạy theo giờ hệ thống; máy đặt UTC thì "02:00" là 02:00 UTC. Xác nhận bằng <code>timedatectl</code> (Linux) / <code>date</code> (FreeBSD) trước khi tin.</li>
-      <li><strong>Quên bật <code>.timer</code>:</strong> tạo unit thôi chưa đủ — phải <code>systemctl enable --now backup.timer</code>. Nhiều người enable nhầm <code>.service</code> (khiến nó chạy lúc boot) thay vì <code>.timer</code>.</li>
-      <li><strong>cron không bù lần lỡ:</strong> nếu máy tắt đúng lúc tới giờ, cron bỏ qua luôn. Cần bù thì dùng systemd timer với <code>Persistent=true</code> (Linux) — FreeBSD không có cơ chế bù tương đương cho cron.</li>
-      <li><strong>FreeBSD tưởng có systemctl:</strong> không có systemd → không có <code>systemctl list-timers</code>. Dùng <code>crontab -l</code> và cấu hình <code>periodic.conf</code>.</li>
-    </ul>
-    <div class="callout">
-      <span class="k">FreeBSD ≠ Linux</span>
-      Trên FreeBSD không có systemd timers. Lịch tuỳ ý dùng <code>cron</code> (giống Linux), còn việc bảo trì định kỳ của hệ do <code>periodic(8)</code> lo — cấu hình ở <code>/etc/periodic.conf</code>, và chính cron trong <code>/etc/crontab</code> gọi <code>periodic daily/weekly/monthly</code>.
-    </div>
-  </section>
+  <section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2><ul class="clean">
+    <li><code>Persistent=true</code> không replay mọi lần bị lỡ; nó tạo catch-up activation theo semantics timer.</li>
+    <li>Calendar expression đúng cú pháp chưa chắc đúng ý timezone; kiểm timezone hệ thống và dùng <code>systemd-analyze calendar</code>.</li>
+    <li>Cron có PATH/environment khác shell tương tác; dùng đường dẫn tuyệt đối hoặc khai PATH rõ ràng.</li>
+    <li>Trên FreeBSD, đừng sửa <code>/etc/crontab</code> cho user job; dùng user crontab. <code>periodic</code> là framework maintenance, không phải scheduler tùy ý.</li>
+  </ul></section>
 
-  <section>
-    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
-    <ul class="clean">
-      <li>Chạy job dưới <em>đúng user tối thiểu quyền</em> (bài #009): dùng user crontab hoặc <code>User=</code> trong unit thay vì mặc định root nếu không cần.</li>
-      <li>Bắt và lưu output: cron truyền thống gửi mail (đặt <code>MAILTO=</code>); systemd timer tự ghi vào journald — luôn có cách xem job thất bại, đừng để nó "im lặng hỏng".</li>
-      <li>Đừng dồn nhiều job nặng vào cùng một mốc (02:00) — rải giờ hoặc dùng <code>RandomizedDelaySec=</code> của systemd timer để tránh dồn tải.</li>
-      <li>Với tác vụ cần chạy bền qua reboot (nhắc lại từ tmux #011): đây chính là chỗ dùng systemd timer/cron, không phải một phiên tmux.</li>
-    </ul>
-  </section>
+  <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean">
+    <li>Không nhét secret trực tiếp vào crontab/unit; dùng file quyền hạn chặt hoặc secret manager.</li>
+    <li>Job phải có timeout/locking nếu chạy chồng có thể gây hỏng dữ liệu hoặc tăng tải.</li>
+    <li>FreeBSD periodic mặc định có thể gửi mail root; có thể cấu hình <code>daily_output</code>/<code>weekly_output</code>/<code>monthly_output</code> sang mailbox được theo dõi hoặc file log được newsyslog rotate.</li>
+    <li>Giám sát “job đã chạy thành công” thay vì chỉ “scheduler đang active”.</li>
+  </ul></section>
 
-  <div class="exercise">
-    <h2><span class="num">07</span> Bài tập tự luyện</h2>
-    <p>Trên một máy <strong>Fedora</strong> và một máy <strong>FreeBSD</strong>, lập lịch chạy một script ghi timestamp vào file lúc mỗi phút. Trên Fedora làm bằng <em>systemd timer</em> (kèm <code>Persistent=true</code>); trên FreeBSD làm bằng <em>cron</em>. Sau đó tắt máy vài phút rồi bật lại. Câu hỏi: máy nào "bù" lần chạy bị lỡ trong lúc tắt, máy nào bỏ qua — và bạn xem lịch sử chạy (thành công/thất bại) của mỗi bên bằng lệnh gì?</p>
-  </div>
+  <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Trên Fedora tạo timer calendar mỗi giờ với <code>Persistent=true</code>; trên FreeBSD tạo cron job tương đương. Tắt hai VM qua một mốc chạy rồi bật lại, ghi nhận số lần thực tế mỗi bên chạy và giải thích vì sao systemd không replay từng lần đã lỡ.</p></div>
 
-  <footer>
-    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
-    <div class="foot-row">
-      <span>Linux Daily #012 · Monitoring</span>
-      <span class="hashtags">#LinuxDaily #SysAdmin #cron</span>
-    </div>
-  </footer>
-
+  <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean">
+    <li><a href="https://manpages.debian.org/trixie/systemd/systemd.timer.5.en.html">Debian manpages — systemd.timer(5)</a></li>
+    <li><a href="https://manpages.debian.org/trixie/systemd/systemd-analyze.1.en.html">Debian manpages — systemd-analyze(1)</a></li>
+    <li><a href="https://docs.freebsd.org/en/books/handbook/config/">FreeBSD Handbook — Cron and Periodic</a></li>
+  </ul></section>
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
 </div>
 </body>
 </html>
