@@ -1,17 +1,14 @@
-🐚 Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic — mà là môi trường.
+🐚 Script chạy ngon trên Fedora nhưng vỡ trên Debian/FreeBSD? Bài #013 vừa được technical review lại để sửa vài lời khuyên shell dễ bị hiểu quá mức.
 
-Bí mật ít người để ý: /bin/sh trỏ vào SHELL KHÁC NHAU trên mỗi hệ:
-• Ubuntu/Xubuntu & Debian → /bin/sh là dash (POSIX tối giản)
-• Fedora → /bin/sh là bash → cú pháp riêng của bash (bashism) TÌNH CỜ chạy được, che mất lỗi
-• FreeBSD → /bin/sh là sh của BSD, và bash không có trong base (nằm ở /usr/local/bin/bash, phải cài gói)
+Điểm quan trọng nhất: `#!/usr/bin/env bash` hữu ích khi Bash nằm ở vị trí khác nhau, nhưng `env` vẫn tìm `bash` qua PATH. Với cron, sudo hay service, PATH có thể khác shell tương tác — vì vậy cần kiểm môi trường chạy thay vì coi shebang này là “portable tuyệt đối”.
 
-Nên script viết trên Fedora dễ "lọt lưới" rồi vỡ khi chạy trên Debian/FreeBSD.
+Bài cũng làm rõ:
+• `set -euo pipefail` là guardrail, không phải cơ chế bắt mọi lỗi; `set -e` có nhiều ngoại lệ theo ngữ cảnh.
+• Không khuyến nghị global `IFS=$'\n\t'` như công thức mặc định; ưu tiên quoting và IFS cục bộ khi thực sự cần.
+• Trong script dùng `command -v bash` thay cho `which bash`.
+• Với lệnh destructive, validate biến trước; đừng dựa vào guardrail của `rm` để cứu một path rỗng.
 
-Bài #013 chỉ cách viết script vững:
-• Shebang: dùng #!/usr/bin/env bash (tìm bash trong PATH), tránh #!/bin/bash cứng — nó vỡ trên FreeBSD.
-• Chế độ nghiêm: set -euo pipefail — dừng khi lỗi, biến chưa đặt, lỗi giữa pipe.
-• trap để luôn dọn file tạm, quote mọi biến ("$dir", đừng để rm -rf $dir/ với biến rỗng thành rm -rf /).
-• Soi lỗi tĩnh bằng shellcheck TRƯỚC khi tin.
+Bài đã bổ sung nguồn upstream GNU Bash/Coreutils và được đánh dấu `reviewed` trong source-backed pipeline.
 
 👉 Đọc đầy đủ: {{LINK}}
 
