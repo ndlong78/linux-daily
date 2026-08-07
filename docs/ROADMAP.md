@@ -3,21 +3,29 @@
 Tài liệu này ghi lại đánh giá tổng thể dự án và lộ trình PR để nâng độ tin cậy khi
 vận hành routine tự động. Cập nhật khi hoàn thành từng mốc.
 
-## Điểm tổng thể (thời điểm đánh giá): 6,8/10
+> **Ghi chú đánh số PR:** lộ trình bên dưới đặt tên các mốc theo "PR #13…#16" từ
+> đợt đánh giá đầu. Trên thực tế các số PR #15–#18 đã bị **bài nội dung** dùng
+> (xem `git log`), nên các mốc pipeline chưa làm sẽ mang số PR mới khi thực hiện —
+> tên "PR #14/#15/#16" ở đây chỉ là nhãn mốc, không phải số PR thật.
+
+## Điểm tổng thể: 7,5/10 _(cập nhật 2026-08-07)_
+
+Đợt đánh giá đầu chấm 6,8/10 khi chưa có quality gate. Sau khi CI gate + test đi vào
+vận hành (và được siết thêm ở phần kiểm định social), điểm nâng lên **7,5/10**.
 
 | Hạng mục | Điểm | Nhận xét |
 |---|---|---|
 | Kiến trúc | 8/10 | Nhỏ gọn, static, ít bề mặt tấn công |
 | Giao diện & accessibility | 8/10 | Responsive, semantic tương đối tốt |
 | Tự động hóa | 6/10 | Quy trình rõ nhưng trạng thái chưa đáng tin |
-| Kiểm thử & CI | 2/10 → **cải thiện ở PR này** | Trước đây chưa có quality gate thực sự |
+| Kiểm thử & CI | 2/10 → **8/10** | Quality gate + test + CI đã vận hành, 44 test xanh |
 | Khả năng bảo trì | 6/10 | Có template nhưng vẫn phụ thuộc HTML + regex |
 | An toàn nội dung kỹ thuật | 5,5/10 | Nội dung tốt nhưng chưa có nguồn & kiểm chứng lệnh |
 | Bảo mật repository | 6,5/10 | Static site an toàn, agent workflow còn thiếu rào chắn |
 
 ## Lộ trình PR
 
-### PR #13 — CI Quality Gate ✅ (PR này)
+### PR #13 — CI Quality Gate ✅ (đã merge)
 - [x] `pyproject.toml` với dependency được pin (Pillow) + dev tools (ruff, pytest).
 - [x] `tools/validate_repo.py`: số bài liên tục, trục đúng chu kỳ 7, ngày ISO hợp lệ
       & **không giảm dần** (bắt lỗi lệch lịch), khớp số bài/ngày giữa filename ↔ HTML ↔
@@ -32,6 +40,15 @@ vận hành routine tự động. Cập nhật khi hoàn thành từng mốc.
       khôi phục thứ tự thời gian không giảm.
 - [ ] Cấu hình branch protection: bắt buộc job `quality-gate` xanh mới merge (thao tác
       trên GitHub Settings — nằm ngoài repo).
+
+### Siết kiểm định social (đợt review 2026-08-07)
+- [x] Đếm độ dài tweet theo cách X đếm: mỗi `{{LINK}}` tính **23 ký tự** (t.co) thay vì
+      độ dài thô 8 — tránh "đạt" nhầm tweet thực chất vượt 280 sau khi thay link
+      (`tweet_length`). *(khuyến nghị 1 — đã merge ở PR #19)*
+- [x] `parse_tweets` + `validate_social` siết cấu trúc thread X theo `SKILL.md`:
+      không có nội dung trước `[Tweet 1]`, số lượng tweet trong **5–7**, đánh số
+      **liên tục 1..N**. *(khuyến nghị 2)*
+- [x] Test cho `tweet_length`, `parse_tweets`, và các nhánh lỗi mới (44 test tổng).
 
 ### PR #14 — Cadence State & Idempotency (kế tiếp)
 - [ ] `state.json` (`last_issue`, `last_generated_at`, `last_published_date`); quyết định
