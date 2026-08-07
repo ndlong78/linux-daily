@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 import sys
 from html.parser import HTMLParser
 from pathlib import Path
