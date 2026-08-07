@@ -1,20 +1,16 @@
-🔑 Một lỗi phân quyền rất hay gặp: cho user vào nhóm admin toàn quyền, rồi thêm một rule “chỉ được chạy 1 lệnh” và nghĩ rằng đã least privilege. Thực tế quyền rộng từ sudo/wheel đã tồn tại trước, nên rule hẹp không còn giới hạn được gì.
+🔑 Least privilege có một lỗi logic rất dễ mắc: vừa cho user vào nhóm admin toàn quyền, vừa viết thêm rule “chỉ được chạy một lệnh”. Khi đó rule hẹp không còn giới hạn gì nữa.
 
-Bài #009 được sửa theo hai role rõ ràng:
-• Administrator → sudo/wheel, quyền rộng
-• Operator → KHÔNG vào admin group, chỉ có sudoers/doas rule command-specific
+Bài #009 đã được technical backfill và tách rõ hai vai trò:
+• Administrator thật sự → Ubuntu/Debian thường dùng nhóm `sudo`, Fedora dùng `wheel`.
+• Limited operator → KHÔNG vào nhóm admin; chỉ nhận command-specific rule trong `sudoers.d` hoặc `doas.conf`.
 
-Khác biệt theo HĐH:
-• Ubuntu/Xubuntu → nhóm sudo cho admin; operator dùng /etc/sudoers.d/
-• Debian → không giả định sudo luôn có; nếu installer đặt root password thì sudo có thể chưa được cài
-• Fedora → wheel là admin group với sudo rộng; operator command-specific không nên vào wheel
-• FreeBSD → wheel liên quan su lên root; doas là package riêng và có thể cấp trực tiếp theo user + cmd + args
+Một số nuance quan trọng:
+• Debian có thể chưa cài sudo nếu lúc installer bạn đã đặt mật khẩu root.
+• FreeBSD: `wheel` là điều kiện cho `su`, nhưng doas có thể cấp trực tiếp theo user/group/command.
+• `permit persist` không nên dùng như mẫu portable trên FreeBSD.
+• `doas -C` có thể parse policy và kiểm một command permit/deny mà không chạy command đó.
 
-Kiểm policy trước khi dùng thật:
-• Linux: visudo -c + sudo -l -U alice
-• FreeBSD: doas -C để parse và command-match mà không thực thi lệnh
-
-Rule đặc quyền phải match đúng executable path + arguments. Khi role thay đổi, thu hồi group/rule cũ thay vì chỉ cộng thêm quyền.
+Ví dụ operator `deploy` chỉ được restart nginx, nhưng không được mở shell root.
 
 👉 Đọc đầy đủ: {{LINK}}
 
