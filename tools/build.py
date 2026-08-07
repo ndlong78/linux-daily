@@ -23,6 +23,7 @@ import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
 import check_links  # noqa: E402
 import validate_accessibility  # noqa: E402
+import validate_fonts  # noqa: E402
 import validate_repo  # noqa: E402
 import validate_site  # noqa: E402
 import validate_sources  # noqa: E402
@@ -112,6 +113,11 @@ def main(argv=None) -> int:
     site_report = validate_site.run()
     if site_report.errors:
         _print_errors("Website/SEO gate", site_report.errors)
+        return 1
+
+    font_report = validate_fonts.run()
+    if font_report.errors:
+        _print_errors("Self-host font gate", font_report.errors)
         return 1
 
     accessibility_report = validate_accessibility.run()
