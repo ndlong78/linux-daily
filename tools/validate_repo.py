@@ -15,7 +15,8 @@ Kiểm tra:
                 không còn placeholder {{...}}, đúng 2 <svg> (đều role="img"+aria-label),
                 2 <figcaption>, đủ 7 mục 01–07, có khối FreeBSD (code-label bsd),
                 giữ link CSS chung và hai link "về trang chủ", body.post, lang="vi".
-  social/     — mỗi bài có facebook.txt và x.txt; mỗi tweet trong x.txt ≤ 280 ký tự
+  social/     — mỗi bài có facebook.txt và x.txt; thread X có 5–7 tweet đánh số liên tục
+                [Tweet 1..N], không có nội dung trước [Tweet 1], mỗi tweet ≤ 280 ký tự
                 (tính {{LINK}} = 23 ký tự như t.co của X).
   index.html  — đồng bộ với posts/ (gọi build_index.render_index).
 """
@@ -51,12 +52,35 @@ TWEET_LIMIT = 280
 # không "đạt" nhầm một tweet thực chất vượt 280 sau khi thay link.
 TWEET_URL_LEN = 23
 LINK_PLACEHOLDER = "{{LINK}}"
+# Thread X theo SKILL.md: 5–7 tweet, đánh số liên tục [Tweet 1], [Tweet 2]…
+TWEET_MIN = 5
+TWEET_MAX = 7
+TWEET_MARKER_RE = re.compile(r"\[Tweet (\d+)\]")
 TOPIC_LINE_RE = re.compile(r"^#(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(.+?)\s*$")
 
 
 def tweet_length(text: str) -> int:
     """Độ dài tweet như X đếm: mỗi {{LINK}} tính bằng 23 ký tự (t.co), không phải 8."""
     return len(text) + text.count(LINK_PLACEHOLDER) * (TWEET_URL_LEN - len(LINK_PLACEHOLDER))
+
+
+def parse_tweets(txt: str) -> tuple[str, list[tuple[int, str]]]:
+    """Tách nội dung x.txt theo các mốc [Tweet n].
+
+    Trả (leading, tweets):
+      leading — phần văn bản đứng trước [Tweet 1] (phải rỗng nếu đúng chuẩn);
+      tweets  — danh sách (số tweet, nội dung sau mốc tới mốc kế / hết file).
+    """
+    matches = list(TWEET_MARKER_RE.finditer(txt))
+    if not matches:
+        return txt.strip(), []
+    leading = txt[: matches[0].start()].strip()
+    tweets: list[tuple[int, str]] = []
+    for i, m in enumerate(matches):
+        start = m.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(txt)
+        tweets.append((int(m.group(1)), txt[start:end].strip()))
+    return leading, tweets
 
 
 class Report:
@@ -234,12 +258,35 @@ def validate_social(expected_n: int, report: Report) -> None:
     if os.path.exists(x):
         with open(x, encoding="utf-8") as f:
             txt = f.read()
-        parts = [p.strip() for p in re.split(r"\[Tweet \d+\]", txt) if p.strip()]
-        report.check(len(parts) >= 1, f"social: {os.path.basename(x)} không có tweet nào đánh dấu [Tweet n].")
-        for i, p in enumerate(parts, 1):
-            n = tweet_length(p)
+        name = os.path.basename(x)
+        leading, tweets = parse_tweets(txt)
+
+        if not tweets:
+            report.fail(f"social: {name} không có tweet nào đánh dấu [Tweet n].")
+            return
+
+        # Không được có nội dung lạc trước [Tweet 1] (dễ bị đăng nhầm/tính nhầm).
+        report.check(not leading, f"social: {name} có nội dung trước [Tweet 1] — mỗi tweet phải bắt đầu bằng mốc [Tweet n].")
+
+        # Số lượng tweet trong khoảng 5–7 theo SKILL.md.
+        report.check(
+            TWEET_MIN <= len(tweets) <= TWEET_MAX,
+            f"social: {name} có {len(tweets)} tweet (cần {TWEET_MIN}–{TWEET_MAX}).",
+        )
+
+        # Đánh số phải liên tục 1..N.
+        actual_nums = [num for num, _ in tweets]
+        expected_nums = list(range(1, len(tweets) + 1))
+        report.check(
+            actual_nums == expected_nums,
+            f"social: {name} đánh số tweet không liên tục: {actual_nums} (cần {expected_nums}).",
+        )
+
+        # Giới hạn 280 ký tự, tính {{LINK}} = 23 như t.co.
+        for num, body in tweets:
+            n = tweet_length(body)
             if n > TWEET_LIMIT:
-                report.fail(f"social: {os.path.basename(x)} tweet {i} dài {n} ký tự (> {TWEET_LIMIT}, đã tính {LINK_PLACEHOLDER} = {TWEET_URL_LEN}).")
+                report.fail(f"social: {name} tweet {num} dài {n} ký tự (> {TWEET_LIMIT}, đã tính {LINK_PLACEHOLDER} = {TWEET_URL_LEN}).")
     else:
         report.fail(f"social: thiếu {os.path.basename(x)}.")
 
