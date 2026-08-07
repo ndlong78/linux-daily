@@ -1,0 +1,32 @@
+name: PR42 Accessibility Backfill
+
+on:
+  push:
+    branches: [chatgpt/pr42-accessibility-baseline]
+
+permissions:
+  contents: write
+
+jobs:
+  backfill:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr42-accessibility-baseline
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install -e ".[dev]"
+      - run: python tools/build.py
+      - name: Commit generated accessibility baseline
+        run: |
+          if git diff --quiet -- index.html posts; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- index.html posts
+          git commit -m 'PR #42: backfill accessibility landmarks'
+          git push origin HEAD:chatgpt/pr42-accessibility-baseline
