@@ -9,6 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-002-ssh-hardening.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Gia cố SSH: khóa cửa trước khi có người gõ">
+<meta property="og:description" content="Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-002-ssh-hardening.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
 <script type="application/json" id="ld-meta">
 {
   "issue": 2,
@@ -31,8 +39,8 @@
       "kind": "official"
     },
     {
-      "title": "Fedora Docs — OpenSSH",
-      "url": "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/",
+      "title": "Fedora Packages — openssh-server",
+      "url": "https://packages.fedoraproject.org/pkgs/openssh/openssh-server/",
       "kind": "official"
     },
     {
@@ -191,7 +199,7 @@ service sshd reload</code></pre>
     <ul class="clean">
       <li><a href="https://man.openbsd.org/sshd_config">OpenSSH upstream — sshd_config(5)</a></li>
       <li><a href="https://manpages.ubuntu.com/manpages/questing/man5/sshd_config.5.html">Ubuntu manpage — sshd_config(5)</a></li>
-      <li><a href="https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/">Fedora Docs — OpenSSH</a></li>
+      <li><a href="https://packages.fedoraproject.org/pkgs/openssh/openssh-server/">Fedora Packages — openssh-server</a></li>
       <li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li>
     </ul>
   </section>

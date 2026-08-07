@@ -9,6 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Serif:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-009-user-sudo-doas.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Tạo user và trao quyền: một nguyên tắc, bốn cơ chế">
+<meta property="og:description" content="Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-009-user-sudo-doas.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
 <script type="application/json" id="ld-meta">
 {
   "issue": 9,
@@ -26,8 +34,8 @@
       "kind": "official"
     },
     {
-      "title": "Fedora Docs — Gaining Privileges",
-      "url": "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/",
+      "title": "Fedora Magazine — Configure sudo",
+      "url": "https://fedoramagazine.org/howto-use-sudo/",
       "kind": "official"
     },
     {
@@ -188,7 +196,7 @@ doas -C /usr/local/etc/doas.conf /bin/sh</code></pre>
     <h2 id="technical-sources">Nguồn kỹ thuật</h2>
     <ul class="clean">
       <li><a href="https://wiki.debian.org/sudo">Debian Wiki — sudo</a></li>
-      <li><a href="https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/">Fedora Docs — Gaining Privileges</a></li>
+      <li><a href="https://fedoramagazine.org/howto-use-sudo/">Fedora Magazine — Configure sudo</a></li>
       <li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li>
       <li><a href="https://man.freebsd.org/cgi/man.cgi?query=doas&amp;sektion=1">FreeBSD manpage — doas(1)</a></li>
     </ul>

@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """
-build.py — Một lệnh duy nhất: dựng index.html + feed.xml + sitemap/robots rồi chạy quality gate.
+build.py — Một lệnh duy nhất: dựng website output rồi chạy quality gate.
 
-  python3 tools/build.py            # dựng output + kiểm định (exit != 0 nếu có lỗi)
-  python3 tools/build.py --check     # không ghi; chỉ kiểm tra output đồng bộ + quality gate
+  python3 tools/build.py            # dựng output + chuẩn hóa post metadata + kiểm định
+  python3 tools/build.py --check    # không ghi; chỉ kiểm tra mọi artifact/post đã đồng bộ
 
-Gộp build_index, build_feed, build_sitemap, validate_repo, source-backed technical gate
-và deterministic internal-link gate vào một luồng. External HTTP checks chạy riêng trong CI
-để lỗi mạng/website bên thứ ba không che mất quality gate local.
+Gộp index, RSS, sitemap/robots, historical discovery metadata, structural/source-backed
+validation và deterministic internal-link gate vào một luồng. External HTTP checks chạy
+riêng trong CI để lỗi mạng/website bên thứ ba không che mất quality gate local.
 """
 import argparse
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import backfill_site_metadata  # noqa: E402
 import build_feed  # noqa: E402
 import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
@@ -47,7 +48,7 @@ def main(argv=None) -> int:
     ap.add_argument(
         "--check",
         action="store_true",
-        help="Không ghi; chỉ kiểm tra index/feed/sitemap/robots đồng bộ + quality gate.",
+        help="Không ghi; chỉ kiểm tra website artifacts + historical post metadata đồng bộ.",
     )
     args = ap.parse_args(argv)
 
@@ -63,6 +64,8 @@ def main(argv=None) -> int:
         ok_robots = _check_file(build_sitemap.ROBOTS_PATH, robots_out, "robots.txt")
         if not (ok_index and ok_feed and ok_sitemap and ok_robots):
             return 1
+        if backfill_site_metadata.run(check=True) != 0:
+            return 1
         print(f"OK: index.html đã đồng bộ ({post_count} bài).")
         print(f"OK: feed.xml đã đồng bộ ({feed_count} bài mới nhất).")
         print(f"OK: sitemap.xml đã đồng bộ ({sitemap_count} URL).")
@@ -76,6 +79,8 @@ def main(argv=None) -> int:
             f.write(sitemap_out)
         with open(build_sitemap.ROBOTS_PATH, "w", encoding="utf-8") as f:
             f.write(robots_out)
+        if backfill_site_metadata.run(check=False) != 0:
+            return 1
         print(f"Đã dựng index.html với {post_count} bài.")
         print(f"Đã dựng feed.xml với {feed_count} bài mới nhất.")
         print(f"Đã dựng sitemap.xml với {sitemap_count} URL.")
@@ -97,8 +102,8 @@ def main(argv=None) -> int:
         return 1
 
     print(
-        "✓ Build + RSS + sitemap/robots + quality gate + source-backed review + "
-        "internal links: tất cả kiểm tra đều đạt."
+        "✓ Build + RSS + sitemap/robots + historical canonical/OG/RSS + quality gate + "
+        "source-backed review + internal links: tất cả kiểm tra đều đạt."
     )
     return 0
 
