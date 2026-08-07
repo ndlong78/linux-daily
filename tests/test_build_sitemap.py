@@ -1,10 +1,17 @@
+from __future__ import annotations
+
 import json
+import os
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
-from tools import build_sitemap
-
 ROOT = Path(__file__).resolve().parents[1]
+TOOLS = os.path.join(ROOT, "tools")
+sys.path.insert(0, TOOLS)
+
+import build_sitemap  # noqa: E402
+
 NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
