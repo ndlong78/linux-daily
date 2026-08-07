@@ -1,32 +1,21 @@
 [Tweet 1] — đính kèm post-009-code.png
-🔑 Đăng nhập root cho mọi việc = một lệnh nhầm là hỏng cả hệ, không dấu vết ai làm gì. Cách chuẩn: user thường + leo thang quyền có kiểm soát. Nhưng cơ chế mỗi HĐH một khác. Thread 🧵
+🔑 PR #28 sửa một lỗi logic rất hay gặp: nếu đã cho user vào nhóm admin toàn quyền rồi, rule “chỉ được chạy 1 lệnh” không còn là least privilege nữa. Thread 🧵
 
 [Tweet 2]
-Ubuntu/Debian — nhóm quản trị là "sudo":
-adduser alice
-usermod -aG sudo alice
-⚠️ Nhớ -a! usermod -G (thiếu -a) sẽ XOÁ alice khỏi mọi nhóm khác.
+Phải tách 2 role: Administrator → sudo/wheel, quyền rộng. Operator → KHÔNG vào admin group, chỉ có sudoers/doas rule command-specific.
 
 [Tweet 3]
-Fedora — nhóm quản trị là "wheel":
-useradd -m alice && passwd alice
-usermod -aG wheel alice
-%wheel đã có sẵn trong /etc/sudoers.
+Ubuntu thường dùng nhóm sudo. Debian thì không nên giả định sudo luôn có: nếu installer đặt root password, sudo có thể chưa cài và user không tự vào nhóm sudo.
 
-[Tweet 4] — FreeBSD
-FreeBSD: dùng pw (không phải useradd), nhóm wheel, và sudo/doas KHÔNG có trong base:
-pw useradd alice -m
-pw groupmod wheel -m alice
-pkg install -y doas
+[Tweet 4]
+Fedora dùng wheel cho quyền admin rộng qua sudo. Vì vậy operator chỉ restart nginx không nên thuộc wheel; dùng /etc/sudoers.d/ với command + arguments chính xác.
 
-[Tweet 5] — FreeBSD
-Cấu hình doas ở /usr/local/etc/doas.conf, cú pháp khác hẳn sudoers:
-permit persist :wheel
-Kiểm cú pháp: doas -C /usr/local/etc/doas.conf
+[Tweet 5]
+FreeBSD: wheel liên quan su lên root. doas là package riêng và có thể cấp trực tiếp theo user + cmd + args; operator doas không bắt buộc phải vào wheel.
 
 [Tweet 6]
-⚠️ Đừng sửa /etc/sudoers trực tiếp — một lỗi cú pháp khoá sudo cả máy. Dùng visudo (kiểm trước khi lưu) + drop-in /etc/sudoers.d/. Và tránh NOPASSWD: ALL — trao đúng lệnh cần thôi.
+Kiểm policy trước khi dùng thật: Linux dùng visudo -c và sudo -l -U alice. FreeBSD dùng doas -C để parse + command-match mà không thực thi lệnh.
 
 [Tweet 7]
-Full bài + sơ đồ leo thang quyền: {{LINK}}
-#LinuxDaily #sudo #FreeBSD #Security
+Full bài source-backed: {{LINK}}
+#LinuxDaily #sudo #doas #FreeBSD
