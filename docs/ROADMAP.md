@@ -13,86 +13,62 @@ Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux
 - Structured metadata + Jinja2 index pipeline: ✅
 - ChatGPT Plus Scheduled Task làm scheduler chính: ✅
 - Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 bắt đầu với #013 và #016 trong PR #25
+- Historical source backfill: 🟡 #013/#016 đã merge; #001/#007/#008/#015 trong PR #26
 
 ## Các mốc đã hoàn thành
 
 ### CI Quality Gate ✅
 
 - `pyproject.toml` pin dependency + dev tools.
-- `tools/validate_repo.py` kiểm tra numbering, axis cycle, date/meta consistency, template structure, SVG/accessibility, FreeBSD block, social output và state.
+- `tools/validate_repo.py` kiểm numbering, axis cycle, date/meta consistency, template structure, SVG/accessibility, FreeBSD block, social output và state.
 - `tools/build.py --check` làm cổng build/validation thống nhất.
 - `.github/workflows/ci.yml` chạy lint, tests, validator/build và smoke tests trên PR.
-- `tools/render_code.py` được hardening cho input/font/wrap/size.
-
-### Social validation ✅
-
-- `{{LINK}}` được tính theo độ dài t.co khi kiểm tra X.
-- Thread X bắt buộc 5–7 tweet, đánh số liên tục, không có nội dung lạc trước `[Tweet 1]`.
-- Facebook/X/code image được kiểm tra theo contract của repo.
 
 ### Cadence State & Idempotency ✅
 
-- `state.json` chứa `last_issue`, `last_generated_at`, `last_published_date`.
-- `tools/cadence.py` quyết định cadence từ `last_generated_at`, không dựa ngày do bài tự ghi.
-- Validator buộc state khớp bài mới nhất.
-- Agent phải kiểm tra branch/PR trùng cho issue kế tiếp.
-- Prefix branch chuẩn:
-
-```text
-chatgpt/linux-daily-<NNN>-<YYYYMMDD>
-```
-
-- Prefix legacy `claude/linux-daily-...` chỉ còn được đọc để phát hiện duplicate trong giai đoạn chuyển đổi.
-
-### Structured Content Pipeline ✅
-
-- Mỗi bài có JSON metadata `<script id="ld-meta">`.
-- `tools/postmeta.py` đọc metadata/text bằng parser thay vì regex brittle.
-- `templates/index.template.html` + Jinja2 dựng trang chủ.
-- `tools/build.py` là entrypoint build/quality gate chính.
+- `state.json` là clock của cadence; `tools/cadence.py` quyết định nhịp từ `last_generated_at`.
+- Agent kiểm duplicate issue qua branch/PR trước khi sinh bài.
+- Prefix branch chuẩn: `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`.
 
 ### Migration Claude Routine → ChatGPT Plus ✅
 
 - PR #23 đã merge 2026-08-07.
-- `AGENTS.md` là hợp đồng vận hành AI chính trong repository.
-- `docs/CHATGPT-OPERATIONS.md` mô tả scheduler, quyền ghi GitHub và failure/rollback path.
+- `AGENTS.md` là hợp đồng vận hành AI chính.
 - Scheduled Task `Linux Daily Operator` chạy 07:00 hằng ngày theo `Asia/Ho_Chi_Minh`.
-- README dùng hoàn toàn kiến trúc ChatGPT Plus + GitHub + GitHub Actions.
-- `.claude/skills/linux-daily/SKILL.md` và `routine-prompt.txt` đã bị loại bỏ.
-- `state.json`, cadence logic, structured pipeline và CI không phụ thuộc vendor AI.
+- Pipeline/CI/state không phụ thuộc vendor AI.
 
 ### PR #24 — Source-backed Technical Review ✅
 
-Mục tiêu: nâng chất lượng từ “đúng cấu trúc” sang “claim kỹ thuật có bằng chứng” cho mọi bài mới.
+- Bài #019+ bắt buộc `review_status`, tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và khớp section hiển thị.
+- `tools/build.py --check` chạy source-backed gate cùng structural gate.
+- Historical post chưa backfill được grandfather; post lịch sử đã opt-in source review phải tiếp tục vượt gate.
 
-- [x] `templates/post.template.html` có `review_status`, `sources` và section **Nguồn kỹ thuật**.
-- [x] `tools/validate_sources.py` bắt buộc từ #019: tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và metadata khớp link hiển thị.
-- [x] `review_status="draft"` không qua merge gate; chỉ `reviewed`/`published` được chấp nhận.
-- [x] `tools/build.py --check` chạy source-backed gate cùng structural quality gate.
-- [x] Test riêng cho status, số nguồn, HTTPS, duplicate và metadata↔HTML drift.
-- [x] `AGENTS.md` có checklist kỹ thuật cho networking/firewall, storage, backup/restore, auth/permissions và shell automation.
-- [x] Bài #001–#018 được grandfather có chủ đích để backfill dần.
+### PR #25 — Historical Technical Backfill #013 + #016 ✅
 
-## PR #25 — Historical Technical Backfill #013 + #016
+- #013 Bash: làm rõ `#!/usr/bin/env bash` phụ thuộc `PATH`, giới hạn của `set -e`, bỏ global `IFS=$'\n\t'`, dùng `command -v`, sửa destructive-path claim.
+- #016 FreeBSD/Fail2Ban: `blocklistd` đúng tên hiện hành, phân biệt `sshguard`, cập nhật `security/py-fail2ban` + `bsd-sshd-session`, bổ sung firewall rollback.
+- Hai bài có `review_status="reviewed"` và nguồn kỹ thuật có cấu trúc.
+- PR #25 đã merge 2026-08-07.
 
-Mục tiêu: backfill hai bài lịch sử có claim phụ thuộc môi trường/phiên bản rõ nhất, không đổi ngày xuất bản và không đổi `state.json`.
+## PR #26 — Historical Technical Backfill: Networking & Firewall
 
-- [x] #013 Bash: làm rõ `#!/usr/bin/env bash` tìm interpreter qua `PATH`.
-- [x] #013 Bash: mô tả đúng giới hạn của `set -e`, bỏ khuyến nghị global `IFS=$'\n\t'`, dùng `command -v` thay `which`.
-- [x] #013 Bash: sửa ví dụ destructive path để không khẳng định GNU `rm` chắc chắn xoá `/`; nhấn mạnh validate biến thay vì dựa vào `--preserve-root`.
-- [x] #013 Bash: thêm `review_status="reviewed"`, 3 nguồn upstream GNU và section **Nguồn kỹ thuật**.
-- [x] #016 FreeBSD: đổi `blacklistd` thành tên hiện hành `blocklistd`; xác nhận `blocklistd` ở base và `sshguard` là Ports/package ngoài base.
-- [x] #016 FreeBSD: dùng `security/py-fail2ban` và filter `bsd-sshd-session` cho OpenSSH hiện hành; thêm kiểm chứng/rollback khi thay firewall từ xa.
-- [x] #016: thêm `review_status="reviewed"`, nguồn Fail2Ban upstream + FreeBSD Handbook/Ports và section **Nguồn kỹ thuật**.
-- [x] `tools/validate_sources.py`: historical post chưa backfill vẫn grandfather; historical post đã khai `review_status` hoặc `sources` phải vượt source-backed gate để chống regression.
-- [x] Đồng bộ Facebook/X cho #013 và #016 với nội dung đã review.
+Mục tiêu: rà #001, #007, #008 và #015 theo nguyên tắc **rollback-first** cho mọi thay đổi có thể làm mất đường quản trị từ xa.
+
+- [x] #001 Static IP: giữ `netplan try`; làm rõ Debian có nhiều network manager; Fedora dùng đúng connection profile + NetworkManager checkpoint; FreeBSD thử runtime/giữ console trước khi persist.
+- [x] #001: bỏ hướng dẫn restart toàn `networking` khi chỉ cần áp lại interface do ifupdown quản lý.
+- [x] #007 Firewall: UFW mở SSH trước khi enable; firewalld runtime-first → verify → `--runtime-to-permanent`.
+- [x] #007 FreeBSD PF: bắt buộc `pfctl -vnf /etc/pf.conf` trước `pfctl -f`; kiểm từ client thật, không chỉ localhost.
+- [x] #008 Diagnostics: thêm tầng name resolution; `getent hosts`; giải thích ping thất bại không phải kết luận cuối; `sockstat -46 -l`; tcpdump có `-c`.
+- [x] #015 WireGuard: cập nhật FreeBSD theo upstream `pkg install wireguard`; mô tả đúng hai vai trò của `AllowedIPs`; dựng split tunnel nhỏ trước full tunnel và chuẩn bị rollback route.
+- [x] 4 bài có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
+- [x] Đồng bộ Facebook/X cho cả 4 bài.
+- [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
 
 ## Mốc kế tiếp — Historical Technical Backfill theo nhóm rủi ro
 
-- [ ] Rà firewall/networking (#001, #007, #008, #015) để bảo đảm có rollback khi thao tác remote và claim theo distro/version có nguồn.
-- [ ] Rà storage/backup (#003, #004, #010, #014, #017) để bảo đảm destructive operations, snapshot/restore semantics và restore verification được nêu rõ.
-- [ ] Rà auth/permissions (#002, #009) theo tài liệu OpenSSH/sudo/doas hiện hành.
+- [ ] Storage/backup (#003, #004, #010, #014, #017): destructive operations, snapshot/restore semantics, restore verification.
+- [ ] Auth/permissions (#002, #009): OpenSSH/sudo/doas hiện hành, đường rollback khi hardening remote access.
+- [ ] Monitoring/automation còn lại: rà các claim phụ thuộc distro/version và thêm nguồn theo mức rủi ro.
 - [ ] Tiếp tục backfill theo PR nhỏ; không thay đổi ngày xuất bản lịch sử.
 
 ## P2 — Repository & website
@@ -107,7 +83,7 @@ Mục tiêu: backfill hai bài lịch sử có claim phụ thuộc môi trườn
 - [ ] Open Graph/social metadata.
 - [ ] broken-link check.
 - [ ] cân nhắc self-host fonts.
-- [ ] skip link và cải thiện mô tả accessibility cho sơ đồ phức tạp.
+- [ ] skip link và cải thiện accessibility cho sơ đồ phức tạp.
 
 ## Nguyên tắc roadmap
 
@@ -115,6 +91,6 @@ Mục tiêu: backfill hai bài lịch sử có claim phụ thuộc môi trườn
 2. Scheduled Task chỉ là scheduler/orchestrator, không thay thế CI.
 3. Không push trực tiếp `main`.
 4. Không bypass quality gate.
-5. Mọi thay đổi automation phải rollback được bằng cách disable scheduler mà không làm hỏng dữ liệu series.
+5. Thay đổi mạng/firewall/remote access phải có rollback path trước khi persist.
 6. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
 7. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
