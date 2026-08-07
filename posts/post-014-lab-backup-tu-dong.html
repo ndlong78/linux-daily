@@ -9,7 +9,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 14,
-  "date": "2026-07-25",
+  "date": "2026-07-28",
   "axis": "Ôn tập",
   "eyebrow": "Ôn tập · Lab end-to-end",
   "slug": "lab-backup-tu-dong",
@@ -24,7 +24,7 @@
 }
 </script></head>
 <body class="post"><div class="wrap">
-<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#014 · 25·07·2026</span></div></div>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#014 · 28·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Lab end-to-end</p><h1>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h1><p class="lede">Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div></header>
 
 <figure><svg viewBox="0 0 760 255" role="img" aria-label="Vòng lặp backup đáng tin gồm backup tự động, kiểm repository, đọc thử data, restore canary và so checksum"><rect width="760" height="255" fill="#fff"/><g font-family="Be Vietnam Pro" font-size="12"><rect x="35" y="95" width="125" height="60" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="98" y="125" text-anchor="middle" font-weight="700">BACKUP</text><rect x="180" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="242" y="125" text-anchor="middle" font-weight="700">CHECK</text><rect x="325" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="387" y="125" text-anchor="middle" font-weight="700">READ DATA</text><rect x="470" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="532" y="125" text-anchor="middle" font-weight="700">RESTORE</text><rect x="615" y="95" width="110" height="60" rx="8" fill="#14201D"/><text x="670" y="125" text-anchor="middle" font-weight="700" fill="#7FE0D2">VERIFY</text></g></svg><figcaption>Hình 1 — Backup đáng tin là một vòng lặp: job chạy thành công chưa đủ; phải kiểm repository, đọc dữ liệu theo kế hoạch và restore thật để so với giá trị mong đợi.</figcaption></figure>
