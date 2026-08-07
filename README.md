@@ -56,6 +56,9 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 .
 ├── AGENTS.md
 ├── README.md
+├── LICENSE
+├── CONTRIBUTING.md
+├── SECURITY.md
 ├── state.json
 ├── topics.md
 ├── index.html
@@ -78,8 +81,21 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ├── docs/
 │   ├── CHATGPT-OPERATIONS.md
 │   └── ROADMAP.md
-└── .github/workflows/ci.yml
+└── .github/
+    ├── CODEOWNERS
+    ├── BRANCH-PROTECTION.md
+    └── workflows/ci.yml
 ```
+
+## Repository governance
+
+- License: MIT (`LICENSE`).
+- Hướng dẫn đóng góp: `CONTRIBUTING.md`.
+- Chính sách báo cáo vấn đề bảo mật: `SECURITY.md`.
+- Default reviewer/owner: `.github/CODEOWNERS`.
+- Baseline bảo vệ `main`: `.github/BRANCH-PROTECTION.md`.
+
+Các thay đổi vào `main` phải đi qua pull request và `quality-gate` phải xanh trước khi merge.
 
 ## Cadence 2 ngày
 
