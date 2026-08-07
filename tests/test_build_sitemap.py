@@ -29,7 +29,7 @@ def test_robots_matches_generator_and_sitemap():
     assert "Sitemap: https://linux.no.id.vn/sitemap.xml" in robots
 
 
-def test_site_config_and_cname_agree():
+def test_site_config_uses_cloudflare_worker_public_url():
     site = json.loads((ROOT / "site.json").read_text(encoding="utf-8"))
     assert site["url"] == "https://linux.no.id.vn/"
-    assert (ROOT / "CNAME").read_text(encoding="utf-8").strip() == "linux.no.id.vn"
+    assert not (ROOT / "CNAME").exists()
