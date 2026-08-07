@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Backfill discovery metadata and repair small historical HTML drift.
+"""Backfill discovery/social metadata and repair small historical HTML drift.
 
 The transformation is deterministic and idempotent: public URLs come from site.json,
-post title/description come from ld-meta, legacy broken source URLs are replaced with
-live stable sources, and old HTML fragments missing the common document shell are
-normalized back to the shared site structure.
+post title/description come from ld-meta, social image metadata comes from the existing
+post-NNN-code.png assets, legacy broken source URLs are replaced with live stable sources,
+and old HTML fragments missing the common document shell are normalized back to the
+shared site structure.
 """
 from __future__ import annotations
 
@@ -17,6 +18,7 @@ import sys
 from urllib.parse import urljoin
 
 import postmeta
+import socialmeta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
@@ -27,11 +29,9 @@ FEDORA_OPENSSH_URL = "https://packages.fedoraproject.org/pkgs/openssh/openssh-se
 DEBIAN_GETENT_URL = "https://manpages.debian.org/bookworm/manpages/getent.1.en.html"
 
 LEGACY_LINK_REPLACEMENTS = {
-    # Original URLs found by PR #36.
     "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
     "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
     "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html": DEBIAN_GETENT_URL,
-    # Intermediate localized Fedora URLs tried during PR #37 also return 404 in Actions.
     "https://docs.fedoraproject.org/ko/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
     "https://docs.fedoraproject.org/cs/fedora/f30/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
 }
@@ -83,6 +83,8 @@ def _strip_discovery_lines(text: str) -> str:
             continue
         if 'property="og:' in line:
             continue
+        if 'name="twitter:' in line:
+            continue
         kept.append(line)
     return "\n".join(kept) + ("\n" if text.endswith("\n") else "")
 
@@ -106,6 +108,9 @@ def render_post(path: str) -> str:
     title = html.escape(str(meta["title"]), quote=True)
     lede = html.escape(str(meta["lede"]), quote=True)
     site_title = html.escape(str(site["title"]), quote=True)
+    social = socialmeta.image_info(int(meta["issue"]), str(meta["title"]), site["url"])
+    social_url = html.escape(str(social["url"]), quote=True)
+    social_alt = html.escape(str(social["alt"]), quote=True)
 
     block = "\n".join(
         [
@@ -117,6 +122,16 @@ def render_post(path: str) -> str:
             f'<meta property="og:url" content="{canonical}">',
             f'<meta property="og:site_name" content="{site_title}">',
             '<meta property="og:locale" content="vi_VN">',
+            f'<meta property="og:image" content="{social_url}">',
+            f'<meta property="og:image:type" content="{social["mime"]}">',
+            f'<meta property="og:image:width" content="{social["width"]}">',
+            f'<meta property="og:image:height" content="{social["height"]}">',
+            f'<meta property="og:image:alt" content="{social_alt}">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:title" content="{title}">',
+            f'<meta name="twitter:description" content="{lede}">',
+            f'<meta name="twitter:image" content="{social_url}">',
+            f'<meta name="twitter:image:alt" content="{social_alt}">',
         ]
     )
 
@@ -141,10 +156,10 @@ def run(check: bool = False) -> int:
 
     if check and changed:
         for path in changed:
-            print(f"LỖI: metadata/link backfill chưa đồng bộ: {path}", file=sys.stderr)
+            print(f"LỖI: metadata/social backfill chưa đồng bộ: {path}", file=sys.stderr)
         return 1
     print(
-        f"OK: historical metadata/link backfill "
+        f"OK: historical metadata/social backfill "
         f"{'đồng bộ' if check else 'đã cập nhật'} ({len(changed)} file thay đổi)."
     )
     return 0
