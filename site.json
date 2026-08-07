@@ -2,6 +2,7 @@
   "title": "Linux Daily",
   "description": "Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.",
   "language": "vi",
-  "url": "https://ndlong78.github.io/linux-daily/",
-  "feed_path": "feed.xml"
+  "url": "https://linux.no.id.vn/",
+  "feed_path": "feed.xml",
+  "sitemap_path": "sitemap.xml"
 }
