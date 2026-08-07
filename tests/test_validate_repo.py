@@ -1,6 +1,12 @@
 """Unit test cho validate_repo: từng quy tắc phải bắt đúng lỗi."""
 import validate_repo
-from validate_repo import Report, validate_post_file, validate_topics
+from validate_repo import (
+    Report,
+    tweet_length,
+    validate_post_file,
+    validate_social,
+    validate_topics,
+)
 
 
 def make_entries(rows):
@@ -148,3 +154,58 @@ def test_post_bad_filename(tmp_path):
 
 def test_axis_cycle_constant_length():
     assert len(validate_repo.AXIS_CYCLE) == 7
+
+
+# --- tweet_length: {{LINK}} phải tính bằng 23 ký tự (t.co), không phải 8 ---
+
+def test_tweet_length_no_link_is_plain_len():
+    assert tweet_length("abc") == 3
+
+
+def test_tweet_length_counts_link_as_23():
+    # "x " (2) + {{LINK}} tính 23 = 25, không phải 2 + 8 = 10.
+    assert tweet_length("x " + validate_repo.LINK_PLACEHOLDER) == 25
+
+
+def test_tweet_length_counts_multiple_links():
+    two = validate_repo.LINK_PLACEHOLDER * 2
+    assert tweet_length(two) == 2 * validate_repo.TWEET_URL_LEN
+
+
+def _write_social(tmp_path, monkeypatch, n, fb="cap", x="[Tweet 1]\nhi"):
+    monkeypatch.setattr(validate_repo, "SOCIAL_DIR", str(tmp_path))
+    (tmp_path / f"post-{n:03d}-facebook.txt").write_text(fb, encoding="utf-8")
+    (tmp_path / f"post-{n:03d}-x.txt").write_text(x, encoding="utf-8")
+
+
+def test_social_valid_passes(tmp_path, monkeypatch):
+    _write_social(tmp_path, monkeypatch, 1)
+    r = Report()
+    validate_social(1, r)
+    assert r.errors == []
+
+
+def test_social_tweet_over_limit_with_link(tmp_path, monkeypatch):
+    # 265 ký tự thô + {{LINK}} → 265 + 23 = 288 > 280, phải bị bắt.
+    body = "a" * 265 + " " + validate_repo.LINK_PLACEHOLDER
+    _write_social(tmp_path, monkeypatch, 1, x=f"[Tweet 1]\n{body}")
+    r = Report()
+    validate_social(1, r)
+    assert any("> 280" in e for e in r.errors)
+
+
+def test_social_tweet_under_limit_without_link_ok(tmp_path, monkeypatch):
+    # Cùng độ dài thô nhưng không có {{LINK}} → 266 ≤ 280, không được báo lỗi.
+    body = "a" * 266
+    _write_social(tmp_path, monkeypatch, 1, x=f"[Tweet 1]\n{body}")
+    r = Report()
+    validate_social(1, r)
+    assert not any("> 280" in e for e in r.errors)
+
+
+def test_social_missing_x_file(tmp_path, monkeypatch):
+    monkeypatch.setattr(validate_repo, "SOCIAL_DIR", str(tmp_path))
+    (tmp_path / "post-001-facebook.txt").write_text("cap", encoding="utf-8")
+    r = Report()
+    validate_social(1, r)
+    assert any("x.txt" in e for e in r.errors)
