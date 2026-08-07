@@ -1,14 +1,23 @@
-🔑 Đăng nhập root cho mọi việc là thói quen nguy hiểm: một lệnh gõ nhầm là hỏng cả hệ, và không có dấu vết ai đã làm gì. Cách chuẩn: mỗi người một tài khoản thường, khi cần thì leo thang quyền qua một công cụ có ghi log.
+🔑 Một lỗi phân quyền rất hay gặp: cho user vào nhóm admin toàn quyền, rồi thêm một rule “chỉ được chạy 1 lệnh” và nghĩ rằng đã least privilege. Thực tế quyền rộng từ sudo/wheel đã tồn tại trước, nên rule hẹp không còn giới hạn được gì.
 
-Bài #009 (Bảo mật) đi vào phần "vào rồi làm được gì" — nối tiếp bài #002 (ai được vào). Cùng nguyên tắc tối thiểu quyền, nhưng ba câu hỏi có ba đáp án khác nhau:
-• Ubuntu/Xubuntu & Debian → tạo user bằng adduser, nhóm quản trị là "sudo", công cụ sudo
-• Fedora → useradd + passwd, nhóm "wheel", công cụ sudo
-• FreeBSD → pw useradd, nhóm "wheel", nhưng sudo/doas KHÔNG có trong base — phải cài gói; cấu hình doas ở /usr/local/etc/doas.conf
+Bài #009 được sửa theo hai role rõ ràng:
+• Administrator → sudo/wheel, quyền rộng
+• Operator → KHÔNG vào admin group, chỉ có sudoers/doas rule command-specific
 
-Cạm bẫy kinh điển: usermod -G (thiếu -a) sẽ XOÁ user khỏi mọi nhóm khác — luôn dùng -aG. Và đừng bao giờ sửa /etc/sudoers trực tiếp; dùng visudo (nó kiểm cú pháp) + drop-in trong /etc/sudoers.d/.
+Khác biệt theo HĐH:
+• Ubuntu/Xubuntu → nhóm sudo cho admin; operator dùng /etc/sudoers.d/
+• Debian → không giả định sudo luôn có; nếu installer đặt root password thì sudo có thể chưa được cài
+• Fedora → wheel là admin group với sudo rộng; operator command-specific không nên vào wheel
+• FreeBSD → wheel liên quan su lên root; doas là package riêng và có thể cấp trực tiếp theo user + cmd + args
+
+Kiểm policy trước khi dùng thật:
+• Linux: visudo -c + sudo -l -U alice
+• FreeBSD: doas -C để parse và command-match mà không thực thi lệnh
+
+Rule đặc quyền phải match đúng executable path + arguments. Khi role thay đổi, thu hồi group/rule cũ thay vì chỉ cộng thêm quyền.
 
 👉 Đọc đầy đủ: {{LINK}}
 
-#LinuxDaily #SysAdmin #sudo #FreeBSD #Security
+#LinuxDaily #SysAdmin #sudo #doas #FreeBSD #Security
 
 [Đính kèm ảnh: post-009-code.png]
