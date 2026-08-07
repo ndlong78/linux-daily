@@ -73,7 +73,7 @@ def _one(items: list[str], label: str, page: str, report: Report) -> str | None:
     return items[0]
 
 
-def _page_urls(path: str, site: dict, report: Report) -> tuple[str | None, set[str]]:
+def _page_canonical(path: str, site: dict, report: Report) -> str | None:
     parser = _parse_page(path)
     page = os.path.relpath(path, ROOT)
     canonicals = [x.get("href", "") for x in parser.links if x.get("rel") == "canonical"]
@@ -89,37 +89,53 @@ def _page_urls(path: str, site: dict, report: Report) -> tuple[str | None, set[s
     if not description:
         report.errors.append(f"{page}: meta description rỗng")
 
+    origin = urlparse(site["url"]).netloc
     if canonical:
         parsed = urlparse(canonical)
-        if parsed.scheme != "https" or parsed.netloc != urlparse(site["url"]).netloc:
+        if parsed.scheme != "https" or parsed.netloc != origin:
             report.errors.append(f"{page}: canonical ngoài public origin: {canonical}")
         if props.get("og:url") != canonical:
             report.errors.append(f"{page}: og:url không khớp canonical")
 
-    for key in ("og:type", "og:title", "og:description", "og:url", "og:site_name", "og:image", "og:image:alt"):
+    for key in (
+        "og:type", "og:title", "og:description", "og:url", "og:site_name",
+        "og:image", "og:image:type", "og:image:width", "og:image:height", "og:image:alt",
+    ):
         if not props.get(key):
             report.errors.append(f"{page}: thiếu {key}")
     for key in ("twitter:card", "twitter:title", "twitter:description", "twitter:image", "twitter:image:alt"):
         if not names.get(key):
             report.errors.append(f"{page}: thiếu {key}")
+
     if names.get("twitter:card") != "summary_large_image":
         report.errors.append(f"{page}: twitter:card phải là summary_large_image")
-    if props.get("og:image") and names.get("twitter:image") != props.get("og:image"):
-        report.errors.append(f"{page}: twitter:image không khớp og:image")
-    if props.get("og:image:alt") and names.get("twitter:image:alt") != props.get("og:image:alt"):
-        report.errors.append(f"{page}: twitter:image:alt không khớp og:image:alt")
-    if props.get("og:description") and description != props.get("og:description"):
-        report.errors.append(f"{page}: og:description không khớp meta description")
-    if names.get("twitter:description") and description != names.get("twitter:description"):
-        report.errors.append(f"{page}: twitter:description không khớp meta description")
+    if props.get("og:image:type") != "image/png":
+        report.errors.append(f"{page}: og:image:type phải là image/png")
+    for key in ("og:image:width", "og:image:height"):
+        value = props.get(key, "")
+        if value and (not value.isdigit() or int(value) <= 0):
+            report.errors.append(f"{page}: {key} không phải kích thước dương")
 
-    internal_hrefs: set[str] = set()
-    origin = urlparse(site["url"]).netloc
-    for link in parser.links:
-        href = link.get("href", "")
-        if href and urlparse(urljoin(canonical or site["url"], href)).netloc == origin:
-            internal_hrefs.add(urljoin(canonical or site["url"], href))
-    return canonical, internal_hrefs
+    image = props.get("og:image", "")
+    if image:
+        parsed_image = urlparse(image)
+        if parsed_image.scheme != "https" or parsed_image.netloc != origin:
+            report.errors.append(f"{page}: og:image ngoài public origin: {image}")
+        else:
+            local_image = os.path.join(ROOT, parsed_image.path.lstrip("/"))
+            if not os.path.isfile(local_image):
+                report.errors.append(f"{page}: og:image không tồn tại local: {parsed_image.path}")
+
+    pairs = (
+        ("twitter:title", "og:title"),
+        ("twitter:description", "og:description"),
+        ("twitter:image", "og:image"),
+        ("twitter:image:alt", "og:image:alt"),
+    )
+    for twitter_key, og_key in pairs:
+        if names.get(twitter_key) and props.get(og_key) and names[twitter_key] != props[og_key]:
+            report.errors.append(f"{page}: {twitter_key} không khớp {og_key}")
+    return canonical
 
 
 def _sitemap_urls(report: Report) -> set[str]:
@@ -129,7 +145,7 @@ def _sitemap_urls(report: Report) -> set[str]:
         report.errors.append(f"sitemap.xml không parse được: {exc}")
         return set()
     ns = {"s": "http://www.sitemaps.org/schemas/sitemap/0.9"}
-    urls = [node.text or "" for node in root.findall("s:url/s:loc", ns)]
+    urls = [(node.text or "").strip() for node in root.findall("s:url/s:loc", ns)]
     if len(urls) != len(set(urls)):
         report.errors.append("sitemap.xml có URL trùng")
     return set(urls)
@@ -163,23 +179,17 @@ def run() -> Report:
     report = Report()
     site = _site()
     posts = sorted(glob.glob(POSTS_GLOB))
-    html_paths = [INDEX_PATH, *posts]
     canonicals: dict[str, str] = {}
 
-    index_canonical, _ = _page_urls(INDEX_PATH, site, report)
-    for path in posts:
-        canonical, _ = _page_urls(path, site, report)
-        if canonical:
-            if canonical in canonicals:
-                report.errors.append(
-                    f"duplicate canonical: {canonical} ở {canonicals[canonical]} và {os.path.relpath(path, ROOT)}"
-                )
-            canonicals[canonical] = os.path.relpath(path, ROOT)
-
-    if index_canonical:
-        if index_canonical in canonicals:
-            report.errors.append(f"duplicate canonical homepage: {index_canonical}")
-        canonicals[index_canonical] = "index.html"
+    for path in [INDEX_PATH, *posts]:
+        canonical = _page_canonical(path, site, report)
+        if not canonical:
+            continue
+        rel = os.path.relpath(path, ROOT)
+        if canonical in canonicals:
+            report.errors.append(f"duplicate canonical: {canonical} ở {canonicals[canonical]} và {rel}")
+        else:
+            canonicals[canonical] = rel
 
     expected_pages = set(canonicals)
     sitemap_urls = _sitemap_urls(report)
@@ -196,7 +206,8 @@ def run() -> Report:
     if not feed_urls <= post_urls:
         report.errors.append("feed.xml chứa URL không phải canonical post")
 
-    index_text = open(INDEX_PATH, encoding="utf-8").read()
+    with open(INDEX_PATH, encoding="utf-8") as f:
+        index_text = f.read()
     for path in posts:
         href = "posts/" + os.path.basename(path)
         if href not in index_text:
@@ -208,7 +219,9 @@ def run() -> Report:
     if f"Sitemap: {expected_sitemap}" not in robots:
         report.errors.append("robots.txt không trỏ đúng sitemap public")
 
-    _check_stale_hosts([SITE_CONFIG, INDEX_PATH, FEED_PATH, SITEMAP_PATH, ROBOTS_PATH, *posts], report)
+    _check_stale_hosts(
+        [SITE_CONFIG, INDEX_PATH, FEED_PATH, SITEMAP_PATH, ROBOTS_PATH, *posts], report
+    )
     return report
 
 
