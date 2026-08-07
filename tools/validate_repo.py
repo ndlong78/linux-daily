@@ -11,10 +11,11 @@ bài viết hoặc nhật ký chủ đề lệch chuẩn. Chạy:
 Kiểm tra:
   topics.md   — số bài liên tục từ #001, ngày ISO hợp lệ & không giảm, trục đúng chu kỳ 7,
                 tiêu đề không trùng.
-  posts/      — tên file khớp số bài, số bài trong HTML khớp topics.md & filename,
-                không còn placeholder {{...}}, đúng 2 <svg> (đều role="img"+aria-label),
-                2 <figcaption>, đủ 7 mục 01–07, có khối FreeBSD (code-label bsd),
-                giữ link CSS chung và hai link "về trang chủ", body.post, lang="vi".
+  posts/      — khối metadata <script id="ld-meta"> đủ trường & khớp topics.md/filename;
+                meta không lệch với phần hiển thị (issue/eyebrow/title/lede); không còn
+                placeholder {{...}}, đúng 2 <svg> (đều role="img"+aria-label), 2 <figcaption>,
+                đủ 7 mục 01–07, có khối FreeBSD (code-label bsd), giữ link CSS chung và hai
+                link "về trang chủ", body.post, lang="vi".
   social/     — mỗi bài có facebook.txt và x.txt; thread X có 5–7 tweet đánh số liên tục
                 [Tweet 1..N], không có nội dung trước [Tweet 1], mỗi tweet ≤ 280 ký tự
                 (tính {{LINK}} = 23 ký tự như t.co của X).
@@ -31,6 +32,9 @@ import json
 import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import postmeta  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
@@ -178,49 +182,72 @@ def _count(pattern: str, text: str, flags: int = 0) -> int:
     return len(re.findall(pattern, text, flags))
 
 
-def validate_post_file(path: str, expected_n: int, report: Report, topic_date: str = "") -> None:
+def validate_post_file(path: str, expected_n: int, report: Report,
+                       topic_date: str = "", topic_axis: str = "") -> None:
     name = os.path.basename(path)
     with open(path, encoding="utf-8") as f:
         t = f.read()
 
-    m = re.match(r"post-(\d+)-[a-z0-9-]+\.html$", name)
+    m = re.match(r"post-(\d+)-([a-z0-9-]+)\.html$", name)
+    file_slug = None
     if not m:
         report.fail(f"{name}: tên file phải dạng post-NNN-slug.html (slug không dấu, chữ thường).")
-        file_n = None
     else:
-        file_n = int(m.group(1))
+        file_n, file_slug = int(m.group(1)), m.group(2)
         report.check(
             file_n == expected_n,
             f"{name}: số trong tên file (#{file_n:03d}) khác số trong topics.md (#{expected_n:03d}).",
         )
 
-    # Số bài trong HTML.
-    issue_raw = re.search(r'<span class="issue">(.*?)</span>', t, re.S)
-    html_n = None
-    if issue_raw:
-        mm = re.search(r"#(\d+)", issue_raw.group(1))
-        if mm:
-            html_n = int(mm.group(1))
-    html_n_disp = f"#{html_n:03d}" if html_n else "?"
-    report.check(
-        html_n == expected_n,
-        f"{name}: số bài trong HTML ({html_n_disp}) khác topics.md (#{expected_n:03d}).",
-    )
+    # --- Metadata có cấu trúc (khối <script id="ld-meta">) ---
+    try:
+        meta = postmeta.read_meta(path)
+    except postmeta.MetaError as exc:
+        report.fail(f"{name}: {exc}")
+        meta = None
 
-    # Ngày hiển thị trong HTML (DD·MM·YYYY) phải khớp ngày trong topics.md (YYYY-MM-DD).
-    if topic_date:
-        try:
-            d = dt.date.fromisoformat(topic_date)
-            expected_disp = f"{d.day:02d}·{d.month:02d}·{d.year}"
-        except ValueError:
-            expected_disp = None
-        if expected_disp:
-            html_date = ""
-            if issue_raw and "·" in issue_raw.group(1):
-                html_date = issue_raw.group(1).split("·", 1)[1].strip()
+    if meta is not None:
+        missing = [k for k in postmeta.REQUIRED_FIELDS
+                   if k not in meta or meta[k] in (None, "")]
+        report.check(not missing, f"{name}: khối meta thiếu/rỗng trường {missing}.")
+
+        report.check(
+            meta.get("issue") == expected_n,
+            f"{name}: meta.issue ({meta.get('issue')}) khác topics.md (#{expected_n:03d}).",
+        )
+        if file_slug is not None:
             report.check(
-                html_date == expected_disp,
-                f"{name}: ngày trong HTML ('{html_date}') khác topics.md ('{expected_disp}').",
+                meta.get("slug") == file_slug,
+                f"{name}: meta.slug ('{meta.get('slug')}') khác slug trong tên file ('{file_slug}').",
+            )
+        if topic_date:
+            report.check(
+                meta.get("date") == topic_date,
+                f"{name}: meta.date ('{meta.get('date')}') khác topics.md ('{topic_date}').",
+            )
+        if topic_axis:
+            report.check(
+                meta.get("axis") == topic_axis,
+                f"{name}: meta.axis ('{meta.get('axis')}') khác topics.md ('{topic_axis}').",
+            )
+
+        # Meta không được lệch với phần người đọc THẤY (index dựng từ meta).
+        vis = postmeta.read_visible(path)
+        if topic_date:
+            try:
+                d = dt.date.fromisoformat(topic_date)
+                expected_issue = f"#{expected_n:03d} · {d.day:02d}·{d.month:02d}·{d.year}"
+            except ValueError:
+                expected_issue = None
+            if expected_issue:
+                report.check(
+                    vis.get("issue") == expected_issue,
+                    f"{name}: <span class=\"issue\"> ('{vis.get('issue')}') khác '{expected_issue}' suy từ topics.md.",
+                )
+        for key, label in (("eyebrow", "eyebrow"), ("title", "<h1>"), ("lede", "lede")):
+            report.check(
+                vis.get(key) == meta.get(key),
+                f"{name}: {label} hiển thị lệch với meta.{key} (khối meta không khớp nội dung).",
             )
 
     # Không còn placeholder.
@@ -313,7 +340,7 @@ def validate_posts(entries: list[dict], report: Report) -> None:
     for e in entries:
         path = by_num.get(e["n"])
         if path:
-            validate_post_file(path, e["n"], report, e["date_s"])
+            validate_post_file(path, e["n"], report, e["date_s"], e["axis"])
             validate_social(e["n"], report)
 
 

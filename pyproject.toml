@@ -8,9 +8,11 @@ version = "0.1.0"
 description = "Công cụ dựng site và kiểm định chất lượng cho series Linux Daily."
 readme = "README.md"
 requires-python = ">=3.10"
-# Pillow chỉ cần cho tools/render_code.py (sinh ảnh code cho Facebook/X).
+# Pillow cho tools/render_code.py (ảnh code FB/X); Jinja2 cho tools/build_index.py
+# (render trang chủ từ templates/index.template.html).
 dependencies = [
     "Pillow==11.0.0",
+    "Jinja2==3.1.4",
 ]
 
 [project.optional-dependencies]

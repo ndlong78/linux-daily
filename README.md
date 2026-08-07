@@ -11,17 +11,20 @@ Bài mới được commit vào nhánh `claude/…` để bạn duyệt rồi me
 ├── assets/
 │   └── style.css           # ⭐ CSS chung — template CỐ ĐỊNH của cả site
 ├── templates/
-│   └── post.template.html  # khung chuẩn cho mỗi bài (có link về trang chủ)
+│   ├── post.template.html  # khung chuẩn cho mỗi bài (có khối meta + link về trang chủ)
+│   └── index.template.html # template Jinja2 của trang chủ
 ├── .claude/skills/linux-daily/
 │   └── SKILL.md            # hướng dẫn Claude (file chính)
 ├── posts/
-│   ├── post-001-static-ip.html   # bài (link ../assets/style.css)
+│   ├── post-001-static-ip.html   # bài (có <script id="ld-meta"> + link ../assets/style.css)
 │   └── social/                   # khối Facebook / X + ảnh code
 │       ├── post-001-facebook.txt
 │       ├── post-001-x.txt
 │       └── post-001-code.png
 ├── tools/
-│   ├── build_index.py      # dựng lại trang chủ
+│   ├── build.py            # MỘT lệnh: dựng index.html + quality gate
+│   ├── build_index.py      # dựng trang chủ từ meta qua Jinja2
+│   ├── postmeta.py         # đọc khối metadata & text hiển thị (không regex)
 │   ├── render_code.py      # tạo ảnh code cho FB/X
 │   ├── cadence.py          # cổng nhịp + state.json (số bài, mốc sinh thực)
 │   └── fonts/              # JetBrains Mono (Vietnamese)
@@ -100,7 +103,11 @@ Trang chủ ở `/`, mỗi bài ở `/posts/post-00N-....html`. File `.nojekyll`
 báo GitHub phục vụ HTML nguyên trạng, không qua Jekyll.
 
 Trang chủ tự cập nhật: mỗi lần routine thêm bài, nó chạy `tools/build_index.py`
-để dựng lại `index.html`. Muốn dựng tay: `python3 tools/build_index.py`.
+để dựng lại `index.html`. Trang chủ **không** bới HTML — nó đọc khối metadata có cấu
+trúc `<script id="ld-meta">` trong mỗi bài (qua `tools/postmeta.py`) rồi render bằng
+Jinja2 từ `templates/index.template.html`. Muốn dựng tay: `python3 tools/build_index.py`;
+hoặc một lệnh gộp cả kiểm định: `python3 tools/build.py` (thêm `--check` để chỉ kiểm tra).
+Cần Jinja2 (`pip install -e ".[dev]"` hoặc `pip install jinja2`).
 
 ⚠️ Lưu ý gói & quyền riêng tư:
 - **Public repo** dùng Pages **miễn phí**. **Private repo** cần **GitHub Pro** (cá nhân)

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề</title>
+<meta name="description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&family=Noto+Serif:wght@400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="home">
+  <div class="wrap">
+    <header class="site">
+      <div class="site-brand">Linux Daily</div>
+      <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
+      <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
+      <div class="count">{{ count }} BÀI</div>
+    </header>
+    <main class="list">
+{% if posts %}
+{% for p in posts %}
+      <a class="card" href="{{ p.href }}">
+        <div class="card-top">
+          <span class="c-issue">{{ p.num }}</span>
+          <span class="c-axis">{{ p.axis }}</span>
+          <span class="c-date">{{ p.date }}</span>
+        </div>
+        <h2>{{ p.title }}</h2>
+        <p>{{ p.lede }}</p>
+      </a>
+{% endfor %}
+{% else %}
+<p class="empty">Chưa có bài nào.</p>
+{% endif %}
+    </main>
+    <footer>Linux Daily · #LinuxDaily #SysAdmin</footer>
+  </div>
+</body>
+</html>

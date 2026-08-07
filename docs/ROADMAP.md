@@ -51,17 +51,19 @@ vận hành (và được siết thêm ở phần kiểm định social), điể
 - [x] Test cho `tweet_length`, `parse_tweets`, và các nhánh lỗi mới (44 test tổng).
 
 ### PR #14 — Cadence State & Idempotency (kế tiếp)
-- [ ] `state.json` (`last_issue`, `last_generated_at`, `last_published_date`); quyết định
-      chạy dựa vào `last_generated_at`, không dựa ngày AI ghi trong bài.
-- [ ] Chống hai tiến trình cùng sinh một số bài (kiểm tra branch/PR đang mở cho issue kế).
-- [ ] Ngày bài mặc định = ngày chạy thực; không backdate trừ khi có `--backfill`.
-- [ ] Branch chứa số issue rõ ràng: `claude/linux-daily-<NNN>-<YYYYMMDD>`.
-- [ ] Stage chính xác từng file mới, không `git add posts/social/` cả thư mục.
+- [x] `state.json` (`last_issue`, `last_generated_at`, `last_published_date`); quyết định
+      chạy dựa vào `last_generated_at`, không dựa ngày AI ghi trong bài. → `tools/cadence.py`.
+- [x] Chống hai tiến trình cùng sinh một số bài (SKILL Bước 0 kiểm tra branch/PR đang mở).
+- [x] Ngày bài mặc định = ngày chạy thực; validator chặn backdate. *(cờ `--backfill` chưa
+      thêm — backfill làm tay khi cần.)*
+- [x] Branch chứa số issue rõ ràng: `claude/linux-daily-<NNN>-<YYYYMMDD>`.
+- [x] Stage chính xác từng file mới, không `git add posts/social/` cả thư mục.
 
-### PR #15 — Structured Content Pipeline
-- [ ] Chuyển metadata bài sang YAML/JSON front matter.
-- [ ] Tách `templates/index.template.html`; render bằng Jinja2; bỏ parse HTML bằng regex.
-- [ ] Một lệnh build duy nhất (`python -m linux_daily build`).
+### PR #15 — Structured Content Pipeline ✅
+- [x] Chuyển metadata bài sang JSON front matter (`<script id="ld-meta">` trong `<head>`).
+- [x] Tách `templates/index.template.html`; render bằng Jinja2; bỏ parse HTML bằng regex
+      (đọc meta & text hiển thị qua `tools/postmeta.py` dùng `html.parser`).
+- [x] Một lệnh build duy nhất: `python3 tools/build.py` (dựng index + quality gate).
 
 ### PR #16 — Source-backed Technical Review
 - [ ] Mỗi bài có mục **Nguồn kỹ thuật** (≥ 2 nguồn chính thức: Ubuntu/Debian/Fedora/FreeBSD/upstream).

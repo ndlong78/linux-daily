@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 build_index.py — Quét posts/post-*.html và dựng trang chủ index.html liệt kê bài,
-mới nhất lên đầu. Dùng CSS chung ở assets/style.css. Chạy sau mỗi lần thêm bài.
+mới nhất lên đầu. Đọc **metadata có cấu trúc** (khối <script id="ld-meta">) qua
+tools/postmeta.py — KHÔNG bới HTML bằng regex — rồi render qua template Jinja2
+templates/index.template.html. CSS chung ở assets/style.css.
 
 Dùng:
   python3 tools/build_index.py            # dựng lại index.html
@@ -11,89 +13,69 @@ import argparse
 import glob
 import html
 import os
-import re
 import sys
+
+from jinja2 import Environment, FileSystemLoader
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import postmeta  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+TEMPLATES_DIR = os.path.join(ROOT, "templates")
+INDEX_TEMPLATE = "index.template.html"
 
 
-def strip_tags(s):
-    return re.sub(r"<[^>]+>", "", s or "").strip()
+def _fmt_date(iso: str) -> str:
+    """2026-08-07 -> 07·08·2026 (định dạng hiển thị trên thẻ)."""
+    y, m, d = iso.split("-")
+    return f"{int(d):02d}·{int(m):02d}·{int(y):04d}"
 
 
-def grab(pattern, text, flags=re.S):
-    m = re.search(pattern, text, flags)
-    return m.group(1).strip() if m else ""
+def collect_posts(posts_dir=POSTS_DIR):
+    """Đọc metadata mọi bài, trả danh sách đã sắp mới→cũ (theo số bài giảm dần)."""
+    posts = []
+    for path in glob.glob(os.path.join(posts_dir, "post-*.html")):
+        meta = postmeta.read_meta(path)
+        n = int(meta["issue"])
+        posts.append({
+            "n": n,
+            "href": "posts/" + os.path.basename(path),
+            "num": f"#{n:03d}",
+            "date": _fmt_date(meta["date"]),
+            "axis": meta["eyebrow"],  # thẻ dùng eyebrow (trục · phụ đề)
+            "title": meta["title"],
+            "lede": meta["lede"],
+        })
+    posts.sort(key=lambda p: p["n"], reverse=True)
+    return posts
 
 
-def parse_post(path):
-    with open(path, encoding="utf-8") as fh:
-        t = fh.read()
-    issue_raw = grab(r'<span class="issue">(.*?)</span>', t)
-    num, date = issue_raw, ""
-    if "·" in issue_raw:
-        num, date = (x.strip() for x in issue_raw.split("·", 1))
-    axis = strip_tags(grab(r'<p class="eyebrow">(.*?)</p>', t))
-    title = strip_tags(grab(r"<h1>(.*?)</h1>", t))
-    lede = strip_tags(grab(r'<p class="lede">(.*?)</p>', t))
-    n = 0
-    m = re.search(r"#(\d+)", num)
-    if m:
-        n = int(m.group(1))
-    return {"file": "posts/" + os.path.basename(path), "num": num, "n": n,
-            "date": date, "axis": axis, "title": title, "lede": lede}
-
-
-def card(p):
-    return f'''      <a class="card" href="{html.escape(p['file'])}">
-        <div class="card-top">
-          <span class="c-issue">{html.escape(p['num'])}</span>
-          <span class="c-axis">{html.escape(p['axis'])}</span>
-          <span class="c-date">{html.escape(p['date'])}</span>
-        </div>
-        <h2>{html.escape(p['title'])}</h2>
-        <p>{html.escape(p['lede'])}</p>
-      </a>'''
-
-
-TEMPLATE = '''<!DOCTYPE html>
-<html lang="vi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề</title>
-<meta name="description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&family=Noto+Serif:wght@400;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/style.css">
-</head>
-<body class="home">
-  <div class="wrap">
-    <header class="site">
-      <div class="site-brand">Linux Daily</div>
-      <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
-      <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">{{COUNT}} BÀI</div>
-    </header>
-    <main class="list">
-{{CARDS}}
-    </main>
-    <footer>Linux Daily · #LinuxDaily #SysAdmin</footer>
-  </div>
-</body>
-</html>
-'''
+def _env() -> Environment:
+    # autoescape=False: tự html.escape trong Python để khớp byte với bản cũ
+    # (html.escape dùng &#x27;/&quot;, khác markupsafe của Jinja).
+    return Environment(
+        loader=FileSystemLoader(TEMPLATES_DIR),
+        autoescape=False,
+        trim_blocks=True,
+        lstrip_blocks=True,
+        keep_trailing_newline=True,
+    )
 
 
 def render_index(posts_dir=POSTS_DIR):
     """Dựng nội dung HTML của trang chủ (không ghi ra đĩa) — dùng chung cho build và --check."""
-    posts = [parse_post(p) for p in glob.glob(os.path.join(posts_dir, "post-*.html"))]
-    posts.sort(key=lambda x: x["n"], reverse=True)
-    cards = "\n".join(card(p) for p in posts) or '<p class="empty">Chưa có bài nào.</p>'
-    out = TEMPLATE.replace("{{CARDS}}", cards).replace("{{COUNT}}", str(len(posts)))
+    posts = collect_posts(posts_dir)
+    ctx = [{
+        "href": html.escape(p["href"]),
+        "num": html.escape(p["num"]),
+        "axis": html.escape(p["axis"]),
+        "date": html.escape(p["date"]),
+        "title": html.escape(p["title"]),
+        "lede": html.escape(p["lede"]),
+    } for p in posts]
+    out = _env().get_template(INDEX_TEMPLATE).render(posts=ctx, count=len(posts))
     return out, len(posts)
 
 
