@@ -1,0 +1,15 @@
+name: Security report
+about: Do not disclose vulnerabilities in a public issue
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Không báo cáo lỗ hổng, secret hoặc chi tiết khai thác qua public issue.
+
+        Hãy sử dụng GitHub private vulnerability reporting / Security Advisory nếu repository đã bật tính năng này. Nếu không khả dụng, liên hệ maintainer qua kênh GitHub riêng tư.
+  - type: checkboxes
+    attributes:
+      label: Acknowledgement
+      options:
+        - label: Tôi hiểu rằng báo cáo bảo mật không nên được đăng công khai.
+          required: true
