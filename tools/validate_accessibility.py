@@ -83,7 +83,7 @@ def _validate_page(path: str, report: Report) -> None:
         report.errors.append(f"{rel}: skip link phải đứng trước main")
     if parser.h1_count != 1:
         report.errors.append(f"{rel}: cần đúng 1 h1, hiện có {parser.h1_count}")
-    for prev, current in zip(parser.headings, parser.headings[1:]):
+    for prev, current in zip(parser.headings, parser.headings[1:], strict=False):
         if current > prev + 1:
             report.errors.append(f"{rel}: heading nhảy cấp h{prev} → h{current}")
             break
