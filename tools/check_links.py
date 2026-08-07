@@ -28,6 +28,7 @@ USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
 TRANSIENT_STATUSES = {408, 425, 429, 500, 502, 503, 504}
 BLOCKED_STATUSES = {401, 403}
 HEAD_FALLBACK_STATUSES = {405, 501}
+IGNORED_LINK_RELS = {"preconnect", "dns-prefetch"}
 
 
 @dataclass(frozen=True)
@@ -58,6 +59,11 @@ class LinkParser(HTMLParser):
         name = data.get("name")
         if tag == "a" and name:
             self.ids.add(name)
+
+        rel_tokens = set((data.get("rel") or "").lower().split())
+        if tag == "link" and rel_tokens & IGNORED_LINK_RELS:
+            return
+
         for attr in ("href", "src"):
             value = data.get(attr)
             if value:
