@@ -1,0 +1,18 @@
+📦 Bạn tăng đĩa VM từ 20GB lên 50GB, reboot, rồi ngơ ngác vì df -h vẫn báo 20GB và ổ vẫn đầy. Không có gì hỏng đâu — 30GB mới nằm ở cuối đĩa, nhưng phân vùng và filesystem vẫn giữ ranh giới cũ.
+
+Bài #017 (Storage): muốn dùng chỗ mới, phải nới LẦN LƯỢT hai lớp — volume/phân vùng trước, filesystem sau (sai thứ tự là không ăn). Và cả hai thường nới được ONLINE, không cần umount:
+• Ubuntu/Xubuntu & Debian → LVM: lvextend rồi resize2fs (ext4, tăng/giảm được)
+• Fedora → LVM: lvextend rồi xfs_growfs (xfs CHỈ tăng, không thu nhỏ)
+• FreeBSD → gpart resize rồi growfs (UFS), hoặc ZFS autoexpand. KHÔNG có LVM
+
+Hai cạm bẫy hay dính:
+– FreeBSD: quên gpart recover trước khi gpart resize → báo lỗi (bản sao GPT ở cuối đĩa nằm sai chỗ sau khi đĩa lớn thêm).
+– ZFS: autoexpand mặc định TẮT — quên bật là pool vẫn giữ dung lượng cũ.
+
+Mẹo: dùng LVM (Linux) / ZFS (FreeBSD) ngay từ đầu để lần sau nới chỉ còn một lệnh.
+
+👉 Đọc đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #LVM #FreeBSD #Storage
+
+[Đính kèm ảnh: post-017-code.png]
