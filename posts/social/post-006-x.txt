@@ -1,29 +1,30 @@
 [Tweet 1] — đính kèm post-006-code.png
-⚙️ Làm tay từng máy: lần thứ mười là sai, và bạn không biết chắc cả đàn máy có giống nhau không. Ansible: khai báo trạng thái mong muốn, nó tự sửa phần lệch. Một playbook, bốn HĐH. Thread 🧵
+⚙️ Ansible “agentless” không có nghĩa mọi module chạy không cần Python. Bài #006 được backfill để tách rõ control node, module runtime và bootstrap. Thread 🧵
 
 [Tweet 2]
-Ansible chạy từ 1 control node, đẩy lệnh qua SSH — KHÔNG agent thường trực. Đổi lại: máy đích phải có sẵn Python. Khi kết nối, nó thu "facts", trong đó ansible_os_family để bạn rẽ nhánh.
+Hầu hết module POSIX cần Python trên managed node. Nếu host tối thiểu chưa có Python:
+ansible bsd1 -m ansible.builtin.raw -a 'pkg install -y python3'
+raw không cần Python.
 
 [Tweet 3]
-Rẽ nhánh module theo họ:
-apt  → os_family "Debian" (Ubuntu + Debian)
-dnf  → "RedHat" (Fedora)
-pkgng → "FreeBSD"
-Bật dịch vụ dùng chung module service, state: started + enabled: true.
+Phần giao nhau đa HĐH nên bắt đầu bằng:
+ansible.builtin.package
+ansible.builtin.service
+Chúng proxy sang package/service manager thực tế. Tên gói vẫn có thể khác giữa distro.
 
-[Tweet 4] — FreeBSD
-⚠️ FreeBSD: bản tối thiểu KHÔNG có Python → ping/facts lỗi. Bootstrap trước:
-ansible bsd1 -m raw -a "pkg install -y python3"
-rồi đặt ansible_python_interpreter=/usr/local/bin/python3
+[Tweet 4]
+FreeBSD nuance:
+community.general.pkgng không thuộc ansible-core.
+Nếu dùng:
+ansible-galaxy collection install community.general
+và nên pin collection trong requirements.yml.
 
-[Tweet 5] — FreeBSD
-⚠️ FreeBSD không có sudo mặc định → become bằng doas (ansible_become_method: doas) hoặc cài sudo. enabled: true ghi vào /etc/rc.conf, không tạo systemd unit.
+[Tweet 5]
+doas become cũng thuộc community.general, không phải builtin của ansible-core. Kiểm collection trước khi kỳ vọng ansible_become_method hoạt động.
 
 [Tweet 6]
-Luôn xem trước rồi mới áp:
-ansible-playbook ... --check --diff
-Playbook idempotent chạy lần hai phải báo changed=0. Còn changed = task chưa thật sự khai báo trạng thái.
+--check --diff rất hữu ích nhưng không phải lời hứa tuyệt đối: check/diff support phụ thuộc module/backend. Rollout production vẫn cần lab, --limit/batch và rollback.
 
 [Tweet 7]
-Full bài + sơ đồ control node → 4 máy: {{LINK}}
+Full bài: {{LINK}}
 #LinuxDaily #Ansible #FreeBSD #Automation
