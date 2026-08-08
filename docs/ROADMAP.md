@@ -48,7 +48,7 @@ P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 - [x] Self-host Be Vietnam Pro, JetBrains Mono và Noto Serif; không còn Google Fonts runtime dependency.
 - [x] Repository health summary + release checklist.
 
-## P3 — Reliability & Operations 🚧
+## P3 — Reliability & Operations ✅
 
 Mục tiêu: xác minh production đang serve đúng public artifacts mong đợi, phát hiện regression sớm và có tín hiệu vận hành đủ rõ để xử lý sự cố.
 
@@ -57,28 +57,24 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Tổng hợp repository/production-adjacent status vào một report dễ đọc trong GitHub Actions Job Summary.
 - [x] Hiển thị publication freshness, latest issue, CI/smoke state và artifact inventory.
 - [x] Không biến dashboard thành source of truth mới; dữ liệu derive trực tiếp từ repo và GitHub Actions.
-- [x] Giữ deployment fingerprint/stale-production detection ngoài P3.1 để xử lý đúng ở P3.2.
 
 ### P3.2 — Production Observability ✅
 
-- [x] Xác định deterministic serving fingerprint từ các public artifacts trọng yếu.
-- [x] Kiểm content-type và cache semantics an toàn cho static public responses; provider-specific header absence chỉ warning để tránh flaky gate.
-- [x] Phát hiện production stale/content drift so với checkout `main` bằng per-endpoint SHA-256 + aggregate fingerprint.
-- [x] Chuẩn hóa incident/rollback procedure trong `docs/production-incident-runbook.md`.
-- [x] Không suy diễn Git SHA từ fingerprint khi deployment pipeline chưa inject commit metadata; fingerprint chứng minh public serving equivalence.
+- [x] Deterministic serving fingerprint từ các public artifacts trọng yếu.
+- [x] Content-type/cache semantics + stale/content-drift detection.
+- [x] Incident/rollback runbook.
 
 ### P3.3 — Release Automation ✅
 
-- [x] Quy ước SemVer chính thức: `VERSION` chứa `X.Y.Z`, Git tag dùng `vX.Y.Z`; Python project metadata derive từ cùng source.
-- [x] Release notes ghép CHANGELOG milestone đã review qua PR với merged-PR notes do GitHub sinh tự động.
-- [x] Release chỉ chạy bằng manual `workflow_dispatch`, yêu cầu explicit confirmation và từ chối publish nếu CI hoặc Production Smoke chưa `success` trên chính SHA hiện tại của `main`.
-- [x] Không cho release workflow tự sửa `main`; CHANGELOG/version vẫn đi qua PR và branch protection.
+- [x] SemVer chính thức qua `VERSION` và tag `vX.Y.Z`.
+- [x] Manual release có CI + Production Smoke exact-SHA gate.
+- [x] Release notes từ CHANGELOG + merged PR context.
 
-### P3.4 — Performance Budget
+### P3.4 — Performance Budget ✅
 
-- [ ] Budget kích thước HTML/CSS/font/social assets.
-- [ ] Regression gate cho asset/page growth bất thường.
-- [ ] Đo performance theo tín hiệu ổn định, tránh CI phụ thuộc network benchmark dễ flaky.
+- [x] Budget kích thước homepage/post HTML, CSS, WOFF2 fonts và social PNG assets.
+- [x] Regression gate chạy trong CI và fail deterministic khi artifact vượt ngưỡng.
+- [x] Chỉ dùng local artifact-size signals ổn định; không đưa network benchmark/Lighthouse runtime vào PR quality gate.
 
 ## P4 — Content Growth ⬜
 
