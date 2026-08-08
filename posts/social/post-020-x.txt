@@ -1,0 +1,30 @@
+[Tweet 1] — đính kèm post-020-code.png
+🛡️ Firewall change qua SSH phải có đường lui trước khi mutate. Linux Daily #020 là Advanced Lab nhiều node: allow-list, negative test, failure injection và auto-recovery trên Linux + FreeBSD. 🧵
+
+[Tweet 2]
+Topology lab:
+ADMIN 192.0.2.10
+SERVER 192.0.2.20
+PROBE 192.0.2.30
+OUTSIDER 192.0.2.40
++ rescue console ngoài data path.
+ADMIN luôn được giữ; chỉ PROBE bị cố ý làm hỏng.
+
+[Tweet 3]
+Ubuntu/Xubuntu dùng UFW: dry-run trước, allow ADMIN/PROBE, rồi insert một deny riêng cho PROBE. Watchdog 90s xóa đúng deny đó để chứng minh recovery.
+
+[Tweet 4]
+Debian stable dùng nftables: table inet ldlab riêng, nft -c -f để check file trước khi load. Failure ruleset bỏ PROBE; watchdog atomically reload cấu hình good.
+
+[Tweet 5]
+Fedora dùng firewalld runtime-only + rich-rule priority. Không chạm permanent config trong lần thử. Failure injection chỉ remove allow rule của PROBE; watchdog add lại.
+
+[Tweet 6]
+FreeBSD đi đường riêng: PF + pfctl.
+pfctl -vnf /tmp/ldlab-good.pf
+pfctl -f /tmp/ldlab-fail.pf
+Watchdog reload good PF ruleset. Không systemd, không nftables.
+
+[Tweet 7]
+Pass khi đủ 3 evidence: allowed path SUCCESS, OUTSIDER FAIL, PROBE FAIL rồi tự SUCCESS sau rollback. Chỉ làm trên VM snapshot/rescue console, không inject production. {{LINK}}
+#LinuxDaily #Firewall #Automation #FreeBSD
