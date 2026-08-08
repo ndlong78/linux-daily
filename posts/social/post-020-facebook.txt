@@ -1,0 +1,20 @@
+🛡️ Thay firewall qua SSH mà không có rollback là một change không có đường lui.
+
+Linux Daily #020 là Advanced Lab nhiều node: ADMIN, PROBE, OUTSIDER, SERVER và rescue console. Mục tiêu không chỉ là “rule chạy được”, mà phải chứng minh đủ ba trạng thái:
+• ADMIN/PROBE được phép SSH.
+• OUTSIDER bị chặn.
+• Khi cố ý làm PROBE mất SSH, watchdog tự khôi phục cấu hình tốt mà ADMIN vẫn sống.
+
+Mỗi hệ đi một backend riêng:
+• Ubuntu/Xubuntu: UFW + dry-run + rule cụ thể.
+• Debian stable: nftables, syntax check bằng nft -c và bảng inet ldlab riêng.
+• Fedora: firewalld runtime-only + rich-rule priority.
+• FreeBSD: PF + pfctl -vnf trước khi load; hoàn toàn không dùng systemd/nftables của Linux.
+
+Lab dùng mạng tài liệu 192.0.2.0/24, VM snapshot và rescue console. Không thử failure injection trên production.
+
+👉 Bài đầy đủ: {{LINK}}
+
+#LinuxDaily #SysAdmin #Firewall #Automation #FreeBSD
+
+[Đính kèm ảnh: post-020-code.png]
