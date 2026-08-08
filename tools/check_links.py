@@ -23,6 +23,7 @@ from urllib.request import Request, urlopen
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
+LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
@@ -78,6 +79,7 @@ def _load_site() -> dict:
 def _html_files() -> list[str]:
     return [
         os.path.join(ROOT, "index.html"),
+        LEARNING_DASHBOARD_PATH,
         LEARNING_PATHS_PATH,
         *sorted(glob.glob(POSTS_GLOB)),
     ]
