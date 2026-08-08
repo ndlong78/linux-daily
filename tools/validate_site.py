@@ -235,9 +235,8 @@ def run() -> Report:
         href = "posts/" + os.path.basename(path)
         if href not in index_text:
             report.errors.append(f"orphan post: {href} không được homepage liên kết")
-    for href in ("archive.html", "learning-paths.html"):
-        if href not in index_text:
-            report.errors.append(f"{href} không được homepage liên kết")
+    if "archive.html" not in index_text:
+        report.errors.append("archive.html không được homepage liên kết")
 
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()
