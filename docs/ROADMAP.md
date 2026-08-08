@@ -50,10 +50,10 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 ### P7.1 — Distro Coverage & Portability Matrix ✅
 
 - [x] `tools/distro_coverage.py` inventory Ubuntu/Xubuntu, Debian, Fedora và FreeBSD coverage cho mọi bài.
-- [x] Mỗi bài phải có FreeBSD code block riêng được đánh dấu `class="bsd"`.
-- [x] Hard-fail các Linux-only command/path rõ ràng nếu xuất hiện trong FreeBSD block.
-- [x] Sinh deterministic `docs/distro-coverage-report.md` và đưa gate vào `tools/publish.py`.
-- [x] Tài liệu hóa policy/false-positive boundary trong `docs/distro-portability.md`.
+- [x] Baseline thực tế được ghi nhận minh bạch: 14/19 bài đủ bốn platform; #007, #008, #010, #014 và #017 vào historical review queue.
+- [x] Từ #020, thiếu bất kỳ platform nào là hard-fail; không dùng backfill giả chỉ để làm đẹp baseline cũ.
+- [x] Mọi bài phải có FreeBSD code block riêng được đánh dấu `class="bsd"` và hard-fail Linux-only command/path rõ ràng trong block đó.
+- [x] Sinh deterministic `docs/distro-coverage-report.md`, đưa gate vào `tools/publish.py` và tài liệu hóa policy trong `docs/distro-portability.md`.
 
 ### P7.2 — Command & Configuration Quality Gate ⬜
 
