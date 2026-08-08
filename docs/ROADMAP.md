@@ -76,7 +76,7 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Regression gate chạy trong CI và fail deterministic khi artifact vượt ngưỡng.
 - [x] Chỉ dùng local artifact-size signals ổn định; không đưa network benchmark/Lighthouse runtime vào PR quality gate.
 
-## P4 — Content Growth 🚧
+## P4 — Content Growth ✅
 
 ### P4.1 — Taxonomy / Tags / Topic Discovery ✅
 
@@ -100,11 +100,14 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Archive vẫn dùng được khi JavaScript lỗi/tắt; search là progressive enhancement.
 - [x] `build.py --check` chặn archive/search index stale và sitemap discover `archive.html`.
 
-### P4.4 — Content Mix Review
+### P4.4 — Content Mix Review ✅
 
-- [ ] Review lại cadence/content mix dựa trên dữ liệu thực tế.
+- [x] Review 19 bài thực tế theo canonical 7-axis rotation: 2 chu kỳ hoàn chỉnh + 5/7 chu kỳ hiện tại.
+- [x] Distribution spread chỉ 1 bài; phần 3-vs-2 là trạng thái tự nhiên của chu kỳ chưa hoàn tất, không cần backfill nhân tạo.
+- [x] `tools/content_mix.py` kiểm sequence, axis coverage, balance và report freshness deterministic.
+- [x] CI chặn content-mix/cadence drift; snapshot nằm ở `docs/content-mix-report.md`.
 
-## P5 — Automation ⬜
+## P5 — Automation 🚧
 
 - [ ] Giảm thao tác thủ công lặp lại trong publish/release.
 - [ ] Tự động hóa audit/report có deterministic input.
