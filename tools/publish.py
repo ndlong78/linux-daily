@@ -24,12 +24,14 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/build.py"],
             [PYTHON, "tools/content_mix.py"],
             [PYTHON, "tools/taxonomy.py"],
+            [PYTHON, "tools/distro_coverage.py"],
         ]
     if mode == "check":
         return [
             [PYTHON, "tools/build.py", "--check"],
             [PYTHON, "tools/taxonomy.py"],
             [PYTHON, "tools/content_mix.py", "--check"],
+            [PYTHON, "tools/distro_coverage.py", "--check"],
             [PYTHON, "tools/release.py", "validate"],
             [PYTHON, "tools/performance_budget.py"],
             [PYTHON, "tools/repo_health.py"],
