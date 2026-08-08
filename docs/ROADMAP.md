@@ -20,7 +20,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 ## P5 — Automation ✅
 - One-command publish pipeline, weekly audit/report và workflow safety guardrails.
 
-## P6 — Community 🚧
+## P6 — Community ✅
 
 ### P6.1 — Contributor Onboarding ✅
 
@@ -37,10 +37,13 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue đến PR.
 - [x] Không thêm automation ghi/merge hoặc dependency vào labels/repository settings ngoài Git.
 
-### P6.3 — Technical Contributor Review Guide 🚧
+### P6.3 — Technical Contributor Review Guide ✅
 
-- [ ] Review guide cho source quality, distro portability và operational safety.
-- [ ] Checklist dành cho technical reviewer không cần hiểu lịch sử repository.
+- [x] `docs/technical-review-guide.md` chuẩn hóa review source quality, distro portability và operational safety.
+- [x] Review guide tách riêng Ubuntu/Xubuntu, Debian, Fedora và FreeBSD; FreeBSD không được gán Linux service/package/network model.
+- [x] Checklist theo nhóm rủi ro: networking/firewall, storage, backup/restore, auth/permissions và automation/shell.
+- [x] Phân loại finding thành blocker / needs change / suggestion để feedback nhất quán.
+- [x] Pull request template trỏ trực tiếp tới review guide; reviewer không cần biết lịch sử repository.
 
 ## Nguyên tắc roadmap
 
