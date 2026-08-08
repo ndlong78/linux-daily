@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Production smoke checks for the Cloudflare-hosted Linux Daily site."""
+"""Production observability checks for the Cloudflare-hosted Linux Daily site."""
 from __future__ import annotations
 
 import argparse
@@ -14,16 +14,21 @@ from dataclasses import dataclass
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse
 
+import site_fingerprint
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
-USER_AGENT = "linux-daily-production-smoke/1.0"
+USER_AGENT = "linux-daily-production-smoke/2.0"
 
 
 @dataclass
 class CheckResult:
     ok: bool
     errors: list[str]
+    warnings: list[str]
+    expected_fingerprint: str = ""
+    production_fingerprint: str = ""
 
 
 class HeadParser(HTMLParser):
@@ -83,8 +88,40 @@ def _parse_html(body: bytes) -> HeadParser:
     return parser
 
 
+def _cache_observation(label: str, headers: dict[str, str], errors: list[str], warnings: list[str]) -> None:
+    """Validate only unsafe cache semantics; keep provider-specific hints observable, not flaky."""
+    cache_control = headers.get("cache-control", "").lower()
+    directives = {part.strip().split("=", 1)[0] for part in cache_control.split(",") if part.strip()}
+    if "private" in directives or "no-store" in directives:
+        errors.append(f"{label}: static public response has unsafe cache-control {cache_control!r}")
+    if not cache_control:
+        warnings.append(f"{label}: cache-control header missing")
+
+
+def _expected_by_public_path() -> tuple[str, dict[str, tuple[str, bytes]]]:
+    fingerprint, files = site_fingerprint.collect()
+    expected: dict[str, tuple[str, bytes]] = {}
+    for item in files:
+        path = os.path.join(ROOT, item.repository_path.replace("/", os.sep))
+        expected[item.public_path] = (item.sha256, open(path, "rb").read())
+    return fingerprint, expected
+
+
+def _production_fingerprint(responses_by_path: dict[str, bytes]) -> str:
+    aggregate = site_fingerprint.hashlib.sha256()
+    for public_path, _ in site_fingerprint.served_files():
+        if public_path not in responses_by_path:
+            return ""
+        aggregate.update(public_path.encode("utf-8"))
+        aggregate.update(b"\0")
+        aggregate.update(responses_by_path[public_path])
+        aggregate.update(b"\0")
+    return aggregate.hexdigest()
+
+
 def _check_once(timeout: float = 12.0) -> CheckResult:
     errors: list[str] = []
+    warnings: list[str] = []
     site = _load_site()
     base = site["url"]
     origin = urlparse(base).netloc
@@ -94,17 +131,19 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
     latest_issue = int(latest_name.split("-")[1])
     image_url = urljoin(base, f"posts/social/post-{latest_issue:03d}-code.png")
 
+    expected_fingerprint, expected = _expected_by_public_path()
     endpoints = {
-        "homepage": (base, {"text/html"}),
-        "feed": (urljoin(base, site["feed_path"]), {"application/rss+xml", "application/xml", "text/xml"}),
-        "sitemap": (urljoin(base, site["sitemap_path"]), {"application/xml", "text/xml"}),
-        "robots": (urljoin(base, "robots.txt"), {"text/plain"}),
-        "latest post": (latest_url, {"text/html"}),
-        "latest social image": (image_url, {"image/png"}),
+        "homepage": (base, "/", {"text/html"}),
+        "feed": (urljoin(base, site["feed_path"]), f"/{site['feed_path'].lstrip('/')}", {"application/rss+xml", "application/xml", "text/xml"}),
+        "sitemap": (urljoin(base, site["sitemap_path"]), f"/{site['sitemap_path'].lstrip('/')}", {"application/xml", "text/xml"}),
+        "robots": (urljoin(base, "robots.txt"), "/robots.txt", {"text/plain"}),
+        "latest post": (latest_url, f"/posts/{latest_name}", {"text/html"}),
+        "latest social image": (image_url, f"/posts/social/post-{latest_issue:03d}-code.png", {"image/png"}),
     }
 
     responses: dict[str, tuple[dict[str, str], bytes, str]] = {}
-    for label, (url, allowed_types) in endpoints.items():
+    production_by_path: dict[str, bytes] = {}
+    for label, (url, public_path, allowed_types) in endpoints.items():
         try:
             status, headers, body, final_url = _fetch(url, timeout)
         except (urllib.error.URLError, TimeoutError) as exc:
@@ -116,9 +155,20 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
         if urlparse(final_url).netloc != origin:
             errors.append(f"{label}: redirected outside public origin to {final_url}")
         _expect_type(_content_type(headers), allowed_types, label, errors)
+        _cache_observation(label, headers, errors, warnings)
         if not body:
             errors.append(f"{label}: empty response body")
         responses[label] = (headers, body, final_url)
+        production_by_path[public_path] = body
+
+        if public_path in expected:
+            expected_sha, _ = expected[public_path]
+            actual_sha = site_fingerprint.sha256_bytes(body)
+            if actual_sha != expected_sha:
+                errors.append(
+                    f"{label}: production stale/content drift for {public_path} "
+                    f"(expected sha256 {expected_sha[:12]}, got {actual_sha[:12]})"
+                )
 
     if "homepage" in responses:
         _, body, _ = responses["homepage"]
@@ -176,11 +226,24 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
     if "robots" in responses:
         _, body, _ = responses["robots"]
         text = body.decode("utf-8", errors="replace")
-        expected = f"Sitemap: {urljoin(base, site['sitemap_path'])}"
-        if expected not in text:
+        expected_sitemap = f"Sitemap: {urljoin(base, site['sitemap_path'])}"
+        if expected_sitemap not in text:
             errors.append("robots: sitemap directive không đúng public URL")
 
-    return CheckResult(ok=not errors, errors=errors)
+    production_fingerprint = _production_fingerprint(production_by_path)
+    if production_fingerprint and production_fingerprint != expected_fingerprint:
+        errors.append(
+            "production fingerprint mismatch: serving state differs from repository main artifacts "
+            f"({production_fingerprint[:12]} != {expected_fingerprint[:12]})"
+        )
+
+    return CheckResult(
+        ok=not errors,
+        errors=errors,
+        warnings=warnings,
+        expected_fingerprint=expected_fingerprint,
+        production_fingerprint=production_fingerprint,
+    )
 
 
 def run(attempts: int = 12, delay: float = 10.0, timeout: float = 12.0) -> int:
@@ -188,19 +251,25 @@ def run(attempts: int = 12, delay: float = 10.0, timeout: float = 12.0) -> int:
     for attempt in range(1, attempts + 1):
         result = _check_once(timeout=timeout)
         if result.ok:
-            print(f"✓ Production smoke passed on attempt {attempt}/{attempts}.")
+            print(f"✓ Production observability passed on attempt {attempt}/{attempts}.")
+            print(f"  expected fingerprint:   {result.expected_fingerprint}")
+            print(f"  production fingerprint: {result.production_fingerprint}")
+            for warning in result.warnings:
+                print(f"  ! {warning}")
             return 0
         print(f"Attempt {attempt}/{attempts} failed:")
         for error in result.errors:
             print(f"  - {error}")
+        for warning in result.warnings:
+            print(f"  ! {warning}")
         if attempt < attempts:
             time.sleep(delay)
-    print("✗ Production smoke failed after retries.")
+    print("✗ Production observability failed after retries.")
     return 1
 
 
 def main(argv=None) -> int:
-    parser = argparse.ArgumentParser(description="Smoke-test linux.no.id.vn production endpoints.")
+    parser = argparse.ArgumentParser(description="Observe linux.no.id.vn production endpoints and serving freshness.")
     parser.add_argument("--attempts", type=int, default=12)
     parser.add_argument("--delay", type=float, default=10.0)
     parser.add_argument("--timeout", type=float, default=12.0)
