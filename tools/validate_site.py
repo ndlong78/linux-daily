@@ -15,6 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
 INDEX_PATH = os.path.join(ROOT, "index.html")
 ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
+LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 FEED_PATH = os.path.join(ROOT, "feed.xml")
 SITEMAP_PATH = os.path.join(ROOT, "sitemap.xml")
@@ -204,7 +205,7 @@ def run() -> Report:
         else:
             canonicals[canonical] = rel
 
-    for path in (ARCHIVE_PATH, LEARNING_PATHS_PATH):
+    for path in (ARCHIVE_PATH, LEARNING_DASHBOARD_PATH, LEARNING_PATHS_PATH):
         canonical = _secondary_page_canonical(path, site, report)
         if not canonical:
             continue
@@ -238,6 +239,12 @@ def run() -> Report:
     if "archive.html" not in index_text:
         report.errors.append("archive.html không được homepage liên kết")
 
+    with open(LEARNING_DASHBOARD_PATH, encoding="utf-8") as f:
+        dashboard_text = f.read()
+    for href in ("index.html", "learning-paths.html", "archive.html"):
+        if href not in dashboard_text:
+            report.errors.append(f"learning-dashboard.html thiếu navigation tới {href}")
+
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()
     expected_sitemap = urljoin(site["url"], site["sitemap_path"])
@@ -249,6 +256,7 @@ def run() -> Report:
             SITE_CONFIG,
             INDEX_PATH,
             ARCHIVE_PATH,
+            LEARNING_DASHBOARD_PATH,
             LEARNING_PATHS_PATH,
             FEED_PATH,
             SITEMAP_PATH,
