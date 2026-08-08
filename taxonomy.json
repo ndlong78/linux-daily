@@ -1,0 +1,40 @@
+{
+  "schema": 1,
+  "axes": {
+    "Networking": {
+      "slug": "networking",
+      "label": "Networking",
+      "description": "Interface, routing, DNS, firewall, VPN và chẩn đoán mạng."
+    },
+    "Bảo mật": {
+      "slug": "security",
+      "label": "Bảo mật & phân quyền",
+      "description": "Users, sudo/doas, SSH hardening, access control và phòng vệ dịch vụ."
+    },
+    "Storage": {
+      "slug": "storage",
+      "label": "Storage & hệ thống tệp",
+      "description": "Filesystem, disk, ZFS/LVM, snapshot, backup và mở rộng dung lượng."
+    },
+    "Công cụ": {
+      "slug": "tools",
+      "label": "Công cụ & phần mềm",
+      "description": "CLI và phần mềm hữu ích cho vận hành Linux/Unix."
+    },
+    "Monitoring": {
+      "slug": "monitoring",
+      "label": "Monitoring & hiệu năng",
+      "description": "Logging, observability, resource triage và performance troubleshooting."
+    },
+    "Automation": {
+      "slug": "automation",
+      "label": "Automation & scripting",
+      "description": "Shell scripting, Ansible, scheduler và tự động hóa vận hành."
+    },
+    "Ôn tập": {
+      "slug": "labs",
+      "label": "Lab end-to-end",
+      "description": "Bài lab ghép nhiều kỹ năng thành quy trình vận hành hoàn chỉnh."
+    }
+  }
+}
