@@ -7,7 +7,7 @@ on:
   pull_request:
   push:
     branches: [main]
-  workflow_dispatch:   # cho phép chạy tay từ tab Actions (hữu ích khi vừa bật Actions)
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -41,6 +41,9 @@ jobs:
 
       - name: Release metadata consistency
         run: python tools/release.py validate
+
+      - name: Performance budget
+        run: python tools/performance_budget.py
 
       - name: Repository health summary
         run: python tools/repo_health.py
