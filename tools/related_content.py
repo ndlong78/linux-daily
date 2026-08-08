@@ -86,7 +86,8 @@ def _link(post: Post, rel: str) -> str:
 def render_block(post: Post, posts: list[Post]) -> str:
     config = taxonomy.load_taxonomy()["axes"][post.axis]
     previous, following = _neighbors(post, posts)
-    related = _related(post, posts)
+    neighbor_set = {item for item in (previous, following) if item is not None}
+    related = [item for item in _related(post, posts, limit=5) if item not in neighbor_set][:3]
     lines = [
         START,
         '<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">',
