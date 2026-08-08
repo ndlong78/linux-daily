@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search & Archive — Linux Daily</title>
+<meta name="description" content="Tìm kiếm và duyệt kho bài Linux Daily theo trục nội dung.">
+<link rel="canonical" href="https://linux.no.id.vn/archive.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<link rel="preload" href="assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/archive.css">
+<script src="assets/search.js" defer></script>
+</head>
+<body class="home archive-page">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<div class="wrap">
+<header class="site">
+  <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
+  <h1 class="site">Search &amp; Archive</h1>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ {{ count }} bài theo chủ đề.</p>
+  <form class="search-box" role="search" onsubmit="return false">
+    <label for="archive-search">Tìm bài</label>
+    <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc {{ count }} bài.</p>
+  </form>
+</header>
+<main id="main-content">
+  <section id="search-results" class="search-results" aria-label="Kết quả tìm kiếm" hidden></section>
+  <div id="archive-groups">
+{% for group in groups %}
+  <section class="archive-group" id="{{ group.slug }}">
+    <h2>{{ group.label }} <span class="archive-count">{{ group.posts|length }}</span></h2>
+{% if group.posts %}
+    <div class="archive-list">
+{% for p in group.posts %}
+      <a class="archive-item" href="{{ p.href }}">
+        <span class="archive-meta">#{{ "%03d"|format(p.issue) }} · {{ p.date }}</span>
+        <strong>{{ p.title }}</strong>
+        <span>{{ p.lede }}</span>
+      </a>
+{% endfor %}
+    </div>
+{% else %}
+    <p class="empty">Chưa có bài trong trục này.</p>
+{% endif %}
+  </section>
+{% endfor %}
+  </div>
+</main>
+<footer><a class="foot-home" href="index.html">← Về trang chủ Linux Daily</a></footer>
+</div>
+</body>
+</html>

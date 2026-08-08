@@ -1,0 +1,253 @@
+{
+  "count": 19,
+  "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-07",
+      "href": "posts/post-019-triage-hieu-nang-vmstat-iostat.html",
+      "issue": 19,
+      "lede": "Máy chủ 'chậm' không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.",
+      "tags": [
+        "Hiệu năng"
+      ],
+      "title": "Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-05",
+      "href": "posts/post-018-rclone-cloud-sync.html",
+      "issue": 18,
+      "lede": "Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là \"rsync cho cloud\": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.",
+      "tags": [
+        "Cloud sync"
+      ],
+      "title": "rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-08-03",
+      "href": "posts/post-017-mo-rong-dung-luong.html",
+      "issue": 17,
+      "lede": "Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa \"biết\" để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.",
+      "tags": [
+        "Hệ thống tệp"
+      ],
+      "title": "Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-08-01",
+      "href": "posts/post-016-fail2ban.html",
+      "issue": 16,
+      "lede": "Bài #002 khoá SSH bằng cấu hình tĩnh — chỉ nhận khoá, cấm root. Nhưng bot vẫn nện cổng 22 hàng nghìn lần mỗi ngày, ăn tài nguyên và rình sơ hở. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng. Cùng ý tưởng đó, bốn hệ đọc log và cấm IP theo cách khác nhau.",
+      "tags": [
+        "Phân quyền"
+      ],
+      "title": "fail2ban: để kẻ dò mật khẩu tự khoá cửa lại"
+    },
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-07-30",
+      "href": "posts/post-015-wireguard-vpn.html",
+      "issue": 15,
+      "lede": "Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.",
+      "tags": [
+        "VPN"
+      ],
+      "title": "WireGuard: một cặp khoá, một đường hầm mã hoá"
+    },
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-07-28",
+      "href": "posts/post-014-lab-backup-tu-dong.html",
+      "issue": 14,
+      "lede": "Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.",
+      "tags": [
+        "Lab end-to-end"
+      ],
+      "title": "Backup tự động mà bạn dám tin — vì đã thử khôi phục"
+    },
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-07-26",
+      "href": "posts/post-013-bash-script-vung.html",
+      "issue": 13,
+      "lede": "Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để \"chạy được ở đây\" đồng nghĩa \"chạy được mọi nơi\".",
+      "tags": [
+        "Scripting"
+      ],
+      "title": "Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?"
+    },
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-07-24",
+      "href": "posts/post-012-lap-lich-cron-timers.html",
+      "issue": 12,
+      "lede": "Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.",
+      "tags": [
+        "Hiệu năng"
+      ],
+      "title": "Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-07-22",
+      "href": "posts/post-011-tmux.html",
+      "issue": 11,
+      "lede": "Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.",
+      "tags": [
+        "CLI"
+      ],
+      "title": "tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-07-20",
+      "href": "posts/post-010-them-dia-moi.html",
+      "issue": 10,
+      "lede": "Bài #003 nói về snapshot khi đã có sẵn pool; bài này lùi về bước cơ bản hơn — gắn một ổ đĩa trống và đưa nó vào dùng. Quy trình bốn bước giống nhau ở mọi hệ: nhận diện đĩa, phân vùng, tạo filesystem, mount vĩnh viễn. Nhưng công cụ thì rẽ nhánh: Linux dùng parted/mkfs, FreeBSD dùng gpart/newfs — và cách định danh đĩa để mount cho bền cũng khác.",
+      "tags": [
+        "Hệ thống tệp"
+      ],
+      "title": "Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-07-18",
+      "href": "posts/post-009-user-sudo-doas.html",
+      "issue": 9,
+      "lede": "Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.",
+      "tags": [
+        "Phân quyền"
+      ],
+      "title": "Tạo user và trao quyền: một nguyên tắc, bốn cơ chế"
+    },
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-07-16",
+      "href": "posts/post-008-chan-doan-mang.html",
+      "issue": 8,
+      "lede": "Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có \"up\" không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.",
+      "tags": [
+        "Chẩn đoán"
+      ],
+      "title": "Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh"
+    },
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-07-14",
+      "href": "posts/post-007-lab-web-server-tuong-lua.html",
+      "issue": 7,
+      "lede": "Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.",
+      "tags": [
+        "Lab end-to-end"
+      ],
+      "title": "Từ máy mới đến web server an toàn, chỉ mở đúng cổng"
+    },
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-07-12",
+      "href": "posts/post-006-ansible-multi-os.html",
+      "issue": 6,
+      "lede": "Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.",
+      "tags": [
+        "Scripting"
+      ],
+      "title": "Ansible: một playbook, bốn hệ điều hành"
+    },
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-07-10",
+      "href": "posts/post-005-doc-log-journald-syslog.html",
+      "issue": 5,
+      "lede": "Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi \"log ở đâu, đọc bằng gì\" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.",
+      "tags": [
+        "Hiệu năng"
+      ],
+      "title": "Đọc log hệ thống: một journal nhị phân, một đống file text"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-07-08",
+      "href": "posts/post-004-restic-backup.html",
+      "issue": 4,
+      "lede": "Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.",
+      "tags": [
+        "Backup"
+      ],
+      "title": "Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-07-06",
+      "href": "posts/post-003-zfs-snapshots.html",
+      "issue": 3,
+      "lede": "Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.",
+      "tags": [
+        "Hệ thống tệp"
+      ],
+      "title": "Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-07-04",
+      "href": "posts/post-002-ssh-hardening.html",
+      "issue": 2,
+      "lede": "Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.",
+      "tags": [
+        "Phân quyền"
+      ],
+      "title": "Gia cố SSH: khóa cửa trước khi có người gõ"
+    },
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-07-02",
+      "href": "posts/post-001-static-ip.html",
+      "issue": 1,
+      "lede": "Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.",
+      "tags": [
+        "Kết nối"
+      ],
+      "title": "Một IP tĩnh, bốn cách khai báo"
+    }
+  ],
+  "schema": 1
+}

@@ -18,7 +18,7 @@ NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 def test_sitemap_matches_generator():
     rendered, count = build_sitemap.render_sitemap()
     assert (ROOT / "sitemap.xml").read_text(encoding="utf-8") == rendered
-    assert count == 20
+    assert count == 21
 
 
 def test_sitemap_uses_custom_domain_and_latest_post():
@@ -26,6 +26,7 @@ def test_sitemap_uses_custom_domain_and_latest_post():
     urls = root.findall("sm:url", NS)
     locs = [u.findtext("sm:loc", namespaces=NS) for u in urls]
     assert locs[0] == "https://linux.no.id.vn/"
+    assert "https://linux.no.id.vn/archive.html" in locs
     assert "https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html" in locs
     assert all(loc.startswith("https://linux.no.id.vn/") for loc in locs)
 

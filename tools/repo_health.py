@@ -27,6 +27,8 @@ REQUIRED = (
     "PROJECT_STATUS.md",
     "CHANGELOG.md",
     "index.html",
+    "archive.html",
+    "search-index.json",
     "feed.xml",
     "sitemap.xml",
     "robots.txt",
@@ -69,7 +71,10 @@ def collect() -> Health:
 
     posts = sorted(glob.glob(POST_GLOB))
     health.metrics["posts"] = len(posts)
-    health.metrics["generated_pages"] = len(posts) + (1 if os.path.isfile(os.path.join(ROOT, "index.html")) else 0)
+    static_pages = sum(
+        1 for name in ("index.html", "archive.html") if os.path.isfile(os.path.join(ROOT, name))
+    )
+    health.metrics["generated_pages"] = len(posts) + static_pages
     health.metrics["technical_sources"] = sum(_post_sources(path, health) for path in posts)
     health.metrics["social_code_images"] = len(glob.glob(SOCIAL_GLOB))
     health.metrics["woff2_fonts"] = len(glob.glob(FONT_GLOB))

@@ -14,6 +14,7 @@ from urllib.parse import urljoin, urlparse
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
 FEED_PATH = os.path.join(ROOT, "feed.xml")
 SITEMAP_PATH = os.path.join(ROOT, "sitemap.xml")
 ROBOTS_PATH = os.path.join(ROOT, "robots.txt")
@@ -73,29 +74,35 @@ def _one(items: list[str], label: str, page: str, report: Report) -> str | None:
     return items[0]
 
 
-def _page_canonical(path: str, site: dict, report: Report) -> str | None:
+def _base_page_canonical(path: str, site: dict, report: Report) -> tuple[PageParser, str | None]:
     parser = _parse_page(path)
     page = os.path.relpath(path, ROOT)
     canonicals = [x.get("href", "") for x in parser.links if x.get("rel") == "canonical"]
     canonical = _one(canonicals, "canonical", page, report)
-    props = {x.get("property"): x.get("content", "") for x in parser.meta if x.get("property")}
-    names = {x.get("name"): x.get("content", "") for x in parser.meta if x.get("name")}
     descriptions = [x.get("content", "") for x in parser.meta if x.get("name") == "description"]
     description = _one(descriptions, "meta description", page, report)
     title = "".join(parser.title_parts).strip()
-
     if not title:
         report.errors.append(f"{page}: thiếu <title>")
     if not description:
         report.errors.append(f"{page}: meta description rỗng")
-
-    origin = urlparse(site["url"]).netloc
     if canonical:
+        origin = urlparse(site["url"]).netloc
         parsed = urlparse(canonical)
         if parsed.scheme != "https" or parsed.netloc != origin:
             report.errors.append(f"{page}: canonical ngoài public origin: {canonical}")
-        if props.get("og:url") != canonical:
-            report.errors.append(f"{page}: og:url không khớp canonical")
+    return parser, canonical
+
+
+def _page_canonical(path: str, site: dict, report: Report) -> str | None:
+    parser, canonical = _base_page_canonical(path, site, report)
+    page = os.path.relpath(path, ROOT)
+    props = {x.get("property"): x.get("content", "") for x in parser.meta if x.get("property")}
+    names = {x.get("name"): x.get("content", "") for x in parser.meta if x.get("name")}
+    origin = urlparse(site["url"]).netloc
+
+    if canonical and props.get("og:url") != canonical:
+        report.errors.append(f"{page}: og:url không khớp canonical")
 
     for key in (
         "og:type", "og:title", "og:description", "og:url", "og:site_name",
@@ -135,6 +142,11 @@ def _page_canonical(path: str, site: dict, report: Report) -> str | None:
     for twitter_key, og_key in pairs:
         if names.get(twitter_key) and props.get(og_key) and names[twitter_key] != props[og_key]:
             report.errors.append(f"{page}: {twitter_key} không khớp {og_key}")
+    return canonical
+
+
+def _secondary_page_canonical(path: str, site: dict, report: Report) -> str | None:
+    _, canonical = _base_page_canonical(path, site, report)
     return canonical
 
 
@@ -191,6 +203,13 @@ def run() -> Report:
         else:
             canonicals[canonical] = rel
 
+    archive_canonical = _secondary_page_canonical(ARCHIVE_PATH, site, report)
+    if archive_canonical:
+        if archive_canonical in canonicals:
+            report.errors.append(f"duplicate canonical: {archive_canonical}")
+        else:
+            canonicals[archive_canonical] = "archive.html"
+
     expected_pages = set(canonicals)
     sitemap_urls = _sitemap_urls(report)
     if sitemap_urls != expected_pages:
@@ -212,6 +231,8 @@ def run() -> Report:
         href = "posts/" + os.path.basename(path)
         if href not in index_text:
             report.errors.append(f"orphan post: {href} không được homepage liên kết")
+    if "archive.html" not in index_text:
+        report.errors.append("archive.html không được homepage liên kết")
 
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()
@@ -220,7 +241,7 @@ def run() -> Report:
         report.errors.append("robots.txt không trỏ đúng sitemap public")
 
     _check_stale_hosts(
-        [SITE_CONFIG, INDEX_PATH, FEED_PATH, SITEMAP_PATH, ROBOTS_PATH, *posts], report
+        [SITE_CONFIG, INDEX_PATH, ARCHIVE_PATH, FEED_PATH, SITEMAP_PATH, ROBOTS_PATH, *posts], report
     )
     return report
 

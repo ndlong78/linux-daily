@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Search & Archive — Linux Daily</title>
+<meta name="description" content="Tìm kiếm và duyệt kho bài Linux Daily theo trục nội dung.">
+<link rel="canonical" href="https://linux.no.id.vn/archive.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<link rel="preload" href="assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/archive.css">
+<script src="assets/search.js" defer></script>
+</head>
+<body class="home archive-page">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<div class="wrap">
+<header class="site">
+  <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
+  <h1 class="site">Search &amp; Archive</h1>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 19 bài theo chủ đề.</p>
+  <form class="search-box" role="search" onsubmit="return false">
+    <label for="archive-search">Tìm bài</label>
+    <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 19 bài.</p>
+  </form>
+</header>
+<main id="main-content">
+  <section id="search-results" class="search-results" aria-label="Kết quả tìm kiếm" hidden></section>
+  <div id="archive-groups">
+  <section class="archive-group" id="networking">
+    <h2>Networking <span class="archive-count">3</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-015-wireguard-vpn.html">
+        <span class="archive-meta">#015 · 2026-07-30</span>
+        <strong>WireGuard: một cặp khoá, một đường hầm mã hoá</strong>
+        <span>Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</span>
+      </a>
+      <a class="archive-item" href="posts/post-008-chan-doan-mang.html">
+        <span class="archive-meta">#008 · 2026-07-16</span>
+        <strong>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</strong>
+        <span>Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có &#34;up&#34; không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.</span>
+      </a>
+      <a class="archive-item" href="posts/post-001-static-ip.html">
+        <span class="archive-meta">#001 · 2026-07-02</span>
+        <strong>Một IP tĩnh, bốn cách khai báo</strong>
+        <span>Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="security">
+    <h2>Bảo mật &amp; phân quyền <span class="archive-count">3</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-016-fail2ban.html">
+        <span class="archive-meta">#016 · 2026-08-01</span>
+        <strong>fail2ban: để kẻ dò mật khẩu tự khoá cửa lại</strong>
+        <span>Bài #002 khoá SSH bằng cấu hình tĩnh — chỉ nhận khoá, cấm root. Nhưng bot vẫn nện cổng 22 hàng nghìn lần mỗi ngày, ăn tài nguyên và rình sơ hở. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng. Cùng ý tưởng đó, bốn hệ đọc log và cấm IP theo cách khác nhau.</span>
+      </a>
+      <a class="archive-item" href="posts/post-009-user-sudo-doas.html">
+        <span class="archive-meta">#009 · 2026-07-18</span>
+        <strong>Tạo user và trao quyền: một nguyên tắc, bốn cơ chế</strong>
+        <span>Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.</span>
+      </a>
+      <a class="archive-item" href="posts/post-002-ssh-hardening.html">
+        <span class="archive-meta">#002 · 2026-07-04</span>
+        <strong>Gia cố SSH: khóa cửa trước khi có người gõ</strong>
+        <span>Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="storage">
+    <h2>Storage &amp; hệ thống tệp <span class="archive-count">3</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-017-mo-rong-dung-luong.html">
+        <span class="archive-meta">#017 · 2026-08-03</span>
+        <strong>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</strong>
+        <span>Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa &#34;biết&#34; để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.</span>
+      </a>
+      <a class="archive-item" href="posts/post-010-them-dia-moi.html">
+        <span class="archive-meta">#010 · 2026-07-20</span>
+        <strong>Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</strong>
+        <span>Bài #003 nói về snapshot khi đã có sẵn pool; bài này lùi về bước cơ bản hơn — gắn một ổ đĩa trống và đưa nó vào dùng. Quy trình bốn bước giống nhau ở mọi hệ: nhận diện đĩa, phân vùng, tạo filesystem, mount vĩnh viễn. Nhưng công cụ thì rẽ nhánh: Linux dùng parted/mkfs, FreeBSD dùng gpart/newfs — và cách định danh đĩa để mount cho bền cũng khác.</span>
+      </a>
+      <a class="archive-item" href="posts/post-003-zfs-snapshots.html">
+        <span class="archive-meta">#003 · 2026-07-06</span>
+        <strong>Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</strong>
+        <span>Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="tools">
+    <h2>Công cụ &amp; phần mềm <span class="archive-count">3</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-018-rclone-cloud-sync.html">
+        <span class="archive-meta">#018 · 2026-08-05</span>
+        <strong>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</strong>
+        <span>Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là &#34;rsync cho cloud&#34;: một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</span>
+      </a>
+      <a class="archive-item" href="posts/post-011-tmux.html">
+        <span class="archive-meta">#011 · 2026-07-22</span>
+        <strong>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</strong>
+        <span>Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</span>
+      </a>
+      <a class="archive-item" href="posts/post-004-restic-backup.html">
+        <span class="archive-meta">#004 · 2026-07-08</span>
+        <strong>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</strong>
+        <span>Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="monitoring">
+    <h2>Monitoring &amp; hiệu năng <span class="archive-count">3</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-019-triage-hieu-nang-vmstat-iostat.html">
+        <span class="archive-meta">#019 · 2026-08-07</span>
+        <strong>Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</strong>
+        <span>Máy chủ &#39;chậm&#39; không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.</span>
+      </a>
+      <a class="archive-item" href="posts/post-012-lap-lich-cron-timers.html">
+        <span class="archive-meta">#012 · 2026-07-24</span>
+        <strong>Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?</strong>
+        <span>Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</span>
+      </a>
+      <a class="archive-item" href="posts/post-005-doc-log-journald-syslog.html">
+        <span class="archive-meta">#005 · 2026-07-10</span>
+        <strong>Đọc log hệ thống: một journal nhị phân, một đống file text</strong>
+        <span>Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi &#34;log ở đâu, đọc bằng gì&#34; lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="automation">
+    <h2>Automation &amp; scripting <span class="archive-count">2</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-013-bash-script-vung.html">
+        <span class="archive-meta">#013 · 2026-07-26</span>
+        <strong>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</strong>
+        <span>Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để &#34;chạy được ở đây&#34; đồng nghĩa &#34;chạy được mọi nơi&#34;.</span>
+      </a>
+      <a class="archive-item" href="posts/post-006-ansible-multi-os.html">
+        <span class="archive-meta">#006 · 2026-07-12</span>
+        <strong>Ansible: một playbook, bốn hệ điều hành</strong>
+        <span>Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</span>
+      </a>
+    </div>
+  </section>
+  <section class="archive-group" id="labs">
+    <h2>Lab end-to-end <span class="archive-count">2</span></h2>
+    <div class="archive-list">
+      <a class="archive-item" href="posts/post-014-lab-backup-tu-dong.html">
+        <span class="archive-meta">#014 · 2026-07-28</span>
+        <strong>Backup tự động mà bạn dám tin — vì đã thử khôi phục</strong>
+        <span>Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</span>
+      </a>
+      <a class="archive-item" href="posts/post-007-lab-web-server-tuong-lua.html">
+        <span class="archive-meta">#007 · 2026-07-14</span>
+        <strong>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</strong>
+        <span>Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</span>
+      </a>
+    </div>
+  </section>
+  </div>
+</main>
+<footer><a class="foot-home" href="index.html">← Về trang chủ Linux Daily</a></footer>
+</div>
+</body>
+</html>
