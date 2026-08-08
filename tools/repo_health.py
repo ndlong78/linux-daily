@@ -28,8 +28,10 @@ REQUIRED = (
     "CHANGELOG.md",
     "index.html",
     "archive.html",
+    "learning-dashboard.html",
     "learning-paths.html",
     "learning-paths.json",
+    "learning-metadata.json",
     "search-index.json",
     "feed.xml",
     "sitemap.xml",
@@ -75,7 +77,12 @@ def collect() -> Health:
     health.metrics["posts"] = len(posts)
     static_pages = sum(
         1
-        for name in ("index.html", "archive.html", "learning-paths.html")
+        for name in (
+            "index.html",
+            "archive.html",
+            "learning-dashboard.html",
+            "learning-paths.html",
+        )
         if os.path.isfile(os.path.join(ROOT, name))
     )
     health.metrics["generated_pages"] = len(posts) + static_pages
