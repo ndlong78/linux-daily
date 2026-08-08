@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import base64
-import io
 import subprocess
 import sys
 import tarfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+ARCHIVE = ROOT / "pr68-prepared.tgz"
 
 
 def test_pr68_dump_deterministic_prepare_outputs():
@@ -17,16 +16,11 @@ def test_pr68_dump_deterministic_prepare_outputs():
     ).splitlines()
     assert changed
 
-    payload = io.BytesIO()
-    with tarfile.open(fileobj=payload, mode="w:gz") as archive:
+    with tarfile.open(ARCHIVE, mode="w:gz") as archive:
         for relative in changed:
             path = ROOT / relative
             if path.is_file():
                 archive.add(path, arcname=relative)
 
-    encoded = base64.b64encode(payload.getvalue()).decode("ascii")
     print("PR68_PREPARE_FILES=" + ",".join(changed))
-    print("PR68_PREPARE_TGZ_BEGIN")
-    print(encoded)
-    print("PR68_PREPARE_TGZ_END")
     raise AssertionError("intentional diagnostic dump; remove after syncing artifacts")
