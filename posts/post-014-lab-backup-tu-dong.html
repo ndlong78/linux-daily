@@ -42,7 +42,8 @@
     {"title": "Removing backup snapshots — restic documentation", "url": "https://restic.readthedocs.io/en/stable/060_forget.html", "kind": "upstream"}
   ]
 }
-</script></head>
+</script><link rel="stylesheet" href="../assets/related.css">
+</head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
@@ -100,6 +101,24 @@ restic restore latest --host "$(hostname)" --path /etc/backup-canary.txt \
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Dựng job hằng ngày, tạo canary và checksum, chạy backup, sau đó restore bằng snapshot ID hoặc filter host/path. Chứng minh sự khác nhau giữa <code>restic check</code>, <code>--read-data-subset</code> và <code>--read-data</code>.</p></div>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn upstream dùng để kiểm chứng check/read-data, restore selection và retention.</p><ul class="clean"><li><a href="https://restic.readthedocs.io/en/stable/010_introduction.html" rel="noopener noreferrer">Introduction — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/050_restore.html" rel="noopener noreferrer">Restoring from backup — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/060_forget.html" rel="noopener noreferrer">Removing backup snapshots — restic documentation</a> — upstream.</li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #014 · Ôn tập</span><span class="hashtags">#LinuxDaily #Backup #restic #FreeBSD</span></div></footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-007-lab-web-server-tuong-lua.html"><span class="series-kicker">#007</span><span>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-007-lab-web-server-tuong-lua.html">#007 · Từ máy mới đến web server an toàn, chỉ mở đúng cổng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #014 · Ôn tập</span><span class="hashtags">#LinuxDaily #Backup #restic #FreeBSD</span></div></footer>
 </div></main>
 </body></html>

@@ -42,7 +42,8 @@
     {"title": "fstab(5) — Linux manual page", "url": "https://www.man7.org/linux/man-pages/man5/fstab.5.html", "kind": "upstream"}
   ]
 }
-</script></head>
+</script><link rel="stylesheet" href="../assets/related.css">
+</head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
@@ -96,6 +97,25 @@ mount | grep ' /data '</code></pre></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Gắn một disk lab mới vào Ubuntu và FreeBSD. Trước khi ghi, lưu output chứa size/model/serial; sau đó tạo GPT + filesystem, thêm fstab bằng định danh bền, verify rồi mount. Giải thích khi nào <code>nofail</code> phù hợp và khi nào không.</p></div>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn dùng để kiểm chứng GPT alignment, fstab semantics và validation.</p><ul class="clean"><li><a href="https://docs.freebsd.org/en/books/handbook/disks/" rel="noopener noreferrer">Chapter 21. Storage — FreeBSD Handbook</a> — official.</li><li><a href="https://www.man7.org/linux/man-pages/man8/findmnt.8.html" rel="noopener noreferrer">findmnt(8) — Linux manual page</a> — upstream.</li><li><a href="https://www.man7.org/linux/man-pages/man5/fstab.5.html" rel="noopener noreferrer">fstab(5) — Linux manual page</a> — upstream.</li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #010 · Storage</span><span class="hashtags">#LinuxDaily #Storage #FreeBSD</span></div></footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-003-zfs-snapshots.html"><span class="series-kicker">#003</span><span>Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</span></a>
+    <a class="series-link next" href="post-017-mo-rong-dung-luong.html"><span class="series-kicker">#017</span><span>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</span></a>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-017-mo-rong-dung-luong.html">#017 · Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</a></li>
+      <li><a href="post-003-zfs-snapshots.html">#003 · Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #010 · Storage</span><span class="hashtags">#LinuxDaily #Storage #FreeBSD</span></div></footer>
 </div></main>
 </body></html>

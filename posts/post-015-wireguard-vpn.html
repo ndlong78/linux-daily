@@ -43,6 +43,7 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
@@ -89,6 +90,25 @@ netstat -rn</code></pre></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Dựng tunnel /32 giữa Debian và FreeBSD, chỉ route IP tunnel của peer. Xác nhận handshake và ping trước. Sau đó giải thích chính xác điều gì thay đổi ở outbound route và inbound source validation nếu đổi AllowedIPs thành <code>0.0.0.0/0</code> — chưa áp thay đổi đó trên máy đang quản trị từ xa.</p></div>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.wireguard.com/install/">WireGuard — Installation</a></li><li><a href="https://www.wireguard.com/">WireGuard — Cryptokey Routing</a></li><li><a href="https://git.zx2c4.com/wireguard-tools/about/src/man/wg-quick.8">wireguard-tools — wg-quick(8)</a></li><li><a href="https://cgit.freebsd.org/src/commit/?h=vendor%2Fwireguard-tools">FreeBSD source — wireguard-tools vendor update</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #015 · Networking</span><span class="hashtags">#LinuxDaily #WireGuard #VPN</span></div></footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-008-chan-doan-mang.html"><span class="series-kicker">#008</span><span>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-008-chan-doan-mang.html">#008 · Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</a></li>
+      <li><a href="post-001-static-ip.html">#001 · Một IP tĩnh, bốn cách khai báo</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #015 · Networking</span><span class="hashtags">#LinuxDaily #WireGuard #VPN</span></div></footer>
 </div></main>
 </body></html>

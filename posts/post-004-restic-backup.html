@@ -44,6 +44,7 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
@@ -93,6 +94,25 @@ restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --prune</code></pr
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo repo lab, thêm key thứ hai bằng <code>restic key add</code>, backup hai phiên bản của một file, xem retention bằng <code>--dry-run</code>, rồi restore snapshot cũ ra thư mục tạm. Giải thích vì sao mất một password chưa chắc làm mất repo nếu còn key hợp lệ khác.</p></div>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Tài liệu upstream dùng để kiểm chứng encryption, key management, repository và retention.</p><ul class="clean"><li><a href="https://restic.readthedocs.io/en/stable/070_encryption.html" rel="noopener noreferrer">Encryption — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/030_preparing_a_new_repo.html" rel="noopener noreferrer">Preparing a new repository — restic documentation</a> — upstream.</li><li><a href="https://restic.readthedocs.io/en/stable/060_forget.html" rel="noopener noreferrer">Removing backup snapshots — restic documentation</a> — upstream.</li><li><a href="https://github.com/restic/restic/blob/master/doc/design.rst" rel="noopener noreferrer">restic repository design</a> — upstream.</li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #004 · Công cụ mới</span><span class="hashtags">#LinuxDaily #restic #Backup #FreeBSD</span></div></footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <span class="series-link is-empty" aria-hidden="true"></span>
+    <a class="series-link next" href="post-011-tmux.html"><span class="series-kicker">#011</span><span>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</span></a>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-011-tmux.html">#011 · tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</a></li>
+      <li><a href="post-018-rclone-cloud-sync.html">#018 · rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #004 · Công cụ mới</span><span class="hashtags">#LinuxDaily #restic #Backup #FreeBSD</span></div></footer>
 </div></main>
 </body></html>
