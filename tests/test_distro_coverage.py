@@ -3,16 +3,21 @@ from __future__ import annotations
 import distro_coverage
 
 
-def test_real_repository_has_complete_four_platform_coverage():
+def test_real_repository_baseline_is_inventory_not_false_green():
     result = distro_coverage.review()
     assert result["total"] >= 19
-    assert result["complete_posts"] == result["total"]
+    assert result["complete_posts"] == 14
+    assert result["coverage_counts"]["ubuntu_xubuntu"] == 14
+    assert result["coverage_counts"]["debian"] == 18
+    assert result["coverage_counts"]["fedora"] == 17
+    assert result["coverage_counts"]["freebsd"] == 19
     assert result["freebsd_marked_posts"] == result["total"]
     assert result["violation_count"] == 0
+    assert len(distro_coverage.coverage_findings(result)) == 5
     assert distro_coverage.errors(result) == []
 
 
-def test_missing_distro_is_a_hard_error():
+def test_missing_distro_on_new_issue_is_a_hard_error():
     post = {
         "issue": 20,
         "title": "synthetic",
@@ -28,6 +33,25 @@ def test_missing_distro_is_a_hard_error():
     }
     problems = distro_coverage.errors(distro_coverage.review([post]))
     assert any("Fedora" in problem for problem in problems)
+
+
+def test_legacy_missing_coverage_stays_in_review_queue_not_hard_error():
+    post = {
+        "issue": 17,
+        "title": "legacy",
+        "path": "posts/post-017-legacy.html",
+        "coverage": {
+            "ubuntu_xubuntu": False,
+            "debian": False,
+            "fedora": False,
+            "freebsd": True,
+        },
+        "freebsd_blocks": 1,
+        "violations": [],
+    }
+    result = distro_coverage.review([post])
+    assert distro_coverage.coverage_findings(result)
+    assert distro_coverage.errors(result) == []
 
 
 def test_linux_only_command_inside_freebsd_block_is_rejected():
