@@ -17,6 +17,7 @@ def test_prepare_plan_regenerates_before_metadata_checks():
 
 def test_check_plan_is_read_only_and_covers_local_publish_gates():
     plan = publish.command_plan("check")
+    assert len(plan) == 14
     flattened = [" ".join(command) for command in plan]
     assert any("tools/build.py --check" in command for command in flattened)
     assert any("tools/content_mix.py --check" in command for command in flattened)
