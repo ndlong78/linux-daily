@@ -95,8 +95,13 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `tools/learning_paths.py` import cùng metadata để hiển thị độ khó + “Học trước”, không reimplement rule.
 - [x] Learning metadata gate được đưa vào `tools/publish.py check`; policy nằm tại `docs/difficulty-prerequisites.md`.
 
-### P8.3 — Topic Progression ⬜
-- [ ] Phát hiện khoảng trống hoặc bước nhảy kiến thức giữa các bài cùng axis/series.
+### P8.3 — Topic Progression ✅
+- [x] `tools/topic_progression.py` kết hợp path ordering + prerequisite DAG + difficulty mà không reimplement P8.1/P8.2 validators.
+- [x] Hard-fail prerequisite xuất hiện sau bài phụ thuộc trong cùng path và difficulty jump tăng quá một bậc.
+- [x] Prerequisite ngoài path được inventory như cross-path dependency, không bị đánh đồng với ordering violation.
+- [x] Missing difficulty tier là curriculum gap dạng ATTENTION; strict audit có thể dùng `--fail-gaps` nhưng normal publish CI không biến baseline thành lỗi giả.
+- [x] Baseline: 23 prerequisite references, 17 local / 6 external, 0 ordering violation, 0 difficulty jump, thiếu tier `advanced`.
+- [x] Progression gate được đưa vào `tools/publish.py check`; operating model nằm tại `docs/topic-progression.md`.
 
 ### P8.4 — Learning Dashboard ⬜
 - [ ] Tạo derived learning view từ taxonomy, prerequisites và progression mà không thay source of truth của bài viết.
