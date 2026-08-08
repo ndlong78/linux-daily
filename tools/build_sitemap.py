@@ -44,6 +44,7 @@ def collect_urls(posts_dir: str = POSTS_DIR, site_config: str = SITE_CONFIG) -> 
     return [
         {"loc": site["url"], "date": newest},
         {"loc": urljoin(site["url"], "archive.html"), "date": newest},
+        {"loc": urljoin(site["url"], "learning-dashboard.html"), "date": newest},
         {"loc": urljoin(site["url"], "learning-paths.html"), "date": newest},
         *posts,
     ]
