@@ -5,14 +5,17 @@ from __future__ import annotations
 import argparse
 import glob
 import json
+import os
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 from urllib.parse import urljoin
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
-import postmeta
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import postmeta  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
