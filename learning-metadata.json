@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "posts": [
+    {"issue": 1, "difficulty": "basic", "prerequisites": []},
+    {"issue": 2, "difficulty": "intermediate", "prerequisites": []},
+    {"issue": 3, "difficulty": "intermediate", "prerequisites": [10]},
+    {"issue": 4, "difficulty": "basic", "prerequisites": []},
+    {"issue": 5, "difficulty": "basic", "prerequisites": []},
+    {"issue": 6, "difficulty": "intermediate", "prerequisites": [2, 9]},
+    {"issue": 7, "difficulty": "intermediate", "prerequisites": [1, 2, 9]},
+    {"issue": 8, "difficulty": "basic", "prerequisites": [1]},
+    {"issue": 9, "difficulty": "basic", "prerequisites": []},
+    {"issue": 10, "difficulty": "basic", "prerequisites": []},
+    {"issue": 11, "difficulty": "basic", "prerequisites": []},
+    {"issue": 12, "difficulty": "intermediate", "prerequisites": []},
+    {"issue": 13, "difficulty": "intermediate", "prerequisites": []},
+    {"issue": 14, "difficulty": "intermediate", "prerequisites": [9, 10, 12, 13]},
+    {"issue": 15, "difficulty": "intermediate", "prerequisites": [1, 8]},
+    {"issue": 16, "difficulty": "intermediate", "prerequisites": [2, 5]},
+    {"issue": 17, "difficulty": "intermediate", "prerequisites": [10]},
+    {"issue": 18, "difficulty": "basic", "prerequisites": []},
+    {"issue": 19, "difficulty": "intermediate", "prerequisites": []}
+  ]
+}
