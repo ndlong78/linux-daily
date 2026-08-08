@@ -12,6 +12,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
+VERSION_PATH = ROOT / "site-version.json"
 
 
 @dataclass(frozen=True)
@@ -72,13 +73,17 @@ def manifest() -> dict:
     }
 
 
+def render_manifest() -> str:
+    return json.dumps(manifest(), ensure_ascii=False, indent=2, sort_keys=True) + "\n"
+
+
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--json", action="store_true", help="Print machine-readable manifest.")
     args = parser.parse_args(argv)
     data = manifest()
     if args.json:
-        print(json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True))
+        print(render_manifest(), end="")
     else:
         print(f"site fingerprint: {data['fingerprint']}")
         for item in data["files"]:
