@@ -76,11 +76,26 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Regression gate chạy trong CI và fail deterministic khi artifact vượt ngưỡng.
 - [x] Chỉ dùng local artifact-size signals ổn định; không đưa network benchmark/Lighthouse runtime vào PR quality gate.
 
-## P4 — Content Growth ⬜
+## P4 — Content Growth 🚧
 
-- [ ] Taxonomy/tag/topic discovery.
-- [ ] Navigation giữa bài liên quan và series.
+### P4.1 — Taxonomy / Tags / Topic Discovery ✅
+
+- [x] `taxonomy.json` định nghĩa canonical axis, slug, label và mô tả; không nhân đôi mapping từng bài.
+- [x] Taxonomy của từng bài derive trực tiếp từ `ld-meta.axis`; secondary tags derive từ `ld-meta.eyebrow`.
+- [x] `tools/taxonomy.py` kiểm coverage/axis drift và xuất report deterministic cho repository.
+- [x] CI chặn bài mới dùng axis chưa đăng ký hoặc thiếu metadata để derive tag.
+
+### P4.2 — Related Content & Series Navigation
+
+- [ ] Navigation giữa bài liên quan theo axis/tag.
+- [ ] Previous/next trong cùng series hoặc trục nội dung.
+
+### P4.3 — Search & Archive
+
 - [ ] Search/archive khi số bài đủ lớn để cần.
+
+### P4.4 — Content Mix Review
+
 - [ ] Review lại cadence/content mix dựa trên dữ liệu thực tế.
 
 ## P5 — Automation ⬜
