@@ -52,6 +52,8 @@ Issue không bắt buộc trước mọi PR. Với thay đổi nhỏ, rõ scope,
 - Không thêm Google Fonts/CDN runtime dependency; giữ accessibility baseline hiện có.
 - Không tự ý thay cadence trong `state.json` nếu PR không nhằm thay cadence.
 
+Nếu bạn là **technical reviewer**, dùng `docs/technical-review-guide.md` làm checklist độc lập cho source quality, distro portability, FreeBSD semantics, rollback/destructive operations và verification evidence. Reviewer không cần biết lịch sử repository để áp dụng guide này.
+
 Xem `AGENTS.md` để hiểu operating contract chi tiết của AI agent. Contributor người thật không cần làm theo các bước scheduler riêng của agent, trừ khi đang tạo bài mới theo cadence.
 
 ## Khi sửa website/pipeline
