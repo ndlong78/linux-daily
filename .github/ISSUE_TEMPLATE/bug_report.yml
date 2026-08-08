@@ -1,0 +1,66 @@
+name: Bug report
+description: Báo lỗi website, tooling, CI hoặc workflow của Linux Daily.
+title: "[Bug] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Cảm ơn bạn đã báo lỗi. Không dùng form này để báo lỗ hổng bảo mật; hãy làm theo `SECURITY.md`.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Phạm vi
+      options:
+        - Website / rendering
+        - Build / tooling
+        - CI / GitHub Actions
+        - Production / Cloudflare serving
+        - Documentation
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Hiện tượng thực tế
+      description: Mô tả lỗi, thông báo lỗi hoặc hành vi bạn quan sát được.
+      placeholder: Điều gì đã xảy ra?
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Kết quả mong đợi
+      placeholder: Theo bạn hệ thống nên hoạt động như thế nào?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Cách tái hiện
+      description: Các bước tối thiểu để tái hiện lỗi. Không đưa secret/token vào đây.
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    id: revision
+    attributes:
+      label: Commit / PR / URL liên quan
+      description: Nếu biết, cung cấp SHA, PR hoặc URL public liên quan.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Môi trường
+      description: OS, Python/browser và thông tin cần thiết khác.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Kiểm tra trước khi gửi
+      options:
+        - label: Tôi đã tìm issue hiện có để tránh báo trùng.
+          required: true
+        - label: Tôi đã loại bỏ secret, token, password và dữ liệu nhạy cảm khỏi nội dung issue.
+          required: true

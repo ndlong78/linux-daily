@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/ndlong78/linux-daily/security/policy
+    about: Không báo lỗ hổng bảo mật bằng public issue; hãy làm theo SECURITY.md / Security Policy.

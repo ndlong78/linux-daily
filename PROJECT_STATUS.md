@@ -2,6 +2,7 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P6 — Community  
+**P6.2 status:** ✅ Issue / Contribution Templates implemented  
 **P6.1 status:** ✅ Contributor Onboarding implemented in PR #56  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
@@ -18,6 +19,18 @@ python3 tools/publish.py check
 ```
 
 `doctor` chỉ kiểm baseline môi trường/repository; `tools/publish.py` vẫn là validation contract dùng chung giữa local và CI. Nếu thay workflow, chạy thêm `python3 tools/workflow_safety.py`; nếu thay URL/source, chạy external link check.
+
+## Issue intake
+
+Repository có GitHub Issue Forms riêng cho:
+
+- bug report;
+- content / technical correction;
+- feature proposal.
+
+Issue chooser không cho blank issue. Báo cáo bảo mật được hướng sang GitHub Security Policy / `SECURITY.md` thay vì public issue. `docs/issue-guidelines.md` mô tả cách chọn form, thông tin tối thiểu để triage và đường từ issue sang PR.
+
+Issue Forms chỉ phục vụ intake/triage, không kích hoạt automation ghi, auto-merge hoặc tạo source of truth mới.
 
 ## Automation baseline
 
@@ -51,15 +64,16 @@ python3 tools/publish.py check
 | P3 — Reliability & Operations | ✅ | Dashboard, production fingerprint, release automation, performance budget |
 | P4 — Content Growth | ✅ | Taxonomy, navigation, search/archive, content-mix review |
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
-| P6 — Community | 🚧 | P6.1 onboarding complete; tiếp theo issue/contribution templates |
+| P6 — Community | 🚧 | P6.1 onboarding + P6.2 issue intake complete; tiếp theo technical review guide |
 
 ## Tài liệu chính
 
 - `docs/contributor-quickstart.md` — zero-to-green contributor flow.
+- `docs/issue-guidelines.md` — issue triage và contribution handoff.
 - `CONTRIBUTING.md` — contribution policy.
 - `AGENTS.md` — AI-agent operating contract.
 - `docs/publish-pipeline.md`, `docs/audit-report.md`, `docs/workflow-safety.md` — vận hành/automation.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. Hạng mục tiếp theo là **P6.2 — Issue / Contribution Templates**.
+Xem `docs/ROADMAP.md`. Hạng mục tiếp theo là **P6.3 — Technical Contributor Review Guide**.

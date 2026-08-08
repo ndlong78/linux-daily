@@ -30,13 +30,14 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Pull request template đồng bộ với publish/workflow safety hiện hành.
 - [x] Phân biệt rõ contributor workflow và AI-agent operating contract trong `AGENTS.md`.
 
-### P6.2 — Issue / Contribution Templates 🚧
+### P6.2 — Issue / Contribution Templates ✅
 
-- [ ] Issue templates cho bug, content correction và feature proposal.
-- [ ] Hướng dẫn chọn đúng template và thông tin tối thiểu để triage.
-- [ ] Không mở automation ghi/merge mới chỉ để quản lý community workflow.
+- [x] GitHub Issue Forms riêng cho bug, content/technical correction và feature proposal.
+- [x] Issue chooser tắt blank issue và hướng security report sang GitHub Security Policy / `SECURITY.md`.
+- [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue đến PR.
+- [x] Không thêm automation ghi/merge hoặc dependency vào labels/repository settings ngoài Git.
 
-### P6.3 — Technical Contributor Review Guide ⬜
+### P6.3 — Technical Contributor Review Guide 🚧
 
 - [ ] Review guide cho source quality, distro portability và operational safety.
 - [ ] Checklist dành cho technical reviewer không cần hiểu lịch sử repository.

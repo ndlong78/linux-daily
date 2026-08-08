@@ -12,6 +12,18 @@ python3 tools/publish.py check
 
 `tools/contributor.py doctor` chỉ kiểm baseline môi trường/repository. `tools/publish.py` vẫn là entrypoint chính cho regenerate + validation, để contributor và CI dùng cùng quality contract.
 
+## Issue trước hay PR trước?
+
+Nếu mới phát hiện vấn đề hoặc muốn thảo luận scope, hãy mở issue bằng form phù hợp:
+
+- **Bug report** cho website/tooling/CI/production behavior sai.
+- **Content / technical correction** cho nội dung Linux/Unix cần sửa hoặc cập nhật.
+- **Feature proposal** cho capability/cải tiến mới.
+
+Xem `docs/issue-guidelines.md` để biết thông tin tối thiểu cần cung cấp. **Không báo lỗ hổng bảo mật bằng public issue**; dùng GitHub Security Policy / `SECURITY.md`.
+
+Issue không bắt buộc trước mọi PR. Với thay đổi nhỏ, rõ scope, contributor có thể mở PR trực tiếp và mô tả đầy đủ trong PR template.
+
 ## Nguyên tắc đóng góp
 
 - Không push trực tiếp vào `main`; mọi thay đổi đi qua pull request.
