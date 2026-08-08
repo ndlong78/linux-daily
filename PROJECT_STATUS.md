@@ -2,13 +2,29 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P7 — Content Quality at Scale  
+**P7.3 status:** ✅ Content Freshness & Technical Drift implemented  
 **P7.2 status:** ✅ Command & Configuration Quality Gate implemented  
 **P7.1 status:** ✅ Distro Coverage & Portability Matrix implemented  
-**Next focus:** P7.3 — Content Freshness & Technical Drift  
+**Next focus:** P7.4 — P7 Audit & Quality Dashboard  
 **P6 status:** ✅ Community complete  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
+
+## P7.3 freshness baseline
+
+`freshness.json` và `tools/content_freshness.py` tách technical review khỏi freshness lifecycle:
+
+- publication date là freshness baseline ban đầu nếu chưa có `last_reviewed` override;
+- Bảo mật và Công cụ mới dùng review window 90 ngày; các axis hiện tại còn lại dùng 180 ngày;
+- `current` và `review-due` được tính theo ngày chạy, không ghi cứng vào HTML;
+- `review-due` tạo review queue nhưng không tự làm CI đỏ chỉ vì thời gian trôi qua;
+- strict/manual audit có thể dùng `--fail-review-due`;
+- `historically-valid` phải được khai báo thủ công với reason, optional replacement phải trỏ issue tồn tại;
+- `--json` cung cấp structured freshness data cho P7.4 dashboard;
+- từ #020, freshness gate yêu cầu `review_status=reviewed/published` trước khi merge.
+
+Policy và remediation flow nằm tại `docs/content-freshness.md`. Re-review hợp lệ cập nhật `last_reviewed`; không đổi ngày xuất bản và không rewrite bài chỉ để làm nó trông mới.
 
 ## P7.2 command/config quality baseline
 
@@ -71,7 +87,7 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 ## Automation baseline
 
 - `python3 tools/publish.py prepare` regenerate deterministic artifacts/reports.
-- `python3 tools/publish.py check` chạy local publish gates read-only, gồm distro portability và command/config quality.
+- `python3 tools/publish.py check` chạy local publish gates read-only, gồm distro portability, command/config quality và freshness policy.
 - `python3 tools/audit_report.py` tạo audit local; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
@@ -84,6 +100,7 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 - Source-backed technical validation.
 - Distro coverage + FreeBSD portability baseline.
 - Command/config static quality + destructive/privilege review signals.
+- Content freshness lifecycle + technical-drift review queue.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
@@ -103,10 +120,12 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 | P4 — Content Growth | ✅ | Taxonomy, navigation, search/archive, content-mix review |
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
-| P7 — Content Quality at Scale | 🚧 | P7.1 distro portability + P7.2 command/config quality complete; P7.3 next |
+| P7 — Content Quality at Scale | 🚧 | P7.1 portability + P7.2 command quality + P7.3 freshness complete; P7.4 next |
 
 ## Tài liệu chính
 
+- `docs/content-freshness.md` — P7.3 freshness/drift policy và remediation flow.
+- `freshness.json` — P7.3 review windows, axis volatility và explicit overrides.
 - `docs/command-config-quality.md` — P7.2 static command/config quality policy.
 - `docs/distro-portability.md` — P7.1 portability policy và validator boundary.
 - `docs/distro-coverage-report.md` — generated distro coverage snapshot + historical review queue.
@@ -119,4 +138,4 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P7 đang mở; focus kế tiếp là P7.3 — Content Freshness & Technical Drift.
+Xem `docs/ROADMAP.md`. P7 đang mở; focus kế tiếp là P7.4 — P7 Audit & Quality Dashboard.
