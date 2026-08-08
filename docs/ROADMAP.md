@@ -45,6 +45,31 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Phân loại finding thành blocker / needs change / suggestion để feedback nhất quán.
 - [x] Pull request template trỏ trực tiếp tới review guide; reviewer không cần biết lịch sử repository.
 
+## P7 — Content Quality at Scale 🚧
+
+### P7.1 — Distro Coverage & Portability Matrix ✅
+
+- [x] `tools/distro_coverage.py` inventory Ubuntu/Xubuntu, Debian, Fedora và FreeBSD coverage cho mọi bài.
+- [x] Baseline thực tế được ghi nhận minh bạch: 14/19 bài đủ bốn platform; #007, #008, #010, #014 và #017 vào historical review queue.
+- [x] Từ #020, thiếu bất kỳ platform nào là hard-fail; không dùng backfill giả chỉ để làm đẹp baseline cũ.
+- [x] Mọi bài phải có FreeBSD code block riêng được đánh dấu `class="bsd"` và hard-fail Linux-only command/path rõ ràng trong block đó.
+- [x] Sinh deterministic `docs/distro-coverage-report.md`, đưa gate vào `tools/publish.py` và tài liệu hóa policy trong `docs/distro-portability.md`.
+
+### P7.2 — Command & Configuration Quality Gate ⬜
+
+- [ ] Static checks cho command/config examples, privilege/destructive markers và shell/config quality.
+- [ ] Không thực thi command nguy hiểm trong CI; ưu tiên deterministic static validation.
+
+### P7.3 — Content Freshness & Technical Drift ⬜
+
+- [ ] Thiết kế freshness state và review-due policy mà không âm thầm rewrite historical content.
+- [ ] Phân biệt current guidance với historically-valid guidance.
+
+### P7.4 — P7 Audit & Quality Dashboard ⬜
+
+- [ ] Tổng hợp distro coverage, command/config findings, freshness và source-quality evidence vào quality view.
+- [ ] Đóng P7 khi các quality signals có ownership và remediation path rõ ràng.
+
 ## Nguyên tắc roadmap
 
 1. Repository/state/validators là source of truth; scheduler không thay business logic.

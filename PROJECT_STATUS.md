@@ -1,13 +1,27 @@
 # Linux Daily — Project Status
 
 **Public site:** https://linux.no.id.vn/  
-**Current phase:** P6 — Community complete  
-**P6.3 status:** ✅ Technical Contributor Review Guide implemented  
-**P6.2 status:** ✅ Issue / Contribution Templates implemented  
-**P6.1 status:** ✅ Contributor Onboarding implemented in PR #56  
+**Current phase:** P7 — Content Quality at Scale  
+**P7.1 status:** ✅ Distro Coverage & Portability Matrix implemented  
+**Next focus:** P7.2 — Command & Configuration Quality Gate  
+**P6 status:** ✅ Community complete  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
+
+## P7.1 quality baseline
+
+`tools/distro_coverage.py` biến yêu cầu multi-OS thành quality gate deterministic:
+
+- baseline hiện tại: 14/19 bài explicit đủ Ubuntu/Xubuntu + Debian + Fedora + FreeBSD;
+- #007, #008, #010, #014 và #017 nằm trong historical review queue thay vì bị backfill giả chỉ để làm xanh CI;
+- từ #020, bài mới thiếu bất kỳ platform nào sẽ hard-fail;
+- 19/19 bài hiện có FreeBSD code block riêng (`class="bsd"`);
+- Linux-only command/path rõ ràng trong FreeBSD block bị hard-fail;
+- `docs/distro-coverage-report.md` là snapshot generated và phải luôn đồng bộ;
+- `tools/publish.py prepare/check` đã bao gồm distro coverage gate.
+
+Gate chỉ bắt các vi phạm portability có tín hiệu cao; technical reviewer vẫn kiểm semantics thực tế theo `docs/technical-review-guide.md` và `docs/distro-portability.md`.
 
 ## Contributor entrypoint
 
@@ -43,7 +57,7 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 ## Automation baseline
 
 - `python3 tools/publish.py prepare` regenerate deterministic artifacts/reports.
-- `python3 tools/publish.py check` chạy local publish gates read-only.
+- `python3 tools/publish.py check` chạy local publish gates read-only, gồm distro coverage/portability.
 - `python3 tools/audit_report.py` tạo audit local; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
@@ -54,6 +68,7 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 - Workflow safety policy.
 - Deterministic publish pipeline.
 - Source-backed technical validation.
+- Distro coverage + FreeBSD portability baseline.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
@@ -73,9 +88,12 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 | P4 — Content Growth | ✅ | Taxonomy, navigation, search/archive, content-mix review |
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
+| P7 — Content Quality at Scale | 🚧 | P7.1 distro coverage/portability complete; P7.2 next |
 
 ## Tài liệu chính
 
+- `docs/distro-portability.md` — P7.1 portability policy và validator boundary.
+- `docs/distro-coverage-report.md` — generated distro coverage snapshot + historical review queue.
 - `docs/contributor-quickstart.md` — zero-to-green contributor flow.
 - `docs/issue-guidelines.md` — issue triage và contribution handoff.
 - `docs/technical-review-guide.md` — checklist review kỹ thuật độc lập.
@@ -85,4 +103,4 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P6 Community đã hoàn tất; phase tiếp theo chỉ nên mở khi có requirement sản phẩm/vận hành mới rõ ràng.
+Xem `docs/ROADMAP.md`. P7 đang mở; focus kế tiếp là P7.2 — Command & Configuration Quality Gate.
