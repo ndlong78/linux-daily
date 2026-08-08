@@ -15,6 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 START = "<!-- related-nav:start -->"
 END = "<!-- related-nav:end -->"
+STYLESHEET = '<link rel="stylesheet" href="../assets/related.css">'
 
 
 @dataclass(frozen=True)
@@ -121,7 +122,17 @@ def render_block(post: Post, posts: list[Post]) -> str:
     return "\n".join(lines)
 
 
+def _ensure_stylesheet(text: str) -> str:
+    if STYLESHEET in text:
+        return text
+    marker = "</head>"
+    if marker not in text:
+        raise ValueError("không tìm thấy </head> để chèn related stylesheet")
+    return text.replace(marker, STYLESHEET + "\n" + marker, 1)
+
+
 def _replace(text: str, block: str) -> str:
+    text = _ensure_stylesheet(text)
     if START in text or END in text:
         if text.count(START) != 1 or text.count(END) != 1:
             raise ValueError("related-nav markers không hợp lệ")
