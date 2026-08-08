@@ -191,7 +191,15 @@ def review(post_paths: list[str] | None = None) -> LabReport:
         if not _is_lab(meta):
             continue
         report.total_labs += 1
-        issue = int(meta.get("issue", 0))
+        rel = os.path.relpath(path, ROOT)
+        try:
+            issue = int(meta.get("issue"))
+        except (TypeError, ValueError):
+            report.errors.append(f"{rel}: issue của lab phải là integer dương")
+            continue
+        if issue <= 0:
+            report.errors.append(f"{rel}: issue của lab phải là integer dương")
+            continue
         if issue < EFFECTIVE_FROM_ISSUE and "lab" not in meta:
             report.legacy_labs += 1
             continue
