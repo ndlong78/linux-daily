@@ -36,23 +36,8 @@ jobs:
       - name: Pytest
         run: pytest -q
 
-      - name: Build + quality gate (index, meta, sources, internal links)
-        run: python tools/build.py --check
-
-      - name: Taxonomy metadata consistency
-        run: python tools/taxonomy.py
-
-      - name: Content mix consistency
-        run: python tools/content_mix.py --check
-
-      - name: Release metadata consistency
-        run: python tools/release.py validate
-
-      - name: Performance budget
-        run: python tools/performance_budget.py
-
-      - name: Repository health summary
-        run: python tools/repo_health.py
+      - name: Deterministic publish pipeline
+        run: python tools/publish.py check
 
       - name: External link check (retry + non-flaky network policy)
         run: python tools/check_links.py --external --workers 8
