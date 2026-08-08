@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -116,6 +116,31 @@ python3 tools/learning_metadata.py --json
 `tools/learning_paths.py` import cùng result để render difficulty + “Học trước” lên public page, vì vậy không có validator rule thứ hai. Khi thêm bài mới, contributor phải cập nhật **cả** `learning-paths.json` và `learning-metadata.json`.
 
 Chi tiết: `docs/difficulty-prerequisites.md`.
+
+## P8.3 topic progression
+
+`tools/topic_progression.py` là analyzer read-only dùng trực tiếp kết quả P8.1 + P8.2:
+
+```bash
+python3 tools/topic_progression.py
+python3 tools/topic_progression.py --json
+```
+
+Normal `publish.py check` hard-fail khi:
+
+- prerequisite có trong cùng path nhưng chỉ xuất hiện sau bài phụ thuộc;
+- hai step liên tiếp tăng difficulty quá một bậc, hiện tại tương đương `basic -> advanced`;
+- upstream P8.1/P8.2 validation đã lỗi.
+
+Prerequisite nằm ngoài path chỉ là cross-path dependency informational vì public Learning Paths đã có link `Học trước`. Missing difficulty tier như baseline chưa có `advanced` được surface là `ATTENTION`, không làm CI đỏ mặc định.
+
+Audit muốn coi curriculum gap là blocker có thể chạy:
+
+```bash
+python3 tools/topic_progression.py --fail-gaps
+```
+
+Chi tiết: `docs/topic-progression.md`.
 
 ## Human control
 

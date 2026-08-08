@@ -2,14 +2,32 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P8 — Learning Experience  
+**P8.3 status:** ✅ Topic Progression implemented  
 **P8.2 status:** ✅ Difficulty & Prerequisites implemented  
 **P8.1 status:** ✅ Learning Paths implemented  
-**Next focus:** P8.3 — Topic Progression  
+**Next focus:** P8.4 — Learning Dashboard  
 **P7 status:** ✅ Content Quality at Scale complete  
 **P6 status:** ✅ Community complete  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
+
+## P8.3 topic progression baseline
+
+`tools/topic_progression.py` kết hợp learning-path ordering với P8.2 difficulty/prerequisite DAG mà không định nghĩa lại upstream validators:
+
+- **4 learning paths / 19 published posts**;
+- **23 prerequisite references** khi xét các step trong từng path;
+- **17 local prerequisite references** đã xuất hiện trước bài phụ thuộc trong cùng path;
+- **6 external prerequisite references** được giữ như cross-path dependency, không coi là ordering error;
+- **0 prerequisite ordering violation**;
+- **0 difficulty jump** tăng quá một bậc giữa hai step liên tiếp;
+- corpus hiện thiếu tier **advanced**, nên progression status là **ATTENTION** nhưng normal publish CI vẫn pass;
+- strict curriculum audit có thể dùng `python3 tools/topic_progression.py --fail-gaps`.
+
+Operating model: `docs/topic-progression.md`.
+
+P8.3 chỉ tạo read-only progression evidence + JSON output. P8.4 sẽ tổng hợp P8.1 coverage, P8.2 graph và P8.3 progression thành Learning Dashboard/public discovery view.
 
 ## P8.2 difficulty & prerequisites baseline
 
@@ -24,8 +42,6 @@
 - `python3 tools/learning_metadata.py --json` cung cấp structured graph cho P8.3/P8.4.
 
 Operating model: `docs/difficulty-prerequisites.md`.
-
-P8.2 không đánh giá path ordering tốt/xấu. P8.3 sẽ kết hợp prerequisite DAG, difficulty và path ordering để tìm progression gap hoặc knowledge jump.
 
 ## P8.1 learning paths baseline
 
@@ -67,12 +83,12 @@ Khi thêm bài mới, contributor phải cập nhật cả:
 - `learning-paths.json` — bài đứng ở path nào;
 - `learning-metadata.json` — difficulty và prerequisite thật sự.
 
-Thiếu một trong hai sẽ bị local/CI gate chặn.
+Sau đó progression gate tự kiểm ordering/difficulty jump trên các path; không cần duy trì thêm một ledger P8.3 riêng.
 
 ## Automation baseline
 
 - `python3 tools/publish.py prepare` regenerate deterministic site/reports; `tools/build.py` bao gồm Learning Paths page.
-- `python3 tools/publish.py check` chạy local read-only gates gồm P7 quality + P8.1 paths + P8.2 learning metadata.
+- `python3 tools/publish.py check` chạy local read-only gates gồm P7 quality + P8.1 paths + P8.2 metadata + P8.3 progression.
 - `python3 tools/audit_report.py` tạo audit local + quality evidence; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
@@ -89,6 +105,7 @@ Thiếu một trong hai sẽ bị local/CI gate chặn.
 - P7 quality dashboard với ownership/remediation queue.
 - P8.1 learning path schema + 100% curriculum coverage gate.
 - P8.2 normalized difficulty + acyclic prerequisite graph gate.
+- P8.3 path ordering + difficulty progression gate và curriculum-gap evidence.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
@@ -109,10 +126,12 @@ Thiếu một trong hai sẽ bị local/CI gate chặn.
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
 | P7 — Content Quality at Scale | ✅ | Portability + command quality + freshness + quality dashboard |
-| P8 — Learning Experience | 🚧 | P8.1 paths + P8.2 difficulty/prerequisites complete; P8.3 next |
+| P8 — Learning Experience | 🚧 | P8.1 paths + P8.2 difficulty/prerequisites + P8.3 progression complete; P8.4 next |
 
 ## Tài liệu chính
 
+- `docs/topic-progression.md` — P8.3 progression signals, gap policy và strict mode.
+- `tools/topic_progression.py` — P8.3 read-only progression analyzer + JSON evidence.
 - `docs/difficulty-prerequisites.md` — P8.2 learning metadata + DAG contract.
 - `learning-metadata.json` — P8.2 difficulty/prerequisite source of truth.
 - `docs/learning-paths.md` — P8.1 schema, coverage contract và operating model.
@@ -127,4 +146,4 @@ Thiếu một trong hai sẽ bị local/CI gate chặn.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P8 đang mở; focus kế tiếp là P8.3 — Topic Progression.
+Xem `docs/ROADMAP.md`. P8 đang mở; focus kế tiếp là P8.4 — Learning Dashboard.
