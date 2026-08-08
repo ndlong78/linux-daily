@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, P9.1 lab contract, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -106,12 +106,7 @@ python3 tools/learning_metadata.py
 python3 tools/learning_metadata.py --json
 ```
 
-`publish.py check` chạy gate này trực tiếp. Nó hard-fail khi:
-
-- một bài published thiếu learning metadata;
-- difficulty không thuộc `basic`, `intermediate`, `advanced`;
-- prerequisite không tồn tại, tự tham chiếu hoặc bị lặp;
-- dependency graph có cycle.
+`publish.py check` chạy gate này trực tiếp. Nó hard-fail khi một bài published thiếu learning metadata, difficulty không hợp lệ, prerequisite không tồn tại/tự tham chiếu/bị lặp hoặc dependency graph có cycle.
 
 `tools/learning_paths.py` import cùng result để render difficulty + “Học trước” lên public page, vì vậy không có validator rule thứ hai. Khi thêm bài mới, contributor phải cập nhật **cả** `learning-paths.json` và `learning-metadata.json`.
 
@@ -156,6 +151,30 @@ python3 tools/learning_dashboard.py --check
 `publish.py prepare` regenerate `learning-dashboard.html`; `publish.py check` chạy `--check` sau learning metadata + topic progression. Dashboard status kế thừa P8.3, nên baseline `ATTENTION` vì chưa có `advanced` vẫn pass normal pipeline nếu hard finding = 0.
 
 Public page được đưa vào sitemap/repository-health và chịu website/SEO, accessibility, self-host font cùng internal-link contracts. Chi tiết: `docs/learning-dashboard.md`.
+
+## P9.1 advanced lab contract
+
+`tools/lab_contract.py` là gate read-only cho lab mới:
+
+```bash
+python3 tools/lab_contract.py
+python3 tools/lab_contract.py --json
+```
+
+Hai lab lịch sử #007/#014 được inventory là legacy. Enforcement bắt đầu từ #020 cho bài có semantics lab; không backfill metadata giả vào lịch sử.
+
+Gate kiểm `ld-meta.lab` và semantic `data-lab-section` markers. Hard-fail khi:
+
+- lab mới thiếu contract;
+- profile/topology/risk/verification khai báo sai schema;
+- Advanced Lab có dưới 2 topology roles hoặc dưới 2 verification classes;
+- risk thực tế nhưng `rollback_required` không phải `true`;
+- `destructive-storage` thiếu `restore` evidence class;
+- failure injection thiếu `recovery` evidence hoặc section tương ứng;
+- thiếu/duplicate semantic lab section;
+- cleanup không được khai báo bắt buộc.
+
+P9.1 không reimplement distro portability, command safety hay source-backed review. Lab vẫn đi qua các gate P7/P8 trước khi đến lab contract. Chi tiết authoring/safety model: `docs/advanced-lab-framework.md`.
 
 ## Human control
 

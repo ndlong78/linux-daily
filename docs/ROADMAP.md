@@ -110,8 +110,32 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Dashboard là first-class public page: canonical, sitemap, repository-health, accessibility, self-host font và internal-link validation.
 - [x] `tools/publish.py prepare/check` regenerate/verify dashboard deterministic; operating model nằm tại `docs/learning-dashboard.md`.
 
-## P9 — Advanced Labs ⬜
-- Mở rộng các lab end-to-end đa hệ điều hành: security/networking, storage/backup, monitoring/automation và Linux ↔ FreeBSD interoperability.
+## P9 — Advanced Labs 🚧
+
+### P9.1 — Advanced Lab Framework & Safety Contract ✅
+- [x] `tools/lab_contract.py` nhận diện lab mới và validate machine-readable `ld-meta.lab` contract.
+- [x] Hai lab lịch sử #007/#014 được giữ như legacy reference; enforcement bắt đầu từ #020, không retro-fit metadata giả.
+- [x] Contract chuẩn hóa topology roles, risk classes, rollback/cleanup, failure injection và verification evidence classes.
+- [x] Semantic HTML markers `data-lab-section` cho scenario/topology/safety/execution/verification/rollback/cleanup giúp CI kiểm cấu trúc mà không parse câu chữ.
+- [x] Destructive storage bắt buộc restore evidence; failure injection bắt buộc recovery evidence; risk thực tế bắt buộc rollback.
+- [x] Gate được đưa vào `tools/publish.py check`; authoring/safety model nằm tại `docs/advanced-lab-framework.md`.
+
+### P9.2 — Security & Networking Advanced Lab 🚧
+- [ ] Dựng lab có topology nhiều node, remote-access rollback và negative tests.
+- [ ] Bao quát Ubuntu/Xubuntu, Debian, Fedora và FreeBSD với firewall/service semantics riêng.
+- [ ] Có failure injection + recovery evidence thay vì chỉ kiểm happy path.
+
+### P9.3 — Storage & Backup/Restore Advanced Lab ⬜
+- [ ] Phân biệt block/partition/volume/filesystem/mount layer.
+- [ ] Có destructive test trên lab resource, backup trước thay đổi và restore evidence bắt buộc.
+
+### P9.4 — Monitoring & Automation Failure Lab ⬜
+- [ ] Inject CPU/RAM/I/O/service failure có blast radius giới hạn.
+- [ ] Thu thập observability evidence rồi tự động recovery/cleanup an toàn.
+
+### P9.5 — Linux ↔ FreeBSD Interoperability Lab ⬜
+- [ ] Dựng một workflow thực tế chạy qua Linux và FreeBSD thay vì mô phỏng FreeBSD bằng Linux commands.
+- [ ] Kiểm package/service/firewall/path differences và end-to-end interoperability evidence.
 
 ## Nguyên tắc roadmap
 
