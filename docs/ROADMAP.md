@@ -63,10 +63,13 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Từ #020, các finding context-sensitive trở thành blocker; #001–#019 giữ historical review queue thay vì rewrite tự động.
 - [x] Gate được đưa vào `tools/publish.py check` và policy/false-positive boundary nằm tại `docs/command-config-quality.md`.
 
-### P7.3 — Content Freshness & Technical Drift ⬜
+### P7.3 — Content Freshness & Technical Drift ✅
 
-- [ ] Thiết kế freshness state và review-due policy mà không âm thầm rewrite historical content.
-- [ ] Phân biệt current guidance với historically-valid guidance.
+- [x] `freshness.json` định nghĩa review cadence theo volatility mà không rewrite metadata lịch sử.
+- [x] `tools/content_freshness.py` tính `current`, `review-due` và `historically-valid`, hỗ trợ `--as-of`, `--json` và strict audit mode.
+- [x] `review-due` tạo actionable queue nhưng không biến CI thành time-bomb; policy/ledger inconsistency vẫn hard-fail.
+- [x] `historically-valid` chỉ được khai báo thủ công với reason, và optional replacement phải trỏ issue tồn tại.
+- [x] Gate được đưa vào `tools/publish.py check`; policy/operating model nằm tại `docs/content-freshness.md`.
 
 ### P7.4 — P7 Audit & Quality Dashboard ⬜
 
