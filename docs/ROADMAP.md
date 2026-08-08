@@ -52,11 +52,12 @@ P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 
 Mục tiêu: biết production đang chạy commit nào, phát hiện regression sớm và có tín hiệu vận hành đủ rõ để xử lý sự cố.
 
-### P3.1 — Operations Dashboard & Repository Insights
+### P3.1 — Operations Dashboard & Repository Insights ✅
 
-- [ ] Tổng hợp repository/production status vào một report dễ đọc.
-- [ ] Hiển thị publication freshness, latest issue, CI/smoke state và artifact inventory.
-- [ ] Không biến dashboard thành source of truth mới; dữ liệu phải derive từ repo/production.
+- [x] Tổng hợp repository/production-adjacent status vào một report dễ đọc trong GitHub Actions Job Summary.
+- [x] Hiển thị publication freshness, latest issue, CI/smoke state và artifact inventory.
+- [x] Không biến dashboard thành source of truth mới; dữ liệu derive trực tiếp từ repo và GitHub Actions.
+- [x] Giữ deployment fingerprint/stale-production detection ngoài P3.1 để xử lý đúng ở P3.2.
 
 ### P3.2 — Production Observability
 
