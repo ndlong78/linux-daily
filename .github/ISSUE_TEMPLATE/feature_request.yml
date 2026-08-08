@@ -1,0 +1,55 @@
+name: Feature proposal
+description: Đề xuất cải tiến website, tooling, automation hoặc contributor experience.
+title: "[Feature] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Mô tả vấn đề trước, rồi mới đề xuất giải pháp. Linux Daily ưu tiên thay đổi nhỏ, deterministic và không tạo source of truth mới nếu đã có nguồn dữ liệu hiện hữu.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Phạm vi
+      options:
+        - Content / discovery
+        - Website / UX
+        - Build / tooling
+        - CI / automation
+        - Operations / observability
+        - Contributor / community
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Vấn đề cần giải quyết
+      description: Ai gặp vấn đề gì, trong workflow nào?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Giải pháp đề xuất
+      description: Mô tả outcome mong muốn; implementation cụ thể là tùy chọn.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Phương án khác đã cân nhắc
+      description: Nếu có, nêu cách đơn giản hơn hoặc lý do không dùng giải pháp hiện tại.
+  - type: textarea
+    id: safety
+    attributes:
+      label: Ảnh hưởng quality / security / operations
+      description: Nêu dependency mới, quyền GitHub Actions, network dependency, compatibility hoặc rollback nếu liên quan.
+  - type: checkboxes
+    id: principles
+    attributes:
+      label: Nguyên tắc repository
+      options:
+        - label: Đề xuất này không yêu cầu bypass CI, branch protection hoặc human approval cho release/merge.
+          required: true
+        - label: Tôi đã tìm issue hiện có để tránh đề xuất trùng.
+          required: true
