@@ -41,7 +41,11 @@ def collect_urls(posts_dir: str = POSTS_DIR, site_config: str = SITE_CONFIG) -> 
         })
     posts.sort(key=lambda item: item["issue"], reverse=True)
     newest = posts[0]["date"] if posts else "2026-01-01"
-    return [{"loc": site["url"], "date": newest}, *posts]
+    return [
+        {"loc": site["url"], "date": newest},
+        {"loc": urljoin(site["url"], "archive.html"), "date": newest},
+        *posts,
+    ]
 
 
 def render_sitemap(posts_dir: str = POSTS_DIR, site_config: str = SITE_CONFIG) -> tuple[str, int]:
