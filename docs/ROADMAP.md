@@ -3,107 +3,43 @@
 Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
 ## P0 — Foundation ✅
-
-- Static site + shared CSS.
-- `state.json` cadence + `tools/cadence.py`.
-- Structured post metadata và deterministic generators.
-- GitHub Actions CI với Ruff, Pytest, build/validator và smoke tests.
-- Social output pipeline.
+- Static site + shared CSS, cadence/state, deterministic generators và CI.
 
 ## P1 — Source-backed Content ✅
-
-- ChatGPT Plus Scheduled Task thay Claude Routine làm scheduler/orchestrator.
-- `AGENTS.md` là hợp đồng vận hành AI chính.
-- Bài mới bắt buộc source-backed technical review.
-- Historical technical backfill #001–#018 hoàn tất theo nhóm rủi ro.
-- FreeBSD, destructive storage/network/auth semantics và rollback được đưa vào review guardrails.
+- AI operating contract, source-backed technical review và historical backfill.
 
 ## P2 — Repository & Website ✅
-
-P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
-
-### Governance
-
-- [x] Branch-protection baseline yêu cầu `quality-gate`.
-- [x] MIT `LICENSE`.
-- [x] `CONTRIBUTING.md`.
-- [x] `SECURITY.md`.
-- [x] `CODEOWNERS`.
-- [x] Pull request template.
-
-### Discovery & metadata
-
-- [x] RSS feed.
-- [x] `sitemap.xml` + `robots.txt`.
-- [x] Canonical URL với public origin `https://linux.no.id.vn/`.
-- [x] Open Graph + Twitter/X Card + social preview image metadata.
-- [x] Historical metadata backfill #001–#019.
-
-### Quality & reliability
-
-- [x] Internal/external broken-link checking.
-- [x] Website/SEO cross-artifact validator.
-- [x] Production smoke tests cho Cloudflare Worker.
-- [x] Accessibility baseline: skip link, main landmark, keyboard focus, heading/SVG guardrails.
-- [x] Self-host Be Vietnam Pro, JetBrains Mono và Noto Serif; không còn Google Fonts runtime dependency.
-- [x] Repository health summary + release checklist.
+- Governance, discovery/SEO, production smoke, accessibility, self-hosted fonts và repository health.
 
 ## P3 — Reliability & Operations ✅
-
-### P3.1 — Operations Dashboard & Repository Insights ✅
-- [x] Source-derived operational dashboard trong GitHub Actions.
-
-### P3.2 — Production Observability ✅
-- [x] Serving fingerprint, cache/content semantics và incident runbook.
-
-### P3.3 — Release Automation ✅
-- [x] SemVer + exact-SHA release gate + human confirmation.
-
-### P3.4 — Performance Budget ✅
-- [x] Deterministic artifact-size regression budget.
+- Operations dashboard, production observability, release automation và performance budget.
 
 ## P4 — Content Growth ✅
-
-### P4.1 — Taxonomy / Tags / Topic Discovery ✅
-- [x] Canonical taxonomy và metadata consistency gate.
-
-### P4.2 — Related Content & Series Navigation ✅
-- [x] Related/previous/next navigation deterministic.
-
-### P4.3 — Search & Archive ✅
-- [x] Static archive + client-side search.
-
-### P4.4 — Content Mix Review ✅
-- [x] 7-axis sequence/distribution review + deterministic report.
+- Taxonomy, related navigation, search/archive và content-mix review.
 
 ## P5 — Automation ✅
-
-### P5.1 — Publish Pipeline Automation ✅
-
-- [x] `python tools/publish.py prepare` regenerate deterministic artifacts/reports.
-- [x] `python tools/publish.py check` chạy local publish gates read-only.
-- [x] CI tái sử dụng cùng orchestration; external HTTP checks tách riêng.
-- [x] Không auto-merge/bypass branch protection/release.
-
-### P5.2 — Audit & Report Automation ✅
-
-- [x] `tools/audit_report.py` gom repository health, content mix, publication freshness và workflow evidence.
-- [x] Full audit có thể bổ sung live production observability nhưng local mode vẫn deterministic/offline.
-- [x] Workflow `Audit Report` chạy hàng tuần, xuất Job Summary và artifact 30 ngày.
-- [x] Workflow chỉ read-only; không commit audit snapshot trở lại repository và không tạo source of truth mới.
-
-### P5.3 — Safe Workflow Automation ✅
-
-- [x] `tools/workflow_safety.py` kiểm safety boundary cho mọi GitHub Actions workflow trong CI.
-- [x] Cấm `pull_request_target`, broad write permissions, auto-merge và branch-protection bypass.
-- [x] `release.yml` là ngoại lệ duy nhất có `contents: write`, chỉ chạy thủ công và phải giữ explicit confirmation + exact-main-SHA gate.
-- [x] Human approval vẫn bắt buộc cho merge/release có ảnh hưởng production.
+- One-command publish pipeline, weekly audit/report và workflow safety guardrails.
 
 ## P6 — Community 🚧
 
-- [ ] Contributor onboarding tốt hơn.
-- [ ] Issue templates/discussion workflow nếu cộng đồng bắt đầu đóng góp thường xuyên.
-- [ ] Tài liệu review cho technical contributors.
+### P6.1 — Contributor Onboarding ✅
+
+- [x] `docs/contributor-quickstart.md` đưa contributor mới từ clone → local validation → PR xanh.
+- [x] `python tools/contributor.py doctor` kiểm Python/Git/repository baseline và chỉ dẫn bước tiếp theo.
+- [x] `CONTRIBUTING.md` dùng `tools/publish.py` làm validation entrypoint duy nhất thay vì checklist lệnh bị trùng.
+- [x] Pull request template đồng bộ với publish/workflow safety hiện hành.
+- [x] Phân biệt rõ contributor workflow và AI-agent operating contract trong `AGENTS.md`.
+
+### P6.2 — Issue / Contribution Templates 🚧
+
+- [ ] Issue templates cho bug, content correction và feature proposal.
+- [ ] Hướng dẫn chọn đúng template và thông tin tối thiểu để triage.
+- [ ] Không mở automation ghi/merge mới chỉ để quản lý community workflow.
+
+### P6.3 — Technical Contributor Review Guide ⬜
+
+- [ ] Review guide cho source quality, distro portability và operational safety.
+- [ ] Checklist dành cho technical reviewer không cần hiểu lịch sử repository.
 
 ## Nguyên tắc roadmap
 
