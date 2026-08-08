@@ -1,0 +1,32 @@
+name: PR51 Generate Discovery Artifacts
+
+on:
+  push:
+    branches: [chatgpt/pr51-search-archive]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr51-search-archive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e ".[dev]"
+      - run: |
+          python tools/build_index.py
+          python tools/build_archive.py
+      - name: Commit generated artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html archive.html search-index.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "build: generate search and archive artifacts"
+          git push origin HEAD:chatgpt/pr51-search-archive
