@@ -55,10 +55,13 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Mọi bài phải có FreeBSD code block riêng được đánh dấu `class="bsd"` và hard-fail Linux-only command/path rõ ràng trong block đó.
 - [x] Sinh deterministic `docs/distro-coverage-report.md`, đưa gate vào `tools/publish.py` và tài liệu hóa policy trong `docs/distro-portability.md`.
 
-### P7.2 — Command & Configuration Quality Gate ⬜
+### P7.2 — Command & Configuration Quality Gate ✅
 
-- [ ] Static checks cho command/config examples, privilege/destructive markers và shell/config quality.
-- [ ] Không thực thi command nguy hiểm trong CI; ưu tiên deterministic static validation.
+- [x] `tools/command_quality.py` static-scan code block, không thực thi command trong CI.
+- [x] Hard-fail repository-wide các anti-pattern có tín hiệu cao: remote pipe-to-shell, `chmod 777`, catastrophic `rm -rf` và recursive permissions trên system roots.
+- [x] Inventory destructive commands, privilege usage, insecure TLS, weak literal credential và privileged shell-redirection.
+- [x] Từ #020, các finding context-sensitive trở thành blocker; #001–#019 giữ historical review queue thay vì rewrite tự động.
+- [x] Gate được đưa vào `tools/publish.py check` và policy/false-positive boundary nằm tại `docs/command-config-quality.md`.
 
 ### P7.3 — Content Freshness & Technical Drift ⬜
 

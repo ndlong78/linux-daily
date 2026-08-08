@@ -19,6 +19,7 @@ def test_check_plan_is_read_only_and_covers_local_publish_gates():
     assert any("tools/build.py --check" in command for command in flattened)
     assert any("tools/content_mix.py --check" in command for command in flattened)
     assert any("tools/distro_coverage.py --check" in command for command in flattened)
+    assert any("tools/command_quality.py" in command for command in flattened)
     assert any("tools/release.py validate" in command for command in flattened)
     assert any("tools/performance_budget.py" in command for command in flattened)
     assert any("tools/repo_health.py" in command for command in flattened)
