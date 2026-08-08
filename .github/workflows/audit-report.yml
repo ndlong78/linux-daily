@@ -1,0 +1,33 @@
+name: Audit Report
+
+on:
+  schedule:
+    - cron: "15 1 * * 1" # Monday 08:15 Asia/Ho_Chi_Minh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install -e ".[dev]"
+      - name: Build audit report
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python tools/audit_report.py --github --production --output audit-report.md
+          cat audit-report.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-daily-audit-report
+          path: audit-report.md
+          retention-days: 30
