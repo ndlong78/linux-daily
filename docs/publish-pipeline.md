@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -96,6 +96,26 @@ python3 tools/learning_paths.py --check
 ```
 
 Gate fail nếu path tham chiếu issue không tồn tại, lặp issue trong cùng path hoặc có bài published chưa thuộc learning path nào. Chi tiết: `docs/learning-paths.md`.
+
+## P8.2 difficulty & prerequisites
+
+`learning-metadata.json` là source of truth cho learning difficulty + prerequisite graph. Gate read-only:
+
+```bash
+python3 tools/learning_metadata.py
+python3 tools/learning_metadata.py --json
+```
+
+`publish.py check` chạy gate này trực tiếp. Nó hard-fail khi:
+
+- một bài published thiếu learning metadata;
+- difficulty không thuộc `basic`, `intermediate`, `advanced`;
+- prerequisite không tồn tại, tự tham chiếu hoặc bị lặp;
+- dependency graph có cycle.
+
+`tools/learning_paths.py` import cùng result để render difficulty + “Học trước” lên public page, vì vậy không có validator rule thứ hai. Khi thêm bài mới, contributor phải cập nhật **cả** `learning-paths.json` và `learning-metadata.json`.
+
+Chi tiết: `docs/difficulty-prerequisites.md`.
 
 ## Human control
 
