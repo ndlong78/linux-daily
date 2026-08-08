@@ -36,3 +36,33 @@ def test_wrong_content_type_is_reported():
     check_production._expect_type("text/plain", {"text/html"}, "homepage", errors)
     assert len(errors) == 1
     assert "homepage" in errors[0]
+
+
+def test_public_static_cache_rejects_private_or_no_store():
+    errors: list[str] = []
+    warnings: list[str] = []
+    check_production._cache_observation(
+        "homepage",
+        {"cache-control": "private, no-store"},
+        errors,
+        warnings,
+    )
+    assert len(errors) == 1
+    assert "unsafe cache-control" in errors[0]
+    assert warnings == []
+
+
+def test_missing_cache_control_is_observability_warning_not_gate_failure():
+    errors: list[str] = []
+    warnings: list[str] = []
+    check_production._cache_observation("homepage", {}, errors, warnings)
+    assert errors == []
+    assert warnings == ["homepage: cache-control header missing"]
+
+
+def test_expected_fingerprint_maps_to_served_paths():
+    fingerprint, expected = check_production._expected_by_public_path()
+    assert len(fingerprint) == 64
+    assert "/" in expected
+    assert "/feed.xml" in expected
+    assert any(path.startswith("/posts/post-019-") for path in expected)
