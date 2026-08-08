@@ -34,7 +34,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
 - [x] GitHub Issue Forms riêng cho bug, content/technical correction và feature proposal.
 - [x] Issue chooser tắt blank issue và hướng security report sang GitHub Security Policy / `SECURITY.md`.
-- [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue đến PR.
+- [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue sang PR.
 - [x] Không thêm automation ghi/merge hoặc dependency vào labels/repository settings ngoài Git.
 
 ### P6.3 — Technical Contributor Review Guide ✅
@@ -45,7 +45,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Phân loại finding thành blocker / needs change / suggestion để feedback nhất quán.
 - [x] Pull request template trỏ trực tiếp tới review guide; reviewer không cần biết lịch sử repository.
 
-## P7 — Content Quality at Scale 🚧
+## P7 — Content Quality at Scale ✅
 
 ### P7.1 — Distro Coverage & Portability Matrix ✅
 
@@ -71,10 +71,27 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `historically-valid` chỉ được khai báo thủ công với reason, và optional replacement phải trỏ issue tồn tại.
 - [x] Gate được đưa vào `tools/publish.py check`; policy/operating model nằm tại `docs/content-freshness.md`.
 
-### P7.4 — P7 Audit & Quality Dashboard ⬜
+### P7.4 — P7 Audit & Quality Dashboard ✅
 
-- [ ] Tổng hợp distro coverage, command/config findings, freshness và source-quality evidence vào quality view.
-- [ ] Đóng P7 khi các quality signals có ownership và remediation path rõ ràng.
+- [x] `tools/quality_dashboard.py` tổng hợp P7.1–P7.3 và source-backed review evidence mà không reimplement validator rules.
+- [x] `docs/quality-dashboard.md` là canonical deterministic snapshot dựa trên `state.last_published_date`.
+- [x] Dashboard có explicit owner + remediation contract cho distro, command/config, freshness và source-quality signals.
+- [x] `tools/audit_report.py` dùng cùng aggregator với ngày audit thực tế để surface `review-due` theo thời gian.
+- [x] P7 đóng với hard-error path rõ ràng và non-blocking remediation queue tách biệt.
+
+## P8 — Learning Experience ⬜
+
+### P8.1 — Learning Paths ⬜
+- [ ] Nhóm nội dung thành learning paths thực dụng theo mục tiêu nghề nghiệp/kỹ năng thay vì chỉ theo ngày xuất bản.
+
+### P8.2 — Difficulty & Prerequisites ⬜
+- [ ] Chuẩn hóa difficulty/prerequisite metadata để người học biết nên học gì trước.
+
+### P8.3 — Topic Progression ⬜
+- [ ] Phát hiện khoảng trống hoặc bước nhảy kiến thức giữa các bài cùng axis/series.
+
+### P8.4 — Learning Dashboard ⬜
+- [ ] Tạo derived learning view từ taxonomy, prerequisites và progression mà không thay source of truth của bài viết.
 
 ## Nguyên tắc roadmap
 

@@ -12,6 +12,8 @@ def test_offline_audit_is_deterministic_and_passes():
     assert code1 == code2 == 0
     assert "Linux Daily — Audit Report" in first
     assert "Repository inventory" in first
+    assert "P7 quality evidence" in first
+    assert "P7 content quality: **ATTENTION**" in first
     assert "Production evidence" in first
     assert "Not requested" in first
 

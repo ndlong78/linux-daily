@@ -11,6 +11,7 @@ def test_prepare_plan_regenerates_before_metadata_checks():
     assert any(command[-1] == "tools/content_mix.py" for command in plan)
     assert any(command[-1] == "tools/taxonomy.py" for command in plan)
     assert any(command[-1] == "tools/distro_coverage.py" for command in plan)
+    assert any(command[-1] == "tools/quality_dashboard.py" for command in plan)
 
 
 def test_check_plan_is_read_only_and_covers_local_publish_gates():
@@ -21,6 +22,7 @@ def test_check_plan_is_read_only_and_covers_local_publish_gates():
     assert any("tools/distro_coverage.py --check" in command for command in flattened)
     assert any("tools/command_quality.py" in command for command in flattened)
     assert any("tools/content_freshness.py" in command for command in flattened)
+    assert any("tools/quality_dashboard.py --check" in command for command in flattened)
     assert any("tools/release.py validate" in command for command in flattened)
     assert any("tools/performance_budget.py" in command for command in flattened)
     assert any("tools/repo_health.py" in command for command in flattened)
