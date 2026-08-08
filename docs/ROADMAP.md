@@ -76,7 +76,7 @@ P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 ### P4.4 — Content Mix Review ✅
 - [x] 7-axis sequence/distribution review + deterministic report.
 
-## P5 — Automation 🚧
+## P5 — Automation ✅
 
 ### P5.1 — Publish Pipeline Automation ✅
 
@@ -92,12 +92,14 @@ P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 - [x] Workflow `Audit Report` chạy hàng tuần, xuất Job Summary và artifact 30 ngày.
 - [x] Workflow chỉ read-only; không commit audit snapshot trở lại repository và không tạo source of truth mới.
 
-### P5.3 — Safe Workflow Automation 🚧
+### P5.3 — Safe Workflow Automation ✅
 
-- [ ] Tự động hóa các bước lặp lại còn lại nhưng không auto-merge hoặc bypass quality gate.
-- [ ] Giữ human approval cho merge/release có ảnh hưởng production.
+- [x] `tools/workflow_safety.py` kiểm safety boundary cho mọi GitHub Actions workflow trong CI.
+- [x] Cấm `pull_request_target`, broad write permissions, auto-merge và branch-protection bypass.
+- [x] `release.yml` là ngoại lệ duy nhất có `contents: write`, chỉ chạy thủ công và phải giữ explicit confirmation + exact-main-SHA gate.
+- [x] Human approval vẫn bắt buộc cho merge/release có ảnh hưởng production.
 
-## P6 — Community ⬜
+## P6 — Community 🚧
 
 - [ ] Contributor onboarding tốt hơn.
 - [ ] Issue templates/discussion workflow nếu cộng đồng bắt đầu đóng góp thường xuyên.
