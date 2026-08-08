@@ -2,70 +2,55 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P5 — Automation  
+**P5.2 status:** ✅ Audit & Report Automation implemented in PR #54  
 **P5.1 status:** ✅ Publish Pipeline Automation implemented in PR #53  
-**P4 status:** ✅ Content Growth closed after P4.4 Content Mix Review  
+**P4 status:** ✅ Content Growth complete  
 **P3 status:** ✅ Reliability & Operations complete  
-**P2 status:** ✅ Closed after PR #44  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
-## Repository health baseline
-
-Linux Daily hiện có 19 bài đã xuất bản (#001–#019). Website được build thành static HTML và các artifact RSS, sitemap, robots; metadata canonical/Open Graph/Twitter, accessibility, self-hosted fonts, source-backed review, taxonomy, related-content navigation, search/archive và link validation đều nằm trong quality gate của repository.
-
-Các số liệu thay đổi theo thời gian không được hard-code làm source of truth. Chạy:
-
-```bash
-python3 tools/repo_health.py
-```
-
-để lấy snapshot deterministic hiện tại về số bài, nguồn kỹ thuật, social images, fonts, RSS và sitemap.
-
 ## Publish pipeline
 
-Sau khi thêm/sửa bài, dùng một lệnh để regenerate toàn bộ artifact/report deterministic:
+Sau khi thêm/sửa bài:
 
 ```bash
 python3 tools/publish.py prepare
-```
-
-Trước khi push PR, chạy local publish gates ở chế độ read-only:
-
-```bash
 python3 tools/publish.py check
 ```
 
-Pipeline này dùng `tools/build.py` làm build engine, sau đó kiểm taxonomy, content mix, release metadata, performance budget và repository health. External HTTP checks vẫn để CI xử lý riêng vì phụ thuộc network. Xem `docs/publish-pipeline.md`.
+`prepare` regenerate deterministic artifacts/reports; `check` chạy local publish gates read-only. External HTTP checks vẫn ở CI.
 
-Để xem content mix/cadence review:
+## Audit & report
 
-```bash
-python3 tools/content_mix.py --check
-```
-
-Snapshot review nằm ở `docs/content-mix-report.md`. Với 19 bài hiện tại, 7 trục nội dung đã đi đúng rotation, distribution spread là 1; bài kế tiếp theo cadence là #020 — Automation & scripting.
-
-Để xem operational report local:
+Local audit không cần network:
 
 ```bash
-python3 tools/operations_dashboard.py
+python3 tools/audit_report.py
 ```
 
-Workflow `Operations Dashboard` bổ sung trạng thái CI/Production Smoke trực tiếp từ GitHub Actions, xuất report vào Job Summary và artifact 14 ngày. Xem `docs/operations-dashboard.md`.
-
-Để xem deterministic serving fingerprint mong đợi từ repository:
+Full operational audit bổ sung GitHub Actions + production evidence:
 
 ```bash
-python3 tools/site_fingerprint.py
+python3 tools/audit_report.py --github --production --output audit-report.md
 ```
 
-`Production Smoke` so SHA-256 của homepage, feed, sitemap, robots, latest post và latest social image với checkout `main`, sau đó so aggregate serving fingerprint. Content-type sai hoặc cache semantics `private`/`no-store` trên static public response làm gate fail; thiếu cache-control chỉ được ghi warning để tránh phụ thuộc provider-specific behavior.
+Workflow `Audit Report` chạy hàng tuần lúc 08:15 Thứ Hai (Asia/Ho_Chi_Minh), ghi Markdown vào Job Summary và giữ artifact 30 ngày. Workflow chỉ có quyền đọc và không commit snapshot trở lại repository. Xem `docs/audit-report.md`.
 
-## Release baseline
+Audit tổng hợp trực tiếp từ repository health, content mix, publication metadata, latest CI/Production Smoke và live production observability. Report chỉ là evidence dẫn xuất; repository/GitHub Actions/production vẫn là source of truth.
 
-Version chính thức nằm ở `VERSION`, SemVer dạng `X.Y.Z`; tag dùng `vX.Y.Z`. `pyproject.toml` derive cùng version để không còn metadata drift.
+## Quality & operations baseline
 
-Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, workflow yêu cầu explicit confirmation, xác minh `CHANGELOG.md`, rồi bắt buộc cả `CI` và `Production Smoke` đều `success` trên đúng SHA hiện tại của `main`. Release notes gồm phần curated từ CHANGELOG và merged-PR notes GitHub tự sinh.
+- Ruff + Pytest.
+- Deterministic publish pipeline.
+- Source-backed technical validation.
+- Canonical/OG/Twitter/RSS/sitemap/robots consistency.
+- Taxonomy, related navigation, search/archive và content-mix consistency.
+- Internal/external link checks.
+- Accessibility + self-hosted font validation.
+- Performance budget.
+- Production serving fingerprint + stale/content-drift detection.
+- Operations Dashboard và weekly Audit Report.
+- Release gate với exact main SHA + human confirmation.
 
 ## Milestones
 
@@ -73,33 +58,16 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 |---|---|---|
 | P0 — Foundation | ✅ | Static site, template, cadence/state, CI cơ bản |
 | P1 — Source-backed Content | ✅ | Technical review + historical source backfill |
-| P2 — Repository & Website | ✅ | Governance, RSS/sitemap, canonical/OG, link gate, production smoke, accessibility, self-host fonts |
+| P2 — Repository & Website | ✅ | Governance, SEO/discovery, accessibility, production smoke |
 | P3 — Reliability & Operations | ✅ | Dashboard, production fingerprint, release automation, performance budget |
-| P4 — Content Growth | ✅ | Taxonomy, related navigation, search/archive, deterministic content-mix review |
-| P5 — Automation | 🚧 | P5.1 one-command publish pipeline hoàn tất; tiếp tục giảm thao tác audit/report lặp lại |
+| P4 — Content Growth | ✅ | Taxonomy, navigation, search/archive, content-mix review |
+| P5 — Automation | 🚧 | P5.1 publish pipeline + P5.2 audit/report complete; tiếp theo P5.3 Safe Workflow Automation |
 | P6 — Community | ⬜ | Contributor experience và community workflow mở rộng |
 
-## Quality gates hiện tại
+## Tài liệu vận hành
 
-- Ruff + Pytest.
-- Deterministic publish pipeline (`tools/publish.py check`).
-- Source-backed technical validation.
-- Canonical/Open Graph/Twitter/RSS/sitemap/robots consistency.
-- Taxonomy + related-content + search/archive consistency.
-- Content mix/canonical 7-axis sequence consistency.
-- Internal/external link checking.
-- Accessibility baseline.
-- Self-hosted font validation.
-- Performance budget.
-- Cadence và render smoke tests.
-- Production observability cho Cloudflare Worker: semantic checks + serving fingerprint + stale/content-drift detection.
-- Source-derived Operations Dashboard cho publication freshness, artifact inventory và latest CI/smoke state.
-- Release gate: canonical version/changelog + CI/Production Smoke success trên exact `main` SHA + human confirmation.
-
-## Kiến trúc vận hành
-
-Xem `docs/architecture.md`, `docs/publish-pipeline.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md`, `docs/release-checklist.md` và `docs/content-mix-report.md`.
+Xem `docs/publish-pipeline.md`, `docs/audit-report.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md`, `docs/release-checklist.md` và `docs/content-mix-report.md`.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P4 đã đóng; P5.1 hoàn tất và trọng tâm tiếp tục là automation deterministic nhưng vẫn giữ human approval cho merge/release.
+Xem `docs/ROADMAP.md`. Hạng mục tiếp theo là **P5.3 — Safe Workflow Automation**.
