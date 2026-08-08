@@ -109,8 +109,21 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 
 ## P5 — Automation 🚧
 
-- [ ] Giảm thao tác thủ công lặp lại trong publish/release.
-- [ ] Tự động hóa audit/report có deterministic input.
+### P5.1 — Publish Pipeline Automation ✅
+
+- [x] Một lệnh `python tools/publish.py prepare` regenerate website artifacts + deterministic reports sau khi sửa/thêm bài.
+- [x] Một lệnh `python tools/publish.py check` chạy toàn bộ local publish gates ở chế độ read-only trước khi push.
+- [x] CI tái sử dụng cùng publish orchestration để local/CI không duy trì hai danh sách validator khác nhau.
+- [x] External HTTP checks vẫn tách riêng vì network-dependent; branch/PR/merge/release vẫn cần human approval.
+
+### P5.2 — Audit & Report Automation
+
+- [ ] Giảm thao tác thủ công khi tổng hợp repository/production audit định kỳ.
+- [ ] Tái sử dụng deterministic reports hiện có thay vì tạo thêm source of truth.
+
+### P5.3 — Safe Workflow Automation
+
+- [ ] Tự động hóa các bước lặp lại còn lại nhưng không auto-merge hoặc bypass quality gate.
 - [ ] Giữ human approval cho merge/release có ảnh hưởng production.
 
 ## P6 — Community ⬜

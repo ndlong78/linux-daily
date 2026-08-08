@@ -2,6 +2,7 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P5 — Automation  
+**P5.1 status:** ✅ Publish Pipeline Automation implemented in PR #53  
 **P4 status:** ✅ Content Growth closed after P4.4 Content Mix Review  
 **P3 status:** ✅ Reliability & Operations complete  
 **P2 status:** ✅ Closed after PR #44  
@@ -19,6 +20,22 @@ python3 tools/repo_health.py
 ```
 
 để lấy snapshot deterministic hiện tại về số bài, nguồn kỹ thuật, social images, fonts, RSS và sitemap.
+
+## Publish pipeline
+
+Sau khi thêm/sửa bài, dùng một lệnh để regenerate toàn bộ artifact/report deterministic:
+
+```bash
+python3 tools/publish.py prepare
+```
+
+Trước khi push PR, chạy local publish gates ở chế độ read-only:
+
+```bash
+python3 tools/publish.py check
+```
+
+Pipeline này dùng `tools/build.py` làm build engine, sau đó kiểm taxonomy, content mix, release metadata, performance budget và repository health. External HTTP checks vẫn để CI xử lý riêng vì phụ thuộc network. Xem `docs/publish-pipeline.md`.
 
 Để xem content mix/cadence review:
 
@@ -59,13 +76,13 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 | P2 — Repository & Website | ✅ | Governance, RSS/sitemap, canonical/OG, link gate, production smoke, accessibility, self-host fonts |
 | P3 — Reliability & Operations | ✅ | Dashboard, production fingerprint, release automation, performance budget |
 | P4 — Content Growth | ✅ | Taxonomy, related navigation, search/archive, deterministic content-mix review |
-| P5 — Automation | 🚧 | Giảm thao tác lặp lại nhưng giữ human approval cho merge/release |
+| P5 — Automation | 🚧 | P5.1 one-command publish pipeline hoàn tất; tiếp tục giảm thao tác audit/report lặp lại |
 | P6 — Community | ⬜ | Contributor experience và community workflow mở rộng |
 
 ## Quality gates hiện tại
 
 - Ruff + Pytest.
-- Deterministic build consistency.
+- Deterministic publish pipeline (`tools/publish.py check`).
 - Source-backed technical validation.
 - Canonical/Open Graph/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy + related-content + search/archive consistency.
@@ -81,8 +98,8 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 
 ## Kiến trúc vận hành
 
-Xem `docs/architecture.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md`, `docs/release-checklist.md` và `docs/content-mix-report.md`.
+Xem `docs/architecture.md`, `docs/publish-pipeline.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md`, `docs/release-checklist.md` và `docs/content-mix-report.md`.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P4 đã đóng; trọng tâm hiện tại chuyển sang P5 — Automation.
+Xem `docs/ROADMAP.md`. P4 đã đóng; P5.1 hoàn tất và trọng tâm tiếp tục là automation deterministic nhưng vẫn giữ human approval cho merge/release.
