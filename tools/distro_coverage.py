@@ -13,6 +13,7 @@ import postmeta
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 REPORT_PATH = ROOT / "docs" / "distro-coverage-report.md"
+ENFORCE_COMPLETE_FROM_ISSUE = 20
 
 DISTROS = {
     "ubuntu_xubuntu": {
@@ -124,13 +125,26 @@ def review(posts: list[dict] | None = None) -> dict:
     }
 
 
+def missing_coverage(post: dict) -> list[str]:
+    return [DISTROS[key]["label"] for key in DISTROS if not post["coverage"].get(key)]
+
+
+def coverage_findings(result: dict) -> list[str]:
+    findings: list[str] = []
+    for post in result["posts"]:
+        missing = missing_coverage(post)
+        if missing:
+            findings.append(f"#{post['issue']:03d} thiếu distro coverage: {', '.join(missing)}")
+    return findings
+
+
 def errors(result: dict) -> list[str]:
     problems: list[str] = []
     for post in result["posts"]:
-        missing = [DISTROS[key]["label"] for key in DISTROS if not post["coverage"].get(key)]
-        if missing:
+        missing = missing_coverage(post)
+        if post["issue"] >= ENFORCE_COMPLETE_FROM_ISSUE and missing:
             problems.append(
-                f"#{post['issue']:03d} thiếu distro coverage: {', '.join(missing)}"
+                f"#{post['issue']:03d} thiếu bắt buộc distro coverage: {', '.join(missing)}"
             )
         if post["freebsd_blocks"] == 0:
             problems.append(f"#{post['issue']:03d} thiếu code block FreeBSD được đánh dấu class=bsd")
@@ -153,6 +167,7 @@ def render_report(result: dict | None = None) -> str:
         f"- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **{result['complete_posts']}/{total}**",
         f"- Posts with explicit FreeBSD code blocks: **{result['freebsd_marked_posts']}/{total}**",
         f"- Linux-only command/path violations inside FreeBSD blocks: **{result['violation_count']}**",
+        f"- Full coverage enforcement starts at issue: **#{ENFORCE_COMPLETE_FROM_ISSUE:03d}**",
         "",
         "| Platform | Posts with explicit coverage |",
         "|---|---:|",
@@ -160,21 +175,22 @@ def render_report(result: dict | None = None) -> str:
     for key, info in DISTROS.items():
         lines.append(f"| {info['label']} | {result['coverage_counts'][key]}/{total} |")
 
-    problems = errors(result)
-    lines.extend(["", "## Review queue", ""])
-    if problems:
-        lines.extend(f"- {problem}" for problem in problems)
+    findings = coverage_findings(result)
+    lines.extend(["", "## Historical review queue", ""])
+    if findings:
+        lines.extend(f"- {finding}" for finding in findings)
     else:
-        lines.append("- Không có bài nào vi phạm baseline P7.1 hiện tại.")
+        lines.append("- Không có bài nào thiếu explicit distro coverage.")
 
     lines.extend(
         [
             "",
             "## Policy boundary",
             "",
-            "- Mỗi bài phải nhắc rõ Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.",
-            "- Mỗi bài phải có ít nhất một code block FreeBSD được đánh dấu `class=\"bsd\"` để tách semantics khỏi Linux.",
-            "- Gate chỉ hard-fail các Linux-only command/path rõ ràng trong block FreeBSD; nó không suy đoán portability từ mọi token CLI.",
+            f"- Các bài trước #{ENFORCE_COMPLETE_FROM_ISSUE:03d} được inventory như technical debt; thiếu coverage cũ xuất hiện trong review queue nhưng không làm CI đỏ.",
+            f"- Từ #{ENFORCE_COMPLETE_FROM_ISSUE:03d}, bài mới phải nhắc rõ Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.",
+            "- Mọi bài phải có ít nhất một code block FreeBSD được đánh dấu `class=\"bsd\"` để tách semantics khỏi Linux.",
+            "- Gate hard-fail các Linux-only command/path rõ ràng trong block FreeBSD; nó không suy đoán portability từ mọi token CLI.",
             "- Technical reviewer vẫn chịu trách nhiệm kiểm package name, service name, filesystem path, firewall model và behavior thực tế trên từng HĐH.",
             "",
         ]
@@ -186,7 +202,7 @@ def run(*, check: bool) -> int:
     result = review()
     problems = errors(result)
     if problems:
-        print(f"LỖI: distro portability có {len(problems)} vấn đề")
+        print(f"LỖI: distro portability có {len(problems)} vấn đề hard-fail")
         for problem in problems:
             print(f"- {problem}")
         return 1
@@ -206,6 +222,7 @@ def run(*, check: bool) -> int:
         print(
             "OK: distro coverage/portability pass; "
             f"{result['complete_posts']}/{result['total']} bài đủ 4 platform, "
+            f"legacy_findings={len(coverage_findings(result))}, "
             f"violations={result['violation_count']}."
         )
     return 0
