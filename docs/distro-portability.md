@@ -4,7 +4,7 @@ P7.1 đưa yêu cầu đa HĐH của Linux Daily thành một quality gate deter
 
 ## Mục tiêu
 
-Mỗi bài phải bao quát rõ:
+Từ issue #020, mỗi bài mới phải bao quát rõ:
 
 - Ubuntu / Xubuntu;
 - Debian;
@@ -12,6 +12,19 @@ Mỗi bài phải bao quát rõ:
 - FreeBSD.
 
 FreeBSD phải được tách riêng về package/service/firewall/path semantics. Gate không coi FreeBSD là một Linux distro và không tự động chuyển lệnh Linux sang BSD.
+
+## Baseline lịch sử
+
+Inventory đầu P7.1 cho thấy 19 bài hiện có chưa đồng nhất hoàn toàn về explicit distro naming:
+
+- 14/19 bài nhắc đủ Ubuntu + Xubuntu;
+- 18/19 bài nhắc Debian;
+- 17/19 bài nhắc Fedora;
+- 19/19 bài nhắc FreeBSD;
+- 19/19 bài có FreeBSD code block riêng;
+- không phát hiện Linux-only command/path trong FreeBSD block.
+
+Các gap ở #007, #008, #010, #014 và #017 được ghi vào `docs/distro-coverage-report.md` như technical review queue. P7.1 không sửa nội dung lịch sử chỉ để làm đẹp số liệu; từ #020 trở đi full four-platform coverage là hard requirement.
 
 ## Chạy local
 
@@ -24,14 +37,15 @@ python3 tools/distro_coverage.py --check
 
 ## Những gì gate kiểm
 
-1. Presence coverage của bốn platform trong từng bài.
-2. Mỗi bài có ít nhất một `<pre class="bsd">...</pre>` để code FreeBSD được tách khỏi Linux.
-3. Các Linux-only command/path rõ ràng không xuất hiện trong block FreeBSD, ví dụ:
+1. Inventory presence coverage của bốn platform trong từng bài.
+2. Từ #020, thiếu bất kỳ platform nào là hard-fail.
+3. Mọi bài có ít nhất một `<pre class="bsd">...</pre>` để code FreeBSD được tách khỏi Linux.
+4. Các Linux-only command/path rõ ràng không xuất hiện trong block FreeBSD, ví dụ:
    - `apt`, `apt-get`, `dnf`, `yum`;
    - `systemctl`, `journalctl`, `timedatectl`, `hostnamectl`, `loginctl`;
    - `nft`, `ufw`, `firewall-cmd`;
    - `/etc/systemd`, `/usr/lib/systemd`, `/etc/netplan`.
-4. `docs/distro-coverage-report.md` phải khớp hoàn toàn với repository hiện tại.
+5. `docs/distro-coverage-report.md` phải khớp hoàn toàn với repository hiện tại.
 
 ## Những gì gate cố ý không làm
 
@@ -50,7 +64,7 @@ Technical review chuẩn tiếp tục nằm tại `docs/technical-review-guide.m
 
 ## Khi validator fail
 
-Không thêm tên distro chỉ để làm xanh CI. Sửa bài để có hướng dẫn thực sự cho platform bị thiếu.
+Không thêm tên distro chỉ để làm xanh CI. Với bài mới từ #020, sửa bài để có hướng dẫn thực sự cho platform bị thiếu.
 
 Nếu FreeBSD block chứa lệnh Linux-only, thay bằng lệnh BSD tương ứng hoặc ghi rõ lệnh đó **không tồn tại / không áp dụng** trên FreeBSD và đưa cách thay thế phù hợp ở ngoài code block.
 
