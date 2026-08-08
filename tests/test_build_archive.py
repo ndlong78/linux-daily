@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import html
 import json
 
 import build_archive
@@ -30,4 +31,4 @@ def test_archive_has_search_accessibility_and_all_axes():
     assert 'id="archive-search"' in archive
     assert 'search-index.json' not in archive  # loaded by external JS, not duplicated inline
     for group in build_archive.taxonomy.load_taxonomy()["axes"].values():
-        assert group["label"] in archive
+        assert html.escape(group["label"]) in archive
