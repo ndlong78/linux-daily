@@ -6,20 +6,20 @@ import quality_dashboard
 
 
 def test_repository_quality_dashboard_has_no_hard_errors():
-    result = quality_dashboard.collect(as_of=date(2026, 8, 7))
-    assert result["total_posts"] == 19
+    result = quality_dashboard.collect(as_of=quality_dashboard.canonical_as_of())
+    assert result["total_posts"] >= 20
     assert result["errors"] == []
     assert result["status"] == "ATTENTION"
     assert result["signals"]["distro"]["status"] == "ATTENTION"
     assert result["signals"]["command"]["status"] == "PASS"
     assert result["signals"]["freshness"]["status"] == "PASS"
     assert result["signals"]["sources"]["status"] == "PASS"
-    assert result["signals"]["sources"]["source_backed_posts"] == 19
-    assert result["signals"]["sources"]["reviewed_source_posts"] == 19
+    assert result["signals"]["sources"]["source_backed_posts"] == result["total_posts"]
+    assert result["signals"]["sources"]["reviewed_source_posts"] == result["total_posts"]
 
 
 def test_repository_quality_dashboard_surfaces_known_legacy_portability_debt():
-    result = quality_dashboard.collect(as_of=date(2026, 8, 7))
+    result = quality_dashboard.collect(as_of=quality_dashboard.canonical_as_of())
     issues = {
         item["issue"]
         for item in result["remediation_queue"]

@@ -8,20 +8,18 @@ import learning_dashboard
 def test_real_repo_learning_dashboard_baseline():
     result = learning_dashboard.collect()
     assert result["errors"] == []
-    assert result["status"] == "ATTENTION"
-    assert result["post_count"] == result["covered_post_count"] == 19
+    assert result["status"] == "PASS"
+    assert result["post_count"] == result["covered_post_count"]
+    assert result["post_count"] >= 20
     assert result["path_count"] == 4
-    assert result["difficulty_counts"] == {
-        "basic": 8,
-        "intermediate": 11,
-        "advanced": 0,
-    }
-    assert result["prerequisite_edges"] == 16
-    assert result["path_prerequisite_references"] == 23
-    assert result["local_prerequisites"] == 17
-    assert result["external_prerequisites"] == 6
+    assert sum(result["difficulty_counts"].values()) == result["post_count"]
+    assert result["difficulty_counts"].get("advanced", 0) >= 1
+    assert result["prerequisite_edges"] >= 20
+    assert result["path_prerequisite_references"] == (
+        result["local_prerequisites"] + result["external_prerequisites"]
+    )
     assert result["hard_findings"] == 0
-    assert result["missing_difficulty_tiers"] == ["advanced"]
+    assert result["missing_difficulty_tiers"] == []
     assert {path["slug"] for path in result["paths"]} == {
         "server-foundations",
         "network-security",

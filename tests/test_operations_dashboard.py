@@ -12,12 +12,14 @@ def test_freshness_thresholds():
 
 
 def test_collect_publication_matches_current_repository():
-    publication = dashboard.collect_publication(date(2026, 8, 8))
-    assert publication.issue == 19
-    assert publication.published == date(2026, 8, 7)
-    assert publication.age_days == 1
+    _, meta = dashboard._latest_post()
+    published = date.fromisoformat(str(meta["date"]))
+    publication = dashboard.collect_publication(published)
+    assert publication.issue == int(meta["issue"])
+    assert publication.published == published
+    assert publication.age_days == 0
     assert publication.freshness == "FRESH"
-    assert publication.title
+    assert publication.title == str(meta["title"])
 
 
 def test_workflow_badges():

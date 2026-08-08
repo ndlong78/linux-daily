@@ -15,10 +15,18 @@ import build_sitemap  # noqa: E402
 NS = {"sm": "http://www.sitemaps.org/schemas/sitemap/0.9"}
 
 
+def _latest_post() -> Path:
+    return max(
+        (ROOT / "posts").glob("post-*.html"),
+        key=lambda path: int(path.name.split("-")[1]),
+    )
+
+
 def test_sitemap_matches_generator():
     rendered, count = build_sitemap.render_sitemap()
     assert (ROOT / "sitemap.xml").read_text(encoding="utf-8") == rendered
-    assert count == 23
+    root = ET.fromstring(rendered)
+    assert count == len(root.findall("sm:url", NS))
 
 
 def test_sitemap_uses_custom_domain_and_latest_post():
@@ -29,7 +37,7 @@ def test_sitemap_uses_custom_domain_and_latest_post():
     assert "https://linux.no.id.vn/archive.html" in locs
     assert "https://linux.no.id.vn/learning-dashboard.html" in locs
     assert "https://linux.no.id.vn/learning-paths.html" in locs
-    assert "https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html" in locs
+    assert f"https://linux.no.id.vn/posts/{_latest_post().name}" in locs
     assert all(loc.startswith("https://linux.no.id.vn/") for loc in locs)
 
 

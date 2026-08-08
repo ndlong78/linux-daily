@@ -1,48 +1,48 @@
 # Linux Daily — P7 Audit & Quality Dashboard
 
-Derived quality snapshot · as of **2026-08-07**.
+Derived quality snapshot · as of **2026-08-08**.
 
 ## Executive status
 
 - P7 quality: **ATTENTION**
-- Published posts: **19**
+- Published posts: **20**
 - Hard errors: **0**
 - Remediation queue: **5**
 
 | Signal | Status | Detail |
 |---|---|---|
-| Distro coverage & portability | **ATTENTION** | 14/19 complete · FreeBSD blocks 19/19 · violations 0 |
-| Command & configuration | **PASS** | 83 blocks · 399 lines · blockers 0 · review 0 |
-| Content freshness | **PASS** | current 19 · review-due 0 · historically-valid 0 |
-| Source quality | **PASS** | backed 19/19 · reviewed 19/19 · sources 69 |
+| Distro coverage & portability | **ATTENTION** | 15/20 complete · FreeBSD blocks 20/20 · violations 0 |
+| Command & configuration | **PASS** | 98 blocks · 517 lines · blockers 0 · review 0 |
+| Content freshness | **PASS** | current 20 · review-due 0 · historically-valid 0 |
+| Source quality | **PASS** | backed 20/20 · reviewed 20/20 · sources 74 |
 
 ## Quality evidence
 
 ### Distro portability
 
-- Complete four-platform coverage: **14/19**
-- Explicit FreeBSD blocks: **19/19**
+- Complete four-platform coverage: **15/20**
+- Explicit FreeBSD blocks: **20/20**
 - Linux-only semantics inside FreeBSD blocks: **0**
 
 ### Command / configuration safety
 
-- Code blocks scanned: **83**
-- Command/config lines scanned: **399**
-- Privileged lines: **86**
+- Code blocks scanned: **98**
+- Command/config lines scanned: **517**
+- Privileged lines: **125**
 - Destructive storage examples: **2**
 - Blocking findings: **0**
 
 ### Freshness / technical drift
 
-- Current: **19**
+- Current: **20**
 - Review due: **0**
 - Historically valid: **0**
 
 ### Source evidence
 
-- Posts with structured source evidence: **19/19**
-- Source-backed posts with mergeable review status: **19/19**
-- Official/upstream technical sources: **69**
+- Posts with structured source evidence: **20/20**
+- Source-backed posts with mergeable review status: **20/20**
+- Official/upstream technical sources: **74**
 
 ## Remediation queue
 

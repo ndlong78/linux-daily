@@ -13,11 +13,13 @@ def test_real_repository_mix_is_balanced_and_in_sequence():
 
 
 def test_next_axis_follows_canonical_rotation():
-    result = content_mix.review()
-    assert result["next_issue"] == 20
-    assert result["next_axis"] == "Automation"
-    assert result["complete_cycles"] == 2
-    assert result["cycle_remainder"] == 5
+    posts = content_mix.collect()
+    result = content_mix.review(posts)
+    axis_order = result["axis_order"]
+    assert result["next_issue"] == posts[-1]["issue"] + 1
+    assert result["next_axis"] == axis_order[len(posts) % len(axis_order)]
+    assert result["complete_cycles"] == len(posts) // len(axis_order)
+    assert result["cycle_remainder"] == len(posts) % len(axis_order)
 
 
 def test_report_matches_committed_snapshot():

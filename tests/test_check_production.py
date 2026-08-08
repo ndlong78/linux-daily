@@ -10,9 +10,16 @@ sys.path.insert(0, str(TOOLS))
 import check_production  # noqa: E402
 
 
+def _latest_post() -> Path:
+    return max(
+        (ROOT / "posts").glob("post-*.html"),
+        key=lambda path: int(path.name.split("-")[1]),
+    )
+
+
 def test_latest_post_path_is_highest_issue():
     path = Path(check_production._latest_post_path())
-    assert path.name.startswith("post-019-")
+    assert path == _latest_post()
 
 
 def test_site_origin_is_cloudflare_public_domain():
@@ -65,4 +72,4 @@ def test_expected_fingerprint_maps_to_served_paths():
     assert len(fingerprint) == 64
     assert "/" in expected
     assert "/feed.xml" in expected
-    assert any(path.startswith("/posts/post-019-") for path in expected)
+    assert f"/posts/{_latest_post().name}" in expected

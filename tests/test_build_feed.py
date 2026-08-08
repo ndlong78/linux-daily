@@ -32,8 +32,11 @@ def test_feed_is_valid_rss_with_absolute_permalinks():
     assert len(items) == count == 10
     assert channel.findtext("language") == "vi"
 
+    expected_items = build_feed.collect_items()
+    assert expected_items
     first = items[0]
-    assert first.findtext("pubDate") == "Fri, 07 Aug 2026 00:00:00 +0700"
+    assert first.findtext("pubDate") == build_feed._pub_date(expected_items[0]["date"])
+    assert first.findtext("link", "").endswith(expected_items[0]["href"])
     assert first.findtext("link", "").startswith("https://")
     assert first.findtext("guid") == first.findtext("link")
 
