@@ -27,5 +27,5 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Smoke-test linux.no.id.vn
+      - name: Verify production freshness, fingerprint and headers
         run: python tools/check_production.py --attempts 18 --delay 10 --timeout 12
