@@ -1,7 +1,8 @@
 # Linux Daily — Project Status
 
 **Public site:** https://linux.no.id.vn/  
-**Current phase:** P6 — Community  
+**Current phase:** P6 — Community complete  
+**P6.3 status:** ✅ Technical Contributor Review Guide implemented  
 **P6.2 status:** ✅ Issue / Contribution Templates implemented  
 **P6.1 status:** ✅ Contributor Onboarding implemented in PR #56  
 **P5 status:** ✅ Automation complete  
@@ -22,15 +23,22 @@ python3 tools/publish.py check
 
 ## Issue intake
 
-Repository có GitHub Issue Forms riêng cho:
+Repository có GitHub Issue Forms riêng cho bug report, content / technical correction và feature proposal. Issue chooser không cho blank issue; báo cáo bảo mật được hướng sang GitHub Security Policy / `SECURITY.md` thay vì public issue. `docs/issue-guidelines.md` mô tả cách chọn form và đường từ issue sang PR.
 
-- bug report;
-- content / technical correction;
-- feature proposal.
+## Technical review baseline
 
-Issue chooser không cho blank issue. Báo cáo bảo mật được hướng sang GitHub Security Policy / `SECURITY.md` thay vì public issue. `docs/issue-guidelines.md` mô tả cách chọn form, thông tin tối thiểu để triage và đường từ issue sang PR.
+Technical reviewer dùng `docs/technical-review-guide.md` để review một PR độc lập mà không cần biết lịch sử repository. Guide bao phủ:
 
-Issue Forms chỉ phục vụ intake/triage, không kích hoạt automation ghi, auto-merge hoặc tạo source of truth mới.
+- source quality và claim-to-evidence;
+- Ubuntu/Xubuntu, Debian, Fedora và FreeBSD portability;
+- FreeBSD service/package/firewall model riêng;
+- rollback cho networking/firewall/auth;
+- destructive semantics + backup/restore evidence cho storage;
+- shell/automation portability, quoting, exit codes và privilege;
+- verification steps, metadata và generated-artifact consistency;
+- mức finding: blocker / needs change / suggestion.
+
+PR template trỏ trực tiếp tới guide này cho các thay đổi content/technical.
 
 ## Automation baseline
 
@@ -64,16 +72,17 @@ Issue Forms chỉ phục vụ intake/triage, không kích hoạt automation ghi,
 | P3 — Reliability & Operations | ✅ | Dashboard, production fingerprint, release automation, performance budget |
 | P4 — Content Growth | ✅ | Taxonomy, navigation, search/archive, content-mix review |
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
-| P6 — Community | 🚧 | P6.1 onboarding + P6.2 issue intake complete; tiếp theo technical review guide |
+| P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
 
 ## Tài liệu chính
 
 - `docs/contributor-quickstart.md` — zero-to-green contributor flow.
 - `docs/issue-guidelines.md` — issue triage và contribution handoff.
+- `docs/technical-review-guide.md` — checklist review kỹ thuật độc lập.
 - `CONTRIBUTING.md` — contribution policy.
 - `AGENTS.md` — AI-agent operating contract.
 - `docs/publish-pipeline.md`, `docs/audit-report.md`, `docs/workflow-safety.md` — vận hành/automation.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. Hạng mục tiếp theo là **P6.3 — Technical Contributor Review Guide**.
+Xem `docs/ROADMAP.md`. P6 Community đã hoàn tất; phase tiếp theo chỉ nên mở khi có requirement sản phẩm/vận hành mới rõ ràng.
