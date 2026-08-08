@@ -12,11 +12,9 @@
 
 ## Kiểm thử
 
-- [ ] `ruff check tools/ tests/`
-- [ ] `pytest -q`
-- [ ] `python3 tools/build.py --check`
-- [ ] `python3 tools/repo_health.py`
+- [ ] `python3 tools/publish.py check`
 - [ ] External link check nếu PR thay URL/source
+- [ ] `python3 tools/workflow_safety.py` nếu PR thay GitHub Actions
 - [ ] Production smoke nếu PR ảnh hưởng serving/deploy
 
 ## Content / technical review
