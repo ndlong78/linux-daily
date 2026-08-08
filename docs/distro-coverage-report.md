@@ -5,24 +5,30 @@
 ## Snapshot
 
 - Published posts: **19**
-- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **19/19**
+- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **14/19**
 - Posts with explicit FreeBSD code blocks: **19/19**
 - Linux-only command/path violations inside FreeBSD blocks: **0**
+- Full coverage enforcement starts at issue: **#020**
 
 | Platform | Posts with explicit coverage |
 |---|---:|
-| Ubuntu / Xubuntu | 19/19 |
-| Debian | 19/19 |
-| Fedora | 19/19 |
+| Ubuntu / Xubuntu | 14/19 |
+| Debian | 18/19 |
+| Fedora | 17/19 |
 | FreeBSD | 19/19 |
 
-## Review queue
+## Historical review queue
 
-- Không có bài nào vi phạm baseline P7.1 hiện tại.
+- #007 thiếu distro coverage: Ubuntu / Xubuntu
+- #008 thiếu distro coverage: Ubuntu / Xubuntu, Fedora
+- #010 thiếu distro coverage: Ubuntu / Xubuntu
+- #014 thiếu distro coverage: Ubuntu / Xubuntu
+- #017 thiếu distro coverage: Ubuntu / Xubuntu, Debian, Fedora
 
 ## Policy boundary
 
-- Mỗi bài phải nhắc rõ Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.
-- Mỗi bài phải có ít nhất một code block FreeBSD được đánh dấu `class="bsd"` để tách semantics khỏi Linux.
-- Gate chỉ hard-fail các Linux-only command/path rõ ràng trong block FreeBSD; nó không suy đoán portability từ mọi token CLI.
+- Các bài trước #020 được inventory như technical debt; thiếu coverage cũ xuất hiện trong review queue nhưng không làm CI đỏ.
+- Từ #020, bài mới phải nhắc rõ Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.
+- Mọi bài phải có ít nhất một code block FreeBSD được đánh dấu `class="bsd"` để tách semantics khỏi Linux.
+- Gate hard-fail các Linux-only command/path rõ ràng trong block FreeBSD; nó không suy đoán portability từ mọi token CLI.
 - Technical reviewer vẫn chịu trách nhiệm kiểm package name, service name, filesystem path, firewall model và behavior thực tế trên từng HĐH.
