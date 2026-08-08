@@ -1,0 +1,40 @@
+{
+  "version": 1,
+  "effective_from_issue": 20,
+  "review_windows_days": {
+    "high": 90,
+    "medium": 180,
+    "low": 365
+  },
+  "axis_policy": {
+    "Networking": {
+      "volatility": "medium",
+      "reason": "Network tooling, service defaults and firewall behavior can drift across distro releases."
+    },
+    "Bảo mật": {
+      "volatility": "high",
+      "reason": "Security guidance, package defaults and hardening recommendations need comparatively frequent review."
+    },
+    "Storage": {
+      "volatility": "medium",
+      "reason": "Storage commands are stable but filesystem, package and platform guidance can change."
+    },
+    "Công cụ mới": {
+      "volatility": "high",
+      "reason": "Tool capabilities, install methods and supported platforms change relatively quickly."
+    },
+    "Monitoring": {
+      "volatility": "medium",
+      "reason": "Observability tools and output semantics evolve, while core troubleshooting concepts are moderately stable."
+    },
+    "Automation": {
+      "volatility": "medium",
+      "reason": "Shell and automation guidance is durable but package, interpreter and platform behavior can drift."
+    },
+    "Ôn tập": {
+      "volatility": "medium",
+      "reason": "End-to-end labs inherit the drift risk of the commands and services they combine."
+    }
+  },
+  "overrides": {}
+}

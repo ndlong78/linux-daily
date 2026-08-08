@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -37,6 +37,24 @@ Chi tiết policy và false-positive boundary: `docs/distro-portability.md`.
 Các bài lịch sử có finding context-sensitive được đưa vào review queue thay vì rewrite tự động. Repository-wide blocker như remote pipe-to-shell, `chmod 777` hoặc catastrophic recursive operations vẫn fail ngay.
 
 Chi tiết policy: `docs/command-config-quality.md`.
+
+## P7.3 content freshness
+
+`tools/content_freshness.py` đọc `freshness.json` và tính trạng thái `current`, `review-due` hoặc `historically-valid` mà không sửa bài viết.
+
+`review-due` được hiển thị như actionable queue nhưng không làm publish CI fail mặc định chỉ vì thời gian trôi qua. Policy/ledger inconsistency vẫn fail cứng. Khi cần audit nghiêm ngặt có thể chạy:
+
+```bash
+python3 tools/content_freshness.py --fail-review-due
+```
+
+Structured data cho audit/dashboard:
+
+```bash
+python3 tools/content_freshness.py --json
+```
+
+Chi tiết policy: `docs/content-freshness.md`.
 
 ## Human control
 

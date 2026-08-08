@@ -33,6 +33,7 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/content_mix.py", "--check"],
             [PYTHON, "tools/distro_coverage.py", "--check"],
             [PYTHON, "tools/command_quality.py"],
+            [PYTHON, "tools/content_freshness.py"],
             [PYTHON, "tools/release.py", "validate"],
             [PYTHON, "tools/performance_budget.py"],
             [PYTHON, "tools/repo_health.py"],
