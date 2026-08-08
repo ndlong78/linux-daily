@@ -22,6 +22,7 @@ def command_plan(mode: str) -> list[list[str]]:
     if mode == "prepare":
         return [
             [PYTHON, "tools/build.py"],
+            [PYTHON, "tools/learning_dashboard.py"],
             [PYTHON, "tools/content_mix.py"],
             [PYTHON, "tools/taxonomy.py"],
             [PYTHON, "tools/distro_coverage.py"],
@@ -38,6 +39,7 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/quality_dashboard.py", "--check"],
             [PYTHON, "tools/learning_metadata.py"],
             [PYTHON, "tools/topic_progression.py"],
+            [PYTHON, "tools/learning_dashboard.py", "--check"],
             [PYTHON, "tools/release.py", "validate"],
             [PYTHON, "tools/performance_budget.py"],
             [PYTHON, "tools/repo_health.py"],

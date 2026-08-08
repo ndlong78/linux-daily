@@ -10,7 +10,7 @@ Sau khi thêm hoặc sửa bài:
 python tools/publish.py prepare
 ```
 
-Pipeline regenerate các artifact deterministic qua `tools/build.py`, gồm public Learning Paths page, rồi cập nhật content-mix report, taxonomy inventory, distro-coverage report và canonical P7 quality dashboard. Nó không commit, push, mở PR hay merge.
+Pipeline regenerate các artifact deterministic qua `tools/build.py`, sau đó regenerate public Learning Dashboard và cập nhật content-mix report, taxonomy inventory, distro-coverage report cùng canonical P7 quality dashboard. Nó không commit, push, mở PR hay merge.
 
 ## Check
 
@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -126,11 +126,7 @@ python3 tools/topic_progression.py
 python3 tools/topic_progression.py --json
 ```
 
-Normal `publish.py check` hard-fail khi:
-
-- prerequisite có trong cùng path nhưng chỉ xuất hiện sau bài phụ thuộc;
-- hai step liên tiếp tăng difficulty quá một bậc, hiện tại tương đương `basic -> advanced`;
-- upstream P8.1/P8.2 validation đã lỗi.
+Normal `publish.py check` hard-fail khi prerequisite xuất hiện sau bài phụ thuộc trong cùng path, khi hai step liên tiếp tăng difficulty quá một bậc, hoặc khi upstream P8.1/P8.2 validation lỗi.
 
 Prerequisite nằm ngoài path chỉ là cross-path dependency informational vì public Learning Paths đã có link `Học trước`. Missing difficulty tier như baseline chưa có `advanced` được surface là `ATTENTION`, không làm CI đỏ mặc định.
 
@@ -141,6 +137,25 @@ python3 tools/topic_progression.py --fail-gaps
 ```
 
 Chi tiết: `docs/topic-progression.md`.
+
+## P8.4 learning dashboard
+
+`tools/learning_dashboard.py` không có ledger riêng. Nó import kết quả P8.1–P8.3 rồi dựng public curriculum dashboard:
+
+```bash
+python3 tools/learning_dashboard.py
+python3 tools/learning_dashboard.py --json
+```
+
+Kiểm deterministic artifact:
+
+```bash
+python3 tools/learning_dashboard.py --check
+```
+
+`publish.py prepare` regenerate `learning-dashboard.html`; `publish.py check` chạy `--check` sau learning metadata + topic progression. Dashboard status kế thừa P8.3, nên baseline `ATTENTION` vì chưa có `advanced` vẫn pass normal pipeline nếu hard finding = 0.
+
+Public page được đưa vào sitemap/repository-health và chịu website/SEO, accessibility, self-host font cùng internal-link contracts. Chi tiết: `docs/learning-dashboard.md`.
 
 ## Human control
 

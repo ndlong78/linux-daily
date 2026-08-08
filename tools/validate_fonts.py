@@ -11,6 +11,7 @@ from html.parser import HTMLParser
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONT_CSS = os.path.join(ROOT, "assets", "fonts.css")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 TEMPLATES = [
@@ -99,7 +100,12 @@ def _check_page(path: str, report: Report) -> None:
 
 def run() -> Report:
     report = Report()
-    pages = [INDEX_PATH, LEARNING_PATHS_PATH, *sorted(glob.glob(POSTS_GLOB))]
+    pages = [
+        INDEX_PATH,
+        LEARNING_DASHBOARD_PATH,
+        LEARNING_PATHS_PATH,
+        *sorted(glob.glob(POSTS_GLOB)),
+    ]
 
     for path in [*pages, *TEMPLATES, FONT_CSS]:
         _check_external_hosts(path, report)

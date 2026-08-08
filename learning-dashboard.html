@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learning Dashboard — Linux Daily</title>
+<meta name="description" content="Dashboard tổng hợp lộ trình, độ khó, prerequisite và progression health của Linux Daily.">
+<link rel="canonical" href="https://linux.no.id.vn/learning-dashboard.html">
+<link rel="preload" href="assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/style.css">
+<link rel="stylesheet" href="assets/learning-dashboard.css">
+</head>
+<body class="learning-dashboard">
+  <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+  <div class="wrap">
+    <header class="site">
+      <div class="site-brand">Linux Daily</div>
+      <h1 class="site">Learning Dashboard</h1>
+      <p class="site-lede">Một view tổng hợp từ Learning Paths, Difficulty &amp; Prerequisites và Topic Progression — không tạo thêm curriculum source of truth.</p>
+      <nav class="dashboard-nav" aria-label="Learning navigation"><a href="index.html">TẤT CẢ BÀI</a> · <a href="learning-paths.html">LEARNING PATHS</a> · <a href="archive.html">SEARCH &amp; ARCHIVE</a></nav>
+    </header>
+    <main id="main-content">
+      <section aria-labelledby="curriculum-overview">
+        <h2 id="curriculum-overview">Tổng quan curriculum</h2>
+        <div class="metric-grid">
+          <div class="metric"><strong>19</strong><span>BÀI</span></div>
+          <div class="metric"><strong>4</strong><span>LỘ TRÌNH</span></div>
+          <div class="metric"><strong>16</strong><span>PREREQUISITE EDGES</span></div>
+          <div class="metric status-attention"><strong>ATTENTION</strong><span>PROGRESSION</span></div>
+        </div>
+      </section>
+      <section aria-labelledby="difficulty-mix">
+        <h2 id="difficulty-mix">Độ khó</h2>
+        <div class="difficulty-grid">
+          <div><strong>8</strong><span>Cơ bản</span></div>
+          <div><strong>11</strong><span>Trung cấp</span></div>
+          <div><strong>0</strong><span>Nâng cao</span></div>
+        </div>
+        <p class="attention-note"><strong>ATTENTION:</strong> curriculum chưa có bài Nâng cao. Đây là gap được giữ nguyên để theo dõi, không relabel bài cũ chỉ để đạt PASS.</p>
+      </section>
+      <section aria-labelledby="progression-health">
+        <h2 id="progression-health">Progression health</h2>
+        <ul class="health-list">
+          <li><strong>0</strong> hard findings: không có prerequisite đứng sau dependent và không có difficulty jump quá một tier.</li>
+          <li><strong>23</strong> prerequisite references trong các learning path: <strong>17 local</strong> + <strong>6 cross-path</strong>.</li>
+          <li>Cross-path prerequisite là dependency hợp lệ; người học dùng link “Học trước” thay vì coi đó là ordering failure.</li>
+        </ul>
+      </section>
+      <section aria-labelledby="path-health">
+        <h2 id="path-health">Các lộ trình</h2>
+        <div class="dashboard-paths">
+          <article class="dashboard-path">
+            <h3>Nền tảng quản trị server</h3>
+            <p>Từ một máy mới đến khả năng vận hành, truy cập và chẩn đoán server an toàn.</p>
+            <p class="path-health-meta">7 bước · 4 Cơ bản · 3 Trung cấp · 0 Nâng cao</p>
+            <p class="path-health-meta">Prerequisite: 3 local · 0 cross-path · Mức cao nhất: Trung cấp</p>
+            <a class="path-cta" href="learning-paths.html#server-foundations">Mở lộ trình →</a>
+          </article>
+          <article class="dashboard-path">
+            <h3>Networking &amp; Security</h3>
+            <p>Xây tư duy chẩn đoán mạng, kiểm soát truy cập và bảo vệ dịch vụ từ host đến VPN.</p>
+            <p class="path-health-meta">7 bước · 3 Cơ bản · 4 Trung cấp · 0 Nâng cao</p>
+            <p class="path-health-meta">Prerequisite: 7 local · 1 cross-path · Mức cao nhất: Trung cấp</p>
+            <a class="path-cta" href="learning-paths.html#network-security">Mở lộ trình →</a>
+          </article>
+          <article class="dashboard-path">
+            <h3>Storage &amp; Backup</h3>
+            <p>Quản lý vòng đời dữ liệu từ disk/filesystem đến snapshot, backup, restore và cloud copy.</p>
+            <p class="path-health-meta">8 bước · 3 Cơ bản · 5 Trung cấp · 0 Nâng cao</p>
+            <p class="path-health-meta">Prerequisite: 5 local · 1 cross-path · Mức cao nhất: Trung cấp</p>
+            <a class="path-cta" href="learning-paths.html#storage-backup">Mở lộ trình →</a>
+          </article>
+          <article class="dashboard-path">
+            <h3>Automation &amp; Operations</h3>
+            <p>Biến thao tác lặp lại thành automation có kiểm soát và có tín hiệu quan sát khi vận hành.</p>
+            <p class="path-health-meta">7 bước · 2 Cơ bản · 5 Trung cấp · 0 Nâng cao</p>
+            <p class="path-health-meta">Prerequisite: 2 local · 4 cross-path · Mức cao nhất: Trung cấp</p>
+            <a class="path-cta" href="learning-paths.html#automation-operations">Mở lộ trình →</a>
+          </article>
+        </div>
+      </section>
+    </main>
+    <footer>Linux Daily · Learning Dashboard · #LinuxDaily #SysAdmin</footer>
+  </div>
+</body>
+</html>
