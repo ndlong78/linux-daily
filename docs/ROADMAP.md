@@ -92,9 +92,13 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Generator dùng marker idempotent và được `build.py --check` kiểm để bài mới không làm navigation stale.
 - [x] Backfill toàn bộ bài hiện có và thêm stylesheet riêng, responsive + keyboard-accessible.
 
-### P4.3 — Search & Archive
+### P4.3 — Search & Archive ✅
 
-- [ ] Search/archive khi số bài đủ lớn để cần.
+- [x] `archive.html` nhóm toàn bộ bài theo canonical taxonomy axis, newest-first trong từng nhóm.
+- [x] `search-index.json` derive từ `ld-meta` + `taxonomy.json`; không crawl body HTML và không tạo source of truth mới.
+- [x] Client-side search không cần backend/framework, tìm theo title, lede, axis và secondary tags; hỗ trợ Vietnamese diacritic-insensitive matching.
+- [x] Archive vẫn dùng được khi JavaScript lỗi/tắt; search là progressive enhancement.
+- [x] `build.py --check` chặn archive/search index stale và sitemap discover `archive.html`.
 
 ### P4.4 — Content Mix Review
 
