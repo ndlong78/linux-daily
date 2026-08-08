@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import tools.workflow_safety as workflow_safety
+import workflow_safety
 
 
 def test_repository_workflows_pass_policy():
