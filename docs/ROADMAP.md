@@ -50,7 +50,7 @@ P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 
 ## P3 — Reliability & Operations 🚧
 
-Mục tiêu: biết production đang chạy commit nào, phát hiện regression sớm và có tín hiệu vận hành đủ rõ để xử lý sự cố.
+Mục tiêu: xác minh production đang serve đúng public artifacts mong đợi, phát hiện regression sớm và có tín hiệu vận hành đủ rõ để xử lý sự cố.
 
 ### P3.1 — Operations Dashboard & Repository Insights ✅
 
@@ -59,12 +59,13 @@ Mục tiêu: biết production đang chạy commit nào, phát hiện regression
 - [x] Không biến dashboard thành source of truth mới; dữ liệu derive trực tiếp từ repo và GitHub Actions.
 - [x] Giữ deployment fingerprint/stale-production detection ngoài P3.1 để xử lý đúng ở P3.2.
 
-### P3.2 — Production Observability
+### P3.2 — Production Observability ✅
 
-- [ ] Xác định deployment/version fingerprint có thể kiểm từ production.
-- [ ] Kiểm cache/content headers phù hợp với Cloudflare Worker.
-- [ ] Phát hiện production stale so với `main`.
-- [ ] Chuẩn hóa incident/rollback procedure.
+- [x] Xác định deterministic serving fingerprint từ các public artifacts trọng yếu.
+- [x] Kiểm content-type và cache semantics an toàn cho static public responses; provider-specific header absence chỉ warning để tránh flaky gate.
+- [x] Phát hiện production stale/content drift so với checkout `main` bằng per-endpoint SHA-256 + aggregate fingerprint.
+- [x] Chuẩn hóa incident/rollback procedure trong `docs/production-incident-runbook.md`.
+- [x] Không suy diễn Git SHA từ fingerprint khi deployment pipeline chưa inject commit metadata; fingerprint chứng minh public serving equivalence.
 
 ### P3.3 — Release Automation
 
