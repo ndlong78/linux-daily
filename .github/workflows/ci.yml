@@ -39,6 +39,9 @@ jobs:
       - name: Build + quality gate (index, meta, sources, internal links)
         run: python tools/build.py --check
 
+      - name: Taxonomy metadata consistency
+        run: python tools/taxonomy.py
+
       - name: Release metadata consistency
         run: python tools/release.py validate
 
