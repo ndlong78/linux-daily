@@ -36,6 +36,9 @@ jobs:
       - name: Pytest
         run: pytest -q
 
+      - name: Workflow safety policy
+        run: python tools/workflow_safety.py
+
       - name: Deterministic publish pipeline
         run: python tools/publish.py check
 
