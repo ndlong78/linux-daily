@@ -1,0 +1,67 @@
+name: Content / technical correction
+description: Báo nội dung Linux/Unix sai, thiếu, lỗi thời hoặc cần làm rõ.
+title: "[Content] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Dùng form này cho correction kỹ thuật. Với claim phụ thuộc phiên bản, ưu tiên tài liệu official/upstream để reviewer có thể kiểm chứng nhanh.
+  - type: input
+    id: article
+    attributes:
+      label: Bài liên quan
+      description: Issue number, tiêu đề hoặc URL bài viết.
+      placeholder: "#019 hoặc https://linux.no.id.vn/posts/..."
+    validations:
+      required: true
+  - type: dropdown
+    id: correction_type
+    attributes:
+      label: Loại correction
+      options:
+        - Lệnh / cấu hình sai
+        - Khác biệt distro / FreeBSD chưa chính xác
+        - Nội dung lỗi thời theo phiên bản
+        - Thiếu cảnh báo rollback / destructive semantics
+        - Nguồn kỹ thuật chưa đủ / không còn phù hợp
+        - Lỗi diễn đạt / typo ảnh hưởng ý nghĩa
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Nội dung hiện tại có vấn đề
+      description: Trích dẫn ngắn hoặc mô tả chính xác phần cần sửa; không cần chép cả bài.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed
+    attributes:
+      label: Correction đề xuất
+      description: Nêu nội dung đúng hoặc cách làm rõ hơn.
+    validations:
+      required: true
+  - type: textarea
+    id: sources
+    attributes:
+      label: Nguồn kiểm chứng
+      description: Ưu tiên tài liệu official/upstream hiện hành; mỗi URL một dòng.
+      placeholder: |
+        https://...
+        https://...
+  - type: checkboxes
+    id: platform_review
+    attributes:
+      label: Rà soát phạm vi
+      options:
+        - label: Tôi đã kiểm tra xem correction này có khác nhau giữa Ubuntu/Debian/Fedora/FreeBSD hay không.
+          required: true
+        - label: Nếu correction liên quan network/storage/auth/automation, tôi đã cân nhắc rollback hoặc destructive impact.
+  - type: checkboxes
+    id: duplicate_check
+    attributes:
+      label: Trước khi gửi
+      options:
+        - label: Tôi đã tìm issue hiện có để tránh báo trùng.
+          required: true
