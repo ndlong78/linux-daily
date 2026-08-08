@@ -13,8 +13,10 @@
 
 `tools/distro_coverage.py` biến yêu cầu multi-OS thành quality gate deterministic:
 
-- mọi bài phải có explicit Ubuntu/Xubuntu, Debian, Fedora và FreeBSD coverage;
-- mọi bài phải có FreeBSD code block riêng (`class="bsd"`);
+- baseline hiện tại: 14/19 bài explicit đủ Ubuntu/Xubuntu + Debian + Fedora + FreeBSD;
+- #007, #008, #010, #014 và #017 nằm trong historical review queue thay vì bị backfill giả chỉ để làm xanh CI;
+- từ #020, bài mới thiếu bất kỳ platform nào sẽ hard-fail;
+- 19/19 bài hiện có FreeBSD code block riêng (`class="bsd"`);
 - Linux-only command/path rõ ràng trong FreeBSD block bị hard-fail;
 - `docs/distro-coverage-report.md` là snapshot generated và phải luôn đồng bộ;
 - `tools/publish.py prepare/check` đã bao gồm distro coverage gate.
@@ -91,7 +93,7 @@ PR template trỏ trực tiếp tới guide này cho các thay đổi content/te
 ## Tài liệu chính
 
 - `docs/distro-portability.md` — P7.1 portability policy và validator boundary.
-- `docs/distro-coverage-report.md` — generated distro coverage snapshot.
+- `docs/distro-coverage-report.md` — generated distro coverage snapshot + historical review queue.
 - `docs/contributor-quickstart.md` — zero-to-green contributor flow.
 - `docs/issue-guidelines.md` — issue triage và contribution handoff.
 - `docs/technical-review-guide.md` — checklist review kỹ thuật độc lập.
