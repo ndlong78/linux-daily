@@ -5,7 +5,7 @@ build.py — Một lệnh duy nhất: dựng website output rồi chạy quality
   python3 tools/build.py            # dựng output + chuẩn hóa post metadata + kiểm định
   python3 tools/build.py --check    # không ghi; chỉ kiểm tra mọi artifact/post đã đồng bộ
 
-Gộp index, archive/search, RSS, sitemap/robots, historical discovery + social preview metadata,
+Gộp index, archive/search, learning paths, RSS, sitemap/robots, historical discovery + social preview metadata,
 related-content navigation, self-hosted font loading, accessibility landmarks,
 structural/source-backed validation, website/SEO consistency và deterministic internal-link
 gate vào một luồng. External HTTP checks chạy riêng trong CI để lỗi mạng/website bên thứ ba
@@ -24,6 +24,7 @@ import build_feed  # noqa: E402
 import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
 import check_links  # noqa: E402
+import learning_paths  # noqa: E402
 import related_content  # noqa: E402
 import validate_accessibility  # noqa: E402
 import validate_fonts  # noqa: E402
@@ -75,6 +76,8 @@ def main(argv=None) -> int:
             return 1
         if build_archive.run(check=True) != 0:
             return 1
+        if learning_paths.run(check=True) != 0:
+            return 1
         if backfill_site_metadata.run(check=True) != 0:
             return 1
         if backfill_accessibility.run(check=True) != 0:
@@ -97,6 +100,8 @@ def main(argv=None) -> int:
         with open(build_sitemap.ROBOTS_PATH, "w", encoding="utf-8") as f:
             f.write(robots_out)
         if build_archive.run(check=False) != 0:
+            return 1
+        if learning_paths.run(check=False) != 0:
             return 1
         if backfill_site_metadata.run(check=False) != 0:
             return 1
@@ -142,7 +147,7 @@ def main(argv=None) -> int:
         return 1
 
     print(
-        "✓ Build + archive/search + RSS + sitemap/robots + canonical/OG/social + related navigation + "
+        "✓ Build + archive/search + learning paths + RSS + sitemap/robots + canonical/OG/social + related navigation + "
         "self-host fonts + website/SEO + accessibility + source-backed review + internal links: "
         "tất cả kiểm tra đều đạt."
     )
