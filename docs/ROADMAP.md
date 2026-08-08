@@ -34,7 +34,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
 - [x] GitHub Issue Forms riêng cho bug, content/technical correction và feature proposal.
 - [x] Issue chooser tắt blank issue và hướng security report sang GitHub Security Policy / `SECURITY.md`.
-- [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue sang PR.
+- [x] `docs/issue-guidelines.md` hướng dẫn chọn form, thông tin tối thiểu để triage và đường từ issue đến PR.
 - [x] Không thêm automation ghi/merge hoặc dependency vào labels/repository settings ngoài Git.
 
 ### P6.3 — Technical Contributor Review Guide ✅
@@ -79,10 +79,14 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `tools/audit_report.py` dùng cùng aggregator với ngày audit thực tế để surface `review-due` theo thời gian.
 - [x] P7 đóng với hard-error path rõ ràng và non-blocking remediation queue tách biệt.
 
-## P8 — Learning Experience ⬜
+## P8 — Learning Experience 🚧
 
-### P8.1 — Learning Paths ⬜
-- [ ] Nhóm nội dung thành learning paths thực dụng theo mục tiêu nghề nghiệp/kỹ năng thay vì chỉ theo ngày xuất bản.
+### P8.1 — Learning Paths ✅
+- [x] `learning-paths.json` định nghĩa curriculum ordering theo mục tiêu kỹ năng bằng issue ID thay vì copy title/URL.
+- [x] 4 learning paths phủ 19/19 bài hiện có; overlap giữa path được cho phép có chủ đích.
+- [x] `tools/learning_paths.py` hard-fail unknown issue, duplicate step, invalid schema và bài published chưa thuộc path nào.
+- [x] `learning-paths.html` được generate deterministic từ config + `ld-meta`, có canonical/sitemap và accessibility/SEO validation.
+- [x] Operating model và boundary với prerequisites/progression nằm tại `docs/learning-paths.md`.
 
 ### P8.2 — Difficulty & Prerequisites ⬜
 - [ ] Chuẩn hóa difficulty/prerequisite metadata để người học biết nên học gì trước.
@@ -92,6 +96,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
 ### P8.4 — Learning Dashboard ⬜
 - [ ] Tạo derived learning view từ taxonomy, prerequisites và progression mà không thay source of truth của bài viết.
+- [ ] Hợp nhất learning navigation/discovery trên public site khi đủ signal từ P8.1–P8.3.
 
 ## Nguyên tắc roadmap
 
