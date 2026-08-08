@@ -1,0 +1,49 @@
+name: Operations Dashboard
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 07:45 Asia/Ho_Chi_Minh — sau Production Smoke 07:30.
+    - cron: "45 0 * * *"
+  workflow_run:
+    workflows: ["Production Smoke"]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: operations-dashboard
+  cancel-in-progress: true
+
+jobs:
+  report:
+    name: repository-insights
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build source-derived operations dashboard
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/operations_dashboard.py --github --output operations-dashboard.md
+
+      - name: Publish dashboard to job summary
+        if: always()
+        run: cat operations-dashboard.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload dashboard artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: operations-dashboard
+          path: operations-dashboard.md
+          retention-days: 14
