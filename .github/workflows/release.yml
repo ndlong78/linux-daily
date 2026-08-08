@@ -1,0 +1,108 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "SemVer without v prefix (must match VERSION)"
+        required: true
+        type: string
+      confirm:
+        description: "Type release-vX.Y.Z to publish"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: validated-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Require explicit human confirmation
+        env:
+          VERSION_INPUT: ${{ inputs.version }}
+          CONFIRM_INPUT: ${{ inputs.confirm }}
+        run: |
+          test "$CONFIRM_INPUT" = "release-v$VERSION_INPUT" || {
+            echo "Confirmation must equal release-v$VERSION_INPUT" >&2
+            exit 1
+          }
+
+      - name: Validate canonical version and changelog
+        run: python tools/release.py validate --version "${{ inputs.version }}"
+
+      - name: Block release unless CI and Production Smoke are green on this main SHA
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python tools/release.py gate --repository "$GITHUB_REPOSITORY" --sha "$GITHUB_SHA"
+
+      - name: Refuse duplicate tag or release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ inputs.version }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists" >&2
+            exit 1
+          fi
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release $TAG already exists" >&2
+            exit 1
+          fi
+
+      - name: Build curated release notes from CHANGELOG
+        run: python tools/release.py notes --version "${{ inputs.version }}" --output curated-notes.md
+
+      - name: Generate merged-PR notes from GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ inputs.version }}
+        run: |
+          gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
+            -f tag_name="$TAG" \
+            -f target_commitish="$GITHUB_SHA" \
+            --jq '.body' > generated-notes.md
+          {
+            cat curated-notes.md
+            printf '\n---\n\n## Merged changes\n\n'
+            cat generated-notes.md
+          } > release-notes.md
+
+      - name: Publish GitHub tag and release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v${{ inputs.version }}
+        run: |
+          gh release create "$TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" \
+            --title "Linux Daily $TAG" \
+            --notes-file release-notes.md \
+            --latest
+
+      - name: Release summary
+        run: |
+          {
+            echo "# Release published"
+            echo
+            echo "- Tag: \`v${{ inputs.version }}\`"
+            echo "- Commit: \`$GITHUB_SHA\`"
+            echo "- Required gates: CI + Production Smoke on exact SHA"
+          } >> "$GITHUB_STEP_SUMMARY"

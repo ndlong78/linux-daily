@@ -39,6 +39,9 @@ jobs:
       - name: Build + quality gate (index, meta, sources, internal links)
         run: python tools/build.py --check
 
+      - name: Release metadata consistency
+        run: python tools/release.py validate
+
       - name: Repository health summary
         run: python tools/repo_health.py
 

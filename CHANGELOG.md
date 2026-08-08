@@ -1,12 +1,34 @@
 # Changelog
 
-Mọi thay đổi đáng chú ý của Linux Daily được ghi tại đây. Format dựa trên Keep a Changelog và repository dùng Semantic Versioning khi bắt đầu phát hành tag chính thức.
+Mọi thay đổi đáng chú ý của Linux Daily được ghi tại đây. Format dựa trên Keep a Changelog và repository dùng Semantic Versioning cho tag chính thức.
 
 ## [Unreleased]
 
 ### Planned
 
-- P3 — Reliability & Operations.
+- P3.4 — Performance Budget.
+
+## [0.4.0] — 2026-08-08
+
+### Added
+
+- P3.1 Operations Dashboard tổng hợp publication freshness, repository inventory, CI và Production Smoke state.
+- P3.2 Production Observability với per-endpoint SHA-256, aggregate serving fingerprint, stale/content-drift detection và cache/content-header checks.
+- Production incident/rollback runbook.
+- Canonical `VERSION` source cho release SemVer.
+- Release validation tooling và human-approved GitHub Actions release workflow.
+- Release notes tự động ghép curated CHANGELOG với merged-PR notes do GitHub sinh.
+
+### Changed
+
+- `Production Smoke` được nâng thành production observability gate, vẫn giữ workflow name để dashboard không bị phá.
+- Python project metadata lấy version động từ `VERSION` thay vì giữ giá trị `0.1.0` bị stale.
+- Release chỉ được phép khi `CI` và `Production Smoke` cùng `success` trên chính SHA hiện tại của `main`.
+
+### Security
+
+- Release workflow từ chối tag/release trùng và yêu cầu chuỗi xác nhận thủ công trước khi publish.
+- Workflow không tự commit changelog hoặc thay đổi `main`; mọi release metadata vẫn phải được review qua PR.
 
 ## [0.3.0] — 2026-08-07
 

@@ -67,11 +67,12 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] Chuẩn hóa incident/rollback procedure trong `docs/production-incident-runbook.md`.
 - [x] Không suy diễn Git SHA từ fingerprint khi deployment pipeline chưa inject commit metadata; fingerprint chứng minh public serving equivalence.
 
-### P3.3 — Release Automation
+### P3.3 — Release Automation ✅
 
-- [ ] Quy ước version/tag chính thức.
-- [ ] Tự động tạo release notes/changelog từ milestone đã merge.
-- [ ] Không tự động release nếu quality gate hoặc production smoke chưa đạt.
+- [x] Quy ước SemVer chính thức: `VERSION` chứa `X.Y.Z`, Git tag dùng `vX.Y.Z`; Python project metadata derive từ cùng source.
+- [x] Release notes ghép CHANGELOG milestone đã review qua PR với merged-PR notes do GitHub sinh tự động.
+- [x] Release chỉ chạy bằng manual `workflow_dispatch`, yêu cầu explicit confirmation và từ chối publish nếu CI hoặc Production Smoke chưa `success` trên chính SHA hiện tại của `main`.
+- [x] Không cho release workflow tự sửa `main`; CHANGELOG/version vẫn đi qua PR và branch protection.
 
 ### P3.4 — Performance Budget
 
