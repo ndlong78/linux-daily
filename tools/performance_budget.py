@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import glob
-import os
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,6 +18,7 @@ BUDGETS = {
     "social_image_each": 2 * 1024 * 1024,
     "social_images_total": 32 * 1024 * 1024,
 }
+
 
 @dataclass(frozen=True)
 class Finding:
@@ -65,7 +65,14 @@ def collect() -> tuple[list[Finding], dict[str, int]]:
     fonts = [Path(p) for p in glob.glob(str(ROOT / "assets" / "fonts" / "*.woff2"))]
     metrics["fonts_total"] = sum(_size(p) for p in fonts)
     if metrics["fonts_total"] > BUDGETS["fonts_total"]:
-        failures.append(Finding("fonts_total", metrics["fonts_total"], BUDGETS["fonts_total"], "assets/fonts/*.woff2"))
+        failures.append(
+            Finding(
+                "fonts_total",
+                metrics["fonts_total"],
+                BUDGETS["fonts_total"],
+                "assets/fonts/*.woff2",
+            )
+        )
     for p in fonts:
         f = _over("font_each", p, BUDGETS["font_each"])
         if f:
@@ -74,7 +81,14 @@ def collect() -> tuple[list[Finding], dict[str, int]]:
     social = [Path(p) for p in glob.glob(str(ROOT / "posts" / "social" / "post-*-code.png"))]
     metrics["social_images_total"] = sum(_size(p) for p in social)
     if metrics["social_images_total"] > BUDGETS["social_images_total"]:
-        failures.append(Finding("social_images_total", metrics["social_images_total"], BUDGETS["social_images_total"], "posts/social/*.png"))
+        failures.append(
+            Finding(
+                "social_images_total",
+                metrics["social_images_total"],
+                BUDGETS["social_images_total"],
+                "posts/social/*.png",
+            )
+        )
     for p in social:
         f = _over("social_image_each", p, BUDGETS["social_image_each"])
         if f:
