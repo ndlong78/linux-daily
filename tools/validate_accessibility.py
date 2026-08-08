@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX_PATH = os.path.join(ROOT, "index.html")
+LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 STYLE_PATH = os.path.join(ROOT, "assets", "style.css")
 
@@ -97,7 +98,7 @@ def _validate_page(path: str, report: Report) -> None:
 
 def run() -> Report:
     report = Report()
-    for path in [INDEX_PATH, *sorted(glob.glob(POSTS_GLOB))]:
+    for path in [INDEX_PATH, LEARNING_PATHS_PATH, *sorted(glob.glob(POSTS_GLOB))]:
         _validate_page(path, report)
 
     try:
