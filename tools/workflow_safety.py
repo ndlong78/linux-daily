@@ -10,7 +10,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = ROOT / ".github" / "workflows"
 RELEASE_WORKFLOW = "release.yml"
-WRITE_PERMISSION_RE = re.compile(r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$", re.MULTILINE)
+WRITE_PERMISSION_RE = re.compile(
+    r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+    re.MULTILINE,
+)
 
 
 @dataclass
@@ -29,9 +32,16 @@ def _permissions_block(text: str) -> str:
     return match.group(1) if match else ""
 
 
+def _display_path(path: Path) -> str:
+    try:
+        return path.relative_to(ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
 def validate_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
-    rel = path.relative_to(ROOT).as_posix()
+    rel = _display_path(path)
     errors: list[str] = []
     events = _event_block(text)
     permissions = _permissions_block(text)
@@ -43,7 +53,9 @@ def validate_file(path: Path) -> list[str]:
 
     writes = WRITE_PERMISSION_RE.findall(permissions)
     if path.name != RELEASE_WORKFLOW and writes:
-        errors.append(f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}: {', '.join(writes)}")
+        errors.append(
+            f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}: {', '.join(writes)}"
+        )
 
     for banned in ("actions", "pull-requests", "issues", "packages", "deployments"):
         if re.search(rf"^\s{{2}}{re.escape(banned)}:\s*write\s*$", permissions, re.MULTILINE):
