@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import learning_metadata  # noqa: E402
 import learning_paths  # noqa: E402
 
-DIFFICULTY_ORDER = ("basic", "intermediate", "advanced")
+DIFFICULTY_ORDER = tuple(learning_metadata.DIFFICULTY_LABELS)
 DIFFICULTY_RANK = {name: index for index, name in enumerate(DIFFICULTY_ORDER)}
 
 
