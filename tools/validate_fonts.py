@@ -11,10 +11,12 @@ from html.parser import HTMLParser
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FONT_CSS = os.path.join(ROOT, "assets", "fonts.css")
 INDEX_PATH = os.path.join(ROOT, "index.html")
+LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 TEMPLATES = [
     os.path.join(ROOT, "templates", "index.template.html"),
     os.path.join(ROOT, "templates", "post.template.html"),
+    os.path.join(ROOT, "templates", "learning-paths.template.html"),
 ]
 EXTERNAL_FONT_HOSTS = ("fonts.googleapis.com", "fonts.gstatic.com")
 FONT_FILES = (
@@ -97,7 +99,7 @@ def _check_page(path: str, report: Report) -> None:
 
 def run() -> Report:
     report = Report()
-    pages = [INDEX_PATH, *sorted(glob.glob(POSTS_GLOB))]
+    pages = [INDEX_PATH, LEARNING_PATHS_PATH, *sorted(glob.glob(POSTS_GLOB))]
 
     for path in [*pages, *TEMPLATES, FONT_CSS]:
         _check_external_hosts(path, report)

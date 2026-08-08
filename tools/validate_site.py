@@ -15,6 +15,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
 INDEX_PATH = os.path.join(ROOT, "index.html")
 ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
+LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 FEED_PATH = os.path.join(ROOT, "feed.xml")
 SITEMAP_PATH = os.path.join(ROOT, "sitemap.xml")
 ROBOTS_PATH = os.path.join(ROOT, "robots.txt")
@@ -203,12 +204,15 @@ def run() -> Report:
         else:
             canonicals[canonical] = rel
 
-    archive_canonical = _secondary_page_canonical(ARCHIVE_PATH, site, report)
-    if archive_canonical:
-        if archive_canonical in canonicals:
-            report.errors.append(f"duplicate canonical: {archive_canonical}")
+    for path in (ARCHIVE_PATH, LEARNING_PATHS_PATH):
+        canonical = _secondary_page_canonical(path, site, report)
+        if not canonical:
+            continue
+        rel = os.path.relpath(path, ROOT)
+        if canonical in canonicals:
+            report.errors.append(f"duplicate canonical: {canonical}")
         else:
-            canonicals[archive_canonical] = "archive.html"
+            canonicals[canonical] = rel
 
     expected_pages = set(canonicals)
     sitemap_urls = _sitemap_urls(report)
@@ -241,7 +245,17 @@ def run() -> Report:
         report.errors.append("robots.txt không trỏ đúng sitemap public")
 
     _check_stale_hosts(
-        [SITE_CONFIG, INDEX_PATH, ARCHIVE_PATH, FEED_PATH, SITEMAP_PATH, ROBOTS_PATH, *posts], report
+        [
+            SITE_CONFIG,
+            INDEX_PATH,
+            ARCHIVE_PATH,
+            LEARNING_PATHS_PATH,
+            FEED_PATH,
+            SITEMAP_PATH,
+            ROBOTS_PATH,
+            *posts,
+        ],
+        report,
     )
     return report
 

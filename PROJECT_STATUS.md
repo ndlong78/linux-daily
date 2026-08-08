@@ -1,68 +1,42 @@
 # Linux Daily — Project Status
 
 **Public site:** https://linux.no.id.vn/  
-**Current phase:** P7 — Content Quality at Scale complete  
-**P7.4 status:** ✅ Audit & Quality Dashboard implemented  
-**P7.3 status:** ✅ Content Freshness & Technical Drift implemented  
-**P7.2 status:** ✅ Command & Configuration Quality Gate implemented  
-**P7.1 status:** ✅ Distro Coverage & Portability Matrix implemented  
-**Next focus:** P8.1 — Learning Paths  
+**Current phase:** P8 — Learning Experience  
+**P8.1 status:** ✅ Learning Paths implemented  
+**Next focus:** P8.2 — Difficulty & Prerequisites  
+**P7 status:** ✅ Content Quality at Scale complete  
 **P6 status:** ✅ Community complete  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
-## P7.4 quality dashboard baseline
+## P8.1 learning paths baseline
 
-`tools/quality_dashboard.py` là lớp tổng hợp read-only trên các source of truth hiện có:
+`learning-paths.json` và `tools/learning_paths.py` thêm curriculum ordering theo mục tiêu thực tế mà không thay post metadata/taxonomy:
 
-- import P7.1 distro coverage/FreeBSD portability result;
-- import P7.2 command/config findings;
-- import P7.3 freshness state theo `as-of`;
-- đọc source-backed technical review evidence qua post metadata + existing source gate;
-- không định nghĩa lại validator rule và không làm yếu enforcement của P7.1–P7.3.
+- **4 learning paths**: Nền tảng quản trị server, Networking & Security, Storage & Backup, Automation & Operations;
+- **19/19 published posts** thuộc ít nhất một path;
+- path chỉ lưu issue ID; title/date/eyebrow/href được resolve từ `ld-meta` của bài gốc;
+- một bài có thể thuộc nhiều path, nhưng không được lặp trong cùng path;
+- unknown issue, duplicate step, invalid schema hoặc bài published chưa thuộc path nào đều hard-fail;
+- public `learning-paths.html` được generate deterministic từ config + post metadata;
+- page có canonical, nằm trong sitemap và chịu website/SEO + accessibility gates;
+- `python3 tools/learning_paths.py --json` cung cấp structured inventory cho P8.4.
 
-Canonical `docs/quality-dashboard.md` dùng `state.json:last_published_date` để deterministic. Baseline tại publication snapshot hiện tại:
+Operating model: `docs/learning-paths.md`.
 
-- P7 overall: **ATTENTION**, không có hard error;
-- distro coverage: **14/19** complete, 5 historical remediation items;
-- FreeBSD blocks: **19/19**, portability violations: **0**;
+P8.1 chưa suy đoán difficulty/prerequisite từ thứ tự path. P8.2 sẽ chuẩn hóa các metadata đó; P8.3 mới đánh giá knowledge progression/gaps. Navigation hợp nhất trên homepage/learning dashboard được giữ cho P8.4 để tránh hard-code UI trước khi P8.2–P8.3 có source signals hoàn chỉnh.
+
+## P7 quality baseline
+
+P7 đã đóng với các guardrail vẫn hoạt động trong publish pipeline:
+
+- distro coverage: **14/19** complete, 5 historical remediation items (#007, #008, #010, #014, #017);
+- FreeBSD code block: **19/19**, Linux-only portability violation trong BSD block: **0**;
 - command/config blockers: **0**;
-- freshness: **19 current / 0 review-due / 0 historically-valid**;
-- structured source evidence: **19/19**, tổng **69** official/upstream sources.
-
-`ATTENTION` không phải PASS giả và cũng không phải hard failure: historical debt vẫn có owner + remediation path rõ ràng. `tools/audit_report.py` dùng cùng aggregator với ngày audit thực tế nên freshness queue tiếp tục tiến triển theo thời gian.
-
-## P7.3 freshness baseline
-
-`freshness.json` và `tools/content_freshness.py` tách technical review khỏi freshness lifecycle:
-
-- publication date là freshness baseline ban đầu nếu chưa có `last_reviewed` override;
-- Bảo mật và Công cụ mới dùng review window 90 ngày; các axis hiện tại còn lại dùng 180 ngày;
-- `current` và `review-due` được tính theo ngày chạy, không ghi cứng vào HTML;
-- `review-due` tạo review queue nhưng không tự làm CI đỏ chỉ vì thời gian trôi qua;
-- strict/manual audit có thể dùng `--fail-review-due`;
-- `historically-valid` phải được khai báo thủ công với reason, optional replacement phải trỏ issue tồn tại;
-- từ #020, freshness gate yêu cầu `review_status=reviewed/published` trước khi merge.
-
-## P7.2 command/config quality baseline
-
-`tools/command_quality.py` static-scan các code block nhưng không thực thi command trong CI:
-
-- hard-fail remote download pipe trực tiếp vào `sh`/`bash`, `chmod 777`, catastrophic `rm -rf` hoặc recursive chmod/chown trên system root;
-- inventory code blocks, command lines, privileged lines và destructive storage lines;
-- nhận diện privileged shell redirection, TLS verification bypass, weak literal credential và destructive command thiếu safety context;
-- #001–#019 giữ context-sensitive finding ở historical review queue; từ #020 các finding này trở thành blocker.
-
-## P7.1 distro portability baseline
-
-`tools/distro_coverage.py` biến yêu cầu multi-OS thành quality gate deterministic:
-
-- baseline: 14/19 bài explicit đủ Ubuntu/Xubuntu + Debian + Fedora + FreeBSD;
-- #007, #008, #010, #014 và #017 nằm trong historical review queue;
-- từ #020, bài mới thiếu bất kỳ platform nào sẽ hard-fail;
-- 19/19 bài có FreeBSD code block riêng (`class="bsd"`);
-- Linux-only command/path rõ ràng trong FreeBSD block bị hard-fail.
+- freshness tại publication snapshot: **19 current / 0 review-due / 0 historically-valid**;
+- source-backed evidence: **19/19**, tổng **69** official/upstream sources;
+- `docs/quality-dashboard.md` tổng hợp owner/remediation nhưng không reimplement rule P7.1–P7.3.
 
 ## Contributor entrypoint
 
@@ -74,13 +48,13 @@ python3 -m pip install -e ".[dev]"
 python3 tools/publish.py check
 ```
 
-`tools/publish.py` là validation contract dùng chung giữa local và CI. Prepare regenerate canonical quality dashboard; check xác nhận dashboard còn đồng bộ với P7 source signals.
+Khi thêm bài mới, contributor phải cập nhật `learning-paths.json`; nếu không, Learning Paths gate sẽ báo bài đó chưa được gán curriculum path.
 
 ## Automation baseline
 
-- `python3 tools/publish.py prepare` regenerate deterministic artifacts/reports, gồm `docs/quality-dashboard.md`.
-- `python3 tools/publish.py check` chạy local publish gates read-only, gồm P7.1–P7.4.
-- `python3 tools/audit_report.py` tạo audit local + P7 quality evidence; weekly workflow bổ sung GitHub/production evidence.
+- `python3 tools/publish.py prepare` regenerate deterministic site/reports; `tools/build.py` hiện bao gồm Learning Paths page.
+- `python3 tools/publish.py check` chạy local read-only gates gồm P7 quality + P8.1 learning-path consistency.
+- `python3 tools/audit_report.py` tạo audit local + quality evidence; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
 
@@ -90,10 +64,11 @@ python3 tools/publish.py check
 - Workflow safety policy.
 - Deterministic publish pipeline.
 - Source-backed technical validation.
-- Distro coverage + FreeBSD portability baseline.
-- Command/config static quality + destructive/privilege review signals.
+- Distro coverage + FreeBSD portability.
+- Command/config static quality.
 - Content freshness lifecycle + technical-drift review queue.
 - P7 quality dashboard với ownership/remediation queue.
+- P8.1 learning path schema + 100% curriculum coverage gate.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
@@ -114,19 +89,20 @@ python3 tools/publish.py check
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
 | P7 — Content Quality at Scale | ✅ | Portability + command quality + freshness + quality dashboard |
-| P8 — Learning Experience | ⬜ | Learning paths, prerequisites, progression và learning dashboard |
+| P8 — Learning Experience | 🚧 | P8.1 learning paths complete; P8.2 next |
 
 ## Tài liệu chính
 
-- `docs/quality-dashboard.md` — P7.4 canonical derived quality snapshot + remediation ownership.
-- `docs/content-freshness.md` — P7.3 freshness/drift policy và remediation flow.
-- `freshness.json` — P7.3 review windows, axis volatility và explicit overrides.
-- `docs/command-config-quality.md` — P7.2 static command/config quality policy.
-- `docs/distro-portability.md` — P7.1 portability policy và validator boundary.
-- `docs/distro-coverage-report.md` — generated distro coverage snapshot + historical review queue.
+- `docs/learning-paths.md` — P8.1 schema, coverage contract và operating model.
+- `learning-paths.json` — P8.1 path definitions/source of truth.
+- `learning-paths.html` — generated public learning path page.
+- `docs/quality-dashboard.md` — P7.4 canonical derived quality snapshot.
+- `docs/content-freshness.md` — P7.3 freshness/drift policy.
+- `docs/command-config-quality.md` — P7.2 command/config policy.
+- `docs/distro-portability.md` — P7.1 portability policy.
 - `docs/technical-review-guide.md` — technical/source review contract.
 - `docs/publish-pipeline.md`, `docs/audit-report.md`, `docs/workflow-safety.md` — vận hành/automation.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P7 đã đóng; focus kế tiếp là P8.1 — Learning Paths.
+Xem `docs/ROADMAP.md`. P8 đang mở; focus kế tiếp là P8.2 — Difficulty & Prerequisites.

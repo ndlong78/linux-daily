@@ -23,6 +23,7 @@ from urllib.request import Request, urlopen
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
+LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
 TRANSIENT_STATUSES = {408, 425, 429, 500, 502, 503, 504}
@@ -75,7 +76,11 @@ def _load_site() -> dict:
 
 
 def _html_files() -> list[str]:
-    return [os.path.join(ROOT, "index.html"), *sorted(glob.glob(POSTS_GLOB))]
+    return [
+        os.path.join(ROOT, "index.html"),
+        LEARNING_PATHS_PATH,
+        *sorted(glob.glob(POSTS_GLOB)),
+    ]
 
 
 def _parse_file(path: str) -> LinkParser:
@@ -172,9 +177,6 @@ def _request_once(url: str, timeout: float) -> int:
         with urlopen(head_req, timeout=timeout) as response:
             return int(response.status)
     except HTTPError:
-        # HEAD is only an optimization. Some documentation/CDN endpoints reject or
-        # mis-handle HEAD while the user-visible GET works, so never declare a link
-        # broken until GET has been tried as well.
         pass
 
     get_req = Request(url, headers={**headers, "Range": "bytes=0-0"}, method="GET")
