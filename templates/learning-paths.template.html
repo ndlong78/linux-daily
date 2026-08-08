@@ -17,7 +17,7 @@
     <header class="site">
       <div class="site-brand">{{ site_title }}</div>
       <h1 class="site">Learning Paths</h1>
-      <p class="site-lede">Không cần học theo ngày xuất bản. Chọn mục tiêu vận hành của bạn, rồi đi theo thứ tự bài đã được sắp để kiến thức nối tiếp nhau.</p>
+      <p class="site-lede">Không cần học theo ngày xuất bản. Chọn mục tiêu vận hành của bạn, xem độ khó và prerequisite của từng bài, rồi đi theo thứ tự đã được sắp.</p>
       <div class="learning-nav"><a href="index.html">← TẤT CẢ BÀI</a> · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
     </header>
     <main id="main-content" class="learning-grid">
@@ -29,12 +29,7 @@
         <p class="path-audience"><strong>Phù hợp:</strong> {{ path.audience }}</p>
         <ol class="path-steps">
 {% for step in path.steps %}
-          <li class="path-step">
-            <div>
-              <a href="{{ step.href }}">#{{ "%03d"|format(step.issue) }} — {{ step.title }}</a>
-              <div class="path-meta"><span>{{ step.eyebrow }}</span><span>{{ step.date }}</span></div>
-            </div>
-          </li>
+          <li class="path-step"><div><a href="{{ step.href }}">#{{ "%03d"|format(step.issue) }} — {{ step.title }}</a><div class="path-meta"><span>{{ step.eyebrow }}</span><span class="difficulty {{ step.difficulty }}">{{ step.difficulty_label }}</span><span>{{ step.date }}</span></div>{% if step.prerequisites %}<div class="path-prerequisites"><strong>Học trước:</strong>{% for prerequisite in step.prerequisites %}<a href="{{ prerequisite.href }}">#{{ "%03d"|format(prerequisite.issue) }} {{ prerequisite.title }}</a>{% if not loop.last %}<span aria-hidden="true">·</span>{% endif %}{% endfor %}</div>{% endif %}</div></li>
 {% endfor %}
         </ol>
       </section>

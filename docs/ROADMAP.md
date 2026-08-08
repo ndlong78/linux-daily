@@ -88,8 +88,12 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `learning-paths.html` được generate deterministic từ config + `ld-meta`, có canonical/sitemap và accessibility/SEO validation.
 - [x] Operating model và boundary với prerequisites/progression nằm tại `docs/learning-paths.md`.
 
-### P8.2 — Difficulty & Prerequisites ⬜
-- [ ] Chuẩn hóa difficulty/prerequisite metadata để người học biết nên học gì trước.
+### P8.2 — Difficulty & Prerequisites ✅
+- [x] `learning-metadata.json` chuẩn hóa difficulty (`basic` / `intermediate` / `advanced`) và prerequisite issue IDs cho mọi bài published.
+- [x] `tools/learning_metadata.py` hard-fail metadata thiếu/thừa, difficulty không hợp lệ, prerequisite sai/self/duplicate và dependency cycle.
+- [x] Baseline 19 bài: 8 Cơ bản, 11 Trung cấp, 0 Nâng cao; 16 prerequisite edges và 0 cycle.
+- [x] `tools/learning_paths.py` import cùng metadata để hiển thị độ khó + “Học trước”, không reimplement rule.
+- [x] Learning metadata gate được đưa vào `tools/publish.py check`; policy nằm tại `docs/difficulty-prerequisites.md`.
 
 ### P8.3 — Topic Progression ⬜
 - [ ] Phát hiện khoảng trống hoặc bước nhảy kiến thức giữa các bài cùng axis/series.

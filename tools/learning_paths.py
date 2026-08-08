@@ -15,6 +15,7 @@ from urllib.parse import urljoin
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import learning_metadata  # noqa: E402
 import postmeta  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -59,10 +60,15 @@ def collect_posts() -> dict[int, dict]:
     return dict(sorted(posts.items()))
 
 
-def review(config: dict | None = None, posts: dict[int, dict] | None = None) -> dict:
+def review(
+    config: dict | None = None,
+    posts: dict[int, dict] | None = None,
+    learning_config: dict | None = None,
+) -> dict:
     config = config if config is not None else _load_json(CONFIG_PATH)
     posts = posts if posts is not None else collect_posts()
-    errors: list[str] = []
+    learning = learning_metadata.review(config=learning_config, posts=posts)
+    errors: list[str] = list(learning["errors"])
 
     if config.get("version") != 1:
         errors.append("learning-paths.json: version phải là 1")
@@ -72,6 +78,7 @@ def review(config: dict | None = None, posts: dict[int, dict] | None = None) -> 
         return {
             "paths": [],
             "posts": posts,
+            "learning": learning,
             "assigned_issues": set(),
             "unassigned_issues": sorted(posts),
             "assignment_counts": {},
@@ -124,7 +131,21 @@ def review(config: dict | None = None, posts: dict[int, dict] | None = None) -> 
                 errors.append(f"{label}: tham chiếu issue không tồn tại #{raw_issue:03d}")
                 continue
             assignments[raw_issue] += 1
-            resolved_steps.append({**post, "position": position})
+            learning_item = learning["metadata"].get(raw_issue, {})
+            prerequisites = []
+            for prerequisite_issue in learning_item.get("prerequisites", []):
+                prerequisite_post = posts.get(prerequisite_issue)
+                if prerequisite_post:
+                    prerequisites.append(prerequisite_post)
+            resolved_steps.append(
+                {
+                    **post,
+                    "position": position,
+                    "difficulty": learning_item.get("difficulty", ""),
+                    "difficulty_label": learning_item.get("difficulty_label", ""),
+                    "prerequisites": prerequisites,
+                }
+            )
 
         enriched_paths.append(
             {
@@ -146,6 +167,7 @@ def review(config: dict | None = None, posts: dict[int, dict] | None = None) -> 
     return {
         "paths": enriched_paths,
         "posts": posts,
+        "learning": learning,
         "assigned_issues": set(assignments),
         "unassigned_issues": unassigned,
         "assignment_counts": dict(assignments),
@@ -176,6 +198,8 @@ def structured(result: dict) -> dict:
         "assigned_post_count": len(result["assigned_issues"]),
         "unassigned_issues": result["unassigned_issues"],
         "assignment_counts": result["assignment_counts"],
+        "difficulty_counts": result["learning"]["difficulty_counts"],
+        "prerequisite_edges": result["learning"]["prerequisite_edges"],
         "errors": result["errors"],
     }
 
@@ -203,14 +227,16 @@ def run(*, check: bool, json_output: bool = False) -> int:
             return 1
         print(
             "OK: learning paths đồng bộ; "
-            f"paths={len(result['paths'])}, covered={len(result['assigned_issues'])}/{len(result['posts'])}."
+            f"paths={len(result['paths'])}, covered={len(result['assigned_issues'])}/{len(result['posts'])}, "
+            f"prerequisite_edges={result['learning']['prerequisite_edges']}."
         )
         return 0
 
     OUTPUT_PATH.write_text(expected, encoding="utf-8")
     print(
         "Đã cập nhật learning-paths.html; "
-        f"paths={len(result['paths'])}, covered={len(result['assigned_issues'])}/{len(result['posts'])}."
+        f"paths={len(result['paths'])}, covered={len(result['assigned_issues'])}/{len(result['posts'])}, "
+        f"prerequisite_edges={result['learning']['prerequisite_edges']}."
     )
     return 0
 

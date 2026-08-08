@@ -2,13 +2,30 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P8 — Learning Experience  
+**P8.2 status:** ✅ Difficulty & Prerequisites implemented  
 **P8.1 status:** ✅ Learning Paths implemented  
-**Next focus:** P8.2 — Difficulty & Prerequisites  
+**Next focus:** P8.3 — Topic Progression  
 **P7 status:** ✅ Content Quality at Scale complete  
 **P6 status:** ✅ Community complete  
 **P5 status:** ✅ Automation complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
+
+## P8.2 difficulty & prerequisites baseline
+
+`learning-metadata.json` và `tools/learning_metadata.py` chuẩn hóa learning metadata độc lập với publication order:
+
+- **19/19 published posts** có metadata entry;
+- difficulty: **8 Cơ bản / 11 Trung cấp / 0 Nâng cao**;
+- prerequisite graph: **16 edges / 0 cycle**;
+- hard-fail unknown/missing/duplicate entry, invalid difficulty, prerequisite không tồn tại, self-reference, duplicate dependency và cycle;
+- prerequisite được phép trỏ bài xuất bản sau nếu curriculum yêu cầu, ví dụ #003 → #010;
+- `tools/learning_paths.py` import cùng result để render difficulty + “Học trước” trên public Learning Paths page;
+- `python3 tools/learning_metadata.py --json` cung cấp structured graph cho P8.3/P8.4.
+
+Operating model: `docs/difficulty-prerequisites.md`.
+
+P8.2 không đánh giá path ordering tốt/xấu. P8.3 sẽ kết hợp prerequisite DAG, difficulty và path ordering để tìm progression gap hoặc knowledge jump.
 
 ## P8.1 learning paths baseline
 
@@ -19,13 +36,10 @@
 - path chỉ lưu issue ID; title/date/eyebrow/href được resolve từ `ld-meta` của bài gốc;
 - một bài có thể thuộc nhiều path, nhưng không được lặp trong cùng path;
 - unknown issue, duplicate step, invalid schema hoặc bài published chưa thuộc path nào đều hard-fail;
-- public `learning-paths.html` được generate deterministic từ config + post metadata;
-- page có canonical, nằm trong sitemap và chịu website/SEO + accessibility gates;
-- `python3 tools/learning_paths.py --json` cung cấp structured inventory cho P8.4.
+- public `learning-paths.html` được generate deterministic từ config + post metadata + P8.2 learning metadata;
+- page có canonical, nằm trong sitemap và chịu website/SEO + accessibility gates.
 
 Operating model: `docs/learning-paths.md`.
-
-P8.1 chưa suy đoán difficulty/prerequisite từ thứ tự path. P8.2 sẽ chuẩn hóa các metadata đó; P8.3 mới đánh giá knowledge progression/gaps. Navigation hợp nhất trên homepage/learning dashboard được giữ cho P8.4 để tránh hard-code UI trước khi P8.2–P8.3 có source signals hoàn chỉnh.
 
 ## P7 quality baseline
 
@@ -48,12 +62,17 @@ python3 -m pip install -e ".[dev]"
 python3 tools/publish.py check
 ```
 
-Khi thêm bài mới, contributor phải cập nhật `learning-paths.json`; nếu không, Learning Paths gate sẽ báo bài đó chưa được gán curriculum path.
+Khi thêm bài mới, contributor phải cập nhật cả:
+
+- `learning-paths.json` — bài đứng ở path nào;
+- `learning-metadata.json` — difficulty và prerequisite thật sự.
+
+Thiếu một trong hai sẽ bị local/CI gate chặn.
 
 ## Automation baseline
 
-- `python3 tools/publish.py prepare` regenerate deterministic site/reports; `tools/build.py` hiện bao gồm Learning Paths page.
-- `python3 tools/publish.py check` chạy local read-only gates gồm P7 quality + P8.1 learning-path consistency.
+- `python3 tools/publish.py prepare` regenerate deterministic site/reports; `tools/build.py` bao gồm Learning Paths page.
+- `python3 tools/publish.py check` chạy local read-only gates gồm P7 quality + P8.1 paths + P8.2 learning metadata.
 - `python3 tools/audit_report.py` tạo audit local + quality evidence; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
@@ -69,6 +88,7 @@ Khi thêm bài mới, contributor phải cập nhật `learning-paths.json`; n�
 - Content freshness lifecycle + technical-drift review queue.
 - P7 quality dashboard với ownership/remediation queue.
 - P8.1 learning path schema + 100% curriculum coverage gate.
+- P8.2 normalized difficulty + acyclic prerequisite graph gate.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
 - Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
@@ -89,10 +109,12 @@ Khi thêm bài mới, contributor phải cập nhật `learning-paths.json`; n�
 | P5 — Automation | ✅ | Publish pipeline, audit/report, workflow safety |
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
 | P7 — Content Quality at Scale | ✅ | Portability + command quality + freshness + quality dashboard |
-| P8 — Learning Experience | 🚧 | P8.1 learning paths complete; P8.2 next |
+| P8 — Learning Experience | 🚧 | P8.1 paths + P8.2 difficulty/prerequisites complete; P8.3 next |
 
 ## Tài liệu chính
 
+- `docs/difficulty-prerequisites.md` — P8.2 learning metadata + DAG contract.
+- `learning-metadata.json` — P8.2 difficulty/prerequisite source of truth.
 - `docs/learning-paths.md` — P8.1 schema, coverage contract và operating model.
 - `learning-paths.json` — P8.1 path definitions/source of truth.
 - `learning-paths.html` — generated public learning path page.
@@ -105,4 +127,4 @@ Khi thêm bài mới, contributor phải cập nhật `learning-paths.json`; n�
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P8 đang mở; focus kế tiếp là P8.2 — Difficulty & Prerequisites.
+Xem `docs/ROADMAP.md`. P8 đang mở; focus kế tiếp là P8.3 — Topic Progression.
