@@ -26,6 +26,13 @@ python3 -m pip install -e ".[dev]"
 ruff check tools/ tests/
 pytest -q
 python3 tools/build.py --check
+python3 tools/repo_health.py
+```
+
+Nếu thay đổi URL/source, chạy thêm external checker:
+
+```bash
+python3 tools/check_links.py --external --workers 8
 ```
 
 Nếu thay đổi liên quan source-backed technical review, có thể chạy riêng:
@@ -41,6 +48,16 @@ python3 tools/validate_sources.py
 - Không sao chép claim kỹ thuật cũ sang bài mới nếu claim đó chưa được kiểm chứng lại.
 - Metadata nguồn và section `Nguồn kỹ thuật` hiển thị phải khớp nhau.
 - Social copy phải đồng bộ với nội dung bài sau technical review.
+- Không thêm Google Fonts/CDN runtime dependency; typography public dùng self-hosted assets trong `assets/fonts/`.
+- Giữ accessibility baseline: skip link, `main` landmark, heading hierarchy và accessible SVG.
+
+## Khi sửa website/pipeline
+
+- Public canonical origin lấy từ `site.json`; không hard-code GitHub Pages URL.
+- Repository không dùng `CNAME`; production serving nằm trên Cloudflare Worker.
+- Generated files phải được tạo bằng tool hiện có, không sửa tay nếu có generator tương ứng.
+- Nếu thêm validator mới, ưu tiên deterministic local check; network check phải có timeout/retry/non-flaky policy.
+- Cập nhật `docs/architecture.md`, `docs/ROADMAP.md` hoặc `CHANGELOG.md` nếu thay đổi kiến trúc/milestone đáng chú ý.
 
 ## Pull request
 
@@ -52,4 +69,8 @@ PR nên nêu rõ:
 - cách đã kiểm thử;
 - rủi ro hoặc giới hạn còn lại nếu có.
 
-Không merge khi `quality-gate` chưa xanh.
+Repository có `.github/pull_request_template.md` làm checklist mặc định. Không merge khi `quality-gate` chưa xanh.
+
+## Release / production change
+
+Với release/tag hoặc thay đổi production đáng kể, dùng `docs/release-checklist.md`. Rollback phải đi qua PR/revert có CI thay vì sửa trực tiếp `main`.

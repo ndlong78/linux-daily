@@ -1,117 +1,110 @@
-# Linux Daily — Lộ trình cải thiện
+# Linux Daily — Roadmap
 
-Tài liệu này ghi lại các mốc nâng độ tin cậy của pipeline Linux Daily. Tên PR lịch sử có thể không trùng số Pull Request thực tế vì một số số PR đã được bài nội dung sử dụng.
+Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
-## Trạng thái nền tảng hiện tại
+## P0 — Foundation ✅
 
-- Static site + CSS chung: ✅
-- CI quality gate trên GitHub Actions: ✅
-- Ruff/Pytest/validator/build check: ✅
-- Social validator (thread X, độ dài URL t.co): ✅
-- Cadence qua `state.json`: ✅
-- Idempotency/duplicate check ở agent workflow: ✅
-- Structured metadata + Jinja2 index pipeline: ✅
-- ChatGPT Plus Scheduled Task làm scheduler chính: ✅
-- Source-backed technical review cho bài mới (#019+): ✅ PR #24
-- Historical source backfill: 🟡 các nhóm rủi ro #001–#017 đã merge; #011/#018 là backfill cuối trong PR #30
+- Static site + shared CSS.
+- `state.json` cadence + `tools/cadence.py`.
+- Structured post metadata và deterministic generators.
+- GitHub Actions CI với Ruff, Pytest, build/validator và smoke tests.
+- Social output pipeline.
 
-## Các mốc đã hoàn thành
+## P1 — Source-backed Content ✅
 
-### CI Quality Gate ✅
-
-- `pyproject.toml` pin dependency + dev tools.
-- `tools/validate_repo.py` kiểm numbering, axis cycle, date/meta consistency, template structure, SVG/accessibility, FreeBSD block, social output và state.
-- `tools/build.py --check` làm cổng build/validation thống nhất.
-- `.github/workflows/ci.yml` chạy lint, tests, validator/build và smoke tests trên PR.
-
-### Cadence State & Idempotency ✅
-
-- `state.json` là clock của cadence; `tools/cadence.py` quyết định nhịp từ `last_generated_at`.
-- Agent kiểm duplicate issue qua branch/PR trước khi sinh bài.
-- Prefix branch chuẩn: `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`.
-
-### Migration Claude Routine → ChatGPT Plus ✅
-
-- PR #23 đã merge 2026-08-07.
+- ChatGPT Plus Scheduled Task thay Claude Routine làm scheduler/orchestrator.
 - `AGENTS.md` là hợp đồng vận hành AI chính.
-- Scheduled Task `Linux Daily Operator` chạy 07:00 hằng ngày theo `Asia/Ho_Chi_Minh`.
-- Pipeline/CI/state không phụ thuộc vendor AI.
+- Bài mới bắt buộc source-backed technical review.
+- Historical technical backfill #001–#018 hoàn tất theo nhóm rủi ro.
+- FreeBSD, destructive storage/network/auth semantics và rollback được đưa vào review guardrails.
 
-### PR #24 — Source-backed Technical Review ✅
+## P2 — Repository & Website ✅
 
-- Bài #019+ bắt buộc `review_status`, tối thiểu 2 nguồn `official`/`upstream`, HTTPS, không trùng và khớp section hiển thị.
-- Historical post đã opt-in source review cũng phải tiếp tục vượt gate.
+P2 được đóng bởi PR #44 sau chuỗi hardening PR #31–#43.
 
-### PR #25 — Historical Technical Backfill #013 + #016 ✅
+### Governance
 
-- #013 Bash: sửa shebang/PATH, `set -e`, IFS và destructive-path claims.
-- #016 FreeBSD/Fail2Ban: `blocklistd`, `sshguard`, package/jail hiện hành và firewall rollback.
-- PR #25 đã merge 2026-08-07.
+- [x] Branch-protection baseline yêu cầu `quality-gate`.
+- [x] MIT `LICENSE`.
+- [x] `CONTRIBUTING.md`.
+- [x] `SECURITY.md`.
+- [x] `CODEOWNERS`.
+- [x] Pull request template.
 
-### PR #26 — Historical Technical Backfill: Networking & Firewall ✅
+### Discovery & metadata
 
-- #001 Static IP, #007 Firewall, #008 Diagnostics, #015 WireGuard được source-review và bổ sung rollback/verification.
-- PR #26 đã merge 2026-08-07.
+- [x] RSS feed.
+- [x] `sitemap.xml` + `robots.txt`.
+- [x] Canonical URL với public origin `https://linux.no.id.vn/`.
+- [x] Open Graph + Twitter/X Card + social preview image metadata.
+- [x] Historical metadata backfill #001–#019.
 
-### PR #27 — Historical Technical Backfill: Storage & Backup ✅
+### Quality & reliability
 
-- #003 ZFS, #004 restic, #010 Add disk, #014 Backup lab, #017 Grow storage được source-review và bổ sung guardrail/restore evidence.
-- PR #27 đã merge 2026-08-07.
+- [x] Internal/external broken-link checking.
+- [x] Website/SEO cross-artifact validator.
+- [x] Production smoke tests cho Cloudflare Worker.
+- [x] Accessibility baseline: skip link, main landmark, keyboard focus, heading/SVG guardrails.
+- [x] Self-host Be Vietnam Pro, JetBrains Mono và Noto Serif; không còn Google Fonts runtime dependency.
+- [x] Repository health summary + release checklist.
 
-### PR #28 — Historical Technical Backfill: Auth & Permissions ✅
+## P3 — Reliability & Operations 🚧
 
-- #002 SSH và #009 sudo/doas được sửa effective-policy/least-privilege semantics.
-- PR #28 đã merge 2026-08-07.
+Mục tiêu: biết production đang chạy commit nào, phát hiện regression sớm và có tín hiệu vận hành đủ rõ để xử lý sự cố.
 
-### PR #29 — Monitoring & Automation Backfill ✅
+### P3.1 — Operations Dashboard & Repository Insights
 
-- #005 Logging: bỏ distro-default assumptions; kiểm effective journald storage và đúng SSH unit.
-- #006 Ansible: Python bootstrap, ansible-core vs community.general, check-mode capability.
-- #012 Scheduling: `Persistent=true`, `AccuracySec`, cron environment và FreeBSD periodic semantics.
-- #005/#006/#012 có `review_status="reviewed"`, nguồn official/upstream và social đồng bộ.
-- PR #29 đã merge 2026-08-07.
+- [ ] Tổng hợp repository/production status vào một report dễ đọc.
+- [ ] Hiển thị publication freshness, latest issue, CI/smoke state và artifact inventory.
+- [ ] Không biến dashboard thành source of truth mới; dữ liệu phải derive từ repo/production.
 
-## PR #30 — Final Historical Tool Backfill
+### P3.2 — Production Observability
 
-Mục tiêu: hoàn tất source-backed coverage cho hai bài grandfathered cuối #011 và #018.
+- [ ] Xác định deployment/version fingerprint có thể kiểm từ production.
+- [ ] Kiểm cache/content headers phù hợp với Cloudflare Worker.
+- [ ] Phát hiện production stale so với `main`.
+- [ ] Chuẩn hóa incident/rollback procedure.
 
-- [x] #011 tmux: bỏ claim tuyệt đối về SIGHUP/process khi SSH mất; mô tả đúng client/server attach-detach model.
-- [x] #011: thêm `tmux new -As`, `tmux -V`, boundary reboot/tmux-server và socket recovery nuance.
-- [x] #018 rclone: sửa crypt algorithm thành XSalsa20+Poly1305 cho content và AES-256 EME cho names; ghi rõ metadata leakage.
-- [x] #018: dùng `rclone cryptcheck` cho encrypted remote; tăng guardrail cho `sync`/`bisync`.
-- [x] #018 FreeBSD: FUSE chỉ cần cho mount; dùng `kldload fusefs` + `sysrc kld_list+=fusefs`.
-- [x] #011/#018 có `review_status="reviewed"` + nguồn official/upstream và section **Nguồn kỹ thuật**.
-- [x] Đồng bộ Facebook/X cho cả hai bài.
-- [x] Không đổi ngày xuất bản, `state.json`, cadence, `topics.md` hoặc metadata title/lede/date/axis dùng để dựng index.
+### P3.3 — Release Automation
 
-## Mốc kế tiếp — P2 Repository & Website
+- [ ] Quy ước version/tag chính thức.
+- [ ] Tự động tạo release notes/changelog từ milestone đã merge.
+- [ ] Không tự động release nếu quality gate hoặc production smoke chưa đạt.
 
-Sau khi PR #30 merge, historical source backfill #001–#018 hoàn tất. Trọng tâm chuyển sang repository/website hardening theo các PR nhỏ.
+### P3.4 — Performance Budget
 
-## P2 — Repository & website
+- [ ] Budget kích thước HTML/CSS/font/social assets.
+- [ ] Regression gate cho asset/page growth bất thường.
+- [ ] Đo performance theo tín hiệu ổn định, tránh CI phụ thuộc network benchmark dễ flaky.
 
-- [ ] Branch protection bắt buộc `quality-gate` xanh trước merge.
-- [ ] `LICENSE`.
-- [ ] `CONTRIBUTING.md`.
-- [ ] `SECURITY.md`.
-- [ ] RSS/Atom.
-- [ ] `sitemap.xml`.
-- [ ] canonical URL.
-- [ ] Open Graph/social metadata.
-- [ ] broken-link check.
-- [ ] cân nhắc self-host fonts.
-- [ ] skip link và cải thiện accessibility cho sơ đồ phức tạp.
+## P4 — Content Growth ⬜
+
+- [ ] Taxonomy/tag/topic discovery.
+- [ ] Navigation giữa bài liên quan và series.
+- [ ] Search/archive khi số bài đủ lớn để cần.
+- [ ] Review lại cadence/content mix dựa trên dữ liệu thực tế.
+
+## P5 — Automation ⬜
+
+- [ ] Giảm thao tác thủ công lặp lại trong publish/release.
+- [ ] Tự động hóa audit/report có deterministic input.
+- [ ] Giữ human approval cho merge/release có ảnh hưởng production.
+
+## P6 — Community ⬜
+
+- [ ] Contributor onboarding tốt hơn.
+- [ ] Issue templates/discussion workflow nếu cộng đồng bắt đầu đóng góp thường xuyên.
+- [ ] Tài liệu review cho technical contributors.
 
 ## Nguyên tắc roadmap
 
-1. Không phụ thuộc một vendor AI cụ thể trong business logic; state và validation nằm trong repo.
-2. Scheduled Task chỉ là scheduler/orchestrator, không thay thế CI.
-3. Không push trực tiếp `main`.
-4. Không bypass quality gate.
-5. Thay đổi mạng/firewall/remote access phải có rollback path trước khi persist.
-6. Thao tác storage phá huỷ/resize phải xác minh đúng device/layer trước khi ghi; backup phải có restore evidence định kỳ.
-7. Hardening auth/permissions phải kiểm effective policy; least privilege không được suy luận từ file cấu hình hoặc group membership đơn lẻ.
-8. Monitoring/automation phải kiểm effective runtime, dependency/collection và scheduler semantics thay vì hard-code theo tên distro.
-9. Tool sync/encryption phải tách rõ confidentiality, destructive sync semantics, verification và backend access control.
-10. Pipeline mới áp nghiêm cho bài mới; bài lịch sử đã opt-in source review cũng phải tiếp tục vượt gate.
-11. Backfill lịch sử làm theo PR nhỏ, ưu tiên mức rủi ro để review dễ audit.
+1. Repository/state/validators là source of truth; scheduler không thay business logic.
+2. Không push trực tiếp `main` và không bypass quality gate.
+3. Cloudflare Worker là production serving layer; GitHub Pages không phải public hosting.
+4. Generated artifacts phải deterministic và kiểm được bằng `build.py --check`.
+5. Nguồn kỹ thuật ưu tiên official/upstream; claim mới không kế thừa mù từ bài cũ.
+6. FreeBSD luôn được xử lý riêng.
+7. Network/firewall/remote access phải có rollback trước khi persist.
+8. Storage/backup phải phân biệt layer, destructive semantics và restore evidence.
+9. External network checks phải có policy chống flaky; local deterministic failures vẫn fail cứng.
+10. Phase đã đóng chỉ mở lại khi có regression hoặc requirement mới rõ ràng; feature mới phải đi vào phase hiện tại.
