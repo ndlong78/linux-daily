@@ -2,6 +2,7 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P3 — Reliability & Operations  
+**P3.3 status:** ✅ Release Automation implemented in PR #47  
 **P3.2 status:** ✅ Production Observability implemented in PR #46  
 **P3.1 status:** ✅ Operations Dashboard & Repository Insights implemented in PR #45  
 **P2 status:** ✅ Closed after PR #44  
@@ -36,6 +37,12 @@ python3 tools/site_fingerprint.py
 
 `Production Smoke` sau P3.2 so SHA-256 của homepage, feed, sitemap, robots, latest post và latest social image với checkout `main`, sau đó so aggregate serving fingerprint. Content-type sai hoặc cache semantics `private`/`no-store` trên static public response làm gate fail; thiếu cache-control chỉ được ghi warning để tránh phụ thuộc provider-specific behavior.
 
+## Release baseline
+
+Version chính thức nằm ở `VERSION`, SemVer dạng `X.Y.Z`; tag dùng `vX.Y.Z`. `pyproject.toml` derive cùng version để không còn metadata drift.
+
+Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, workflow yêu cầu explicit confirmation, xác minh `CHANGELOG.md`, rồi bắt buộc cả `CI` và `Production Smoke` đều `success` trên đúng SHA hiện tại của `main`. Release notes gồm phần curated từ CHANGELOG và merged-PR notes GitHub tự sinh.
+
 ## Milestones
 
 | Phase | Trạng thái | Kết quả chính |
@@ -43,7 +50,7 @@ python3 tools/site_fingerprint.py
 | P0 — Foundation | ✅ | Static site, template, cadence/state, CI cơ bản |
 | P1 — Source-backed Content | ✅ | Technical review + historical source backfill |
 | P2 — Repository & Website | ✅ | Governance, RSS/sitemap, canonical/OG, link gate, production smoke, accessibility, self-host fonts |
-| P3 — Reliability & Operations | 🚧 | P3.1 dashboard + P3.2 production observability complete; tiếp theo release automation và performance budgets |
+| P3 — Reliability & Operations | 🚧 | P3.1 dashboard + P3.2 production observability + P3.3 release automation complete; tiếp theo performance budget |
 | P4 — Content Growth | ⬜ | Discovery, taxonomy, navigation và nội dung mở rộng |
 | P5 — Automation | ⬜ | Release/process automation sau khi P3 ổn định |
 | P6 — Community | ⬜ | Contributor experience và community workflow mở rộng |
@@ -60,11 +67,12 @@ python3 tools/site_fingerprint.py
 - Cadence và render smoke tests.
 - Production observability cho Cloudflare Worker: semantic checks + serving fingerprint + stale/content-drift detection.
 - Source-derived Operations Dashboard cho publication freshness, artifact inventory và latest CI/smoke state.
+- Release gate: canonical version/changelog + CI/Production Smoke success trên exact `main` SHA + human confirmation.
 
 ## Kiến trúc vận hành
 
-Xem `docs/architecture.md`, `docs/operations-dashboard.md` và `docs/production-incident-runbook.md`.
+Xem `docs/architecture.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md` và `docs/release-checklist.md`.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P2 đã đóng; P3.1 và P3.2 hoàn tất. Hạng mục tiếp theo là P3.3 Release Automation.
+Xem `docs/ROADMAP.md`. P2 đã đóng; P3.1, P3.2 và P3.3 hoàn tất. Hạng mục tiếp theo là P3.4 Performance Budget.
