@@ -90,6 +90,7 @@ netstat -rn</code></pre></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Dựng tunnel /32 giữa Debian và FreeBSD, chỉ route IP tunnel của peer. Xác nhận handshake và ping trước. Sau đó giải thích chính xác điều gì thay đổi ở outbound route và inbound source validation nếu đổi AllowedIPs thành <code>0.0.0.0/0</code> — chưa áp thay đổi đó trên máy đang quản trị từ xa.</p></div>
 
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.wireguard.com/install/">WireGuard — Installation</a></li><li><a href="https://www.wireguard.com/">WireGuard — Cryptokey Routing</a></li><li><a href="https://git.zx2c4.com/wireguard-tools/about/src/man/wg-quick.8">wireguard-tools — wg-quick(8)</a></li><li><a href="https://cgit.freebsd.org/src/commit/?h=vendor%2Fwireguard-tools">FreeBSD source — wireguard-tools vendor update</a></li></ul></section>
+
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
   <div class="related-head">
