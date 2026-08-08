@@ -13,8 +13,8 @@ BUDGETS = {
     "homepage_html": 256 * 1024,
     "post_html_each": 512 * 1024,
     "css_each": 128 * 1024,
-    "font_each": 512 * 1024,
-    "fonts_total": 2 * 1024 * 1024,
+    "font_each": 1280 * 1024,
+    "fonts_total": 2560 * 1024,
     "social_image_each": 2 * 1024 * 1024,
     "social_images_total": 32 * 1024 * 1024,
 }
