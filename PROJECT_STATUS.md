@@ -1,25 +1,32 @@
 # Linux Daily — Project Status
 
 **Public site:** https://linux.no.id.vn/  
-**Current phase:** P3 — Reliability & Operations  
-**P3.3 status:** ✅ Release Automation implemented in PR #47  
-**P3.2 status:** ✅ Production Observability implemented in PR #46  
-**P3.1 status:** ✅ Operations Dashboard & Repository Insights implemented in PR #45  
+**Current phase:** P5 — Automation  
+**P4 status:** ✅ Content Growth closed after P4.4 Content Mix Review  
+**P3 status:** ✅ Reliability & Operations complete  
 **P2 status:** ✅ Closed after PR #44  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
 ## Repository health baseline
 
-Linux Daily hiện có 19 bài đã xuất bản (#001–#019). Website được build thành static HTML và các artifact RSS, sitemap, robots; metadata canonical/Open Graph/Twitter, accessibility, self-hosted fonts, source-backed review và link validation đều nằm trong quality gate của repository.
+Linux Daily hiện có 19 bài đã xuất bản (#001–#019). Website được build thành static HTML và các artifact RSS, sitemap, robots; metadata canonical/Open Graph/Twitter, accessibility, self-hosted fonts, source-backed review, taxonomy, related-content navigation, search/archive và link validation đều nằm trong quality gate của repository.
 
-Các số liệu thay đổi theo thời gian không được hard-code tại đây. Chạy:
+Các số liệu thay đổi theo thời gian không được hard-code làm source of truth. Chạy:
 
 ```bash
 python3 tools/repo_health.py
 ```
 
 để lấy snapshot deterministic hiện tại về số bài, nguồn kỹ thuật, social images, fonts, RSS và sitemap.
+
+Để xem content mix/cadence review:
+
+```bash
+python3 tools/content_mix.py --check
+```
+
+Snapshot review nằm ở `docs/content-mix-report.md`. Với 19 bài hiện tại, 7 trục nội dung đã đi đúng rotation, distribution spread là 1; bài kế tiếp theo cadence là #020 — Automation & scripting.
 
 Để xem operational report local:
 
@@ -35,7 +42,7 @@ Workflow `Operations Dashboard` bổ sung trạng thái CI/Production Smoke tr�
 python3 tools/site_fingerprint.py
 ```
 
-`Production Smoke` sau P3.2 so SHA-256 của homepage, feed, sitemap, robots, latest post và latest social image với checkout `main`, sau đó so aggregate serving fingerprint. Content-type sai hoặc cache semantics `private`/`no-store` trên static public response làm gate fail; thiếu cache-control chỉ được ghi warning để tránh phụ thuộc provider-specific behavior.
+`Production Smoke` so SHA-256 của homepage, feed, sitemap, robots, latest post và latest social image với checkout `main`, sau đó so aggregate serving fingerprint. Content-type sai hoặc cache semantics `private`/`no-store` trên static public response làm gate fail; thiếu cache-control chỉ được ghi warning để tránh phụ thuộc provider-specific behavior.
 
 ## Release baseline
 
@@ -50,9 +57,9 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 | P0 — Foundation | ✅ | Static site, template, cadence/state, CI cơ bản |
 | P1 — Source-backed Content | ✅ | Technical review + historical source backfill |
 | P2 — Repository & Website | ✅ | Governance, RSS/sitemap, canonical/OG, link gate, production smoke, accessibility, self-host fonts |
-| P3 — Reliability & Operations | 🚧 | P3.1 dashboard + P3.2 production observability + P3.3 release automation complete; tiếp theo performance budget |
-| P4 — Content Growth | ⬜ | Discovery, taxonomy, navigation và nội dung mở rộng |
-| P5 — Automation | ⬜ | Release/process automation sau khi P3 ổn định |
+| P3 — Reliability & Operations | ✅ | Dashboard, production fingerprint, release automation, performance budget |
+| P4 — Content Growth | ✅ | Taxonomy, related navigation, search/archive, deterministic content-mix review |
+| P5 — Automation | 🚧 | Giảm thao tác lặp lại nhưng giữ human approval cho merge/release |
 | P6 — Community | ⬜ | Contributor experience và community workflow mở rộng |
 
 ## Quality gates hiện tại
@@ -61,9 +68,12 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 - Deterministic build consistency.
 - Source-backed technical validation.
 - Canonical/Open Graph/Twitter/RSS/sitemap/robots consistency.
+- Taxonomy + related-content + search/archive consistency.
+- Content mix/canonical 7-axis sequence consistency.
 - Internal/external link checking.
 - Accessibility baseline.
 - Self-hosted font validation.
+- Performance budget.
 - Cadence và render smoke tests.
 - Production observability cho Cloudflare Worker: semantic checks + serving fingerprint + stale/content-drift detection.
 - Source-derived Operations Dashboard cho publication freshness, artifact inventory và latest CI/smoke state.
@@ -71,8 +81,8 @@ Release chỉ chạy thủ công từ workflow `Release`. Trước khi publish, 
 
 ## Kiến trúc vận hành
 
-Xem `docs/architecture.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md` và `docs/release-checklist.md`.
+Xem `docs/architecture.md`, `docs/operations-dashboard.md`, `docs/production-incident-runbook.md`, `docs/release-checklist.md` và `docs/content-mix-report.md`.
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P2 đã đóng; P3.1, P3.2 và P3.3 hoàn tất. Hạng mục tiếp theo là P3.4 Performance Budget.
+Xem `docs/ROADMAP.md`. P4 đã đóng; trọng tâm hiện tại chuyển sang P5 — Automation.
