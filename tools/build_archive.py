@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import argparse
 import glob
-import html
 import json
 from pathlib import Path
 
-from jinja2 import Environment, FileSystemLoader
-
 import postmeta
 import taxonomy
+from jinja2 import Environment, FileSystemLoader
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
