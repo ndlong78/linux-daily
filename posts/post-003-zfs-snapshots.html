@@ -44,6 +44,7 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
@@ -112,6 +113,24 @@ zfs list -t snapshot -o name,creation -s creation tank/data</code></pre></sectio
   <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo một dataset thử, snapshot nó, thay đổi ba file rồi khôi phục một file qua <code>.zfs/snapshot</code>. Sau đó liệt kê các snapshot theo thời gian và giải thích chính xác dữ liệu nào sẽ mất nếu rollback về snapshot cũ hơn.</p></div>
 
   <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Tài liệu chính thức/upstream dùng để kiểm chứng semantics snapshot, rollback và cách cài ZFS.</p><ul class="clean"><li><a href="https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html" rel="noopener noreferrer">Fedora — OpenZFS documentation</a> — upstream.</li><li><a href="https://openzfs.github.io/openzfs-docs/man/v2.3/8/zfs-rollback.8.html" rel="noopener noreferrer">zfs-rollback.8 — OpenZFS documentation</a> — upstream.</li><li><a href="https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Datasets/Snapshots%20and%20Clones.html" rel="noopener noreferrer">Snapshots, Clones and Bookmarks — OpenZFS documentation</a> — upstream.</li><li><a href="https://docs.freebsd.org/en/books/handbook/zfs/" rel="noopener noreferrer">Chapter 23. The Z File System (ZFS) — FreeBSD Handbook</a> — official.</li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <span class="series-link is-empty" aria-hidden="true"></span>
+    <a class="series-link next" href="post-010-them-dia-moi.html"><span class="series-kicker">#010</span><span>Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</span></a>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-017-mo-rong-dung-luong.html">#017 · Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
 
   <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #003 · Storage</span><span class="hashtags">#LinuxDaily #ZFS #Storage #FreeBSD</span></div></footer>
 </div>

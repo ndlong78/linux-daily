@@ -6,9 +6,10 @@ build.py — Một lệnh duy nhất: dựng website output rồi chạy quality
   python3 tools/build.py --check    # không ghi; chỉ kiểm tra mọi artifact/post đã đồng bộ
 
 Gộp index, RSS, sitemap/robots, historical discovery + social preview metadata,
-self-hosted font loading, accessibility landmarks, structural/source-backed validation,
-website/SEO consistency và deterministic internal-link gate vào một luồng. External HTTP
-checks chạy riêng trong CI để lỗi mạng/website bên thứ ba không che mất quality gate local.
+related-content navigation, self-hosted font loading, accessibility landmarks,
+structural/source-backed validation, website/SEO consistency và deterministic internal-link
+gate vào một luồng. External HTTP checks chạy riêng trong CI để lỗi mạng/website bên thứ ba
+không che mất quality gate local.
 """
 import argparse
 import os
@@ -22,6 +23,7 @@ import build_feed  # noqa: E402
 import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
 import check_links  # noqa: E402
+import related_content  # noqa: E402
 import validate_accessibility  # noqa: E402
 import validate_fonts  # noqa: E402
 import validate_repo  # noqa: E402
@@ -76,6 +78,8 @@ def main(argv=None) -> int:
             return 1
         if backfill_fonts.run(check=True) != 0:
             return 1
+        if related_content.run(check=True) != 0:
+            return 1
         print(f"OK: index.html đã đồng bộ ({post_count} bài).")
         print(f"OK: feed.xml đã đồng bộ ({feed_count} bài mới nhất).")
         print(f"OK: sitemap.xml đã đồng bộ ({sitemap_count} URL).")
@@ -94,6 +98,8 @@ def main(argv=None) -> int:
         if backfill_accessibility.run(check=False) != 0:
             return 1
         if backfill_fonts.run(check=False) != 0:
+            return 1
+        if related_content.run(check=False) != 0:
             return 1
         print(f"Đã dựng index.html với {post_count} bài.")
         print(f"Đã dựng feed.xml với {feed_count} bài mới nhất.")
@@ -131,8 +137,9 @@ def main(argv=None) -> int:
         return 1
 
     print(
-        "✓ Build + RSS + sitemap/robots + canonical/OG/social + self-host fonts + "
-        "website/SEO + accessibility + source-backed review + internal links: tất cả kiểm tra đều đạt."
+        "✓ Build + RSS + sitemap/robots + canonical/OG/social + related navigation + "
+        "self-host fonts + website/SEO + accessibility + source-backed review + internal links: "
+        "tất cả kiểm tra đều đạt."
     )
     return 0
 

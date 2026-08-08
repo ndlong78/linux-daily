@@ -85,10 +85,12 @@ Mục tiêu: xác minh production đang serve đúng public artifacts mong đợ
 - [x] `tools/taxonomy.py` kiểm coverage/axis drift và xuất report deterministic cho repository.
 - [x] CI chặn bài mới dùng axis chưa đăng ký hoặc thiếu metadata để derive tag.
 
-### P4.2 — Related Content & Series Navigation
+### P4.2 — Related Content & Series Navigation ✅
 
-- [ ] Navigation giữa bài liên quan theo axis/tag.
-- [ ] Previous/next trong cùng series hoặc trục nội dung.
+- [x] Navigation giữa các bài liên quan derive từ cùng `ld-meta.axis`, ưu tiên secondary-tag overlap rồi khoảng cách issue.
+- [x] Previous/next deterministic trong cùng trục nội dung, không tạo mapping thủ công thứ hai.
+- [x] Generator dùng marker idempotent và được `build.py --check` kiểm để bài mới không làm navigation stale.
+- [x] Backfill toàn bộ bài hiện có và thêm stylesheet riêng, responsive + keyboard-accessible.
 
 ### P4.3 — Search & Archive
 
