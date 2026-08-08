@@ -79,7 +79,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] `tools/audit_report.py` dùng cùng aggregator với ngày audit thực tế để surface `review-due` theo thời gian.
 - [x] P7 đóng với hard-error path rõ ràng và non-blocking remediation queue tách biệt.
 
-## P8 — Learning Experience 🚧
+## P8 — Learning Experience ✅
 
 ### P8.1 — Learning Paths ✅
 - [x] `learning-paths.json` định nghĩa curriculum ordering theo mục tiêu kỹ năng bằng issue ID thay vì copy title/URL.
@@ -103,9 +103,15 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Baseline: 23 prerequisite references, 17 local / 6 external, 0 ordering violation, 0 difficulty jump, thiếu tier `advanced`.
 - [x] Progression gate được đưa vào `tools/publish.py check`; operating model nằm tại `docs/topic-progression.md`.
 
-### P8.4 — Learning Dashboard ⬜
-- [ ] Tạo derived learning view từ taxonomy, prerequisites và progression mà không thay source of truth của bài viết.
-- [ ] Hợp nhất learning navigation/discovery trên public site khi đủ signal từ P8.1–P8.3.
+### P8.4 — Learning Dashboard ✅
+- [x] `tools/learning_dashboard.py` tạo derived view trực tiếp từ P8.1–P8.3, không thêm curriculum ledger mới.
+- [x] `learning-dashboard.html` hiển thị coverage, difficulty mix, prerequisite/progression health và summary từng learning path.
+- [x] Dashboard giữ `ATTENTION` khi corpus chưa có bài Nâng cao; không relabel bài cũ chỉ để tạo PASS.
+- [x] Dashboard là first-class public page: canonical, sitemap, repository-health, accessibility, self-host font và internal-link validation.
+- [x] `tools/publish.py prepare/check` regenerate/verify dashboard deterministic; operating model nằm tại `docs/learning-dashboard.md`.
+
+## P9 — Advanced Labs ⬜
+- Mở rộng các lab end-to-end đa hệ điều hành: security/networking, storage/backup, monitoring/automation và Linux ↔ FreeBSD interoperability.
 
 ## Nguyên tắc roadmap
 
