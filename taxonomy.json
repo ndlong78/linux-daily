@@ -16,7 +16,7 @@
       "label": "Storage & hệ thống tệp",
       "description": "Filesystem, disk, ZFS/LVM, snapshot, backup và mở rộng dung lượng."
     },
-    "Công cụ": {
+    "Công cụ mới": {
       "slug": "tools",
       "label": "Công cụ & phần mềm",
       "description": "CLI và phần mềm hữu ích cho vận hành Linux/Unix."
