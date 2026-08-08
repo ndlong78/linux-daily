@@ -8,7 +8,7 @@ def test_taxonomy_has_unique_slugs_and_required_axes():
     axes = data["axes"]
     slugs = [cfg["slug"] for cfg in axes.values()]
     assert len(slugs) == len(set(slugs))
-    assert {"Networking", "Bảo mật", "Storage", "Công cụ", "Monitoring", "Automation", "Ôn tập"} <= set(axes)
+    assert {"Networking", "Bảo mật", "Storage", "Công cụ mới", "Monitoring", "Automation", "Ôn tập"} <= set(axes)
 
 
 def test_all_current_posts_are_classified():
