@@ -19,10 +19,14 @@
 
 ## Content / technical review
 
+<!-- Reviewer kỹ thuật có thể dùng docs/technical-review-guide.md. -->
+
 - [ ] Không áp dụng (không sửa bài)
-- [ ] Sources official/upstream đã được kiểm chứng
-- [ ] FreeBSD được xử lý riêng
-- [ ] Rollback/destructive semantics đã được rà soát nếu có
+- [ ] Sources official/upstream đã được kiểm chứng và hỗ trợ đúng claim
+- [ ] Ubuntu/Xubuntu, Debian, Fedora và FreeBSD được phân biệt đúng nơi cần thiết
+- [ ] FreeBSD được xử lý riêng, không gán command/path/service model của Linux
+- [ ] Rollback/destructive semantics/restore evidence đã được rà soát nếu có
+- [ ] Verification steps đủ để chứng minh trạng thái sau thay đổi
 
 ## Website
 
