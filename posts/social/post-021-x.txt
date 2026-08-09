@@ -1,0 +1,14 @@
+[Tweet 1]
+Linux Daily #021: backup chạy xong chưa có nghĩa là restore được. Hôm nay là lab Storage & Backup/Restore với dữ liệu disposable, checksum và recovery có bằng chứng. {{LINK}}
+
+[Tweet 2]
+Lab đi theo chuỗi rõ ràng: tạo dữ liệu mẫu → checksum baseline → backup sang đích độc lập → failure injection có kiểm soát → restore → checksum lại.
+
+[Tweet 3]
+Ubuntu/Xubuntu và Fedora dùng loop device + ext4; Debian có đường lệnh phù hợp stable. Mục tiêu không phải nhớ syntax, mà hiểu đúng layer block → partition → filesystem → mount → file.
+
+[Tweet 4]
+FreeBSD được xử lý riêng: vnode-backed md(4) + gpart + UFS. Không gán losetup, systemd hay semantics Linux sang BSD.
+
+[Tweet 5]
+Điểm quan trọng nhất: destructive test chỉ chạy trên image disposable, backup target nằm ngoài filesystem thử nghiệm, có snapshot/rescue console và cleanup sau khi xác minh restore. #Linux #FreeBSD #Backup
