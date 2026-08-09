@@ -2,13 +2,13 @@
 
 Baseline date: **2026-08-09**  
 Scope: **Linux Daily #001–#040**  
-Current enforcement: **#001–#010 và #041+**
+Current enforcement: **#001–#020 và #041+**
 
 ## Trạng thái
 
-PR Batch A đã backfill **#001–#010** theo contract `STYLE.md`. Các bài này không còn được grandfather: `tools/validate_style.py` sẽ fail CI nếu một trong #001–#010 regress.
+PR Batch A đã backfill **#001–#010** và Batch B backfill **#011–#020** theo contract `STYLE.md`. Các bài #001–#020 không còn được grandfather: `tools/validate_style.py` sẽ fail CI nếu regress.
 
-Các bài **#011–#040** vẫn là legacy migration backlog. Legacy không có nghĩa nội dung kỹ thuật không hợp lệ; trạng thái này chỉ nói bài chưa đáp ứng đầy đủ contract mới về metadata, step structure, command context và code semantics.
+Các bài **#021–#040** vẫn là legacy migration backlog. Legacy không có nghĩa nội dung kỹ thuật không hợp lệ; trạng thái này chỉ nói bài chưa đáp ứng đầy đủ contract mới về metadata, step structure, command context và code semantics.
 
 ## Contract được backfill
 
@@ -36,9 +36,9 @@ python3 tools/validate_style.py
 python3 tools/validate_style.py --audit
 ```
 
-- mặc định: fail CI nếu **#001–#010** hoặc **#041+** vi phạm;
+- mặc định: fail CI nếu **#001–#020** hoặc **#041+** vi phạm;
 - `--audit`: in chi tiết trạng thái của toàn bộ lịch sử;
-- **#011–#040** tiếp tục được audit nhưng chưa fail cho tới khi batch tương ứng hoàn tất;
+- **#021–#040** tiếp tục được audit nhưng chưa fail cho tới khi batch tương ứng hoàn tất;
 - legacy exemption không áp dụng cho nội dung mới sao chép từ bài cũ.
 
 ## Kế hoạch backfill
@@ -46,7 +46,7 @@ python3 tools/validate_style.py --audit
 | Batch | Bài | Trạng thái | Mục tiêu |
 |---|---:|---|---|
 | A | #001–#010 | **Hoàn tất trong PR #85** | Metadata + command semantics + rollback |
-| B | #011–#020 | Chờ | Metadata + step/verification + automation safety |
+| B | #011–#020 | **Hoàn tất trong PR #87** | Metadata + step/verification + automation safety |
 | C | #021–#030 | Chờ | Incident/lab structure + Expected Output + placeholders |
 | D | #031–#040 | Chờ | Chuẩn hóa các bài gần nhất và đóng legacy baseline |
 
@@ -57,7 +57,7 @@ python3 tools/validate_style.py --audit
 python3 tools/publish.py check
 ```
 
-Sau Batch B, nâng `BACKFILLED_THROUGH` lên 20; Batch C lên 30; Batch D lên 40. Khi #001–#040 đều đạt contract mới, có thể đơn giản hóa validator thành enforcement toàn bộ series.
+Batch B đã nâng `BACKFILLED_THROUGH` lên 20; Batch C sẽ nâng lên 30; Batch D lên 40. Khi #001–#040 đều đạt contract mới, có thể đơn giản hóa validator thành enforcement toàn bộ series.
 
 ## Nguyên tắc migration
 
