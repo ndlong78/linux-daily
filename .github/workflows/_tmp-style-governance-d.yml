@@ -1,0 +1,29 @@
+name: Temporary STYLE Governance D
+on:
+  pull_request:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr89-style-backfill-031-040
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Apply once
+        run: |
+          if grep -q 'BACKFILLED_THROUGH = 40' tools/validate_style.py; then
+            echo "Batch D governance already applied"
+            exit 0
+          fi
+          python3 tools/_tmp_style_governance_d.py
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tools/validate_style.py tests/test_validate_style.py docs/STYLE-AUDIT.md
+          git commit -m "style(governance): close legacy baseline through #040"
+          git push origin HEAD:chatgpt/pr89-style-backfill-031-040
