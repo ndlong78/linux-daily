@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate Linux Daily posts against STYLE.md.
 
-Historical posts #001-#040 are audited as legacy baseline. Linux Daily #041+
-are enforced and fail the publish gate when mandatory style rules are violated.
+Historical posts are migrated in batches. Linux Daily #001-#010 have completed
+STYLE.md backfill and are enforced together with all new posts #041+.
 """
 from __future__ import annotations
 
@@ -17,6 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_DIR = ROOT / "posts"
+BACKFILLED_THROUGH = 10
 ENFORCED_FROM_ISSUE = 41
 
 SCRIPT_META_RE = re.compile(
@@ -56,7 +57,7 @@ class StyleResult:
 
     @property
     def enforced(self) -> bool:
-        return self.issue >= ENFORCED_FROM_ISSUE
+        return self.issue <= BACKFILLED_THROUGH or self.issue >= ENFORCED_FROM_ISSUE
 
     @property
     def compliant(self) -> bool:
@@ -194,7 +195,11 @@ def check(results: list[StyleResult], *, stream=sys.stdout, err_stream=sys.stder
         file=stream,
     )
     if not enforced_failures:
-        print(f"OK: STYLE.md enforced từ Linux Daily #{ENFORCED_FROM_ISSUE:03d}.", file=stream)
+        print(
+            f"OK: STYLE.md enforced cho #001-#{BACKFILLED_THROUGH:03d} và từ "
+            f"#{ENFORCED_FROM_ISSUE:03d}+.",
+            file=stream,
+        )
         return 0
     for result in enforced_failures:
         print(f"FAIL #{result.issue:03d}: {result.path.name}", file=err_stream)
