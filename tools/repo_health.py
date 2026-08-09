@@ -10,6 +10,9 @@ import sys
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass, field
 
+import postmeta
+import socialmeta
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POST_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 SOCIAL_GLOB = os.path.join(ROOT, "posts", "social", "post-*-code.png")
@@ -67,6 +70,24 @@ def _post_sources(path: str, health: Health) -> int:
     return len(sources)
 
 
+def _social_preview_coverage(posts: list[str], health: Health) -> int:
+    covered = 0
+    for path in posts:
+        rel = os.path.relpath(path, ROOT)
+        try:
+            meta = postmeta.read_meta(path)
+            socialmeta.image_info(
+                int(meta["issue"]),
+                str(meta["title"]),
+                "https://linux.no.id.vn/",
+            )
+        except (postmeta.MetaError, KeyError, TypeError, ValueError, FileNotFoundError, OSError) as exc:
+            health.errors.append(f"{rel}: social preview không resolve được: {exc}")
+        else:
+            covered += 1
+    return covered
+
+
 def collect() -> Health:
     health = Health()
     for rel in REQUIRED:
@@ -88,6 +109,7 @@ def collect() -> Health:
     health.metrics["generated_pages"] = len(posts) + static_pages
     health.metrics["technical_sources"] = sum(_post_sources(path, health) for path in posts)
     health.metrics["social_code_images"] = len(glob.glob(SOCIAL_GLOB))
+    health.metrics["social_preview_coverage"] = _social_preview_coverage(posts, health)
     health.metrics["woff2_fonts"] = len(glob.glob(FONT_GLOB))
 
     try:
@@ -105,8 +127,8 @@ def collect() -> Health:
         health.metrics["sitemap_urls"] = 0
         health.errors.append(f"sitemap.xml không parse được: {exc}")
 
-    if health.metrics["social_code_images"] < health.metrics["posts"]:
-        health.errors.append("social code images ít hơn số bài")
+    if health.metrics["social_preview_coverage"] != health.metrics["posts"]:
+        health.errors.append("social preview coverage không phủ mọi bài")
     if health.metrics["sitemap_urls"] != health.metrics["generated_pages"]:
         health.errors.append("sitemap URL count không khớp generated page inventory")
     if health.metrics["rss_items"] > health.metrics["posts"]:
@@ -125,11 +147,12 @@ def main() -> int:
         "generated_pages",
         "technical_sources",
         "social_code_images",
+        "social_preview_coverage",
         "woff2_fonts",
         "rss_items",
         "sitemap_urls",
     ):
-        print(f"{key:20} {health.metrics.get(key, 0)}")
+        print(f"{key:23} {health.metrics.get(key, 0)}")
     if health.errors:
         print(f"\nFAIL: {len(health.errors)} vấn đề", file=sys.stderr)
         for error in health.errors:
