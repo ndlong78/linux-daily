@@ -181,6 +181,19 @@ Linux Daily #<NNN>: <tên chủ đề>
 
 Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge.
 
+### Self-fix CI completion contract
+
+Một PR **chưa được coi là hoàn tất** chỉ vì local test pass hoặc một workflow run cũ đã xanh. Sau **mỗi lần push** vào branch PR, agent bắt buộc:
+
+1. đọc lại PR và lấy đúng `head_sha` hiện tại;
+2. kiểm tra toàn bộ workflow/check gắn với **chính SHA đó**, gồm cả trigger `push` và `pull_request`;
+3. coi `queued`, `pending`, `in_progress`, `failure`, `cancelled` hoặc `timed_out` là **chưa hoàn tất**;
+4. nếu có check đỏ, đọc log job lỗi, sửa nguyên nhân gốc, chạy lại generator deterministic + local gates, push và lặp lại từ bước 1;
+5. trước khi báo sẵn sàng review, kiểm tra diff PR không còn workflow/helper/artifact chẩn đoán tạm;
+6. chỉ được báo **ready for review** khi tất cả required checks của exact `head_sha` đã `completed/success`.
+
+Không được skip, suppress, nới lỏng hoặc bypass gate để làm CI xanh. Nếu connector không hiển thị đủ check, trạng thái phải được coi là **chưa xác minh**, không được suy đoán là PASS.
+
 ## 10. Scheduled Task của ChatGPT
 
 Task chạy hằng ngày lúc 07:00. Cadence do `state.json` quyết định với mặc định **1 ngày**. Khi chưa sang ngày phát hành kế tiếp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị bài, source-backed review và quality gates.
