@@ -41,7 +41,7 @@
         <div class="card-top">
           <span class="c-issue">#021</span>
           <span class="c-axis">Ôn tập · Advanced Lab Storage &amp; Backup/Restore</span>
-          <span class="c-date">09·08·2026</span>
+          <span class="c-date">21·07·2026</span>
         </div>
         <h2>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</h2>
         <p>Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</p>
@@ -50,7 +50,7 @@
         <div class="card-top">
           <span class="c-issue">#020</span>
           <span class="c-axis">Automation · Advanced Lab Security &amp; Networking</span>
-          <span class="c-date">08·08·2026</span>
+          <span class="c-date">20·07·2026</span>
         </div>
         <h2>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</h2>
         <p>Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.</p>
@@ -59,7 +59,7 @@
         <div class="card-top">
           <span class="c-issue">#019</span>
           <span class="c-axis">Monitoring · Hiệu năng</span>
-          <span class="c-date">07·08·2026</span>
+          <span class="c-date">19·07·2026</span>
         </div>
         <h2>Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</h2>
         <p>Máy chủ &#x27;chậm&#x27; không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.</p>
@@ -68,7 +68,7 @@
         <div class="card-top">
           <span class="c-issue">#018</span>
           <span class="c-axis">Công cụ mới · Cloud sync</span>
-          <span class="c-date">05·08·2026</span>
+          <span class="c-date">18·07·2026</span>
         </div>
         <h2>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h2>
         <p>Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là &quot;rsync cho cloud&quot;: một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p>
@@ -77,7 +77,7 @@
         <div class="card-top">
           <span class="c-issue">#017</span>
           <span class="c-axis">Storage · Hệ thống tệp</span>
-          <span class="c-date">03·08·2026</span>
+          <span class="c-date">17·07·2026</span>
         </div>
         <h2>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</h2>
         <p>Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa &quot;biết&quot; để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.</p>
@@ -86,7 +86,7 @@
         <div class="card-top">
           <span class="c-issue">#016</span>
           <span class="c-axis">Bảo mật · Phân quyền</span>
-          <span class="c-date">01·08·2026</span>
+          <span class="c-date">16·07·2026</span>
         </div>
         <h2>fail2ban: để kẻ dò mật khẩu tự khoá cửa lại</h2>
         <p>Bài #002 khoá SSH bằng cấu hình tĩnh — chỉ nhận khoá, cấm root. Nhưng bot vẫn nện cổng 22 hàng nghìn lần mỗi ngày, ăn tài nguyên và rình sơ hở. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng. Cùng ý tưởng đó, bốn hệ đọc log và cấm IP theo cách khác nhau.</p>
@@ -95,7 +95,7 @@
         <div class="card-top">
           <span class="c-issue">#015</span>
           <span class="c-axis">Networking · VPN</span>
-          <span class="c-date">30·07·2026</span>
+          <span class="c-date">15·07·2026</span>
         </div>
         <h2>WireGuard: một cặp khoá, một đường hầm mã hoá</h2>
         <p>Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</p>
@@ -104,7 +104,7 @@
         <div class="card-top">
           <span class="c-issue">#014</span>
           <span class="c-axis">Ôn tập · Lab end-to-end</span>
-          <span class="c-date">28·07·2026</span>
+          <span class="c-date">14·07·2026</span>
         </div>
         <h2>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h2>
         <p>Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p>
@@ -113,7 +113,7 @@
         <div class="card-top">
           <span class="c-issue">#013</span>
           <span class="c-axis">Automation · Scripting</span>
-          <span class="c-date">26·07·2026</span>
+          <span class="c-date">13·07·2026</span>
         </div>
         <h2>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</h2>
         <p>Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để &quot;chạy được ở đây&quot; đồng nghĩa &quot;chạy được mọi nơi&quot;.</p>
@@ -122,7 +122,7 @@
         <div class="card-top">
           <span class="c-issue">#012</span>
           <span class="c-axis">Monitoring · Hiệu năng</span>
-          <span class="c-date">24·07·2026</span>
+          <span class="c-date">12·07·2026</span>
         </div>
         <h2>Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?</h2>
         <p>Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</p>
@@ -131,7 +131,7 @@
         <div class="card-top">
           <span class="c-issue">#011</span>
           <span class="c-axis">Công cụ mới · CLI</span>
-          <span class="c-date">22·07·2026</span>
+          <span class="c-date">11·07·2026</span>
         </div>
         <h2>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</h2>
         <p>Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</p>
@@ -140,7 +140,7 @@
         <div class="card-top">
           <span class="c-issue">#010</span>
           <span class="c-axis">Storage · Hệ thống tệp</span>
-          <span class="c-date">20·07·2026</span>
+          <span class="c-date">10·07·2026</span>
         </div>
         <h2>Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</h2>
         <p>Bài #003 nói về snapshot khi đã có sẵn pool; bài này lùi về bước cơ bản hơn — gắn một ổ đĩa trống và đưa nó vào dùng. Quy trình bốn bước giống nhau ở mọi hệ: nhận diện đĩa, phân vùng, tạo filesystem, mount vĩnh viễn. Nhưng công cụ thì rẽ nhánh: Linux dùng parted/mkfs, FreeBSD dùng gpart/newfs — và cách định danh đĩa để mount cho bền cũng khác.</p>
@@ -149,7 +149,7 @@
         <div class="card-top">
           <span class="c-issue">#009</span>
           <span class="c-axis">Bảo mật · Phân quyền</span>
-          <span class="c-date">18·07·2026</span>
+          <span class="c-date">09·07·2026</span>
         </div>
         <h2>Tạo user và trao quyền: một nguyên tắc, bốn cơ chế</h2>
         <p>Bài #002 kiểm soát ai được vào máy; bài này kiểm soát vào rồi làm được gì. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm sudo hay wheel, công cụ sudo hay doas, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.</p>
@@ -158,7 +158,7 @@
         <div class="card-top">
           <span class="c-issue">#008</span>
           <span class="c-axis">Networking · Chẩn đoán</span>
-          <span class="c-date">16·07·2026</span>
+          <span class="c-date">08·07·2026</span>
         </div>
         <h2>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</h2>
         <p>Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có &quot;up&quot; không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.</p>
@@ -167,7 +167,7 @@
         <div class="card-top">
           <span class="c-issue">#007</span>
           <span class="c-axis">Ôn tập · Lab end-to-end</span>
-          <span class="c-date">14·07·2026</span>
+          <span class="c-date">07·07·2026</span>
         </div>
         <h2>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</h2>
         <p>Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</p>
@@ -176,7 +176,7 @@
         <div class="card-top">
           <span class="c-issue">#006</span>
           <span class="c-axis">Automation · Scripting</span>
-          <span class="c-date">12·07·2026</span>
+          <span class="c-date">06·07·2026</span>
         </div>
         <h2>Ansible: một playbook, bốn hệ điều hành</h2>
         <p>Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</p>
@@ -185,7 +185,7 @@
         <div class="card-top">
           <span class="c-issue">#005</span>
           <span class="c-axis">Monitoring · Hiệu năng</span>
-          <span class="c-date">10·07·2026</span>
+          <span class="c-date">05·07·2026</span>
         </div>
         <h2>Đọc log hệ thống: một journal nhị phân, một đống file text</h2>
         <p>Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi &quot;log ở đâu, đọc bằng gì&quot; lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.</p>
@@ -194,7 +194,7 @@
         <div class="card-top">
           <span class="c-issue">#004</span>
           <span class="c-axis">Công cụ mới · Backup</span>
-          <span class="c-date">08·07·2026</span>
+          <span class="c-date">04·07·2026</span>
         </div>
         <h2>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h2>
         <p>Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p>
@@ -203,7 +203,7 @@
         <div class="card-top">
           <span class="c-issue">#003</span>
           <span class="c-axis">Storage · Hệ thống tệp</span>
-          <span class="c-date">06·07·2026</span>
+          <span class="c-date">03·07·2026</span>
         </div>
         <h2>Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</h2>
         <p>Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</p>
@@ -212,7 +212,7 @@
         <div class="card-top">
           <span class="c-issue">#002</span>
           <span class="c-axis">Bảo mật · Phân quyền</span>
-          <span class="c-date">04·07·2026</span>
+          <span class="c-date">02·07·2026</span>
         </div>
         <h2>Gia cố SSH: khóa cửa trước khi có người gõ</h2>
         <p>Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.</p>
@@ -221,7 +221,7 @@
         <div class="card-top">
           <span class="c-issue">#001</span>
           <span class="c-axis">Networking · Kết nối</span>
-          <span class="c-date">02·07·2026</span>
+          <span class="c-date">01·07·2026</span>
         </div>
         <h2>Một IP tĩnh, bốn cách khai báo</h2>
         <p>Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.</p>
