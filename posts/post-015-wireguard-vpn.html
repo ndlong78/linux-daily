@@ -28,7 +28,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 15,
-  "date": "2026-07-30",
+  "date": "2026-07-15",
   "axis": "Networking",
   "eyebrow": "Networking · VPN",
   "slug": "wireguard-vpn",
@@ -48,7 +48,7 @@
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
-<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#015 · 30·07·2026</span></div></div>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#015 · 15·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · VPN</p><h1>WireGuard: một cặp khoá, một đường hầm mã hoá</h1><p class="lede">Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div></header>
 
 <figure><svg viewBox="0 0 760 245" role="img" aria-label="Hai peer WireGuard trao đổi qua UDP, mỗi peer có khóa riêng và AllowedIPs quyết định route outbound cùng source IP hợp lệ inbound"><rect width="760" height="245" fill="#fff"/><g font-family="JetBrains Mono" font-size="11"><rect x="45" y="75" width="190" height="95" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="140" y="105" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">PEER A</text><text x="140" y="130" text-anchor="middle">10.10.0.1/32</text><text x="140" y="150" text-anchor="middle">private A · public A</text><rect x="525" y="75" width="190" height="95" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="620" y="105" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">PEER B</text><text x="620" y="130" text-anchor="middle">10.10.0.2/32</text><text x="620" y="150" text-anchor="middle">private B · public B</text><rect x="275" y="92" width="210" height="60" rx="30" fill="#14201D"/><text x="380" y="118" text-anchor="middle" fill="#7FE0D2">UDP + authenticated tunnel</text><text x="380" y="138" text-anchor="middle" fill="#fff">AllowedIPs ↔ cryptokey routing</text><path d="M235 122H275M485 122H525" stroke="#0C6E61" stroke-width="2"/></g></svg><figcaption>Hình 1 — <code>AllowedIPs</code> có hai vai trò: chọn peer/route cho destination khi gửi và xác thực source IP thuộc peer khi nhận.</figcaption></figure>
