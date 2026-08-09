@@ -1,3 +1,4 @@
+# PR83 synchronize trigger; workflow restores release.yml from main before verification.
 name: PR83 Finalize via Release Policy
 
 on:
