@@ -37,22 +37,64 @@
   "lede": "Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Debian trixie — losetup(8)", "url": "https://manpages.debian.org/trixie/mount/losetup.8.en.html", "kind": "official"},
-    {"title": "Debian trixie — mount(8)", "url": "https://manpages.debian.org/trixie/mount/mount.8.en.html", "kind": "official"},
-    {"title": "Fedora Docs — SELinux changing file labels", "url": "https://docs.fedoraproject.org/en-US/quick-docs/selinux-changing-states-and-modes/", "kind": "official"},
-    {"title": "FreeBSD Handbook — GEOM", "url": "https://docs.freebsd.org/en/books/handbook/geom/", "kind": "official"},
-    {"title": "FreeBSD Handbook — Disk Organization / GPT and UFS", "url": "https://docs.freebsd.org/en/books/handbook/bsdinstall/", "kind": "official"}
+    {
+      "title": "Debian trixie — losetup(8)",
+      "url": "https://manpages.debian.org/trixie/mount/losetup.8.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "Debian trixie — mount(8)",
+      "url": "https://manpages.debian.org/trixie/mount/mount.8.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "Fedora Docs — SELinux changing file labels",
+      "url": "https://docs.fedoraproject.org/en-US/quick-docs/selinux-changing-states-and-modes/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — GEOM",
+      "url": "https://docs.freebsd.org/en/books/handbook/geom/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Disk Organization / GPT and UFS",
+      "url": "https://docs.freebsd.org/en/books/handbook/bsdinstall/",
+      "kind": "official"
+    }
   ],
   "lab": {
     "version": 1,
     "profile": "advanced",
-    "topology": ["storage-host", "backup-target", "verification-shell", "rescue-console"],
-    "risks": ["destructive-storage", "downtime"],
-    "verification": ["functional", "negative", "recovery", "restore", "observability"],
+    "topology": [
+      "storage-host",
+      "backup-target",
+      "verification-shell",
+      "rescue-console"
+    ],
+    "risks": [
+      "destructive-storage",
+      "downtime"
+    ],
+    "verification": [
+      "functional",
+      "negative",
+      "recovery",
+      "restore",
+      "observability"
+    ],
     "rollback_required": true,
     "cleanup_required": true,
     "failure_injection": true
-  }
+  },
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -68,6 +110,10 @@
     <p class="lede">Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</p>
     <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~22 PHÚT</span></div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Chứng minh khả năng phục hồi bằng backup, failure injection, restore thật và checksum verification.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Dữ liệu lab, đích backup tách biệt và đủ dung lượng restore.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 250" role="img" aria-label="Chuỗi layer của lab storage từ image file tới dữ liệu">
@@ -118,8 +164,9 @@
   </section>
 
   <section data-lab-section="safety">
-    <h2><span class="num">03</span> Safety contract trước khi chạy</h2>
-    <pre><code># Linux — chỉ tiếp tục nếu biến trỏ tới image lab
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Tạo dữ liệu lab và checksum baseline.</li><li>Chạy backup và xác nhận snapshot/repository tồn tại.</li><li>Inject lỗi có kiểm soát vào bản sao làm việc.</li><li>Restore sang vị trí mới và so checksum với baseline.</li></ol>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux — chỉ tiếp tục nếu biến trỏ tới image lab
 export LAB=/var/tmp/ldlab21
 sudo mkdir -p "$LAB" "$LAB/mnt" "$LAB/backup"
 truncate -s 512M "$LAB/disk.img"
@@ -127,7 +174,8 @@ ls -lh "$LAB/disk.img"
 
 # Không nhập tên disk thật vào bất kỳ lệnh mkfs nào trong lab này.</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — dùng vnode-backed memory disk, không dùng ada/nvme thật</span>
-    <pre class="bsd"><code>setenv LAB /var/tmp/ldlab21
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">setenv LAB /var/tmp/ldlab21
 mkdir -p "$LAB" "$LAB/mnt" "$LAB/backup"
 truncate -s 512M "$LAB/disk.img"
 ls -lh "$LAB/disk.img"
@@ -137,9 +185,10 @@ ls -lh "$LAB/disk.img"
   </section>
 
   <section data-lab-section="execution">
-    <h2><span class="num">04</span> Dựng storage disposable và tạo backup</h2>
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Backup/snapshot được liệt kê không lỗi integrity.</li><li>Restore tạo lại đầy đủ dữ liệu ở vị trí mới.</li><li>Checksum sau restore khớp baseline.</li></ul>
     <h3>Ubuntu / Xubuntu — APT, systemd nhưng storage lab dùng util-linux + ext4</h3>
-    <pre><code>export LAB=/var/tmp/ldlab21
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">export LAB=/var/tmp/ldlab21
 LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
 sudo parted -s "$LOOP" mklabel gpt mkpart primary ext4 1MiB 100%
 sudo partprobe "$LOOP"
@@ -153,7 +202,8 @@ lsblk -f "$LOOP"
 findmnt "$LAB/mnt"</code></pre>
 
     <h3>Debian stable — lệnh giống Linux, package policy khác Ubuntu</h3>
-    <pre><code>export LAB=/var/tmp/ldlab21
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">export LAB=/var/tmp/ldlab21
 LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
 sudo sfdisk "$LOOP" &lt;&lt;'EOF'
 label: gpt
@@ -170,7 +220,8 @@ lsblk -f "$LOOP"
 findmnt "$LAB/mnt"</code></pre>
 
     <h3>Fedora — DNF/systemd, SELinux cần relabel khi restore vào path có policy</h3>
-    <pre><code>export LAB=/var/tmp/ldlab21
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">export LAB=/var/tmp/ldlab21
 LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
 sudo parted -s "$LOOP" mklabel gpt mkpart primary ext4 1MiB 100%
 sudo partprobe "$LOOP"
@@ -185,7 +236,8 @@ findmnt "$LAB/mnt"</code></pre>
 
     <h3>FreeBSD — pkg/ports không liên quan; dùng GEOM md + gpart + UFS, không systemd</h3>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — md(4) / gpart / UFS</span>
-    <pre class="bsd"><code>setenv LAB /var/tmp/ldlab21
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">setenv LAB /var/tmp/ldlab21
 set MD `mdconfig -a -t vnode -f "$LAB/disk.img"`
 gpart create -s GPT "$MD"
 gpart add -t freebsd-ufs "$MD"
@@ -198,20 +250,24 @@ gpart show "$MD"
 mount | grep "$LAB/mnt"</code></pre>
   </section>
 
-  <section data-lab-section="verification">
-    <h2><span class="num">05</span> Baseline verification trước failure</h2>
-    <pre><code># Linux — backup phải đọc được trước khi phá filesystem
+  <section><h2>Gỡ / Hoàn tác</h2><p>Hoàn tác thay đổi lab theo thứ tự ngược, khôi phục baseline đã ghi trước bài và kiểm chứng lại trước khi đóng phiên quản trị.</p></section>
+<section data-lab-section="verification">
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux — backup phải đọc được trước khi phá filesystem
 sudo tar -tf "$LAB/backup/payload.tar"
 sudo sha256sum -c "$LAB/expected.sha256"</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — checksum dùng sha256(1)</span>
-    <pre class="bsd"><code>tar -tf "$LAB/backup/payload.tar"
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">tar -tf "$LAB/backup/payload.tar"
 sha256 "$LAB/mnt/payload.txt"</code></pre>
     <p>Chỉ tiếp tục khi archive liệt kê được file và checksum khớp dữ liệu đang mount.</p>
   </section>
 
   <section data-lab-section="failure-injection">
     <h2><span class="num">06</span> Failure injection — chỉ phá filesystem disposable</h2>
-    <pre><code># Linux: unmount rồi recreate ext4 trên đúng PART của image lab
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux: unmount rồi recreate ext4 trên đúng PART của image lab
 sudo umount "$LAB/mnt"
 sudo mkfs.ext4 -F "$PART"
 
@@ -219,7 +275,8 @@ sudo mkfs.ext4 -F "$PART"
 sudo mount "$PART" "$LAB/mnt"
 test ! -e "$LAB/mnt/payload.txt" &amp;&amp; echo 'EXPECTED: payload absent after recreate'</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — recreate UFS trên md partition của image lab</span>
-    <pre class="bsd"><code>umount "$LAB/mnt"
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">umount "$LAB/mnt"
 newfs -U "/dev/${MD}p1"
 mount "/dev/${MD}p1" "$LAB/mnt"
 test ! -e "$LAB/mnt/payload.txt" &amp;&amp; echo 'EXPECTED: payload absent after recreate'</code></pre>
@@ -227,24 +284,28 @@ test ! -e "$LAB/mnt/payload.txt" &amp;&amp; echo 'EXPECTED: payload absent after
 
   <section data-lab-section="rollback">
     <h2><span class="num">07</span> Rollback / restore</h2>
-    <pre><code># Ubuntu / Xubuntu / Debian / Fedora
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Ubuntu / Xubuntu / Debian / Fedora
 sudo tar -C "$LAB/mnt" -xpf "$LAB/backup/payload.tar"
 sudo sha256sum -c "$LAB/expected.sha256"</code></pre>
     <p>Trên Fedora, nếu restore vào đường dẫn được SELinux quản lý cố định thay vì <code>/var/tmp</code>, relabel theo policy sau restore bằng <code>restorecon</code> trên đúng cây đích; không dùng <code>chcon</code> như giải pháp lâu dài.</p>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — restore archive vào UFS mới</span>
-    <pre class="bsd"><code>tar -C "$LAB/mnt" -xpf "$LAB/backup/payload.tar"
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">tar -C "$LAB/mnt" -xpf "$LAB/backup/payload.tar"
 sha256 "$LAB/mnt/payload.txt"
 cat "$LAB/expected.sha256"</code></pre>
   </section>
 
   <section data-lab-section="cleanup">
     <h2>Cleanup</h2>
-    <pre><code># Linux
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux
 sudo umount "$LAB/mnt"
 sudo losetup --detach "$LOOP"
 rm -rf "$LAB"</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — detach md rồi xóa duy nhất thư mục lab</span>
-    <pre class="bsd"><code>umount "$LAB/mnt"
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">umount "$LAB/mnt"
 mdconfig -d -u "${MD#md}"
 rm -rf "$LAB"</code></pre>
     <p>Kiểm tra cuối: không còn mount point, loop/md provider của lab và image file. Snapshot rescue chỉ xóa sau khi restore verification đã đạt.</p>

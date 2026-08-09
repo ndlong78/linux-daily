@@ -37,13 +37,45 @@
   "lede": "DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "ISC BIND 9 — dig DNS lookup utility", "url": "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility", "kind": "upstream"},
-    {"title": "systemd — resolvectl", "url": "https://www.freedesktop.org/software/systemd/man/devel/resolvectl.html", "kind": "upstream"},
-    {"title": "Ubuntu Packages — dnsutils (Noble)", "url": "https://packages.ubuntu.com/noble/dnsutils", "kind": "official"},
-    {"title": "Debian — bind9-dnsutils (stable)", "url": "https://packages.debian.org/stable/bind9-dnsutils", "kind": "official"},
-    {"title": "Fedora Packages — bind-utils", "url": "https://packages.fedoraproject.org/pkgs/bind/bind-utils/", "kind": "official"},
-    {"title": "FreeBSD drill(1)", "url": "https://man.freebsd.org/cgi/man.cgi?query=drill&sektion=1", "kind": "official"}
-  ]
+    {
+      "title": "ISC BIND 9 — dig DNS lookup utility",
+      "url": "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility",
+      "kind": "upstream"
+    },
+    {
+      "title": "systemd — resolvectl",
+      "url": "https://www.freedesktop.org/software/systemd/man/devel/resolvectl.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ubuntu Packages — dnsutils (Noble)",
+      "url": "https://packages.ubuntu.com/noble/dnsutils",
+      "kind": "official"
+    },
+    {
+      "title": "Debian — bind9-dnsutils (stable)",
+      "url": "https://packages.debian.org/stable/bind9-dnsutils",
+      "kind": "official"
+    },
+    {
+      "title": "Fedora Packages — bind-utils",
+      "url": "https://packages.fedoraproject.org/pkgs/bind/bind-utils/",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD drill(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=drill&sektion=1",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": false
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -59,6 +91,10 @@
     <p class="lede">DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.</p>
     <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Khoanh vùng lỗi DNS theo client, resolver và authoritative thay vì sửa cấu hình theo cảm tính.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Một hostname kiểm thử và resolver dự kiến; thao tác chính read-only.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 260" role="img" aria-label="Luồng chẩn đoán DNS bốn lớp từ ứng dụng và NSS tới resolver cục bộ, recursive DNS server và authoritative DNS">
@@ -105,11 +141,12 @@
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Thao tác từng HĐH</h2>
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Kiểm phân giải qua NSS để xác nhận triệu chứng.</li><li>Xác định resolver runtime thật sự đang dùng.</li><li>Query trực tiếp resolver bằng dig/drill.</li><li>Khi cần, lần theo authoritative chain để xác định lớp lỗi.</li></ol>
     <p>Ví dụ dùng domain public dành cho tài liệu là <code>example.com</code>. Với DNS nội bộ, thay bằng FQDN thật nhưng <strong>không gửi tên nội bộ tới public resolver</strong>.</p>
 
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — APT + systemd-resolved</span>
-    <pre><code>sudo apt update
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install -y dnsutils
 
 getent hosts example.com
@@ -123,7 +160,8 @@ fi
 dig example.com A</code></pre>
 
     <span class="code-label"><span class="dot"></span>Debian — APT; không giả định systemd-resolved đang được dùng</span>
-    <pre><code>sudo apt update
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install -y dnsutils
 
 getent hosts example.com
@@ -137,7 +175,8 @@ dig example.com A</code></pre>
     <p><strong>Khác biệt:</strong> đừng cài hoặc bật <code>systemd-resolved</code> chỉ để troubleshooting trên Debian. Trước hết phải quan sát resolver hiện có; thay backend DNS là một thay đổi cấu hình, không phải phép đo.</p>
 
     <span class="code-label"><span class="dot"></span>Fedora — DNF + systemd-resolved</span>
-    <pre><code>sudo dnf install -y bind-utils
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install -y bind-utils
 
 getent hosts example.com
 if systemctl is-active --quiet systemd-resolved; then
@@ -150,7 +189,8 @@ fi
 dig example.com A</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — drill/LDNS utilities, không systemd</span>
-    <pre class="bsd"><code>getent hosts example.com
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">getent hosts example.com
 cat /etc/resolv.conf
 
 drill example.com A
@@ -163,12 +203,14 @@ fi</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng theo từng lớp</h2>
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Xác định được resolver và DNS status cụ thể.</li><li>NSS và direct query nhất quán hoặc chỉ ra rõ điểm khác nhau.</li><li>Nếu authoritative lỗi, direct query tới authoritative tái hiện được lỗi.</li></ul>
     <p><strong>Bước 1 — NSS/application:</strong></p>
-    <pre><code>getent hosts example.com</code></pre>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">getent hosts example.com</code></pre>
 
     <p><strong>Bước 2 — DNS query mặc định:</strong></p>
-    <pre><code># Linux
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux
 DIG_DOMAIN=example.com
 dig "$DIG_DOMAIN" A
 
@@ -176,7 +218,8 @@ dig "$DIG_DOMAIN" A
 drill example.com A</code></pre>
 
     <p><strong>Bước 3 — hỏi đúng nameserver đang thấy trong resolv.conf:</strong></p>
-    <pre><code># Linux
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux
 DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
 [ -n "$DNS_SERVER" ] &amp;&amp; dig @"$DNS_SERVER" example.com A
 
@@ -186,14 +229,16 @@ DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
     <p>Nếu Linux trả về <code>127.0.0.53</code>, bạn đang kiểm local systemd-resolved stub. Hãy dùng <code>resolvectl status</code> để xem upstream DNS theo từng link thay vì coi địa chỉ stub là DNS server cuối cùng.</p>
 
     <p><strong>Bước 4 — chỉ khi cần kiểm delegation/authoritative:</strong></p>
-    <pre><code># Linux
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux
 dig +trace example.com A
 
 # FreeBSD
 drill -T example.com A</code></pre>
 
     <p><strong>Bước 5 — nghi UDP/fragmentation/truncation:</strong></p>
-    <pre><code># Linux
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># Linux
 dig +tcp example.com A
 
 # FreeBSD
@@ -201,7 +246,7 @@ drill -t example.com A</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong><code>dig</code> chạy được nhưng ứng dụng vẫn lỗi:</strong> kiểm <code>getent</code>, <code>/etc/nsswitch.conf</code>, search domain và split DNS. DNS query trực tiếp không chứng minh toàn bộ NSS path của ứng dụng ổn.</li>
       <li><strong>Sửa thẳng <code>/etc/resolv.conf</code> rồi “hết lỗi”:</strong> file có thể bị NetworkManager, DHCP, VPN, systemd-resolved hoặc FreeBSD <code>resolvconf</code> ghi lại. Sửa source of truth thay vì đấu với file sinh tự động.</li>

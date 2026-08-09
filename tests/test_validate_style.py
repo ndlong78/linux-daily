@@ -73,6 +73,15 @@ def test_batch_b_issue_20_is_enforced(tmp_path: Path):
     assert validate_style.check([result]) == 1
 
 
+def test_batch_c_issue_30_is_enforced(tmp_path: Path):
+    post = tmp_path / "post-030-style-test.html"
+    post.write_text(_post(30, valid=False), encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert result.enforced
+    assert any("tested_on" in error for error in result.errors)
+    assert validate_style.check([result]) == 1
+
+
 def test_issue_41_requires_style_metadata(tmp_path: Path):
     post = tmp_path / "post-041-style-test.html"
     post.write_text(_post(41, valid=False), encoding="utf-8")

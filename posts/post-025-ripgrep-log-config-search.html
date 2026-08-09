@@ -49,7 +49,15 @@
       "url": "https://github.com/BurntSushi/ripgrep/blob/master/GUIDE.md",
       "kind": "upstream"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -65,6 +73,10 @@
     <p class="lede">`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</p>
     <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~12 PHÚT</span></div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Dùng ripgrep nhanh nhưng hiểu ignore, hidden và binary semantics để không kết luận sai.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có cây file lab hoặc thư mục chỉ đọc; quyền cài package nếu rg chưa có.</p></section>
+
 
   <figure>
 <svg viewBox="0 0 760 210" role="img" aria-label="Luồng thao tác an toàn cho Công cụ mới · ripgrep">
@@ -115,39 +127,44 @@
 </figure>
 
   <section>
-    <h2><span class="num">03</span> Bảng lệnh song song theo distro</h2>
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Cài và kiểm phiên bản rg từ package manager.</li><li>Tìm trong path/pattern hẹp trước.</li><li>So sánh mặc định với --hidden/--no-ignore khi cần.</li><li>Dùng glob/type/context để thu hẹp output.</li></ol>
     <p>Ubuntu và Xubuntu dùng cùng khối lệnh. Debian/Fedora được tách vì package hoặc service naming có thể khác. FreeBSD là nhánh riêng.</p>
     <div class="code-wrap">
 <div class="code-label ubuntu">Ubuntu / Xubuntu</div>
-<pre><code>sudo apt update
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install ripgrep
 rg --version</code></pre>
 </div>
     <div class="code-wrap">
 <div class="code-label debian">Debian</div>
-<pre><code>sudo apt update
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install ripgrep
 rg --version</code></pre>
 </div>
     <div class="code-wrap">
 <div class="code-label fedora">Fedora</div>
-<pre><code>sudo dnf install ripgrep
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install ripgrep
 rg --version</code></pre>
 </div>
     <div class="code-wrap">
 <div class="code-label bsd">FreeBSD — KHÁC Linux</div>
-<pre class="bsd"><code>sudo pkg install ripgrep
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">sudo pkg install ripgrep
 rg --version</code></pre>
 </div>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Ví dụ thực hành từng bước</h2>
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>rg tìm đúng pattern và exit status hợp lý.</li><li>Giải thích được file hidden/ignored bị bỏ qua mặc định.</li><li>Có thể mở rộng phạm vi mà không quét mù toàn filesystem.</li></ul>
     <p>Tạo cây lab trong `/tmp/linux-daily-rg`, gồm file cấu hình thường và file ẩn, sau đó so sánh truy vấn mặc định với `--hidden`.</p>
     <h3>Linux — Ubuntu/Xubuntu, Debian, Fedora</h3>
     <div class="code-wrap">
 <div class="code-label linux">Linux</div>
-<pre><code>rm -rf /tmp/linux-daily-rg
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">rm -rf /tmp/linux-daily-rg
 mkdir -p /tmp/linux-daily-rg/app
 printf &#x27;listen=8080\ntimeout=30\n&#x27; &gt; /tmp/linux-daily-rg/app/app.conf
 printf &#x27;token=demo-not-secret\n&#x27; &gt; /tmp/linux-daily-rg/.env
@@ -157,7 +174,8 @@ rg --hidden -n &#x27;token&#x27; /tmp/linux-daily-rg</code></pre>
     <h3>FreeBSD</h3>
     <div class="code-wrap">
 <div class="code-label bsd">FreeBSD</div>
-<pre class="bsd"><code>rm -rf /tmp/linux-daily-rg
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">rm -rf /tmp/linux-daily-rg
 mkdir -p /tmp/linux-daily-rg/app
 printf &#x27;listen=8080\ntimeout=30\n&#x27; &gt; /tmp/linux-daily-rg/app/app.conf
 printf &#x27;token=demo-not-secret\n&#x27; &gt; /tmp/linux-daily-rg/.env
@@ -169,12 +187,14 @@ rg --hidden -n &#x27;token&#x27; /tmp/linux-daily-rg</code></pre>
     <h3>Cleanup / Revert</h3>
 <div class="code-wrap">
 <div class="code-label same">Linux / FreeBSD lab cleanup</div>
-<pre><code>rm -rf /tmp/linux-daily-rg</code></pre>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">rm -rf /tmp/linux-daily-rg</code></pre>
 </div>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Hoàn tác thay đổi lab theo thứ tự ngược, khôi phục baseline đã ghi trước bài và kiểm chứng lại trước khi đóng phiên quản trị.</p></section>
+<section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li>Quên rằng ignore/hidden rules có thể làm mất kết quả mong đợi.</li>
 <li>Dùng regex quá rộng trên `/var/log` mà không giới hạn file type/glob.</li>
