@@ -31,6 +31,47 @@ jobs:
           from pathlib import Path
           from PIL import Image, ImageDraw, ImageFont
 
+          post = Path('posts/post-021-storage-backup-restore-recovery-lab.html')
+          html = post.read_text(encoding='utf-8')
+          if '<svg' not in html:
+              figures = '''
+
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Chuỗi layer của lab storage: image file, block provider, partition, filesystem, mount point và dữ liệu">
+      <rect width="760" height="250" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="20" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="75" y="110" font-size="12" font-weight="700">IMAGE</text><text x="75" y="134" font-size="10">disk.img</text>
+        <rect x="145" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="200" y="110" font-size="12" font-weight="700">PROVIDER</text><text x="200" y="134" font-size="10">loop / md</text>
+        <rect x="270" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="325" y="110" font-size="12" font-weight="700">PARTITION</text><text x="325" y="134" font-size="10">GPT</text>
+        <rect x="395" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="450" y="110" font-size="12" font-weight="700">FILESYSTEM</text><text x="450" y="134" font-size="10">ext4 / UFS</text>
+        <rect x="520" y="82" width="100" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="570" y="110" font-size="12" font-weight="700">MOUNT</text><text x="570" y="134" font-size="10">mnt</text>
+        <rect x="635" y="82" width="105" height="70" rx="8" fill="#14201D"/><text x="687" y="110" fill="#7FE0D2" font-size="12" font-weight="700">DATA</text><text x="687" y="134" fill="#FFFFFF" font-size="10">payload</text>
+        <path d="M130 117H145M255 117H270M380 117H395M505 117H520M620 117H635" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Phân biệt rõ từng layer giúp giới hạn failure injection vào đúng filesystem disposable, không nhầm sang disk thật.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 760 270" role="img" aria-label="Quy trình recovery: baseline checksum, backup độc lập, failure injection, restore và xác minh checksum">
+      <rect width="760" height="270" fill="#FFFFFF"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="25" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="87" y="108" font-size="12" font-weight="700">BASELINE</text><text x="87" y="133" font-size="10">checksum</text>
+        <rect x="175" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="237" y="108" font-size="12" font-weight="700">BACKUP</text><text x="237" y="133" font-size="10">independent target</text>
+        <rect x="325" y="78" width="125" height="80" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="387" y="108" font-size="12" font-weight="700">FAILURE</text><text x="387" y="133" font-size="10">disposable only</text>
+        <rect x="475" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="537" y="108" font-size="12" font-weight="700">RESTORE</text><text x="537" y="133" font-size="10">from archive</text>
+        <rect x="625" y="78" width="110" height="80" rx="8" fill="#14201D"/><text x="680" y="108" fill="#7FE0D2" font-size="12" font-weight="700">VERIFY</text><text x="680" y="133" fill="#FFFFFF" font-size="10">checksum OK</text>
+        <path d="M150 118H175M300 118H325M450 118H475M600 118H625" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Backup chỉ được coi là có giá trị sau khi restore và verification quay về đúng baseline.</figcaption>
+  </figure>'''
+              html = html.replace('  </header>', '  </header>' + figures, 1)
+          html = html.replace('<h2><span class="num">08</span> Cleanup</h2>', '<h2>Cleanup</h2>')
+          html = html.replace('<h2><span class="num">09</span> Cạm bẫy và bảo mật</h2>', '<h2>Cạm bẫy và bảo mật</h2>')
+          html = html.replace('  <section>\n    <h2><span class="num">10</span> Bài tập tự luyện</h2>', '  <section class="exercise">\n    <h2>Bài tập tự luyện</h2>')
+          post.write_text(html, encoding='utf-8')
+
           out = Path('posts/social/post-021-code.png')
           image = Image.new('RGB', (948, 642), '#14211e')
           draw = ImageDraw.Draw(image)
@@ -60,7 +101,6 @@ jobs:
           image.save(out, format='PNG', optimize=True)
           PY
           python tools/build.py
-          python tools/related_content.py
       - name: Commit generated outputs and remove helper workflow
         run: |
           git config user.name "github-actions[bot]"
