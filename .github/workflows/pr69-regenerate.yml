@@ -1,6 +1,9 @@
 name: PR69 Regenerate deterministic artifacts
 
 on:
+  push:
+    branches:
+      - chatgpt/pr69-p9-3-storage-backup-restore-advanced-lab
   pull_request:
     types: [reopened]
 
@@ -9,7 +12,7 @@ permissions:
 
 jobs:
   regenerate:
-    if: github.event.pull_request.number == 69
+    if: github.event_name == 'push' || github.event.pull_request.number == 69
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
