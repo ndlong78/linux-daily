@@ -100,8 +100,8 @@ Quy tắc kết thúc:
               ops.write_text(text, encoding="utf-8")
           PY
 
-      - name: Remove one-off helper before final validation
-        run: git rm -- .github/workflows/pr81-artifact-rebuild.yml
+      - name: Remove one-off helper and trigger before final validation
+        run: git rm -- .github/workflows/pr81-artifact-rebuild.yml .pr81-self-fix-trigger
 
       - name: Regenerate deterministic artifacts
         run: python tools/publish.py prepare
@@ -136,6 +136,7 @@ Quy tắc kết thúc:
 
           allowed = {
               ".github/workflows/pr81-artifact-rebuild.yml",
+              ".pr81-self-fix-trigger",
               "AGENTS.md",
               "docs/CHATGPT-OPERATIONS.md",
               "archive.html",
