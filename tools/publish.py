@@ -31,6 +31,7 @@ def command_plan(mode: str) -> list[list[str]]:
     if mode == "check":
         return [
             [PYTHON, "tools/build.py", "--check"],
+            [PYTHON, "tools/validate_style.py"],
             [PYTHON, "tools/taxonomy.py"],
             [PYTHON, "tools/content_mix.py", "--check"],
             [PYTHON, "tools/curriculum_planner.py"],

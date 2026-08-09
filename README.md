@@ -10,7 +10,7 @@ Website public được phục vụ qua **Cloudflare Worker** tại `https://lin
 ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                  │
                  ▼
-          đọc GitHub main
+       đọc AGENTS.md + STYLE.md
                  │
         state.json / topics.md
                  │
@@ -21,7 +21,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
          dừng            ▼
                     chuẩn bị bài
                          │
-                  technical review
+            technical + style review
                          │
                          ▼
                 chatgpt/... branch
@@ -47,13 +47,15 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ## Source of truth
 
 - `AGENTS.md` — hợp đồng vận hành cho ChatGPT/AI agent.
+- `STYLE.md` — chuẩn bắt buộc về ngôn ngữ, cấu trúc trình bày, code block và safety affordance.
 - `state.json` — trạng thái cadence (`last_issue`, `last_generated_at`, `last_published_date`).
 - `topics.md` — lịch sử chủ đề và thứ tự series.
 - `site.json` — metadata website và public base URL `https://linux.no.id.vn/`.
 - `templates/post.template.html` — khung bài.
 - `templates/index.template.html` — khung trang chủ.
-- `tools/build.py` — build + quality gate local.
-- `tools/validate_sources.py` — source-backed technical gate cho bài mới.
+- `tools/build.py` — build + structural/source quality gate local.
+- `tools/validate_sources.py` — source-backed technical gate.
+- `tools/validate_style.py` — audit STYLE.md toàn lịch sử và enforce từ bài #041.
 - `.github/workflows/ci.yml` — quality gate trên PR/push.
 
 ## Cấu trúc repo
@@ -61,6 +63,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ```text
 .
 ├── AGENTS.md
+├── STYLE.md
 ├── README.md
 ├── LICENSE
 ├── CONTRIBUTING.md
@@ -73,25 +76,21 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 ├── sitemap.xml
 ├── robots.txt
 ├── assets/
-│   └── style.css
 ├── templates/
 │   ├── post.template.html
 │   └── index.template.html
 ├── posts/
-│   ├── post-001-static-ip.html
-│   └── social/              # artifact lịch sử; hiện không sinh mới mặc định
 ├── tools/
 │   ├── cadence.py
 │   ├── build.py
-│   ├── build_index.py
-│   ├── build_feed.py
-│   ├── build_sitemap.py
-│   ├── postmeta.py
+│   ├── publish.py
 │   ├── validate_sources.py
-│   └── render_code.py
+│   ├── validate_style.py
+│   └── ...
 ├── tests/
 ├── docs/
 │   ├── CHATGPT-OPERATIONS.md
+│   ├── STYLE-AUDIT.md
 │   └── ROADMAP.md
 └── .github/
     ├── CODEOWNERS
@@ -127,60 +126,57 @@ Sau khi sinh bài hoàn chỉnh:
 ```bash
 python3 tools/build.py
 python3 tools/cadence.py record
-python3 tools/build.py --check
+python3 tools/publish.py check
+```
+
+## STYLE.md quality gate
+
+Từ **Linux Daily #041**, bài mới phải đáp ứng `STYLE.md` trước khi merge. Gate kiểm tra các contract máy đọc được, gồm:
+
+- `ld-meta.tested_on`, `last_verified`, `changes_system`;
+- metadata `Tested on` / `Last verified` hiển thị trong bài;
+- Mục tiêu, Yêu cầu tiên quyết, Các bước thực hiện, Kiểm chứng, Lưu ý & Khắc phục lỗi, Bài tập;
+- `<ol class="steps">` cho quy trình tuyến tính;
+- `language-*` cho mọi code block;
+- `data-run-as="user|sudo|root"` cho command block shell;
+- Expected Output/Kết quả mong đợi trong verification;
+- Gỡ / Hoàn tác khi `changes_system=true`;
+- chặn shell prompt trong command block, placeholder legacy và `curl | sh` chạy trực tiếp.
+
+Bài #001–#040 là **legacy baseline**: vẫn được audit nhưng chưa làm CI fail. Xem `docs/STYLE-AUDIT.md`.
+
+```bash
+python3 tools/validate_style.py
+python3 tools/validate_style.py --audit
 ```
 
 ## Source-backed Technical Review
 
-Từ **Linux Daily #019**, mỗi bài mới phải có tối thiểu **2 nguồn official/upstream**. Metadata `ld-meta` bổ sung:
+Từ **Linux Daily #019**, mỗi bài mới phải có tối thiểu **2 nguồn official/upstream**. Metadata `ld-meta` bổ sung `review_status` và `sources`; danh sách nguồn hiển thị phải khớp metadata.
 
-```json
-{
-  "review_status": "reviewed",
-  "sources": [
-    {"title": "Official documentation", "url": "https://...", "kind": "official"},
-    {"title": "Upstream documentation", "url": "https://...", "kind": "upstream"}
-  ]
-}
-```
-
-Cùng danh sách đó phải được hiển thị trong `<section class="sources">` với title/URL/thứ tự khớp metadata. `tools/validate_sources.py` kiểm tra:
-
-- ít nhất 2 nguồn primary;
-- URL HTTPS đầy đủ, không trùng;
-- `kind` là `official` hoặc `upstream`;
-- nguồn hiển thị khớp metadata;
-- `review_status` phải là `reviewed` hoặc `published` để qua merge gate.
-
-Bài #001–#018 được grandfather để không phải backfill toàn bộ series trong cùng một PR. Claim cũ không được sao chép sang bài mới nếu chưa kiểm chứng lại.
+`tools/validate_sources.py` kiểm tra URL, loại nguồn, số lượng và trạng thái review. Claim cũ không được sao chép sang bài mới nếu chưa kiểm chứng lại.
 
 ## Quy trình bài mới
 
-1. ChatGPT đọc `AGENTS.md`, `state.json`, `topics.md` và trạng thái GitHub hiện tại.
+1. ChatGPT đọc `AGENTS.md`, `STYLE.md`, `state.json`, `topics.md` và trạng thái GitHub hiện tại.
 2. Kiểm tra cadence hằng ngày và duplicate branch/PR cho issue kế tiếp.
 3. Chọn trục theo chu kỳ 7 và tránh chủ đề trùng.
 4. Tạo HTML theo template, metadata `ld-meta` và 2 SVG.
 5. Kiểm tra claim kỹ thuật bằng tài liệu official/upstream hiện hành; ghi `sources` và `review_status`.
-6. Cập nhật `topics.md`, `state.json` và learning metadata/path nếu cần.
-7. Chạy `python3 tools/build.py` để regenerate các artifact site deterministic.
-8. Chạy `python3 tools/build.py --check`.
-9. Dùng branch:
+6. Kiểm tra STYLE.md: metadata môi trường test, quyền lệnh, step ordering, verification output, rollback và FreeBSD portability.
+7. Cập nhật `topics.md`, `state.json` và learning metadata/path nếu cần.
+8. Chạy generator deterministic.
+9. Chạy `python3 tools/publish.py check`.
+10. Dùng branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`.
+11. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
 
-```text
-chatgpt/linux-daily-<NNN>-<YYYYMMDD>
-```
-
-10. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
-
-**Facebook/X đang tạm dừng.** Bài mới không cần tạo `posts/social/post-<NNN>-facebook.txt`, `post-<NNN>-x.txt` hoặc ảnh code social. Các artifact lịch sử vẫn được giữ nguyên.
-
-Trong thời gian migration, agent vẫn phải phát hiện prefix cũ `claude/linux-daily-...` để tránh sinh trùng, nhưng **không tạo branch Claude mới**.
+**Facebook/X đang tạm dừng.** Bài mới không cần tạo social artifact mặc định.
 
 ## ChatGPT Plus Scheduled Task
 
-Task vận hành chính là **Linux Daily Operator**, chạy lúc **07:00 hằng ngày** theo giờ Việt Nam. Task đọc repository mỗi lần chạy; business rules lâu dài nằm trong `AGENTS.md`, không nằm duy nhất trong prompt của task.
+Task vận hành chính là **Linux Daily Operator**, chạy lúc **07:00 hằng ngày** theo giờ Việt Nam. Task đọc repository mỗi lần chạy; business rules lâu dài nằm trong `AGENTS.md` và `STYLE.md`, không nằm duy nhất trong prompt của task.
 
-Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị bài và technical review; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
+Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị bài, technical review và STYLE.md review; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
 
 Chi tiết: `docs/CHATGPT-OPERATIONS.md`.
 
@@ -197,26 +193,19 @@ Chạy quality gate:
 ```bash
 ruff check tools/ tests/
 pytest -q
-python3 tools/build.py --check
+python3 tools/publish.py check
 ```
 
-Có thể chạy source gate riêng:
+Có thể chạy riêng:
 
 ```bash
 python3 tools/validate_sources.py
+python3 tools/validate_style.py --audit
 ```
-
-`tools/render_code.py` và social validators vẫn được giữ để audit/tái sử dụng artifact lịch sử nhưng không còn nằm trong contract tạo bài mới mặc định.
 
 ## Website
 
-Repo là source của static site; lớp public hosting nằm trên **Cloudflare Worker**. Public URL chuẩn được khai báo duy nhất trong `site.json`:
-
-```text
-https://linux.no.id.vn/
-```
-
-`index.html`, `feed.xml`, `sitemap.xml` và `robots.txt` đều được build từ metadata trong repo. Không dùng file `CNAME` và không phụ thuộc GitHub Pages để phục vụ domain public.
+Repo là source của static site; lớp public hosting nằm trên **Cloudflare Worker**. Public URL chuẩn được khai báo duy nhất trong `site.json` là `https://linux.no.id.vn/`.
 
 ## An toàn vận hành
 
@@ -227,7 +216,8 @@ https://linux.no.id.vn/
 - Không tạo bài nếu branch/PR cho issue kế tiếp đã tồn tại.
 - FreeBSD luôn được xử lý riêng, không áp lệnh Linux cho FreeBSD.
 - Với networking, firewall, storage, backup/restore, auth/permissions và automation shell: luôn rà rollback, destructive flags và khác biệt phiên bản trước khi `reviewed`.
+- Không bypass STYLE.md gate bằng cách giảm enforcement hoặc đổi metadata giả.
 
 ## Migration khỏi Claude Routine
 
-Từ 2026-08-07, Linux Daily đã chuyển sang ChatGPT Plus làm bộ điều phối. Các entrypoint Claude (`.claude/skills/...` và `routine-prompt.txt`) đã được loại bỏ; `AGENTS.md` là hợp đồng vận hành chính trong repo.
+Từ 2026-08-07, Linux Daily đã chuyển sang ChatGPT Plus làm bộ điều phối. Các entrypoint Claude đã được loại bỏ; `AGENTS.md` + `STYLE.md` là contract chính trong repo.

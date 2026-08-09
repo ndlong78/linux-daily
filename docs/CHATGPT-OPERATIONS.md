@@ -8,7 +8,7 @@ Linux Daily được vận hành theo mô hình **ChatGPT Plus + Scheduled Task 
 ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                  │
                  ▼
-          đọc GitHub main
+       đọc AGENTS.md + STYLE.md
                  │
         state.json / topics.md
                  │
@@ -19,7 +19,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
          dừng            ▼
                     chuẩn bị bài
                          │
-               source-backed review
+          source-backed + style review
                          │
               duplicate branch/PR?
                   │              │
@@ -36,9 +36,6 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                                  │
                                  ▼
                            người dùng merge
-                                 │
-                                 ▼
-                         website trên main
 ```
 
 ## Scheduled Task
@@ -47,29 +44,52 @@ Task chuẩn chạy **07:00 mỗi ngày** theo `Asia/Ho_Chi_Minh`.
 
 Mỗi lần chạy, ChatGPT phải:
 
-1. Đọc `AGENTS.md` và trạng thái mới nhất của `main`.
+1. Đọc `AGENTS.md` **và `STYLE.md`** từ `main` mới nhất.
 2. Đọc `state.json` và kiểm tra cadence mặc định 1 ngày.
 3. Nếu chưa sang ngày phát hành kế tiếp: kết thúc, không tạo thay đổi.
 4. Nếu tới nhịp: xác định issue kế tiếp, kiểm tra trục, tránh chủ đề trùng và ưu tiên progression hợp lý với các bài trước.
 5. Kiểm tra branch/PR đang mở cho issue đó, bao gồm cả prefix `chatgpt/` và legacy `claude/`.
-6. Chuẩn bị bài theo template/meta/validator hiện hành.
-7. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, và tạo section **Nguồn kỹ thuật** khớp metadata.
-8. Chạy structural quality gate + source-backed gate.
-9. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
-10. Nếu chưa có quyền GitHub write rõ ràng trong phiên tự động, chỉ báo gói thay đổi cho người dùng; không tự push/merge.
+6. Chuẩn bị bài theo `templates/post.template.html`, `AGENTS.md`, `STYLE.md` và validators hiện hành.
+7. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources` và tạo section **Nguồn kỹ thuật** khớp metadata.
+8. Từ #041: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
+9. Chạy structural gate + source-backed gate + STYLE.md gate thông qua `python3 tools/publish.py check`.
+10. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
+11. Nếu chưa có quyền GitHub write rõ ràng trong phiên tự động, chỉ báo gói thay đổi cho người dùng; không tự push/merge.
 
 ## Source of truth
 
 - `AGENTS.md`: hợp đồng vận hành của AI agent.
+- `STYLE.md`: chuẩn ngôn ngữ, cấu trúc trình bày, code block và safety affordance.
 - `state.json`: trạng thái cadence.
 - `topics.md`: lịch sử chủ đề và thứ tự series.
 - `templates/post.template.html`: khung bài.
-- `templates/index.template.html`: khung trang chủ.
-- `tools/build.py`: build + quality gate tại local.
-- `tools/validate_sources.py`: source-backed technical gate từ bài #019.
+- `tools/publish.py`: entrypoint quality gate local.
+- `tools/validate_sources.py`: source-backed technical gate.
+- `tools/validate_style.py`: STYLE.md audit/enforcement.
 - `.github/workflows/ci.yml`: quality gate trên GitHub.
 
 Không dùng prompt Scheduled Task làm nơi duy nhất giữ business rules. Prompt task chỉ là entrypoint; quy tắc bền vững nằm trong repository.
+
+## STYLE.md review
+
+Linux Daily #041+ phải đạt style contract trước khi được coi là ready for review:
+
+- metadata hiển thị `Tested on` + `Last verified`;
+- `ld-meta` có `tested_on`, `last_verified`, `changes_system`;
+- Mục tiêu + Yêu cầu tiên quyết;
+- Các bước thực hiện dùng `<ol class="steps">`;
+- mọi code block có `language-*`;
+- command block shell có `data-run-as="user|sudo|root"`;
+- verification có Expected Output/Kết quả mong đợi;
+- `changes_system=true` thì có **Gỡ / Hoàn tác**;
+- không shell prompt trong command block, không `curl | sh` chạy trực tiếp, không placeholder legacy kiểu `YOUR_*`.
+
+#001–#040 được audit nhưng chưa fail CI. Không được tận dụng legacy exemption cho bài mới. Backfill theo batch riêng.
+
+```bash
+python3 tools/validate_style.py
+python3 tools/validate_style.py --audit
+```
 
 ## Source-backed technical review
 
@@ -83,16 +103,9 @@ Các vùng cần review sâu hơn:
 - auth/permissions: quyền root/sudo, đường lui khi hardening;
 - shell automation: shell thực thi, PATH, quoting, exit-code semantics và portability.
 
-Bài #001–#018 được grandfather trong source validator. Backfill lịch sử làm theo PR riêng để diff nhỏ và dễ audit.
-
 ## Social output
 
 Facebook/X và ảnh code social đang **tạm dừng** để giảm khối lượng generation/review khi cadence tăng lên hằng ngày.
-
-- Không tạo social artifact mới theo mặc định.
-- Không coi thiếu social artifact của bài mới là lỗi CI.
-- Giữ nguyên `posts/social/` lịch sử để audit và có thể tái sử dụng sau này.
-- Nếu bật lại social publishing, cập nhật contract + validator bằng một PR riêng.
 
 ## Quyền ghi GitHub
 
@@ -105,7 +118,8 @@ Nguyên tắc an toàn:
 - không ghi state khi cadence chưa tới;
 - không tạo issue trùng nếu branch/PR đã tồn tại;
 - không bypass CI;
-- không đặt `review_status="reviewed"` khi nguồn chưa được kiểm tra.
+- không đặt `review_status="reviewed"` khi nguồn chưa được kiểm tra;
+- không giảm STYLE.md enforcement chỉ để CI xanh.
 
 ## Branch convention
 
@@ -120,50 +134,42 @@ Prefix cũ `claude/linux-daily-...` chỉ được giữ để phát hiện dupl
 ```bash
 python3 tools/cadence.py gate
 python3 tools/cadence.py next
-# tạo HTML + technical sources; không tạo social theo mặc định
+# tạo HTML + technical sources + STYLE.md metadata
 python3 tools/build_index.py
 python3 tools/cadence.py record
-python3 tools/build.py --check
+python3 tools/publish.py check
 ```
-
-`tools/build.py --check` gọi validator cấu trúc hiện có và `tools/validate_sources.py`; social artifact không còn là merge gate cho bài mới.
 
 Nếu tất cả kiểm tra sạch và người dùng đã cấp quyền remote write, tạo branch `chatgpt/...`, commit chính xác các file liên quan, push và mở PR vào `main`.
 
 ## CI
 
-PR phải đi qua `quality-gate`, gồm lint/test/validator/build/smoke tests theo workflow hiện hành. Do CI gọi `tools/build.py --check`, source-backed gate cũng là một phần của quality gate. CI xanh là điều kiện kỹ thuật để merge; người dùng vẫn là người quyết định cuối cùng.
+PR phải đi qua `quality-gate`, gồm lint/test/validator/build/smoke tests theo workflow hiện hành. `tools/publish.py check` bao gồm STYLE.md gate; CI xanh là điều kiện kỹ thuật để merge.
 
 ## Self-fix CI loop
 
-Sau khi push branch hoặc cập nhật một PR, ChatGPT phải coi CI là một vòng lặp có trạng thái, không phải bước kiểm tra một lần:
+Sau khi push branch hoặc cập nhật một PR, ChatGPT phải coi CI là một vòng lặp có trạng thái:
 
 ```text
 push
   ↓
 đọc lại PR → lấy exact head SHA
   ↓
-kiểm push + pull_request checks của SHA đó
+kiểm checks của SHA đó
   ├─ pending/running → chưa được kết luận
   ├─ failed → đọc log → sửa → regenerate → local check → push lại
-  └─ all success → kiểm diff không còn helper tạm → ready for review
+  └─ all success → kiểm diff → ready for review
 ```
-
-Quy tắc kết thúc:
 
 - local PASS không thay thế GitHub Actions PASS;
 - run xanh của SHA cũ không có giá trị cho SHA mới;
-- phải kiểm cả `push` và `pull_request` nếu workflow tạo cả hai;
 - check đang chờ/chạy được coi là chưa hoàn tất;
-- helper workflow dùng để chẩn đoán phải được xóa trước vòng CI cuối;
-- không báo PR “xong”, “sạch” hoặc “sẵn sàng merge” khi chưa chứng minh exact head SHA không còn check đỏ/pending.
-
-Nếu CI fail, agent tự sửa theo log đến khi xanh trong phạm vi branch đã được người dùng cho phép; không yêu cầu người dùng tự chẩn đoán những lỗi có thể xử lý bằng repository/CI hiện có. Tuyệt đối không sửa gate theo hướng bỏ kiểm tra chỉ để đạt PASS.
+- không báo PR sẵn sàng merge khi chưa chứng minh exact head SHA sạch.
 
 ## Migration khỏi Claude Routine
 
-Migration PR #23 đã merge ngày 2026-08-07. `AGENTS.md` là quy tắc AI chính; `.claude/skills/linux-daily/SKILL.md` và `routine-prompt.txt` đã được loại bỏ. `state.json`, cadence, structured pipeline và GitHub Actions được giữ độc lập với vendor AI.
+Migration PR #23 đã merge ngày 2026-08-07. `AGENTS.md` + `STYLE.md` là contract AI chính; entrypoint Claude cũ đã được loại bỏ.
 
 ## Khi cần rollback
 
-Nếu Scheduled Task gặp vấn đề, chỉ cần disable task trong ChatGPT. Repository vẫn tự đủ để vận hành thủ công bằng `AGENTS.md`, `tools/cadence.py` và `tools/build.py`; không cần rollback dữ liệu nội dung.
+Nếu Scheduled Task gặp vấn đề, disable task trong ChatGPT. Repository vẫn tự đủ để vận hành thủ công bằng `AGENTS.md`, `STYLE.md`, `tools/cadence.py` và `tools/publish.py`.

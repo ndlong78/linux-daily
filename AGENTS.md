@@ -5,12 +5,15 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 ## 1. Nguyên tắc vận hành
 
 - `main` là nguồn sự thật của nội dung đã chấp nhận.
+- `AGENTS.md` quy định workflow; **`STYLE.md` là source of truth bắt buộc về ngôn ngữ, cấu trúc trình bày, code block và safety affordance của bài viết**.
+- Trước khi tạo hoặc sửa bài, agent phải đọc cả `AGENTS.md` và `STYLE.md` trên `main` hiện tại.
 - Không push trực tiếp vào `main`.
 - Bài mới đi qua branch → Pull Request → GitHub Actions → người dùng review/merge.
 - `state.json` là nguồn sự thật của cadence; `topics.md` là lịch sử nội dung, không dùng làm clock vận hành.
 - Không tự ý commit/push/mở PR/merge nếu phiên làm việc chưa có quyền ghi GitHub rõ ràng của người dùng cho hành động tương ứng.
 - Scheduled Task chỉ chuẩn bị và kiểm tra; khi cần remote write mà chưa có quyền, báo người dùng để phê duyệt trong chat.
 - Từ bài **#019**, mọi claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
+- Từ bài **#041**, mọi bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và được backfill theo PR riêng.
 
 ## 2. Cổng cadence hằng ngày
 
@@ -64,7 +67,7 @@ Luôn kiểm tra `topics.md` để tránh trùng chủ đề đã có. Khi phù 
 Mỗi bài phải nêu rõ khác biệt giữa:
 
 - Ubuntu / Xubuntu: APT, systemd, netplan, UFW/nftables.
-- Debian: APT, systemd, cấu hình phù hợp Debian hiện hành.
+- Debian: APT, systemd, cấu hình phù hợp Debian stable hiện hành.
 - Fedora: DNF, systemd, SELinux, NetworkManager/`nmcli`, firewalld.
 - FreeBSD: pkg/ports, rc.d, `rc.conf`, pf/ipfw, công cụ BSD tương ứng.
 
@@ -106,19 +109,26 @@ Checklist bắt buộc với nội dung rủi ro cao:
 - **Auth/permissions:** account scope, sudo/root impact, cách giữ đường lui khi hardening.
 - **Automation/shell:** shell thực thi, exit-code semantics, quoting, PATH và portability.
 
-Bài #001–#018 được grandfather về mặt validator; việc backfill nguồn lịch sử làm theo PR riêng, không được dùng grandfather để sao chép claim cũ sang bài mới mà không kiểm chứng.
+Bài #001–#018 được grandfather về mặt source validator; việc backfill nguồn lịch sử làm theo PR riêng, không được dùng grandfather để sao chép claim cũ sang bài mới mà không kiểm chứng.
 
-## 6. Cấu trúc bài
+## 6. Cấu trúc và STYLE.md
 
-Dùng `templates/post.template.html` và giữ `assets/style.css` làm CSS chung. Mỗi bài có đúng 7 mục:
+Dùng `templates/post.template.html`, `STYLE.md` và giữ `assets/style.css` làm CSS chung.
 
-1. Bối cảnh thực tế
-2. Kiến thức cốt lõi
-3. Cấu hình/thao tác từng HĐH
-4. Kiểm chứng
-5. Cạm bẫy + cách xử lý
-6. Bảo mật & vận hành
-7. Bài tập tự luyện
+Cấu trúc editorial của Linux Daily giữ 7 mục chuyên môn, nhưng từ #041 phải bao bọc bởi contract của `STYLE.md`:
+
+1. metadata hiển thị `Tested on` + `Last verified`;
+2. Mục tiêu;
+3. Yêu cầu tiên quyết;
+4. `01 Bối cảnh thực tế`;
+5. `02 Kiến thức cốt lõi`;
+6. `03 Các bước thực hiện` — dùng `<ol class="steps">`, mỗi bước một hành động chính;
+7. `04 Kiểm chứng` — có Expected Output/Kết quả mong đợi;
+8. `Gỡ / Hoàn tác` không đánh số nếu `changes_system=true`;
+9. `05 Lưu ý & Khắc phục lỗi`;
+10. `06 Bảo mật & vận hành`;
+11. `07 Bài tập tự luyện`;
+12. `Nguồn kỹ thuật` không đánh số.
 
 Mỗi bài phải có:
 
@@ -127,11 +137,20 @@ Mỗi bài phải có:
 - khối FreeBSD riêng;
 - 2 link về trang chủ;
 - metadata JSON `<script id="ld-meta">` trong `<head>`;
-- từ #019: `review_status`, `sources`, và `<section class="sources">` không đánh số.
+- từ #019: `review_status`, `sources`, và `<section class="sources">` không đánh số;
+- từ #041: `tested_on`, `last_verified`, `changes_system`;
+- từ #041: mọi `<pre><code>` có `language-*`; command block shell phải có ngữ cảnh `data-run-as="user|sudo|root"`;
+- từ #041: không có shell prompt `$`/`#`, `curl | sh` chạy mù, hay placeholder legacy kiểu `YOUR_*` trong command block.
 
 Metadata cơ bản phải khớp filename, `topics.md` và nội dung hiển thị: `issue`, `date`, `axis`, `slug`, `eyebrow`, `title`, `lede`.
 
 Ngày bài mặc định là ngày chạy thực tế. Không backdate để vượt cadence.
+
+### Legacy style migration
+
+- #001–#040 vẫn được audit bởi `python3 tools/validate_style.py --audit` nhưng không làm CI fail.
+- Không dùng legacy exemption cho bài mới hoặc nội dung copy từ bài cũ.
+- Backfill lịch sử theo batch nhỏ để diff reviewable; sau khi một batch đạt chuẩn có thể nâng enforcement boundary bằng PR riêng.
 
 ## 7. Social output — tạm dừng
 
@@ -148,10 +167,10 @@ Sau khi nội dung hoàn chỉnh:
 ```bash
 python3 tools/build_index.py
 python3 tools/cadence.py record
-python3 tools/build.py --check
+python3 tools/publish.py check
 ```
 
-`tools/build.py --check` chạy quality gate cấu trúc và **source-backed gate**. Social artifact không còn là điều kiện merge cho bài mới.
+`tools/publish.py check` chạy structural/source-backed gates và **STYLE.md gate**. Social artifact không còn là điều kiện merge cho bài mới.
 
 `state.json` phải khớp bài mới nhất trong `topics.md` và `last_generated_at` phải phản ánh thời điểm sinh thực tế.
 
@@ -196,7 +215,9 @@ Không được skip, suppress, nới lỏng hoặc bypass gate để làm CI xa
 
 ## 10. Scheduled Task của ChatGPT
 
-Task chạy hằng ngày lúc 07:00. Cadence do `state.json` quyết định với mặc định **1 ngày**. Khi chưa sang ngày phát hành kế tiếp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị bài, source-backed review và quality gates.
+Task chạy hằng ngày lúc 07:00. Cadence do `state.json` quyết định với mặc định **1 ngày**. Mỗi lần chạy phải đọc `AGENTS.md` **và `STYLE.md`** từ `main` trước khi chuẩn bị bài.
+
+Khi chưa sang ngày phát hành kế tiếp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị bài, source-backed review, STYLE.md review và quality gates.
 
 Task không tạo Facebook/X theo mặc định trong giai đoạn social output tạm dừng.
 
