@@ -38,7 +38,7 @@ def validate(plan: dict | None = None, posts: list[dict] | None = None) -> list[
         problems.append("readiness.required_platforms phải gồm đúng ubuntu/debian/fedora/freebsd")
     if not isinstance(minimum_sources, int) or minimum_sources < 2:
         problems.append("readiness.minimum_primary_sources phải >= 2")
-    if not isinstance(threshold, (int, float)) or not 0.5 <= float(threshold) <= 0.95:
+    if not isinstance(threshold, int | float) or not 0.5 <= float(threshold) <= 0.95:
         problems.append("semantic_similarity_block_threshold phải nằm trong [0.5, 0.95]")
         threshold = 0.72
 
