@@ -5,8 +5,57 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 02 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 09 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>pidstat và procstat: theo dõi process theo thời gian</title>
+      <link>https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html</guid>
+      <pubDate>Sun, 09 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.</description>
+    </item>
+    <item>
+      <title>fd: tìm file nhanh nhưng phải hiểu ignore và hidden</title>
+      <link>https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html</guid>
+      <pubDate>Sat, 08 Aug 2026 00:00:00 +0700</pubDate>
+      <description>fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.</description>
+    </item>
+    <item>
+      <title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</title>
+      <link>https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html</guid>
+      <pubDate>Fri, 07 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</description>
+    </item>
+    <item>
+      <title>ACL và default ACL: quyền chia sẻ không cần chmod 777</title>
+      <link>https://linux.no.id.vn/posts/post-037-acl-default-acl-shared-access.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-037-acl-default-acl-shared-access.html</guid>
+      <pubDate>Thu, 06 Aug 2026 00:00:00 +0700</pubDate>
+      <description>ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.</description>
+    </item>
+    <item>
+      <title>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</title>
+      <link>https://linux.no.id.vn/posts/post-036-tcpdump-targeted-packet-capture.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-036-tcpdump-targeted-packet-capture.html</guid>
+      <pubDate>Wed, 05 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.</description>
+    </item>
+    <item>
+      <title>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</title>
+      <link>https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html</guid>
+      <pubDate>Tue, 04 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</description>
+    </item>
+    <item>
+      <title>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</title>
+      <link>https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html</guid>
+      <pubDate>Mon, 03 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</description>
+    </item>
     <item>
       <title>Process tree và service ownership: PID này thuộc service nào?</title>
       <link>https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</link>
@@ -27,55 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</guid>
       <pubDate>Fri, 31 Jul 2026 00:00:00 +0700</pubDate>
       <description>noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</description>
-    </item>
-    <item>
-      <title>Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</title>
-      <link>https://linux.no.id.vn/posts/post-030-login-privilege-escalation-audit.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-030-login-privilege-escalation-audit.html</guid>
-      <pubDate>Thu, 30 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Khi một thay đổi bất thường xuất hiện, cần biết ai đăng nhập, từ đâu và đã nâng quyền bằng cơ chế nào. Linux systemd và FreeBSD lưu dấu vết khác nhau.</description>
-    </item>
-    <item>
-      <title>Nhiều default gateway: policy routing không cắt SSH</title>
-      <link>https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html</guid>
-      <pubDate>Wed, 29 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.</description>
-    </item>
-    <item>
-      <title>Lab DNS outage: khoanh vùng trước, phục hồi sau</title>
-      <link>https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html</guid>
-      <pubDate>Tue, 28 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</description>
-    </item>
-    <item>
-      <title>Shell idempotent: chạy lại không phá trạng thái</title>
-      <link>https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html</guid>
-      <pubDate>Mon, 27 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</description>
-    </item>
-    <item>
-      <title>vmstat và systat: đọc pressure trước khi đoán bottleneck</title>
-      <link>https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html</guid>
-      <pubDate>Sun, 26 Jul 2026 00:00:00 +0700</pubDate>
-      <description>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</description>
-    </item>
-    <item>
-      <title>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</title>
-      <link>https://linux.no.id.vn/posts/post-025-ripgrep-log-config-search.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-025-ripgrep-log-config-search.html</guid>
-      <pubDate>Sat, 25 Jul 2026 00:00:00 +0700</pubDate>
-      <description>`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</description>
-    </item>
-    <item>
-      <title>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</title>
-      <link>https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html</guid>
-      <pubDate>Fri, 24 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</description>
     </item>
   </channel>
 </rss>

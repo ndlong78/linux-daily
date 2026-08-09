@@ -1,6 +1,97 @@
 {
-  "count": 33,
+  "count": 40,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-09",
+      "href": "posts/post-040-pidstat-procstat-process-timeseries.html",
+      "issue": 40,
+      "lede": "Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.",
+      "tags": [
+        "Per-process time series"
+      ],
+      "title": "pidstat và procstat: theo dõi process theo thời gian"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-08",
+      "href": "posts/post-039-fd-find-files-fast.html",
+      "issue": 39,
+      "lede": "fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.",
+      "tags": [
+        "fd"
+      ],
+      "title": "fd: tìm file nhanh nhưng phải hiểu ignore và hidden"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-08-07",
+      "href": "posts/post-038-smart-nvme-health-disk-degradation.html",
+      "issue": 38,
+      "lede": "Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.",
+      "tags": [
+        "Device health"
+      ],
+      "title": "SMART và NVMe health: phát hiện disk degradation trước khi hỏng"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-08-06",
+      "href": "posts/post-037-acl-default-acl-shared-access.html",
+      "issue": 37,
+      "lede": "ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.",
+      "tags": [
+        "ACL"
+      ],
+      "title": "ACL và default ACL: quyền chia sẻ không cần chmod 777"
+    },
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-08-05",
+      "href": "posts/post-036-tcpdump-targeted-packet-capture.html",
+      "issue": 36,
+      "lede": "Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.",
+      "tags": [
+        "Packet capture"
+      ],
+      "title": "tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence"
+    },
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-08-04",
+      "href": "posts/post-035-lab-filesystem-full-recovery.html",
+      "issue": 35,
+      "lede": "Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.",
+      "tags": [
+        "Filesystem full lab"
+      ],
+      "title": "Lab filesystem đầy: quan sát, xử lý và phòng tái diễn"
+    },
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-03",
+      "href": "posts/post-034-systemd-timer-freebsd-periodic-cron.html",
+      "issue": 34,
+      "lede": "Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.",
+      "tags": [
+        "Scheduling"
+      ],
+      "title": "systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",

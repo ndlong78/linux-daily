@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>ACL và default ACL: quyền chia sẻ không cần chmod 777 — Linux Daily #037</title><meta name="description" content="ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.">
+
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-037-acl-default-acl-shared-access.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="ACL và default ACL: quyền chia sẻ không cần chmod 777">
+<meta property="og:description" content="ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-037-acl-default-acl-shared-access.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="ACL và default ACL: quyền chia sẻ không cần chmod 777">
+<meta name="twitter:description" content="ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 37,
+  "date": "2026-08-06",
+  "axis": "Bảo mật",
+  "eyebrow": "Bảo mật · ACL",
+  "slug": "acl-default-acl-shared-access",
+  "title": "ACL và default ACL: quyền chia sẻ không cần chmod 777",
+  "lede": "ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "Linux man-pages — setfacl(1)",
+      "url": "https://man7.org/linux/man-pages/man1/setfacl.1.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Linux man-pages — getfacl(1)",
+      "url": "https://man7.org/linux/man-pages/man1/getfacl.1.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — setfacl(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=setfacl&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — getfacl(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=getfacl&sektion=1",
+      "kind": "official"
+    }
+  ]
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#037 · 06·08·2026</span></div></div><header class="post"><p class="eyebrow">Bảo mật · ACL</p><h1>ACL và default ACL: quyền chia sẻ không cần chmod 777</h1><p class="lede">ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.</p><div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Shared directory thường bị xử lý bằng <code>chmod 777</code> vì nhanh nhưng phá nguyên tắc least privilege. ACL cho phép thêm đúng user/group cần thiết và kiểm tra quyền hiệu lực.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>POSIX.1e ACL có owner, named user/group, mask và other; mask có thể giới hạn quyền hiệu lực của named entries.</li><li>Linux dùng <code>getfacl/setfacl</code> từ package <code>acl</code>. FreeBSD có công cụ trong base và hỗ trợ cả POSIX.1e/NFSv4 ACL tùy filesystem.</li><li>Default ACL áp cho directory POSIX.1e; trên FreeBSD NFSv4 ACL dùng inheritance flags thay vì <code>-d</code>.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install acl
+getfacl '&lt;PATH&gt;'
+setfacl -m 'g:&lt;GROUP&gt;:rwx' '&lt;PATH&gt;'</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install acl
+getfacl '&lt;PATH&gt;'
+setfacl -m 'g:&lt;GROUP&gt;:rwx' '&lt;PATH&gt;'</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install acl
+getfacl '&lt;PATH&gt;'
+setfacl -m 'g:&lt;GROUP&gt;:rwx' '&lt;PATH&gt;'</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>getfacl '&lt;PATH&gt;'
+setfacl -m 'g:&lt;GROUP&gt;:rwx' '&lt;PATH&gt;'
+getfacl -d '&lt;DIR&gt;' 2&gt;/dev/null || echo 'Default ACL không áp dụng cho ACL model này'</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Dùng thư mục tạm và group hiện tại để xem ACL/mask; không đụng dữ liệu production.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>rm -rf /tmp/ld-acl &amp;&amp; mkdir /tmp/ld-acl
+setfacl -m "g:$(id -gn):rwx" /tmp/ld-acl
+setfacl -d -m "g:$(id -gn):rwx" /tmp/ld-acl
+touch /tmp/ld-acl/new-file
+getfacl /tmp/ld-acl /tmp/ld-acl/new-file</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>rm -rf /tmp/ld-acl &amp;&amp; mkdir /tmp/ld-acl
+setfacl -m "g:$(id -gn):rwx" /tmp/ld-acl
+getfacl /tmp/ld-acl
+getfacl -d /tmp/ld-acl 2&gt;/dev/null || echo 'Kiểm ACL model: NFSv4 không dùng default ACL -d'</code></pre></div><h3>Expected Output</h3><p>ACL của directory có named group entry; Linux còn hiển thị default entries và file mới kế thừa policy. FreeBSD phải xác định ACL model trước khi thiết kế inheritance.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Cleanup</div><pre><code>rm -rf /tmp/ld-acl</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Nhìn entry <code>rwx</code> nhưng bỏ qua <code>mask</code> khiến effective rights thấp hơn.</li><li>Dùng default ACL syntax trên NFSv4 ACL của FreeBSD.</li><li>Recursive ACL thay đổi cả cây dữ liệu mà không backup current ACL.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Trước thay ACL production, lưu <code>getfacl</code> hiện trạng và thử với user mục tiêu. Không dùng ACL để che một thiết kế owner/group sai từ đầu.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thiết kế shared directory cho group <code>&lt;TEAM&gt;</code>: thành viên được read/write, user khác không được ghi; nêu cách kiểm effective rights và rollback ACL.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://man7.org/linux/man-pages/man1/setfacl.1.html">Linux man-pages — setfacl(1)</a></li><li><a href="https://man7.org/linux/man-pages/man1/getfacl.1.html">Linux man-pages — getfacl(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=setfacl&amp;sektion=1">FreeBSD Manual Pages — setfacl(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=getfacl&amp;sektion=1">FreeBSD Manual Pages — getfacl(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-030-login-privilege-escalation-audit.html"><span class="series-kicker">#030</span><span>Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-023-sudo-doas-least-privilege.html">#023 · Least privilege: sudo trên Linux, doas trên FreeBSD</a></li>
+      <li><a href="post-016-fail2ban.html">#016 · fail2ban: để kẻ dò mật khẩu tự khoá cửa lại</a></li>
+      <li><a href="post-009-user-sudo-doas.html">#009 · Tạo user và trao quyền: một nguyên tắc, bốn cơ chế</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

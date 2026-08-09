@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence — Linux Daily #036</title><meta name="description" content="Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.">
+
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-036-tcpdump-targeted-packet-capture.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence">
+<meta property="og:description" content="Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-036-tcpdump-targeted-packet-capture.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence">
+<meta name="twitter:description" content="Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 36,
+  "date": "2026-08-05",
+  "axis": "Networking",
+  "eyebrow": "Networking · Packet capture",
+  "slug": "tcpdump-targeted-packet-capture",
+  "title": "tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence",
+  "lede": "Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "tcpdump — upstream manual page",
+      "url": "https://www.tcpdump.org/manpages/tcpdump.1.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "pcap-filter — upstream capture filter syntax",
+      "url": "https://www.tcpdump.org/manpages/pcap-filter.7.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — tcpdump(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=tcpdump&sektion=1",
+      "kind": "official"
+    }
+  ]
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#036 · 05·08·2026</span></div></div><header class="post"><p class="eyebrow">Networking · Packet capture</p><h1>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</h1><p class="lede">Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Khi DNS timeout hoặc TCP không bắt tay được, log ứng dụng thường chưa đủ để biết packet có rời host hay reply có quay về. tcpdump cho bằng chứng ở network layer nhưng cần filter để không tạo dữ liệu thừa.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>-i</code> chọn interface, <code>-n/-nn</code> tránh resolve tên, <code>-c</code> giới hạn số packet.</li><li>Capture filter như <code>host</code>, <code>port</code>, <code>tcp</code>, <code>udp</code>, <code>icmp</code> chạy trước khi packet được in.</li><li>FreeBSD có tcpdump trong base system; Linux thường cài package riêng.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install tcpdump
+ip route get 1.1.1.1
+sudo tcpdump -D</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install tcpdump
+ip route get 1.1.1.1
+sudo tcpdump -D</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install tcpdump
+ip route get 1.1.1.1
+sudo tcpdump -D</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>command -v tcpdump
+route -n get default
+sudo tcpdump -D</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Thay <code>&lt;IF&gt;</code> bằng interface lab. Capture chỉ metadata ICMP và giới hạn 6 packet; không dump payload.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Terminal 1</div><pre><code>sudo tcpdump -ni '&lt;IF&gt;' -c 6 'icmp or icmp6'</code></pre></div><div class="code-wrap"><div class="code-label linux">Terminal 2</div><pre><code>ping -c 2 1.1.1.1</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">Terminal 1</div><pre class="bsd"><code>sudo tcpdump -ni '&lt;IF&gt;' -c 6 'icmp or icmp6'</code></pre></div><div class="code-wrap"><div class="code-label bsd">Terminal 2</div><pre class="bsd"><code>ping -c 2 1.1.1.1</code></pre></div><h3>Expected Output</h3><p>Capture cho thấy request/reply ICMP với IP nguồn/đích. Nếu chỉ thấy request, đó là evidence để tiếp tục kiểm route/firewall/upstream.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Capture mọi traffic không có <code>-c</code> rồi tạo dữ liệu quá lớn.</li><li>Bật name resolution khiến output chậm và vô tình sinh thêm DNS traffic.</li><li>Thấy packet rời interface rồi kết luận remote host đã nhận được.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Packet capture có thể chứa thông tin nhạy cảm. Giới hạn interface/filter/count, tránh payload nếu không cần và bảo vệ file pcap như log nhạy cảm.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Viết ba filter riêng cho DNS port 53, TCP port 443 và traffic tới một IP cụ thể; mỗi filter phải có packet count giới hạn.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.tcpdump.org/manpages/tcpdump.1.html">tcpdump — upstream manual page</a></li><li><a href="https://www.tcpdump.org/manpages/pcap-filter.7.html">pcap-filter — upstream capture filter syntax</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=tcpdump&amp;sektion=1">FreeBSD Manual Pages — tcpdump(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-029-policy-routing-multiple-default-gateways.html"><span class="series-kicker">#029</span><span>Nhiều default gateway: policy routing không cắt SSH</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-022-dns-troubleshooting-dig-resolvectl-drill.html">#022 · DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</a></li>
+      <li><a href="post-015-wireguard-vpn.html">#015 · WireGuard: một cặp khoá, một đường hầm mã hoá</a></li>
+      <li><a href="post-008-chan-doan-mang.html">#008 · Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

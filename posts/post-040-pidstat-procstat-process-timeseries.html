@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>pidstat và procstat: theo dõi process theo thời gian — Linux Daily #040</title><meta name="description" content="Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.">
+
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="pidstat và procstat: theo dõi process theo thời gian">
+<meta property="og:description" content="Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="pidstat và procstat: theo dõi process theo thời gian">
+<meta name="twitter:description" content="Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 40,
+  "date": "2026-08-09",
+  "axis": "Monitoring",
+  "eyebrow": "Monitoring · Per-process time series",
+  "slug": "pidstat-procstat-process-timeseries",
+  "title": "pidstat và procstat: theo dõi process theo thời gian",
+  "lede": "Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "sysstat — pidstat(1) manual",
+      "url": "https://man7.org/linux/man-pages/man1/pidstat.1.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "sysstat — upstream project",
+      "url": "https://github.com/sysstat/sysstat",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — procstat(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=procstat&sektion=1",
+      "kind": "official"
+    }
+  ]
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#040 · 09·08·2026</span></div></div><header class="post"><p class="eyebrow">Monitoring · Per-process time series</p><h1>pidstat và procstat: theo dõi process theo thời gian</h1><p class="lede">Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.</p><div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một worker có thể spike CPU vài giây hoặc tăng RSS từ từ. <code>ps</code>/<code>top</code> chỉ cho một lát cắt; sampling theo PID cho evidence rõ hơn trước khi restart service.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Linux <code>pidstat</code> thuộc sysstat, có thể lấy CPU (<code>-u</code>), memory/page fault (<code>-r</code>) và I/O (<code>-d</code>) theo interval/count.</li><li>FreeBSD không có pidstat trong base; <code>procstat</code> cung cấp chi tiết process và có thể được sample lặp lại bằng shell.</li><li>Chọn PID đúng và ghi timestamp; nếu process restart, PID có thể đổi nên cần đối chiếu service owner.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install sysstat
+pidstat -u -r -d -p '&lt;PID&gt;' 1 5</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install sysstat
+pidstat -u -r -d -p '&lt;PID&gt;' 1 5</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install sysstat
+pidstat -u -r -d -p '&lt;PID&gt;' 1 5</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>procstat -r '&lt;PID&gt;'
+procstat -v '&lt;PID&gt;'
+ps -o pid,ppid,%cpu,%mem,rss,vsz,command -p '&lt;PID&gt;'</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Dùng PID của shell hiện tại để luyện read-only; khi áp dụng cho daemon thật hãy lấy PID từ service manager/process tree.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>PID=$$
+printf 'monitor PID=%s\n' "$PID"
+pidstat -u -r -p "$PID" 1 5</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>PID=$$
+printf 'monitor PID=%s\n' "$PID"
+jot 5 1 | while read _; do
+  date '+%H:%M:%S'
+  ps -o pid,ppid,%cpu,%mem,rss,vsz,command -p "$PID"
+  procstat -r "$PID"
+  sleep 1
+done</code></pre></div><h3>Expected Output</h3><p>Có 5 mẫu theo thời gian. Bạn có thể phân biệt giá trị ổn định với spike/trend thay vì kết luận từ một dòng duy nhất.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Dùng <code>pidstat</code> trên FreeBSD như thể có sẵn.</li><li>Monitor PID cũ sau khi service restart và kết luận sai.</li><li>Thấy CPU cao nhưng bỏ qua I/O wait, page faults hoặc child process.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Full command line/process metadata có thể chứa credential hoặc đường dẫn nhạy cảm. Lọc output trước khi chia sẻ ra ngoài nhóm vận hành.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Chọn một service lab, lấy PID owner đúng cách rồi thu 10 mẫu CPU/RSS mỗi 2 giây. Viết tiêu chí nào đủ để gọi là trend thay vì spike.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://man7.org/linux/man-pages/man1/pidstat.1.html">sysstat — pidstat(1) manual</a></li><li><a href="https://github.com/sysstat/sysstat">sysstat — upstream project</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=procstat&amp;sektion=1">FreeBSD Manual Pages — procstat(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-033-process-tree-service-ownership.html"><span class="series-kicker">#033</span><span>Process tree và service ownership: PID này thuộc service nào?</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-026-vmstat-systat-resource-pressure.html">#026 · vmstat và systat: đọc pressure trước khi đoán bottleneck</a></li>
+      <li><a href="post-019-triage-hieu-nang-vmstat-iostat.html">#019 · Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</a></li>
+      <li><a href="post-012-lap-lich-cron-timers.html">#012 · Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

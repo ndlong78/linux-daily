@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>fd: tìm file nhanh nhưng phải hiểu ignore và hidden — Linux Daily #039</title><meta name="description" content="fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.">
+
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fd: tìm file nhanh nhưng phải hiểu ignore và hidden">
+<meta property="og:description" content="fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="fd: tìm file nhanh nhưng phải hiểu ignore và hidden">
+<meta name="twitter:description" content="fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 39,
+  "date": "2026-08-08",
+  "axis": "Công cụ mới",
+  "eyebrow": "Công cụ mới · fd",
+  "slug": "fd-find-files-fast",
+  "title": "fd: tìm file nhanh nhưng phải hiểu ignore và hidden",
+  "lede": "fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "fd — upstream README",
+      "url": "https://github.com/sharkdp/fd",
+      "kind": "upstream"
+    },
+    {
+      "title": "Debian stable — fd-find package",
+      "url": "https://packages.debian.org/stable/fd-find",
+      "kind": "official"
+    },
+    {
+      "title": "Fedora Packages — fd-find",
+      "url": "https://packages.fedoraproject.org/pkgs/rust-fd-find/fd-find/",
+      "kind": "official"
+    }
+  ]
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#039 · 08·08·2026</span></div></div><header class="post"><p class="eyebrow">Công cụ mới · fd</p><h1>fd: tìm file nhanh nhưng phải hiểu ignore và hidden</h1><p class="lede">fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span></div></header>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Khi tìm file cấu hình, log export hoặc source tree, <code>find</code> rất mạnh nhưng dài. <code>fd</code> tối ưu cho tương tác hằng ngày với syntax ngắn và filter rõ.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Mặc định pattern là regex và chỉ match filename; <code>-g</code> dùng glob, <code>-p</code> match full path.</li><li><code>-t f</code> giới hạn file, <code>-e</code> lọc extension, <code>-H</code> gồm hidden, <code>-I</code> bỏ ignore rules.</li><li>Ubuntu/Debian package <code>fd-find</code> dùng binary <code>fdfind</code> do xung đột tên; Fedora/FreeBSD dùng <code>fd</code>.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install fd-find
+fdfind --version
+fdfind -t f -e conf . /etc</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install fd-find
+fdfind --version
+fdfind -t f -e conf . /etc</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install fd-find
+fd --version
+fd -t f -e conf . /etc</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>sudo pkg install fd-find
+fd --version
+fd -t f -e conf . /etc</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Tạo cây lab có file thường, hidden file và <code>.gitignore</code> để thấy khác biệt giữa default và unrestricted.</p><h3>Ubuntu / Debian</h3><div class="code-wrap"><div class="code-label linux">Ubuntu / Debian</div><pre><code>rm -rf /tmp/ld-fd &amp;&amp; mkdir -p /tmp/ld-fd/cache
+printf '*.tmp\n' &gt; /tmp/ld-fd/.gitignore
+touch /tmp/ld-fd/app.conf /tmp/ld-fd/cache/data.tmp /tmp/ld-fd/.secret.conf
+fdfind -t f . /tmp/ld-fd
+fdfind -HI -t f . /tmp/ld-fd</code></pre></div><h3>Fedora / FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">Fedora / FreeBSD</div><pre class="bsd"><code>rm -rf /tmp/ld-fd &amp;&amp; mkdir -p /tmp/ld-fd/cache
+printf '*.tmp\n' &gt; /tmp/ld-fd/.gitignore
+touch /tmp/ld-fd/app.conf /tmp/ld-fd/cache/data.tmp /tmp/ld-fd/.secret.conf
+fd -t f . /tmp/ld-fd
+fd -HI -t f . /tmp/ld-fd</code></pre></div><h3>Expected Output</h3><p>Lệnh mặc định bỏ hidden/ignored file; lệnh <code>-HI</code> hiển thị cả <code>.secret.conf</code> và <code>data.tmp</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Cleanup</div><pre><code>rm -rf /tmp/ld-fd</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Dùng <code>fd</code> trên Ubuntu/Debian rồi gặp command khác hoặc command not found.</li><li>Quên hidden/ignore defaults và kết luận file không tồn tại.</li><li>Dùng <code>-x</code>/<code>-X</code> với lệnh xóa trước khi xem danh sách kết quả.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Khi tìm secret/config, giới hạn path và không paste kết quả nhạy cảm. Với exec mode, luôn chạy truy vấn read-only trước để kiểm tập kết quả.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tìm mọi file <code>*.conf</code> trong cây lab, kể cả hidden nhưng vẫn tôn trọng <code>.gitignore</code>; sau đó viết lệnh tương đương bằng <code>find</code>.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/sharkdp/fd">fd — upstream README</a></li><li><a href="https://packages.debian.org/stable/fd-find">Debian stable — fd-find package</a></li><li><a href="https://packages.fedoraproject.org/pkgs/rust-fd-find/fd-find/">Fedora Packages — fd-find</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-032-jq-json-operations.html"><span class="series-kicker">#032</span><span>jq: biến JSON thành dữ liệu vận hành dùng được</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-025-ripgrep-log-config-search.html">#025 · ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</a></li>
+      <li><a href="post-018-rclone-cloud-sync.html">#018 · rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</a></li>
+      <li><a href="post-011-tmux.html">#011 · tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
