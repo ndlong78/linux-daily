@@ -87,8 +87,8 @@
     <div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div>
   </header>
   <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
-    <p><strong>Last verified:</strong> 2026-08-09</p>
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
   </section>
   <section><h2>Mục tiêu</h2><p>Chạy một playbook Ansible đa nền tảng có phân nhánh package/service đúng cho Linux và FreeBSD.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có inventory lab và SSH key; target đã có Python khi module Ansible yêu cầu; FreeBSD được inventory riêng khi cần.</p></section>
@@ -124,7 +124,7 @@
     <figcaption>Hình 2 — Dùng abstraction ở phần chung; chỉ chọn module/collection cụ thể khi cần capability riêng.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Khai báo inventory lab gồm ít nhất một Linux host và một FreeBSD host, rồi kiểm kết nối bằng module ping phù hợp.</li><li>Thu thập facts và dùng <code>ansible_os_family</code>/<code>ansible_system</code> để rẽ nhánh package, service và path thay vì suy đoán theo hostname.</li><li>Viết task bằng module idempotent; tách riêng biến hoặc block cho FreeBSD khi service/path khác Linux.</li><li>Chạy <code>--check --diff</code> trước, sau đó apply và chạy lại lần hai để chứng minh playbook không tạo thay đổi thừa.</li></ol>
     <pre><code class="language-yaml">- hosts: all
   become: true
   tasks:
@@ -149,7 +149,7 @@ ansible-galaxy collection install community.general
 ansible-galaxy collection list | grep community.general</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Facts nhận đúng family/system của từng node và không chạy package manager Linux trên FreeBSD.</li><li>Lần chạy apply đầu chỉ thay đổi những resource cần thiết.</li><li>Lần chạy thứ hai kết thúc với <code>changed=0</code> cho các task đã đạt trạng thái mong muốn.</li></ul>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">ansible all -i inventory.ini -m ansible.builtin.ping
 ansible all -i inventory.ini -m ansible.builtin.setup \

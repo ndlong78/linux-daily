@@ -83,8 +83,8 @@
     <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
   <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
-    <p><strong>Last verified:</strong> 2026-08-09</p>
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
   </section>
   <section><h2>Mục tiêu</h2><p>Tạo tài khoản và cấp quyền quản trị tối thiểu bằng sudo/wheel hoặc doas, rồi kiểm chứng quyền thực tế.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có tài khoản quản trị hiện tại và một phiên dự phòng; xác định policy sudo/doas trước khi sửa quyền.</p></section>
@@ -146,7 +146,7 @@
     <figcaption>Hình 2 — FreeBSD tách riêng: không có systemd; <code>sudo</code>/<code>doas</code> không nằm trong base. Nhóm <code>wheel</code> cần cho <code>su</code>, còn doas policy có thể chỉ định user trực tiếp.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Tạo hoặc chọn tài khoản lab, xác nhận UID/group và giữ một phiên root/admin độc lập trước khi thay đổi quyền nâng đặc quyền.</li><li>Trên Linux cấu hình sudo bằng file trong <code>/etc/sudoers.d</code> và luôn kiểm bằng <code>visudo</code>; trên FreeBSD dùng sudo hoặc doas theo công cụ đã cài.</li><li>Cấp đúng command/scope cần thiết thay vì <code>ALL=(ALL) ALL</code> nếu bài toán chỉ cần một tác vụ quản trị cụ thể.</li><li>Đăng nhập lại bằng user lab, thử lệnh được phép và một lệnh không được phép để kiểm cả positive lẫn negative path.</li></ol>
     <p><strong>Mô hình A — administrator:</strong> chỉ dùng khi user thật sự cần quyền quản trị rộng.</p>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
@@ -184,7 +184,7 @@ permit deploy as root cmd /usr/sbin/service args nginx restart
 doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>File sudoers/doas hợp lệ về cú pháp và không làm mất quyền của tài khoản quản trị hiện có.</li><li>User lab chạy được đúng lệnh đã cho phép sau khi xác thực theo policy.</li><li>Một lệnh ngoài phạm vi bị từ chối, chứng minh rule không cấp quyền rộng hơn dự kiến.</li></ul>
     <p>Đừng suy luận từ group membership; kiểm policy mà công cụ thực sự áp.</p>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Linux:</span>
