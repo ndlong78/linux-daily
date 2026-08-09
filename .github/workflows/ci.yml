@@ -1,6 +1,6 @@
 name: CI
 
-# Quality gate cho Linux Daily: chạy lint, test và validator trước PR, trên PR và main.
+# Quality gate cho Linux Daily: chạy lint, test và validator trên PR và sau khi merge/push vào main.
 # Bật branch protection (bắt buộc job "quality-gate" xanh) trước khi merge vào main.
 
 on:
@@ -8,7 +8,6 @@ on:
   push:
     branches:
       - main
-      - "chatgpt/**"
   workflow_dispatch:
 
 permissions:
