@@ -13,7 +13,7 @@ def test_prepare_plan_regenerates_before_metadata_checks():
     assert any(command[-1] == "tools/taxonomy.py" for command in plan)
     assert any(command[-1] == "tools/distro_coverage.py" for command in plan)
     assert any(command[-1] == "tools/quality_dashboard.py" for command in plan)
-    assert any(command[-1] == "tools/daily_operations_dashboard.py" for command in plan)
+    assert all(command[-1] != "tools/daily_operations_dashboard.py" for command in plan)
 
 
 def test_check_plan_is_read_only_and_covers_local_publish_gates():
