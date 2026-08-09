@@ -27,6 +27,10 @@ SAMPLE = [
 ]
 
 
+def test_default_interval_is_daily():
+    assert cadence.DEFAULT_INTERVAL_DAYS == 1
+
+
 def test_read_topics_parses_and_sorts(tmp_path, monkeypatch):
     _point(tmp_path, monkeypatch, topics_lines=list(reversed(SAMPLE)))
     entries = cadence.read_topics()
@@ -62,33 +66,52 @@ def test_days_since_uses_generated_at(tmp_path, monkeypatch):
 
 
 def test_days_since_falls_back_to_topics(tmp_path, monkeypatch):
-    # Không có state → lấy ngày bài mới nhất (2026-01-03) làm mốc: 10 - 3 = 7 ngày.
     _point(tmp_path, monkeypatch, topics_lines=SAMPLE)
     assert cadence.days_since(None, now=NOW) == 7
 
 
 def test_is_due_true_when_interval_met(tmp_path, monkeypatch):
     _point(tmp_path, monkeypatch, topics_lines=SAMPLE)
-    state = {"last_generated_at": "2026-01-08T00:00:00+00:00"}  # 2 ngày
+    state = {"last_generated_at": "2026-01-08T00:00:00+00:00"}
     assert cadence.is_due(state, interval=2, now=NOW) is True
 
 
 def test_is_due_false_when_too_soon(tmp_path, monkeypatch):
     _point(tmp_path, monkeypatch, topics_lines=SAMPLE)
-    state = {"last_generated_at": "2026-01-09T00:00:00+00:00"}  # 1 ngày
+    state = {"last_generated_at": "2026-01-09T00:00:00+00:00"}
     assert cadence.is_due(state, interval=2, now=NOW) is False
 
 
-def test_gate_exit_codes(tmp_path, monkeypatch, capsys):
-    _point(tmp_path, monkeypatch, topics_lines=SAMPLE,
-           state={"last_issue": 2, "last_published_date": "2026-01-03",
-                  "last_generated_at": (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=5)).isoformat()})
-    assert cadence.main(["gate", "--interval", "2"]) == 0  # 5 ngày ≥ 2 → tới nhịp
+def test_is_due_defaults_to_one_day(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE)
+    state = {"last_generated_at": "2026-01-09T00:00:00+00:00"}
+    assert cadence.is_due(state, now=NOW) is True
 
-    _point(tmp_path, monkeypatch, topics_lines=SAMPLE,
-           state={"last_issue": 2, "last_published_date": "2026-01-03",
-                  "last_generated_at": dt.datetime.now(dt.timezone.utc).isoformat()})
-    assert cadence.main(["gate", "--interval", "2"]) == cadence.GATE_NOT_DUE  # 0 ngày → chưa
+
+def test_gate_exit_codes(tmp_path, monkeypatch, capsys):
+    _point(
+        tmp_path,
+        monkeypatch,
+        topics_lines=SAMPLE,
+        state={
+            "last_issue": 2,
+            "last_published_date": "2026-01-03",
+            "last_generated_at": (dt.datetime.now(dt.timezone.utc) - dt.timedelta(days=5)).isoformat(),
+        },
+    )
+    assert cadence.main(["gate", "--interval", "2"]) == 0
+
+    _point(
+        tmp_path,
+        monkeypatch,
+        topics_lines=SAMPLE,
+        state={
+            "last_issue": 2,
+            "last_published_date": "2026-01-03",
+            "last_generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
+        },
+    )
+    assert cadence.main(["gate", "--interval", "2"]) == cadence.GATE_NOT_DUE
 
 
 def test_init_creates_and_refuses_overwrite(tmp_path, monkeypatch):
@@ -97,11 +120,8 @@ def test_init_creates_and_refuses_overwrite(tmp_path, monkeypatch):
     assert sp.exists()
     saved = json.loads(sp.read_text(encoding="utf-8"))
     assert saved["last_issue"] == 2
-    # last_generated_at bootstrap = 00:00 UTC ngày bài mới nhất.
     assert saved["last_generated_at"].startswith("2026-01-03")
-    # Không --force → từ chối ghi đè.
     assert cadence.main(["init"]) == 1
-    # --force → ghi đè được.
     assert cadence.main(["init", "--force"]) == 0
 
 
