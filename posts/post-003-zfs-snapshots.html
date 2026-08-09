@@ -107,13 +107,15 @@
     <figcaption>Hình 2 — Lệnh quản trị ZFS gần như cùng semantics trên OpenZFS; phần khác biệt lớn là đóng gói, module kernel và cơ chế service của từng hệ.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo apt update
 sudo apt install -y zfsutils-linux
 zfs version</code></pre>
     <span class="code-label"><span class="dot"></span>Debian</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Bật contrib/backports theo release hiện hành trước khi cài.</span>
 sudo apt update
@@ -122,6 +124,7 @@ sudo modprobe zfs
 zfs version</code></pre>
     <span class="code-label"><span class="dot"></span>Fedora — repo OpenZFS hiện hành</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo dnf install -y \
   https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval "%{dist}").noarch.rpm
 sudo dnf install -y kernel-devel-$(uname -r | awk -F'-' '{print $1}')
@@ -129,13 +132,15 @@ sudo dnf install -y zfs
 sudo modprobe zfs</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — ZFS trong base</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">sysrc zfs_enable="YES"
 service zfs start
 zfs version
 zpool status</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Dùng một dataset thử, không thực hành rollback trên production.</span>
 sudo zfs snapshot tank/data@before-change
