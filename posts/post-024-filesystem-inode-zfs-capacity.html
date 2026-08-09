@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset — Linux Daily #024</title>
+<meta name="description" content="Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 24,
+  "date": "2026-07-24",
+  "axis": "Storage",
+  "eyebrow": "Storage · Capacity",
+  "slug": "filesystem-inode-zfs-capacity",
+  "title": "Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset",
+  "lede": "Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "GNU Coreutils — df invocation",
+      "url": "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "OpenZFS — zfs-list(8)",
+      "url": "https://openzfs.github.io/openzfs-docs/man/master/8/zfs-list.8.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — df(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=df&sektion=1",
+      "kind": "official"
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#024 · 24·07·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Storage · Capacity</p>
+    <h1>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</h1>
+    <p class="lede">Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</p>
+    <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+  </header>
+
+  <figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng thao tác an toàn cho Storage · Capacity">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quy tắc vận hành xuyên suốt: quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</p>
+    <p>Mục tiêu là có bằng chứng trước và sau thao tác, đồng thời giữ khác biệt giữa Linux và FreeBSD rõ ràng để runbook có thể dùng trong vận hành thật.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li>`df -h` trả lời áp lực block; `df -i` trả lời inode trên filesystem có khái niệm inode.</li>
+<li>ZFS dùng dataset, quota, reservation và thuộc tính riêng; đừng suy luận chỉ từ `df`.</li>
+<li>Đo ở đúng mountpoint/dataset của dịch vụ, không chỉ nhìn `/`.</li>
+    </ul>
+  </section>
+
+  <figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd*</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">03</span> Bảng lệnh song song theo distro</h2>
+    <p>Ubuntu và Xubuntu dùng cùng khối lệnh. Debian/Fedora được tách vì package hoặc service naming có thể khác. FreeBSD là nhánh riêng.</p>
+    <div class="code-wrap">
+<div class="code-label ubuntu">Ubuntu / Xubuntu</div>
+<pre><code>df -hT /
+df -i /
+command -v zfs &gt;/dev/null &amp;&amp; sudo zfs list -o name,used,avail,refer,mountpoint || true</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label debian">Debian</div>
+<pre><code>df -hT /
+df -i /
+command -v zfs &gt;/dev/null &amp;&amp; sudo zfs list -o name,used,avail,refer,mountpoint || true</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label fedora">Fedora</div>
+<pre><code>df -hT /
+df -i /
+command -v zfs &gt;/dev/null &amp;&amp; sudo zfs list -o name,used,avail,refer,mountpoint || true</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD — KHÁC Linux</div>
+<pre><code>df -h /
+df -i /
+sysctl -n vfs.zfs.version.spa &gt;/dev/null 2&gt;&amp;1 &amp;&amp; zfs list -o name,used,avail,refer,mountpoint || true</code></pre>
+</div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Ví dụ thực hành từng bước</h2>
+    <p>Chọn một thư mục dữ liệu thật của dịch vụ, ví dụ &lt;DATA_PATH&gt;, rồi xác định filesystem chứa nó, tỷ lệ block, inode và nếu là ZFS thì dataset tương ứng. Bài thực hành chỉ đọc trạng thái, không xóa file.</p>
+    <h3>Linux — Ubuntu/Xubuntu, Debian, Fedora</h3>
+    <div class="code-wrap">
+<div class="code-label linux">Linux</div>
+<pre><code>df -hT &#x27;&lt;DATA_PATH&gt;&#x27;
+df -i &#x27;&lt;DATA_PATH&gt;&#x27;
+findmnt -T &#x27;&lt;DATA_PATH&gt;&#x27; -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre>
+</div>
+    <h3>FreeBSD</h3>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD</div>
+<pre><code>df -h &#x27;&lt;DATA_PATH&gt;&#x27;
+df -i &#x27;&lt;DATA_PATH&gt;&#x27;
+mount | grep &#x27; on &#x27; | sed -n &#x27;1,20p&#x27;
+zfs list -o name,used,avail,refer,mountpoint 2&gt;/dev/null || true</code></pre>
+</div>
+    <h3>Expected Output</h3>
+    <p>Bạn phải chỉ ra được mountpoint chứa `<DATA_PATH>`, phần trăm block đã dùng, phần trăm inode (nếu filesystem hỗ trợ) và dataset ZFS nếu có.</p>
+    
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2>
+    <ul class="clean">
+      <li>Chỉ chạy `du` rồi kết luận disk đầy; file đã unlink nhưng process còn mở có thể làm số liệu khác nhau.</li>
+<li>Thấy inode thấp trên ZFS rồi áp logic ext4 một cách máy móc.</li>
+<li>Dọn dữ liệu trước khi xác định mountpoint khiến xóa nhầm chỗ mà không giải quyết áp lực.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật</h2>
+    <p>Ưu tiên quan sát trước. Nếu phải xóa dữ liệu, xác nhận owner, retention policy, backup và đường dẫn tuyệt đối.</p>
+  </section>
+
+  <section class="exercise">
+    <h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2>
+    <p>Tự chọn hai mountpoint và viết bảng bốn cột: filesystem/dataset, block used, inode used, hành động khi vượt 80%.</p>
+  </section>
+
+  <section class="sources">
+    <h2>Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html">GNU Coreutils — df invocation</a></li>
+<li><a href="https://openzfs.github.io/openzfs-docs/man/master/8/zfs-list.8.html">OpenZFS — zfs-list(8)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về Linux Daily</a>
+  </footer>
+</div>
+</main>
+</body>
+</html>

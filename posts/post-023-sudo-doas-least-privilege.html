@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Least privilege: sudo trên Linux, doas trên FreeBSD — Linux Daily #023</title>
+<meta name="description" content="Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-023-sudo-doas-least-privilege.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 23,
+  "date": "2026-07-23",
+  "axis": "Bảo mật",
+  "eyebrow": "Bảo mật · Least privilege",
+  "slug": "sudo-doas-least-privilege",
+  "title": "Least privilege: sudo trên Linux, doas trên FreeBSD",
+  "lede": "Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "Debian Manpages — sudoers(5)",
+      "url": "https://manpages.debian.org/stable/sudo/sudoers.5.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — doas(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=doas&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — doas.conf(5)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=doas.conf&sektion=5",
+      "kind": "official"
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#023 · 23·07·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Bảo mật · Least privilege</p>
+    <h1>Least privilege: sudo trên Linux, doas trên FreeBSD</h1>
+    <p class="lede">Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.</p>
+    <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+  </header>
+
+  <figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng thao tác an toàn cho Bảo mật · Least privilege">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quy tắc vận hành xuyên suốt: quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.</p>
+    <p>Mục tiêu là có bằng chứng trước và sau thao tác, đồng thời giữ khác biệt giữa Linux và FreeBSD rõ ràng để runbook có thể dùng trong vận hành thật.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li>`sudoers` và `doas.conf` là policy engine: danh tính, lệnh và đối tượng đích phải được mô tả càng hẹp càng tốt.</li>
+<li>Ubuntu/Xubuntu, Debian và Fedora dùng `sudo` phổ biến; FreeBSD có thể dùng `doas` từ ports/packages và không có systemd.</li>
+<li>Luôn kiểm tra policy bằng công cụ riêng trước khi thay file đang dùng; đừng sửa quyền từ một phiên SSH duy nhất.</li>
+    </ul>
+  </section>
+
+  <figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd*</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">03</span> Bảng lệnh song song theo distro</h2>
+    <p>Ubuntu và Xubuntu dùng cùng khối lệnh. Debian/Fedora được tách vì package hoặc service naming có thể khác. FreeBSD là nhánh riêng.</p>
+    <div class="code-wrap">
+<div class="code-label ubuntu">Ubuntu / Xubuntu</div>
+<pre><code>sudo -l
+sudo visudo -c
+sudo grep -R --line-number &#x27;^%sudo&#x27; /etc/sudoers /etc/sudoers.d 2&gt;/dev/null</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label debian">Debian</div>
+<pre><code>sudo -l
+sudo visudo -c
+sudo grep -R --line-number &#x27;^%sudo&#x27; /etc/sudoers /etc/sudoers.d 2&gt;/dev/null</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label fedora">Fedora</div>
+<pre><code>sudo -l
+sudo visudo -c
+sudo grep -R --line-number &#x27;^%wheel&#x27; /etc/sudoers /etc/sudoers.d 2&gt;/dev/null</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD — KHÁC Linux</div>
+<pre><code>pkg info doas &gt;/dev/null 2&gt;&amp;1 || echo &#x27;doas chưa được cài&#x27;
+command -v doas || true
+pkg info -l doas 2&gt;/dev/null | grep -E &#x27;doas\.conf|examples&#x27; || true
+pw groupshow wheel</code></pre>
+</div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Ví dụ thực hành từng bước</h2>
+    <p>Tạo một policy lab chỉ cho phép tài khoản &lt;OPS_USER&gt; xem trạng thái dịch vụ web, không cấp shell root tổng quát. Trên Linux, đặt rule riêng trong `/etc/sudoers.d/` và kiểm tra bằng `visudo -cf &lt;FILE&gt;` trước khi dùng. Trên FreeBSD, nếu chọn OpenDoas từ packages, dùng đường dẫn cấu hình do package/man page của máy xác nhận; không sao chép máy móc đường dẫn Linux.</p>
+    <h3>Linux — Ubuntu/Xubuntu, Debian, Fedora</h3>
+    <div class="code-wrap">
+<div class="code-label linux">Linux</div>
+<pre><code>sudo install -m 0440 /dev/null /etc/sudoers.d/90-linux-daily-lab
+printf &#x27;%s ALL=(root) /usr/bin/systemctl status nginx\n&#x27; &#x27;&lt;OPS_USER&gt;&#x27; | sudo tee /etc/sudoers.d/90-linux-daily-lab &gt;/dev/null
+sudo visudo -cf /etc/sudoers.d/90-linux-daily-lab
+sudo -l -U &#x27;&lt;OPS_USER&gt;&#x27;</code></pre>
+</div>
+    <h3>FreeBSD</h3>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD</div>
+<pre><code>command -v doas
+pkg info -l doas | grep -E &#x27;doas\.conf|examples&#x27;
+# Đặt đường dẫn cấu hình thực tế vừa xác nhận vào placeholder:
+doas -C &#x27;&lt;DOAS_CONF&gt;&#x27;</code></pre>
+</div>
+    <h3>Expected Output</h3>
+    <p>Linux: `visudo` báo parsed OK và `sudo -l -U <OPS_USER>` chỉ liệt kê lệnh đã cho phép. FreeBSD: `doas -C` phải kiểm tra policy hợp lệ trước khi thay cấu hình thật.</p>
+    <h3>Cleanup / Revert</h3>
+<div class="code-wrap">
+<div class="code-label same">Linux / FreeBSD lab cleanup</div>
+<pre><code>sudo rm -f /etc/sudoers.d/90-linux-daily-lab</code></pre>
+</div>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2>
+    <ul class="clean">
+      <li>Cho cả group quyền `ALL=(ALL) ALL` rồi gọi đó là least privilege.</li>
+<li>Dùng `NOPASSWD`/`nopass` chỉ để né thao tác xác thực thay vì vì một luồng automation đã được đánh giá rủi ro.</li>
+<li>Trên FreeBSD, giả định đường dẫn/package doas giống Linux; hãy kiểm `pkg info -l doas` và man page của phiên bản cài.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật</h2>
+    <p>Giữ một phiên root/console độc lập trong lúc thay policy. Không cấp quyền chỉnh chính file sudoers/doas.conf cho tài khoản mà policy đang cố giới hạn.</p>
+  </section>
+
+  <section class="exercise">
+    <h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2>
+    <p>Tạo rule cho &lt;OPS_USER&gt; chỉ được xem trạng thái một service và chứng minh một lệnh ngoài allowlist bị từ chối. Sau đó xóa file lab.</p>
+  </section>
+
+  <section class="sources">
+    <h2>Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://manpages.debian.org/stable/sudo/sudoers.5.en.html">Debian Manpages — sudoers(5)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=doas&amp;sektion=1">FreeBSD Manual Pages — doas(1)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=doas.conf&amp;sektion=5">FreeBSD Manual Pages — doas.conf(5)</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về Linux Daily</a>
+  </footer>
+</div>
+</main>
+</body>
+</html>

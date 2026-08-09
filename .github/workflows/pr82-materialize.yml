@@ -1,0 +1,37 @@
+name: PR82 Materialize
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+      - name: Regenerate deterministic artifacts
+        run: |
+          python tools/build.py || true
+          python tools/learning_dashboard.py || true
+          python tools/content_mix.py || true
+          python tools/taxonomy.py || true
+          python tools/distro_coverage.py || true
+          python tools/quality_dashboard.py || true
+      - name: Package materialized workspace
+        run: tar --exclude=.git -czf pr82-materialized.tgz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pr82-materialized
+          path: pr82-materialized.tgz
+          retention-days: 1

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>vmstat và systat: đọc pressure trước khi đoán bottleneck — Linux Daily #026</title>
+<meta name="description" content="CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 26,
+  "date": "2026-07-26",
+  "axis": "Monitoring",
+  "eyebrow": "Monitoring · Resource pressure",
+  "slug": "vmstat-systat-resource-pressure",
+  "title": "vmstat và systat: đọc pressure trước khi đoán bottleneck",
+  "lede": "CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "Debian Manpages — vmstat(8)",
+      "url": "https://manpages.debian.org/stable/procps/vmstat.8.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — vmstat(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — systat(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=systat&sektion=1",
+      "kind": "official"
+    }
+  ]
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#026 · 26·07·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Monitoring · Resource pressure</p>
+    <h1>vmstat và systat: đọc pressure trước khi đoán bottleneck</h1>
+    <p class="lede">CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</p>
+    <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+  </header>
+
+  <figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng thao tác an toàn cho Monitoring · Resource pressure">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quy tắc vận hành xuyên suốt: quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</p>
+    <p>Mục tiêu là có bằng chứng trước và sau thao tác, đồng thời giữ khác biệt giữa Linux và FreeBSD rõ ràng để runbook có thể dùng trong vận hành thật.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li>Đọc nhiều mẫu liên tiếp; cột đầu tiên thường phản ánh số liệu kể từ boot hoặc một khoảng tổng hợp nên không đủ để kết luận.</li>
+<li>Linux `vmstat` đến từ procps/procps-ng; FreeBSD có `vmstat` và `systat` trong base system.</li>
+<li>Interpretation phải gắn với workload: run queue, swap/page activity, I/O wait và CPU idle chỉ có ý nghĩa khi đọc cùng nhau.</li>
+    </ul>
+  </section>
+
+  <figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd*</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+
+  <section>
+    <h2><span class="num">03</span> Bảng lệnh song song theo distro</h2>
+    <p>Ubuntu và Xubuntu dùng cùng khối lệnh. Debian/Fedora được tách vì package hoặc service naming có thể khác. FreeBSD là nhánh riêng.</p>
+    <div class="code-wrap">
+<div class="code-label ubuntu">Ubuntu / Xubuntu</div>
+<pre><code>command -v vmstat || sudo apt install procps
+vmstat 1 5</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label debian">Debian</div>
+<pre><code>command -v vmstat || sudo apt install procps
+vmstat 1 5</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label fedora">Fedora</div>
+<pre><code>command -v vmstat || sudo dnf install procps-ng
+vmstat 1 5</code></pre>
+</div>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD — KHÁC Linux</div>
+<pre><code>vmstat 1 5
+systat -ifstat 1</code></pre>
+</div>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Ví dụ thực hành từng bước</h2>
+    <p>Chạy 5 mẫu `vmstat` cách nhau 1 giây trong lúc hệ thống bình thường. Ghi lại run queue, memory free/cache theo semantics của HĐH, paging/swap, block I/O và CPU idle. Không tạo tải nhân tạo trên máy production.</p>
+    <h3>Linux — Ubuntu/Xubuntu, Debian, Fedora</h3>
+    <div class="code-wrap">
+<div class="code-label linux">Linux</div>
+<pre><code>vmstat 1 5
+printf &#x27;\nCPU count: &#x27;
+nproc</code></pre>
+</div>
+    <h3>FreeBSD</h3>
+    <div class="code-wrap">
+<div class="code-label bsd">FreeBSD</div>
+<pre><code>vmstat 1 5
+printf &#x27;\nCPU count: &#x27;
+sysctl -n hw.ncpu
+# Nhấn q để thoát sau khi quan sát:
+systat -vmstat 1</code></pre>
+</div>
+    <h3>Expected Output</h3>
+    <p>Có ít nhất 5 dòng mẫu thời gian. Bạn xác định được tín hiệu nào ổn định và tín hiệu nào tăng liên tục thay vì dựa vào một snapshot.</p>
+    
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2>
+    <ul class="clean">
+      <li>Đọc cột đầu tiên như một mẫu 1 giây giống các dòng sau.</li>
+<li>Thấy free memory thấp rồi kết luận thiếu RAM mà bỏ qua cache và paging.</li>
+<li>So sánh tên/cột Linux với FreeBSD như thể semantics giống hệt.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Lưu ý bảo mật</h2>
+    <p>Công cụ monitoring chủ yếu chỉ đọc, nhưng output có thể lộ tên process/interface; lọc trước khi chia sẻ ra ngoài.</p>
+  </section>
+
+  <section class="exercise">
+    <h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2>
+    <p>Lưu 10 mẫu `vmstat 2 10` vào file tạm, đánh dấu hai cột bạn sẽ cảnh báo và giải thích vì sao cần baseline riêng cho máy đó.</p>
+  </section>
+
+  <section class="sources">
+    <h2>Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://manpages.debian.org/stable/procps/vmstat.8.en.html">Debian Manpages — vmstat(8)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8">FreeBSD Manual Pages — vmstat(8)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=systat&amp;sektion=1">FreeBSD Manual Pages — systat(1)</a></li>
+    </ul>
+  </section>
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về Linux Daily</a>
+  </footer>
+</div>
+</main>
+</body>
+</html>

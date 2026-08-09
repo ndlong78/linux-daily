@@ -24,3 +24,14 @@
 #020 | 2026-07-20 | Automation | Advanced Lab Security & Networking: firewall rollback tự động, negative test và recovery trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD
 #021 | 2026-07-21 | Ôn tập | Advanced Lab Storage & Backup/Restore: backup trước thay đổi, failure injection, restore và checksum verification trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD
 #022 | 2026-07-22 | Networking | DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill
+#023 | 2026-07-23 | Bảo mật | Least privilege: sudo trên Linux, doas trên FreeBSD
+#024 | 2026-07-24 | Storage | Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset
+#025 | 2026-07-25 | Công cụ mới | ripgrep: tìm log và cấu hình nhanh mà không quét nhầm
+#026 | 2026-07-26 | Monitoring | vmstat và systat: đọc pressure trước khi đoán bottleneck
+#027 | 2026-07-27 | Automation | Shell idempotent: chạy lại không phá trạng thái
+#028 | 2026-07-28 | Ôn tập | Lab DNS outage: khoanh vùng trước, phục hồi sau
+#029 | 2026-07-29 | Networking | Nhiều default gateway: policy routing không cắt SSH
+#030 | 2026-07-30 | Bảo mật | Audit đăng nhập và privilege escalation: lần theo ai đã làm gì
+#031 | 2026-07-31 | Storage | Mount options: giảm bề mặt tấn công của filesystem
+#032 | 2026-08-01 | Công cụ mới | jq: biến JSON thành dữ liệu vận hành dùng được
+#033 | 2026-08-02 | Monitoring | Process tree và service ownership: PID này thuộc service nào?
