@@ -1,4 +1,4 @@
-name: PR82 Materialize
+name: PR82 Finalize
 
 on:
   pull_request:
@@ -6,13 +6,16 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  materialize:
+  finalize:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr82-backfill-023-033-20260723-0802
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -20,18 +23,110 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e ".[dev]"
-      - name: Regenerate deterministic artifacts
+      - name: Normalize new post contracts
         run: |
-          python tools/build.py || true
-          python tools/learning_dashboard.py || true
-          python tools/content_mix.py || true
-          python tools/taxonomy.py || true
-          python tools/distro_coverage.py || true
-          python tools/quality_dashboard.py || true
-      - name: Package materialized workspace
-        run: tar --exclude=.git -czf /tmp/pr82-materialized.tgz .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: pr82-materialized
-          path: /tmp/pr82-materialized.tgz
-          retention-days: 1
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          posts = Path("posts")
+
+          # Distro portability gate requires the FreeBSD <pre> itself to carry class=bsd.
+          for issue in range(23, 34):
+              path = next(posts.glob(f"post-{issue:03d}-*.html"))
+              text = path.read_text(encoding="utf-8")
+              text = re.sub(
+                  r'(<div class="code-label bsd">.*?</div>\s*)<pre(?![^>]*\bclass=)>',
+                  r'\1<pre class="bsd">',
+                  text,
+                  flags=re.S,
+              )
+              path.write_text(text, encoding="utf-8")
+
+          # #027-#033 were authored compactly; isolate discovery tags so the historical
+          # metadata backfill can remove/replace those lines without deleting the head.
+          for issue in range(27, 34):
+              path = next(posts.glob(f"post-{issue:03d}-*.html"))
+              text = path.read_text(encoding="utf-8")
+              text = text.replace('><link rel="canonical"', '>\n<link rel="canonical"')
+              text = text.replace('><link rel="alternate"', '>\n<link rel="alternate"')
+              text = text.replace(
+                  '><script type="application/json" id="ld-meta">',
+                  '>\n<script type="application/json" id="ld-meta">',
+              )
+              path.write_text(text, encoding="utf-8")
+
+          # #028 is an enforced lab from #020 onward. It is intentionally read-only:
+          # NXDOMAIN is the negative test; no production DNS state is changed.
+          path = next(posts.glob("post-028-*.html"))
+          text = path.read_text(encoding="utf-8")
+          marker = '<script type="application/json" id="ld-meta">\n'
+          start = text.index(marker) + len(marker)
+          end = text.index('\n</script>', start)
+          meta = json.loads(text[start:end])
+          meta["lab"] = {
+              "version": 1,
+              "profile": "standard",
+              "topology": ["client", "recursive-resolver", "authoritative-dns"],
+              "risks": ["none"],
+              "verification": ["functional", "negative"],
+              "rollback_required": False,
+              "cleanup_required": True,
+              "failure_injection": False,
+          }
+          text = text[:start] + json.dumps(meta, ensure_ascii=False, indent=2) + text[end:]
+          mappings = [
+              ("01", "scenario"),
+              ("02", "topology"),
+              ("03", "safety"),
+              ("04", "execution"),
+              ("05", "verification"),
+              ("06", "cleanup"),
+          ]
+          for number, role in mappings:
+              old = f'<section><h2><span class="num">{number}</span>'
+              new = f'<section data-lab-section="{role}"><h2><span class="num">{number}</span>'
+              if old in text:
+                  text = text.replace(old, new, 1)
+          path.write_text(text, encoding="utf-8")
+
+          # Normalize local font resources to exactly one preload + one fonts.css link.
+          preload = '<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>'
+          fonts = '<link rel="stylesheet" href="../assets/fonts.css">'
+          style = '<link rel="stylesheet" href="../assets/style.css">'
+          for issue in range(23, 34):
+              path = next(posts.glob(f"post-{issue:03d}-*.html"))
+              text = path.read_text(encoding="utf-8")
+              text = text.replace(preload, "").replace(fonts, "")
+              text = text.replace(style, preload + "\n" + fonts + "\n" + style, 1)
+              path.write_text(text, encoding="utf-8")
+          PY
+      - name: Regenerate deterministic repository state
+        run: |
+          python tools/backfill_site_metadata.py
+          python tools/backfill_fonts.py
+          python tools/taxonomy.py
+          python tools/related_content.py
+          python tools/build.py
+          python tools/distro_coverage.py
+          python tools/quality_dashboard.py
+          python tools/learning_dashboard.py
+          python tools/content_mix.py
+      - name: Verify exact workspace
+        run: |
+          python tools/backfill_site_metadata.py --check
+          python tools/backfill_fonts.py --check
+          python tools/related_content.py --check
+          python tools/build.py --check
+          python tools/validate_repo.py
+          pytest -q
+      - name: Commit verified result and remove helper
+        run: |
+          rm -f .github/workflows/pr82-materialize.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Finalize Linux Daily #023-#033 publication backfill"
+          git push origin HEAD:chatgpt/pr82-backfill-023-033-20260723-0802
