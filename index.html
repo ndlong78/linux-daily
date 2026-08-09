@@ -13,16 +13,16 @@
 <meta property="og:url" content="https://linux.no.id.vn/">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
-<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-020-code.png">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="948">
 <meta property="og:image:height" content="642">
-<meta property="og:image:alt" content="Linux Daily #020 — Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<meta property="og:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề">
 <meta name="twitter:description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
-<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-020-code.png">
-<meta name="twitter:image:alt" content="Linux Daily #020 — Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
 <link rel="preload" href="assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="assets/fonts.css">
 <link rel="stylesheet" href="assets/style.css">
@@ -34,9 +34,18 @@
       <div class="site-brand">Linux Daily</div>
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">20 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
+      <div class="count">21 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-021-storage-backup-restore-recovery-lab.html">
+        <div class="card-top">
+          <span class="c-issue">#021</span>
+          <span class="c-axis">Ôn tập · Advanced Lab Storage &amp; Backup/Restore</span>
+          <span class="c-date">09·08·2026</span>
+        </div>
+        <h2>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</h2>
+        <p>Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</p>
+      </a>
       <a class="card" href="posts/post-020-firewall-rollback-negative-test.html">
         <div class="card-top">
           <span class="c-issue">#020</span>

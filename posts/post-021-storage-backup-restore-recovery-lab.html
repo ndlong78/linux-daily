@@ -69,6 +69,37 @@
     <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~22 PHÚT</span></div>
   </header>
 
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Chuỗi layer của lab storage từ image file tới dữ liệu">
+      <rect width="760" height="250" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="20" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="75" y="110" font-size="12" font-weight="700">IMAGE</text><text x="75" y="134" font-size="10">disk.img</text>
+        <rect x="145" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="200" y="110" font-size="12" font-weight="700">PROVIDER</text><text x="200" y="134" font-size="10">loop / md</text>
+        <rect x="270" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="325" y="110" font-size="12" font-weight="700">PARTITION</text><text x="325" y="134" font-size="10">GPT</text>
+        <rect x="395" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="450" y="110" font-size="12" font-weight="700">FILESYSTEM</text><text x="450" y="134" font-size="10">ext4 / UFS</text>
+        <rect x="520" y="82" width="100" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="570" y="110" font-size="12" font-weight="700">MOUNT</text><text x="570" y="134" font-size="10">mnt</text>
+        <rect x="635" y="82" width="105" height="70" rx="8" fill="#14201D"/><text x="687" y="110" fill="#7FE0D2" font-size="12" font-weight="700">DATA</text><text x="687" y="134" fill="#FFFFFF" font-size="10">payload</text>
+        <path d="M130 117H145M255 117H270M380 117H395M505 117H520M620 117H635" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Phân biệt từng layer để failure injection chỉ tác động filesystem disposable, không nhầm sang disk thật.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 760 270" role="img" aria-label="Quy trình recovery từ baseline checksum qua backup failure restore tới verification">
+      <rect width="760" height="270" fill="#FFFFFF"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="25" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="87" y="108" font-size="12" font-weight="700">BASELINE</text><text x="87" y="133" font-size="10">checksum</text>
+        <rect x="175" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="237" y="108" font-size="12" font-weight="700">BACKUP</text><text x="237" y="133" font-size="10">independent</text>
+        <rect x="325" y="78" width="125" height="80" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="387" y="108" font-size="12" font-weight="700">FAILURE</text><text x="387" y="133" font-size="10">disposable</text>
+        <rect x="475" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="537" y="108" font-size="12" font-weight="700">RESTORE</text><text x="537" y="133" font-size="10">archive</text>
+        <rect x="625" y="78" width="110" height="80" rx="8" fill="#14201D"/><text x="680" y="108" fill="#7FE0D2" font-size="12" font-weight="700">VERIFY</text><text x="680" y="133" fill="#FFFFFF" font-size="10">checksum OK</text>
+        <path d="M150 118H175M300 118H325M450 118H475M600 118H625" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Backup chỉ được coi là có giá trị khi restore thành công và checksum quay về đúng baseline.</figcaption>
+  </figure>
+
   <section data-lab-section="scenario">
     <h2><span class="num">01</span> Bối cảnh thực tế</h2>
     <p>Khi thay filesystem, repartition, migrate volume hoặc kiểm tra quy trình DR, lỗi nguy hiểm nhất là coi “backup đã chạy” đồng nghĩa với “restore được”. Lab này tách toàn bộ bài tập khỏi disk thật: Linux dùng file image gắn vào loop device; FreeBSD dùng file image gắn qua <code>mdconfig</code>.</p>
@@ -207,7 +238,7 @@ cat "$LAB/expected.sha256"</code></pre>
   </section>
 
   <section data-lab-section="cleanup">
-    <h2><span class="num">08</span> Cleanup</h2>
+    <h2>Cleanup</h2>
     <pre><code># Linux
 sudo umount "$LAB/mnt"
 sudo losetup --detach "$LOOP"
@@ -220,7 +251,7 @@ rm -rf "$LAB"</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">09</span> Cạm bẫy và bảo mật</h2>
+    <h2>Cạm bẫy và bảo mật</h2>
     <ul class="clean">
       <li>Không suy ra “backup tốt” chỉ từ exit code của job; cần restore test và checksum/application verification.</li>
       <li>Không dùng cùng filesystem cho source và backup target khi đang kiểm destructive recovery.</li>
@@ -230,8 +261,8 @@ rm -rf "$LAB"</code></pre>
     </ul>
   </section>
 
-  <section>
-    <h2><span class="num">10</span> Bài tập tự luyện</h2>
+  <section class="exercise">
+    <h2>Bài tập tự luyện</h2>
     <p>Thay payload bằng ba file có kích thước khác nhau, lưu manifest checksum trước backup, sau restore dùng manifest để chứng minh đủ file và đúng nội dung. Không tăng scope sang disk thật; mục tiêu là luyện evidence, không luyện thao tác phá thiết bị.</p>
   </section>
 
