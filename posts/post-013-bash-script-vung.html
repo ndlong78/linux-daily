@@ -52,7 +52,15 @@
       "url": "https://www.gnu.org/software/coreutils/rm",
       "kind": "upstream"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -78,6 +86,13 @@
       <span class="tag">~10 PHÚT</span>
     </div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Viết shell script phòng thủ với kiểm tra đầu vào, exit code rõ ràng và chế độ lỗi phù hợp để automation thất bại có kiểm soát.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có Bash trên Linux; trên FreeBSD xác nhận <code>bash</code> đã được cài nếu script dùng Bash-specific syntax, vì <code>/bin/sh</code> của FreeBSD không phải Bash.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 260" role="img" aria-label="Sơ đồ cùng một shell script đi qua các trình thông dịch khác nhau trên Ubuntu Debian Fedora và FreeBSD">
@@ -141,9 +156,10 @@
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Viết một script Bash vững</h2>
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Chọn interpreter đúng và ghi shebang phù hợp thay vì giả định <code>/bin/sh</code> là Bash trên mọi hệ.</li><li>Bật các guard phù hợp, validate argument/file trước khi thay đổi trạng thái và quote biến khi mở rộng.</li><li>Tách thao tác kiểm tra khỏi thao tác ghi, trả exit code khác 0 khi điều kiện tiên quyết không đạt.</li><li>Test cả happy path lẫn input sai/missing dependency và xác nhận script dừng ở điểm dự kiến.</li></ol>
     <span class="code-label"><span class="dot"></span>Khung chung — Bash + cleanup</span>
-    <pre><code>#!/usr/bin/env bash
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">#!/usr/bin/env bash
 set -euo pipefail
 
 tmp="$(mktemp)"
@@ -156,21 +172,24 @@ printf 'Đã xử lý: %s\n' "$src"</code></pre>
     <p>Không đặt <code>IFS=$'\n\t'</code> toàn cục nếu không có nhu cầu cụ thể. Quote biến mới là nền tảng. Khi cần đọc dữ liệu theo delimiter, đặt <code>IFS</code> cục bộ, ví dụ <code>while IFS= read -r line</code>.</p>
 
     <span class="code-label"><span class="dot"></span>Linux — kiểm interpreter</span>
-    <pre><code>command -v bash
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">command -v bash
 bash --version
 chmod +x script.sh
 ./script.sh /etc/hostname</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — Bash ngoài base</span>
-    <pre class="bsd"><code>pkg install -y bash
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">pkg install -y bash
 command -v bash
 # thường: /usr/local/bin/bash
 ./script.sh /etc/hostname</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
-    <pre><code>shellcheck script.sh
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Input hợp lệ cho exit code 0 và tạo đúng kết quả mong muốn.</li><li>Input sai hoặc dependency thiếu cho exit code khác 0, thông báo lỗi có ngữ cảnh và không để lại thay đổi dở dang.</li><li>Script chạy nhất quán trên những hệ đã khai báo interpreter, không dựa vào shell mặc định của user.</li></ul>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">shellcheck script.sh
 bash -n script.sh
 command -v bash
 
@@ -178,8 +197,9 @@ env -i PATH="/usr/bin:/bin" bash -c 'printf "%s\n" "$PATH"'</code></pre>
     <p>Lệnh cuối minh hoạ vì sao môi trường chạy quan trọng: khi <code>PATH</code> bị thay đổi, <code>env</code> cũng thay đổi cách tìm interpreter. Với job tự động, ghi rõ hoặc kiểm tra <code>PATH</code> thay vì giả định.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Xóa file/script và dữ liệu test do bài tạo ra. Nếu script có thao tác thay đổi hệ thống, dùng rollback path của thao tác đó; đừng coi xóa script là đã hoàn tác trạng thái.</p></section>
+<section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong>Hiểu sai <code>set -e</code>:</strong> không phải mọi non-zero đều làm script thoát. Với bước quan trọng, kiểm trạng thái rõ ràng hoặc dùng cấu trúc <code>if ! command; then ...; fi</code>.</li>
       <li><strong><code>env bash</code> dưới <code>sudo</code>/cron:</strong> có thể gặp <code>PATH</code> khác phiên shell tương tác. Nếu môi trường được kiểm soát chặt và đường dẫn Bash cố định, shebang tuyệt đối cũng là lựa chọn hợp lệ.</li>

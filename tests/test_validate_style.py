@@ -64,13 +64,13 @@ def test_batch_a_issue_10_is_enforced(tmp_path: Path):
     assert validate_style.check([result]) == 1
 
 
-def test_issue_11_remains_legacy_until_batch_b(tmp_path: Path):
-    post = tmp_path / "post-011-style-test.html"
-    post.write_text(_post(11, valid=False), encoding="utf-8")
+def test_batch_b_issue_20_is_enforced(tmp_path: Path):
+    post = tmp_path / "post-020-style-test.html"
+    post.write_text(_post(20, valid=False), encoding="utf-8")
     result = validate_style.audit_post(post)
-    assert not result.enforced
-    assert result.errors
-    assert validate_style.check([result]) == 0
+    assert result.enforced
+    assert any("tested_on" in error for error in result.errors)
+    assert validate_style.check([result]) == 1
 
 
 def test_issue_41_requires_style_metadata(tmp_path: Path):

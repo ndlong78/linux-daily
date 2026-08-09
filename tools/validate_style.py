@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate Linux Daily posts against STYLE.md.
 
-Historical posts are migrated in batches. Linux Daily #001-#010 have completed
+Historical posts are migrated in batches. Linux Daily #001-#020 have completed
 STYLE.md backfill and are enforced together with all new posts #041+.
 """
 from __future__ import annotations
@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_DIR = ROOT / "posts"
-BACKFILLED_THROUGH = 10
+BACKFILLED_THROUGH = 20
 ENFORCED_FROM_ISSUE = 41
 
 SCRIPT_META_RE = re.compile(
