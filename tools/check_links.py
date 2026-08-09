@@ -28,7 +28,7 @@ LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
 TRANSIENT_STATUSES = {408, 425, 429, 500, 502, 503, 504}
-BLOCKED_STATUSES = {401, 403}
+BLOCKED_STATUSES = {401, 403, 418}
 IGNORED_LINK_RELS = {"preconnect", "dns-prefetch"}
 
 
