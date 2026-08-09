@@ -34,9 +34,9 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 
 ## P10 — Sustainable Daily Publishing 🚧
 
-Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Daily thành tập hợp topic ngẫu nhiên. Planning phải deterministic, review được và tách khỏi publication state.
+Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Daily thành tập hợp topic ngẫu nhiên. Planning/readiness phải deterministic, review được và tách khỏi publication state.
 
-### P10.1 — Daily Curriculum Planner 🚧
+### P10.1 — Daily Curriculum Planner ✅
 - [x] `curriculum-plan.json` là queue chủ đề tương lai riêng, không ghi đè `state.json` và không tự publish.
 - [x] Queue giữ đúng canonical 7-axis rotation từ `taxonomy.json` và bắt đầu tại axis kế tiếp sau corpus đã publish.
 - [x] Mỗi topic có difficulty + learning goal để reviewer đánh giá progression trước khi viết bài.
@@ -45,9 +45,15 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] `tools/publish.py check` chạy planner như read-only gate.
 - [x] Baseline horizon là 14 ngày / 2 chu kỳ; social output không nằm trong planner.
 
-### P10.2 — Publication Readiness Gate ⬜
-- [ ] Kiểm topic uniqueness sâu hơn exact-title match, prerequisite readiness và expected distro/source-review scope trước authoring.
-- [ ] Readiness chỉ quyết định topic có sẵn sàng để viết; cadence vẫn thuộc `tools/cadence.py` + `state.json`.
+### P10.2 — Publication Readiness Gate 🚧
+- [x] Mỗi planned topic khai báo prerequisite issue IDs; prerequisite phải là bài đã publish và không được trùng.
+- [x] Advanced topic bắt buộc có prerequisite thay vì nhảy thẳng vào nội dung nâng cao.
+- [x] Readiness policy khóa expected platform scope: Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.
+- [x] Readiness policy yêu cầu tối thiểu 2 primary official/upstream sources khi authoring.
+- [x] `tools/publication_readiness.py` dùng token/Jaccard similarity để chặn topic quá giống title đã publish, ngoài exact-title guard của planner.
+- [x] `tools/publication_readiness.py --json` xuất next-topic readiness contract cho operator/reviewer.
+- [x] `tools/publish.py check` chạy readiness gate read-only sau curriculum planner.
+- [x] Readiness không đọc clock, không thay cadence, không sửa `state.json` và không tự publish.
 
 ### P10.3 — Backlog & Coverage Intelligence ⬜
 - [ ] Tìm curriculum gaps theo taxonomy, learning paths và corpus thay vì chọn topic ngẫu nhiên.
@@ -72,3 +78,4 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 9. External network checks phải có policy chống flaky; local deterministic failures vẫn fail cứng.
 10. Phase đã đóng chỉ mở lại khi có regression hoặc requirement mới rõ ràng; feature mới phải đi vào phase hiện tại.
 11. Curriculum plan là intent tương lai; `state.json` và post metadata mới là publication truth.
+12. Readiness gate chỉ trả lời “topic đã sẵn sàng để authoring chưa”; cadence gate mới trả lời “đã tới lúc sinh bài chưa”.
