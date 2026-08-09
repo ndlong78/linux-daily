@@ -10,6 +10,8 @@ import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
+import socialmeta
+
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 VERSION_PATH = ROOT / "site-version.json"
@@ -33,13 +35,14 @@ def latest_post_path() -> Path:
 def served_files() -> list[tuple[str, Path]]:
     latest = latest_post_path()
     issue = int(latest.name.split("-")[1])
+    social_relpath = socialmeta.image_relpath(issue)
     return [
         ("/", ROOT / "index.html"),
         ("/feed.xml", ROOT / "feed.xml"),
         ("/sitemap.xml", ROOT / "sitemap.xml"),
         ("/robots.txt", ROOT / "robots.txt"),
         (f"/posts/{latest.name}", latest),
-        (f"/posts/social/post-{issue:03d}-code.png", ROOT / "posts" / "social" / f"post-{issue:03d}-code.png"),
+        (f"/{social_relpath}", ROOT / social_relpath),
     ]
 
 

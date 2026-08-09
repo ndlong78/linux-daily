@@ -134,6 +134,32 @@ Nếu tất cả kiểm tra sạch và người dùng đã cấp quyền remote 
 
 PR phải đi qua `quality-gate`, gồm lint/test/validator/build/smoke tests theo workflow hiện hành. Do CI gọi `tools/build.py --check`, source-backed gate cũng là một phần của quality gate. CI xanh là điều kiện kỹ thuật để merge; người dùng vẫn là người quyết định cuối cùng.
 
+## Self-fix CI loop
+
+Sau khi push branch hoặc cập nhật một PR, ChatGPT phải coi CI là một vòng lặp có trạng thái, không phải bước kiểm tra một lần:
+
+```text
+push
+  ↓
+đọc lại PR → lấy exact head SHA
+  ↓
+kiểm push + pull_request checks của SHA đó
+  ├─ pending/running → chưa được kết luận
+  ├─ failed → đọc log → sửa → regenerate → local check → push lại
+  └─ all success → kiểm diff không còn helper tạm → ready for review
+```
+
+Quy tắc kết thúc:
+
+- local PASS không thay thế GitHub Actions PASS;
+- run xanh của SHA cũ không có giá trị cho SHA mới;
+- phải kiểm cả `push` và `pull_request` nếu workflow tạo cả hai;
+- check đang chờ/chạy được coi là chưa hoàn tất;
+- helper workflow dùng để chẩn đoán phải được xóa trước vòng CI cuối;
+- không báo PR “xong”, “sạch” hoặc “sẵn sàng merge” khi chưa chứng minh exact head SHA không còn check đỏ/pending.
+
+Nếu CI fail, agent tự sửa theo log đến khi xanh trong phạm vi branch đã được người dùng cho phép; không yêu cầu người dùng tự chẩn đoán những lỗi có thể xử lý bằng repository/CI hiện có. Tuyệt đối không sửa gate theo hướng bỏ kiểm tra chỉ để đạt PASS.
+
 ## Migration khỏi Claude Routine
 
 Migration PR #23 đã merge ngày 2026-08-07. `AGENTS.md` là quy tắc AI chính; `.claude/skills/linux-daily/SKILL.md` và `routine-prompt.txt` đã được loại bỏ. `state.json`, cadence, structured pipeline và GitHub Actions được giữ độc lập với vendor AI.

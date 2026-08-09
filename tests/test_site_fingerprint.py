@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 import site_fingerprint
+import socialmeta
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -17,9 +18,10 @@ def _latest_issue() -> int:
 def test_served_files_cover_public_operational_surface():
     paths = [public_path for public_path, _ in site_fingerprint.served_files()]
     latest_issue = _latest_issue()
+    expected_preview = f"/{socialmeta.image_relpath(latest_issue)}"
     assert paths[:4] == ["/", "/feed.xml", "/sitemap.xml", "/robots.txt"]
     assert any(path.startswith(f"/posts/post-{latest_issue:03d}-") for path in paths)
-    assert f"/posts/social/post-{latest_issue:03d}-code.png" in paths
+    assert expected_preview in paths
 
 
 def test_fingerprint_is_deterministic_and_complete():

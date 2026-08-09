@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill — Linux Daily #022</title>
+<meta name="description" content="DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill">
+<meta property="og:description" content="DNS hỏng thường bị báo thành &#x27;mất mạng&#x27;, nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill">
+<meta name="twitter:description" content="DNS hỏng thường bị báo thành &#x27;mất mạng&#x27;, nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 22,
+  "date": "2026-07-22",
+  "axis": "Networking",
+  "eyebrow": "Networking · DNS troubleshooting",
+  "slug": "dns-troubleshooting-dig-resolvectl-drill",
+  "title": "DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill",
+  "lede": "DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "ISC BIND 9 — dig DNS lookup utility", "url": "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility", "kind": "upstream"},
+    {"title": "systemd — resolvectl", "url": "https://www.freedesktop.org/software/systemd/man/devel/resolvectl.html", "kind": "upstream"},
+    {"title": "Ubuntu Packages — dnsutils (Noble)", "url": "https://packages.ubuntu.com/noble/dnsutils", "kind": "official"},
+    {"title": "Debian — bind9-dnsutils (stable)", "url": "https://packages.debian.org/stable/bind9-dnsutils", "kind": "official"},
+    {"title": "Fedora Packages — bind-utils", "url": "https://packages.fedoraproject.org/pkgs/bind/bind-utils/", "kind": "official"},
+    {"title": "FreeBSD drill(1)", "url": "https://man.freebsd.org/cgi/man.cgi?query=drill&sektion=1", "kind": "official"}
+  ]
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#022 · 22·07·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Networking · DNS troubleshooting</p>
+    <h1>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</h1>
+    <p class="lede">DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.</p>
+    <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 760 260" role="img" aria-label="Luồng chẩn đoán DNS bốn lớp từ ứng dụng và NSS tới resolver cục bộ, recursive DNS server và authoritative DNS">
+      <rect width="760" height="260" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="20" y="82" width="155" height="100" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="97" y="111" font-size="13" font-weight="700">1 · APP / NSS</text><text x="97" y="142" font-family="JetBrains Mono" font-size="11">getent hosts</text>
+        <rect x="205" y="82" width="155" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="282" y="111" font-size="13" font-weight="700">2 · RESOLVER</text><text x="282" y="142" font-family="JetBrains Mono" font-size="11">resolvectl</text>
+        <rect x="390" y="82" width="155" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="467" y="111" font-size="13" font-weight="700">3 · DNS SERVER</text><text x="467" y="142" font-family="JetBrains Mono" font-size="11">dig / drill</text>
+        <rect x="575" y="82" width="165" height="100" rx="8" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/><text x="657" y="111" font-size="13" font-weight="700">4 · AUTH CHAIN</text><text x="657" y="142" font-family="JetBrains Mono" font-size="11">+trace / -T</text>
+        <path d="M175 132H198" stroke="#0C6E61" stroke-width="3"/><path d="M360 132H383" stroke="#0C6E61" stroke-width="3"/><path d="M545 132H568" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Đừng bắt đầu bằng sửa <code>/etc/resolv.conf</code>. Hãy xác định lớp nào sai trước: ứng dụng/NSS, resolver runtime, recursive server hay authoritative chain.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Một host vẫn ping được gateway và IP Internet nhưng <code>apt</code>, <code>dnf</code>, trình duyệt hoặc service discovery báo “name or service not known”. Một tình huống khác: tên public phân giải được nhưng zone nội bộ qua VPN lại không. Cả hai đều là “DNS lỗi” ở góc nhìn người dùng, nhưng cách sửa hoàn toàn khác.</p>
+    <p>Mục tiêu của triage là trả lời lần lượt: ứng dụng có resolve qua NSS được không; máy đang dùng resolver nào; truy vấn DNS trực tiếp có nhận phản hồi không; và chỉ khi cần mới trace chuỗi authoritative.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li><strong><code>getent</code> và <code>dig/drill</code> không trả lời cùng một câu hỏi.</strong> <code>getent hosts</code> đi qua cơ chế NSS của hệ điều hành, nên có thể thấy dữ liệu từ <code>/etc/hosts</code> hoặc resolver tích hợp. <code>dig</code>/<code>drill</code> gửi DNS query và phù hợp để tách lỗi DNS khỏi NSS.</li>
+      <li><strong>Resolver runtime có thể khác nội dung bạn tưởng đang nằm trong <code>/etc/resolv.conf</code>.</strong> Máy dùng systemd-resolved có DNS theo từng link, search domain và split DNS; <code>resolvectl status</code> cho biết trạng thái global/per-link đang hiệu lực.</li>
+      <li><strong>Query mặc định và query tới server chỉ định là hai phép thử khác nhau.</strong> <code>dig example.com A</code> dùng resolver được cấu hình; <code>dig @SERVER example.com A</code> kiểm trực tiếp server đó. FreeBSD dùng cú pháp <code>drill example.com @SERVER A</code>.</li>
+      <li><strong><code>+trace</code>/<code>-T</code> không phải phép thử đầu tiên.</strong> Trace đi từ root xuống authoritative và không kiểm đúng đường recursive resolver mà ứng dụng đang dùng; firewall doanh nghiệp cũng có thể chặn DNS trực tiếp ra ngoài.</li>
+      <li><strong>Phân biệt kết quả:</strong> timeout thường hướng tới reachability/firewall/server không trả lời; <code>NXDOMAIN</code> nghĩa là server đã trả lời rằng tên không tồn tại; <code>SERVFAIL</code> cần điều tra server-side, delegation hoặc validation thay vì đổi DNS mù quáng.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 760 285" role="img" aria-label="So sánh lệnh DNS troubleshooting trên Ubuntu Xubuntu, Debian, Fedora và FreeBSD">
+      <rect width="760" height="285" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono" font-size="10.5" text-anchor="middle">
+        <rect x="15" y="30" width="175" height="220" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="102" y="57" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="98">apt install dnsutils</text><text x="102" y="130">resolvectl status</text><text x="102" y="162">dig example.com A</text><text x="102" y="194">dig +trace ...</text>
+        <rect x="205" y="30" width="170" height="220" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="290" y="57" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Debian</text><text x="290" y="98">apt install dnsutils</text><text x="290" y="130">cat /etc/resolv.conf</text><text x="290" y="162">dig example.com A</text><text x="290" y="194">resolvectl nếu active</text>
+        <rect x="390" y="30" width="170" height="220" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="475" y="57" font-family="Be Vietnam Pro" font-size="13" font-weight="700">Fedora</text><text x="475" y="98">dnf install bind-utils</text><text x="475" y="130">resolvectl status</text><text x="475" y="162">dig example.com A</text><text x="475" y="194">dig +trace ...</text>
+        <rect x="575" y="30" width="170" height="220" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="660" y="57" font-family="Be Vietnam Pro" font-size="13" font-weight="700">FreeBSD</text><text x="660" y="98">drill trong base*</text><text x="660" y="130">cat /etc/resolv.conf</text><text x="660" y="162">drill example.com A</text><text x="660" y="194">drill -T ...</text>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Linux dùng BIND <code>dig</code>; systemd-resolved bổ sung góc nhìn per-link qua <code>resolvectl</code>. FreeBSD dùng <code>drill</code> từ LDNS utilities trong base build chuẩn; custom world tắt <code>MK_LDNS_UTILS</code> là ngoại lệ.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Thao tác từng HĐH</h2>
+    <p>Ví dụ dùng domain public dành cho tài liệu là <code>example.com</code>. Với DNS nội bộ, thay bằng FQDN thật nhưng <strong>không gửi tên nội bộ tới public resolver</strong>.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — APT + systemd-resolved</span>
+    <pre><code>sudo apt update
+sudo apt install -y dnsutils
+
+getent hosts example.com
+if systemctl is-active --quiet systemd-resolved; then
+  resolvectl status
+  resolvectl query example.com
+else
+  cat /etc/resolv.conf
+fi
+
+dig example.com A</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Debian — APT; không giả định systemd-resolved đang được dùng</span>
+    <pre><code>sudo apt update
+sudo apt install -y dnsutils
+
+getent hosts example.com
+cat /etc/resolv.conf
+if systemctl is-active --quiet systemd-resolved; then
+  resolvectl status
+  resolvectl query example.com
+fi
+
+dig example.com A</code></pre>
+    <p><strong>Khác biệt:</strong> đừng cài hoặc bật <code>systemd-resolved</code> chỉ để troubleshooting trên Debian. Trước hết phải quan sát resolver hiện có; thay backend DNS là một thay đổi cấu hình, không phải phép đo.</p>
+
+    <span class="code-label"><span class="dot"></span>Fedora — DNF + systemd-resolved</span>
+    <pre><code>sudo dnf install -y bind-utils
+
+getent hosts example.com
+if systemctl is-active --quiet systemd-resolved; then
+  resolvectl status
+  resolvectl query example.com
+else
+  cat /etc/resolv.conf
+fi
+
+dig example.com A</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — drill/LDNS utilities, không systemd</span>
+    <pre class="bsd"><code>getent hosts example.com
+cat /etc/resolv.conf
+
+drill example.com A
+
+DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
+if [ -n "$DNS_SERVER" ]; then
+  drill example.com @"$DNS_SERVER" A
+fi</code></pre>
+    <p>FreeBSD không có <code>resolvectl</code> hay systemd. <code>/etc/resolv.conf</code> có thể được cập nhật bởi DHCP/<code>resolvconf</code>; hãy truy nguồn cấu hình trước khi sửa file trực tiếp.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng theo từng lớp</h2>
+    <p><strong>Bước 1 — NSS/application:</strong></p>
+    <pre><code>getent hosts example.com</code></pre>
+
+    <p><strong>Bước 2 — DNS query mặc định:</strong></p>
+    <pre><code># Linux
+DIG_DOMAIN=example.com
+dig "$DIG_DOMAIN" A
+
+# FreeBSD
+drill example.com A</code></pre>
+
+    <p><strong>Bước 3 — hỏi đúng nameserver đang thấy trong resolv.conf:</strong></p>
+    <pre><code># Linux
+DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
+[ -n "$DNS_SERVER" ] &amp;&amp; dig @"$DNS_SERVER" example.com A
+
+# FreeBSD
+DNS_SERVER=$(awk '/^nameserver/{print $2; exit}' /etc/resolv.conf)
+[ -n "$DNS_SERVER" ] &amp;&amp; drill example.com @"$DNS_SERVER" A</code></pre>
+    <p>Nếu Linux trả về <code>127.0.0.53</code>, bạn đang kiểm local systemd-resolved stub. Hãy dùng <code>resolvectl status</code> để xem upstream DNS theo từng link thay vì coi địa chỉ stub là DNS server cuối cùng.</p>
+
+    <p><strong>Bước 4 — chỉ khi cần kiểm delegation/authoritative:</strong></p>
+    <pre><code># Linux
+dig +trace example.com A
+
+# FreeBSD
+drill -T example.com A</code></pre>
+
+    <p><strong>Bước 5 — nghi UDP/fragmentation/truncation:</strong></p>
+    <pre><code># Linux
+dig +tcp example.com A
+
+# FreeBSD
+drill -t example.com A</code></pre>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2>
+    <ul class="clean">
+      <li><strong><code>dig</code> chạy được nhưng ứng dụng vẫn lỗi:</strong> kiểm <code>getent</code>, <code>/etc/nsswitch.conf</code>, search domain và split DNS. DNS query trực tiếp không chứng minh toàn bộ NSS path của ứng dụng ổn.</li>
+      <li><strong>Sửa thẳng <code>/etc/resolv.conf</code> rồi “hết lỗi”:</strong> file có thể bị NetworkManager, DHCP, VPN, systemd-resolved hoặc FreeBSD <code>resolvconf</code> ghi lại. Sửa source of truth thay vì đấu với file sinh tự động.</li>
+      <li><strong>Debian không có <code>resolvectl</code>:</strong> đây không tự động là lỗi. Kiểm backend DNS hiện tại; không cài <code>systemd-resolved</code> chỉ để có lệnh troubleshooting.</li>
+      <li><strong><code>+trace</code>/<code>-T</code> timeout:</strong> có thể outbound UDP/TCP 53 trực tiếp bị policy chặn, trong khi recursive DNS doanh nghiệp vẫn hoạt động. Trace thất bại không đồng nghĩa authoritative DNS hỏng.</li>
+      <li><strong>Public domain chạy, internal domain không:</strong> nghĩ tới VPN/split DNS/search domain trước khi đổi nameserver. So sánh per-link DNS trên Linux và cấu hình resolver được cấp trên FreeBSD.</li>
+      <li><strong>UDP lỗi nhưng TCP được:</strong> kiểm firewall, MTU/fragmentation và thiết bị trung gian; đừng kết luận chỉ từ một query.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Không gửi hostname nội bộ, zone AD, service discovery hoặc dữ liệu split-DNS tới resolver public để “test nhanh”; đó có thể là rò rỉ metadata và còn cho kết quả sai với kiến trúc nội bộ.</li>
+      <li>Không thay nameserver production trước khi lưu trạng thái cũ. Với máy remote, đổi DNS có thể làm mất package mirror, authentication, monitoring và cả tên endpoint quản trị.</li>
+      <li>Ưu tiên query đọc-only. Các lệnh trong bài không flush cache và không reconfigure resolver; nếu cần <code>resolvectl flush-caches</code>, hãy coi đó là một thao tác thay đổi trạng thái và ghi nhận trước/sau.</li>
+      <li>Khi thu thập bằng chứng, lưu timestamp, FQDN, server được hỏi, record type và kết quả. “DNS lúc được lúc không” chỉ điều tra được khi có cùng một bộ dữ liệu để so sánh.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <div class="exercise">
+      <p><strong>Tình huống:</strong> một host truy cập IP của web server được nhưng FQDN không mở; đồng thời VPN vừa kết nối.</p>
+      <ol>
+        <li>Dùng <code>getent</code> xác định NSS có resolve tên hay không.</li>
+        <li>Ghi lại resolver runtime: <code>resolvectl status</code> trên Linux nếu service active, hoặc <code>/etc/resolv.conf</code> trên FreeBSD.</li>
+        <li>Dùng <code>dig</code>/<code>drill</code> hỏi domain qua resolver mặc định và qua một DNS server nội bộ được quản trị viên cung cấp.</li>
+        <li>Giải thích vì sao không nên dùng public resolver để thử hostname nội bộ.</li>
+        <li>Chỉ khi domain public cũng có dấu hiệu delegation bất thường, dùng <code>dig +trace</code> hoặc <code>drill -T</code> và ghi rõ trace đang kiểm lớp nào.</li>
+      </ol>
+      <p><strong>Đầu ra:</strong> một bảng 4 dòng “NSS → resolver runtime → recursive server → authoritative chain”, mỗi dòng ghi PASS/FAIL và bằng chứng lệnh tương ứng.</p>
+    </div>
+  </section>
+
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <p>Ưu tiên tài liệu chính thức của upstream hoặc từng hệ điều hành; title và URL khớp <code>ld-meta.sources</code>.</p>
+    <ul class="clean">
+      <li><a href="https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility">ISC BIND 9 — dig DNS lookup utility</a></li>
+      <li><a href="https://www.freedesktop.org/software/systemd/man/devel/resolvectl.html">systemd — resolvectl</a></li>
+      <li><a href="https://packages.ubuntu.com/noble/dnsutils">Ubuntu Packages — dnsutils (Noble)</a></li>
+      <li><a href="https://packages.debian.org/stable/bind9-dnsutils">Debian — bind9-dnsutils (stable)</a></li>
+      <li><a href="https://packages.fedoraproject.org/pkgs/bind/bind-utils/">Fedora Packages — bind-utils</a></li>
+      <li><a href="https://man.freebsd.org/cgi/man.cgi?query=drill&amp;sektion=1">FreeBSD drill(1)</a></li>
+    </ul>
+  </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-015-wireguard-vpn.html"><span class="series-kicker">#015</span><span>WireGuard: một cặp khoá, một đường hầm mã hoá</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-008-chan-doan-mang.html">#008 · Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</a></li>
+      <li><a href="post-001-static-ip.html">#001 · Một IP tĩnh, bốn cách khai báo</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row"><span>Linux Daily #022 · Networking</span><span class="hashtags">#Linux #DNS #dig #resolvectl #FreeBSD</span></div>
+  </footer>
+</div>
+</main>
+</body>
+</html>

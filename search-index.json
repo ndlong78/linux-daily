@@ -1,6 +1,19 @@
 {
-  "count": 21,
+  "count": 22,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-07-22",
+      "href": "posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html",
+      "issue": 22,
+      "lede": "DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.",
+      "tags": [
+        "DNS troubleshooting"
+      ],
+      "title": "DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",
