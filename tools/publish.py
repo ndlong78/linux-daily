@@ -27,7 +27,6 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/taxonomy.py"],
             [PYTHON, "tools/distro_coverage.py"],
             [PYTHON, "tools/quality_dashboard.py"],
-            [PYTHON, "tools/daily_operations_dashboard.py"],
         ]
     if mode == "check":
         return [
