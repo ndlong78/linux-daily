@@ -158,6 +158,19 @@ def _validate_lab(path: str, meta: dict, report: LabReport) -> None:
         report.errors.append(
             f"{rel}: destructive-storage yêu cầu verification chứa 'restore'"
         )
+    if "resource-pressure" in risks:
+        if failure_injection is not True:
+            report.errors.append(
+                f"{rel}: resource-pressure yêu cầu failure_injection=true để failure có scope/evidence rõ ràng"
+            )
+        if "observability" not in verification:
+            report.errors.append(
+                f"{rel}: resource-pressure yêu cầu verification chứa 'observability'"
+            )
+        if "recovery" not in verification:
+            report.errors.append(
+                f"{rel}: resource-pressure yêu cầu verification chứa 'recovery'"
+            )
 
     sections = _read_sections(path)
     if len(sections) != len(set(sections)):

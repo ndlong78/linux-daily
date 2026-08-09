@@ -103,6 +103,40 @@ def test_destructive_storage_requires_restore_evidence(tmp_path):
     assert any("verification chứa 'restore'" in error for error in report.errors)
 
 
+def test_resource_pressure_requires_failure_injection_and_observability(tmp_path):
+    lab = _valid_lab(
+        risks=["resource-pressure"],
+        failure_injection=False,
+        verification=["functional", "recovery"],
+    )
+    path = _write_lab(tmp_path / "post-020-test.html", lab=lab)
+    report = lab_contract.review([str(path)])
+    assert any("resource-pressure yêu cầu failure_injection=true" in error for error in report.errors)
+    assert any("verification chứa 'observability'" in error for error in report.errors)
+
+
+def test_resource_pressure_advanced_lab_passes_with_bounded_evidence_contract(tmp_path):
+    lab = _valid_lab(
+        risks=["resource-pressure", "downtime"],
+        failure_injection=True,
+        verification=["functional", "negative", "recovery", "observability"],
+    )
+    sections = [
+        "scenario",
+        "topology",
+        "safety",
+        "execution",
+        "failure-injection",
+        "verification",
+        "rollback",
+        "cleanup",
+    ]
+    path = _write_lab(tmp_path / "post-020-test.html", lab=lab, sections=sections)
+    report = lab_contract.review([str(path)])
+    assert report.errors == []
+    assert report.risk_counts == {"resource-pressure": 1, "downtime": 1}
+
+
 def test_material_risk_requires_rollback(tmp_path):
     lab = _valid_lab(rollback_required=False)
     path = _write_lab(tmp_path / "post-020-test.html", lab=lab)
