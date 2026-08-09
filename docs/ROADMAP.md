@@ -103,7 +103,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Dashboard là first-class public page: canonical, sitemap, repository-health, accessibility, self-host font và internal-link validation.
 - [x] `tools/publish.py prepare/check` regenerate/verify dashboard deterministic; operating model nằm tại `docs/learning-dashboard.md`.
 
-## P9 — Advanced Labs 🚧
+## P9 — Advanced Labs ✅
 
 ### P9.1 — Advanced Lab Framework & Safety Contract ✅
 - [x] `tools/lab_contract.py` nhận diện lab mới và validate machine-readable `ld-meta.lab` contract.
@@ -126,9 +126,9 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 - [x] Contract bắt buộc failure injection có blast radius giới hạn cho `resource-pressure` (CPU/RAM/I/O/service scenario).
 - [x] Contract bắt buộc `observability` + `recovery`; framework mô tả evidence trước/trong/sau fault và cleanup tự động an toàn.
 
-### P9.5 — Linux ↔ FreeBSD Interoperability Lab 🚧
-- [ ] Dựng một workflow thực tế chạy qua Linux và FreeBSD thay vì mô phỏng FreeBSD bằng Linux commands.
-- [ ] Kiểm package/service/firewall/path differences và end-to-end interoperability evidence.
+### P9.5 — Linux ↔ FreeBSD Interoperability Lab ✅
+- [x] Dựng workflow nginx/HTTP hai chiều trên Linux peer và FreeBSD peer thật; mỗi platform có script riêng và application-level functional/negative/recovery evidence.
+- [x] `tools/interoperability_lab.py` kiểm package/service/firewall/path differences, cấm Linux-only semantics trong FreeBSD helper và được đưa vào deterministic `publish.py check`.
 
 ## Nguyên tắc roadmap
 
