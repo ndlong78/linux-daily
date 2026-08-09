@@ -1,7 +1,8 @@
 """Regression tests cho Daily Curriculum Planner."""
 
-import curriculum_planner
+import importlib
 
+curriculum_planner = importlib.import_module("curriculum_planner")
 
 AXES = ["Networking", "Bảo mật", "Storage", "Công cụ mới", "Monitoring", "Automation", "Ôn tập"]
 
