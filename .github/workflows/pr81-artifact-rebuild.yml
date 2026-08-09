@@ -14,6 +14,25 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Capture pre-render git tree
+        run: |
+          echo "ROOT_TREE=$(git rev-parse HEAD^{tree})"
+          git ls-tree HEAD -- \
+            archive.html \
+            docs/content-mix-report.md \
+            docs/distro-coverage-report.md \
+            docs/quality-dashboard.md \
+            feed.xml \
+            index.html \
+            learning-dashboard.html \
+            learning-paths.html \
+            posts/post-001-static-ip.html \
+            posts/post-008-chan-doan-mang.html \
+            posts/post-015-wireguard-vpn.html \
+            posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html \
+            search-index.json \
+            sitemap.xml
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
