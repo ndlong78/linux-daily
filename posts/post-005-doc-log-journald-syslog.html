@@ -37,10 +37,30 @@
   "lede": "Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi \"log ở đâu, đọc bằng gì\" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "systemd — journald.conf", "url": "https://www.freedesktop.org/software/systemd/man/252/journald.conf.html", "kind": "upstream"},
-    {"title": "systemd — journalctl", "url": "https://www.freedesktop.org/software/systemd/man/255/journalctl.html", "kind": "upstream"},
-    {"title": "FreeBSD Handbook — Configuration, Services and Logging", "url": "https://docs.freebsd.org/en/books/handbook/config/", "kind": "official"}
-  ]
+    {
+      "title": "systemd — journald.conf",
+      "url": "https://www.freedesktop.org/software/systemd/man/252/journald.conf.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "systemd — journalctl",
+      "url": "https://www.freedesktop.org/software/systemd/man/255/journalctl.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Handbook — Configuration, Services and Logging",
+      "url": "https://docs.freebsd.org/en/books/handbook/config/",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": false
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -56,6 +76,13 @@
     <p class="lede">Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi "log ở đâu, đọc bằng gì" lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào <code>journald</code> và truy vấn qua <code>journalctl</code>. FreeBSD giữ nguyên <code>syslog</code> truyền thống: log là các file text trong <code>/var/log</code>, đọc bằng <code>grep</code> và <code>tail</code>.</p>
     <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Xác định đúng nguồn log hệ thống trên Linux và FreeBSD, lọc sự kiện theo thời gian/service mà không sửa trạng thái hệ thống.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Có quyền đọc log cần thiết; biết tên service/process đang điều tra.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 240" role="img" aria-label="Linux dùng journald và journalctl; FreeBSD dùng syslogd ghi file text và newsyslog để xoay vòng">
@@ -100,36 +127,37 @@
     <figcaption>Hình 2 — Cùng mục tiêu điều tra, Linux khác nhau ở unit name; FreeBSD dùng file text và công cụ BSD gốc.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
-    <pre><code>journalctl -u ssh -b
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">journalctl -u ssh -b
 journalctl -p err --since "1 hour ago"
 journalctl --disk-usage
 test -d /var/log/journal &amp;&amp; echo persistent-path-present || echo check-journald-config</code></pre>
     <span class="code-label"><span class="dot"></span>Fedora</span>
-    <pre><code>journalctl -u sshd -b
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">journalctl -u sshd -b
 journalctl -p err --since "1 hour ago"
 journalctl -f
 journalctl --disk-usage</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — syslog/newsyslog</span>
-    <pre class="bsd"><code>grep sshd /var/log/auth.log
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">grep sshd /var/log/auth.log
 tail -f /var/log/messages
 service syslogd status
 newsyslog -n                       # dry-run: xem file nào sẽ rotate
 grep -v '^[[:space:]]*#' /etc/newsyslog.conf</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng</h2>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
     <p>Trên Linux, kiểm cả log hiện tại và khả năng giữ log qua reboot bằng cấu hình hiệu lực + sự tồn tại của persistent journal. Trên FreeBSD, kiểm file đích trong <code>/etc/syslog.conf</code> và chạy <code>newsyslog -n</code> trước khi thay đổi rule rotation.</p>
-    <pre><code>journalctl -b -n 20
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">journalctl -b -n 20
 journalctl --list-boots
 journalctl --disk-usage</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li>Không dùng claim “distro X luôn persistent/volatile”; package preset và cấu hình site có thể khác.</li>
       <li><code>journalctl -u sshd</code> trên Ubuntu/Debian có thể lọc sai unit; kiểm <code>systemctl status ssh</code> trước.</li>

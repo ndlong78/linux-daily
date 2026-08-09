@@ -57,7 +57,15 @@
       "url": "https://docs.freebsd.org/en/books/handbook/security/",
       "kind": "official"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -74,6 +82,13 @@
     <p class="lede">Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân <code>sshd_config</code> gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.</p>
     <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Gia cố SSH theo hướng key-only, hạn chế root và giới hạn tài khoản được phép đăng nhập mà không tự khóa đường quản trị.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Đã đăng nhập được bằng ít nhất một tài khoản quản trị; nên có hai phiên SSH và public key hợp lệ trước khi hardening.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 260" role="img" aria-label="Luồng hardening SSH an toàn: xác nhận khóa công khai, giữ phiên cứu hộ, kiểm cấu hình, reload rồi kiểm bằng phiên mới">
@@ -135,10 +150,9 @@
     <figcaption>Hình 2 — Directive OpenSSH gần như chung, nhưng cách nạp dịch vụ và lớp tích hợp hệ điều hành khác nhau. FreeBSD dùng rc.d, không dùng systemd.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <p>Trước khi thay đổi, mở một phiên SSH thứ hai bằng key và giữ phiên hiện tại. Khối hardening tham chiếu:</p>
-    <pre><code>PermitRootLogin no
+    <pre><code class="language-conf">PermitRootLogin no
 PubkeyAuthentication yes
 PasswordAuthentication no
 KbdInteractiveAuthentication no
@@ -148,7 +162,8 @@ AllowUsers longnd deploy
 X11Forwarding no</code></pre>
 
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
-    <pre><code>sudo install -d -m 0755 /etc/ssh/sshd_config.d
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo install -d -m 0755 /etc/ssh/sshd_config.d
 sudo cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
 <span class="cmt"># Đặt local policy ở file lexicographically sớm, ví dụ 00-local-hardening.conf.</span>
 sudo sshd -t
@@ -156,7 +171,8 @@ sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractivea
 sudo systemctl reload ssh</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora</span>
-    <pre><code>sudo cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
 <span class="cmt"># Nếu dùng drop-in, đặt local policy trước các default như 50-redhat.conf.</span>
 sudo sshd -t
 sudo sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods|pubkeyauthentication) '
@@ -164,24 +180,25 @@ sudo systemctl reload sshd
 <span class="cmt"># Chỉ khi đổi port: cập nhật SELinux + firewalld cho port mới trước khi bỏ port cũ.</span></code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — rc.d, không systemd</span>
-    <pre class="bsd"><code>cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">cp -a /etc/ssh/sshd_config /etc/ssh/sshd_config.pre-hardening
 <span class="cmt"># Sửa /etc/ssh/sshd_config; không giả định có drop-in mặc định.</span>
 sshd -t
 sshd -T | grep -E '^(permitrootlogin|passwordauthentication|kbdinteractiveauthentication|authenticationmethods|pubkeyauthentication) '
 service sshd reload</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng và rollback</h2>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
     <p>Từ một terminal mới, buộc client chỉ thử public key:</p>
-    <pre><code>ssh -o PreferredAuthentications=publickey \
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ssh -o PreferredAuthentications=publickey \
     -o PasswordAuthentication=no \
     longnd@server.example</code></pre>
     <p>Nếu phiên mới không vào được, <strong>không đóng phiên cứu hộ</strong>. Khôi phục bản sao cấu hình, chạy lại <code>sshd -t</code> rồi reload đúng service. Nếu có <code>Match</code>, kiểm effective config theo user/IP trước khi kết luận policy đã áp đúng.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Giữ phiên SSH hiện tại mở, khôi phục bản sao sshd_config/sshd_config.d đã lưu, kiểm tra cú pháp rồi reload daemon. Chỉ đóng phiên cứu hộ sau khi đăng nhập mới thành công.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong>Hiểu sai precedence:</strong> không phải “dòng cuối thắng”. Với phần lớn directive OpenSSH, giá trị đầu tiên đọc được thắng; file drop-in được include sớm có thể override file chính.</li>
       <li><strong>Chỉ chạy <code>sshd -t</code>:</strong> cú pháp đúng chưa chắc effective policy đúng. Dùng thêm <code>sshd -T</code>.</li>

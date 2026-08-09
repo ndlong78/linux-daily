@@ -37,11 +37,35 @@
   "lede": "Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Netplan CLI — try/apply và rollback", "url": "https://netplan.readthedocs.io/en/stable/cli/", "kind": "official"},
-    {"title": "NetworkManager — nmcli Device Checkpoint and Restore", "url": "https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli-examples.html", "kind": "upstream"},
-    {"title": "Debian Reference — Chapter 5. Network setup", "url": "https://www.debian.org/doc/manuals/debian-reference/ch05", "kind": "official"},
-    {"title": "FreeBSD Handbook — Network", "url": "https://docs.freebsd.org/en/books/handbook/network/", "kind": "official"}
-  ]
+    {
+      "title": "Netplan CLI — try/apply và rollback",
+      "url": "https://netplan.readthedocs.io/en/stable/cli/",
+      "kind": "official"
+    },
+    {
+      "title": "NetworkManager — nmcli Device Checkpoint and Restore",
+      "url": "https://networkmanager.pages.freedesktop.org/NetworkManager/NetworkManager/nmcli-examples.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Debian Reference — Chapter 5. Network setup",
+      "url": "https://www.debian.org/doc/manuals/debian-reference/ch05",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Network",
+      "url": "https://docs.freebsd.org/en/books/handbook/network/",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -57,6 +81,13 @@
     <p class="lede">Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.</p>
     <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Cấu hình địa chỉ mạng tĩnh theo đúng network stack của từng hệ điều hành và luôn có đường lui trước khi thay đổi từ xa.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Có console hoặc phiên SSH dự phòng; biết interface, IP/prefix, gateway và DNS dự kiến.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 250" role="img" aria-label="Quy trình thay IP tĩnh từ xa: ghi nhận cấu hình cũ, áp dụng có rollback, kiểm tra gateway DNS SSH rồi mới xác nhận">
@@ -97,9 +128,9 @@
     <figcaption>Hình 2 — Không có một lệnh chung cho bốn hệ. Điểm chung là phải biết công cụ quản lý interface và chuẩn bị rollback trước khi thay đổi.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Cấu hình an toàn trên từng hệ</h2>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — Netplan</span>
-    <pre><code># /etc/netplan/01-static.yaml
+    <pre><code class="language-yaml"># /etc/netplan/01-static.yaml
 network:
   version: 2
   ethernets:
@@ -116,7 +147,8 @@ sudo netplan try          # xác nhận khi SSH vẫn hoạt động
 sudo netplan status --all</code></pre>
 
     <span class="code-label"><span class="dot"></span>Debian — ví dụ khi interface thật sự do ifupdown quản lý</span>
-    <pre><code>grep -v '^#' /etc/network/interfaces
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">grep -v '^#' /etc/network/interfaces
 # chỉ dùng block dưới nếu ens33 thuộc ifupdown
 auto ens33
 iface ens33 inet static
@@ -127,7 +159,8 @@ iface ens33 inet static
 sudo ifdown ens33 &amp;&amp; sudo ifup ens33</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora — NetworkManager checkpoint</span>
-    <pre><code>nmcli -f NAME,DEVICE con show --active
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">nmcli -f NAME,DEVICE con show --active
 # giả sử profile thật là "Wired connection 1"
 sudo nmcli dev checkpoint --timeout 60 ens33 -- \
   nmcli con mod "Wired connection 1" \
@@ -138,7 +171,8 @@ sudo nmcli dev checkpoint --timeout 60 ens33 -- \
 # checkpoint yêu cầu xác nhận; mất SSH thì NetworkManager rollback</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — rc.conf, giữ console/phiên cứu hộ</span>
-    <pre class="bsd"><code>ifconfig em0
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">ifconfig em0
 sysrc ifconfig_em0="inet 192.168.10.20 netmask 255.255.255.0"
 sysrc defaultrouter="192.168.10.1"
 # thử runtime trong cửa sổ bảo trì trước khi reboot
@@ -146,18 +180,21 @@ ifconfig em0 inet 192.168.10.20/24
 route -n get default</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng trước khi đóng phiên quản trị</h2>
-    <pre><code>ip addr; ip route                 # Linux
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ip addr; ip route                 # Linux
 getent hosts example.com          # kiểm resolver qua NSS
 ping -c3 192.168.10.1             # gateway có trả lời?
 # mở một SSH thứ hai từ máy quản trị trước khi xác nhận thay đổi</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD</span>
-    <pre class="bsd"><code>ifconfig em0
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">ifconfig em0
 netstat -rn | grep default
 getent hosts example.com</code></pre>
   </section>
 
-  <section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Khôi phục file cấu hình mạng đã sao lưu. Với Netplan, ưu tiên cơ chế try/timeout; với NetworkManager dùng checkpoint/rollback. Trên FreeBSD khôi phục /etc/rc.conf từ console rồi áp lại netif/routing.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li>Giả định tên connection profile của NetworkManager bằng tên NIC.</li>
       <li>Restart toàn bộ networking trên Debian dù chỉ cần đưa một interface xuống/lên.</li>
