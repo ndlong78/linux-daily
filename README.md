@@ -1,6 +1,6 @@
 # Linux Daily
 
-Linux Daily là website tự sinh bài học Linux/Unix system administration bằng tiếng Việt theo **nhịp 2 ngày/bài**. Workflow hiện tại dùng **ChatGPT Plus Scheduled Task** để điều phối, GitHub để lưu mã nguồn/PR và GitHub Actions làm quality gate.
+Linux Daily là website tự sinh bài học Linux/Unix system administration bằng tiếng Việt theo **nhịp 1 bài/ngày**. Workflow hiện tại dùng **ChatGPT Plus Scheduled Task** để điều phối, GitHub để lưu mã nguồn/PR và GitHub Actions làm quality gate.
 
 Website public được phục vụ qua **Cloudflare Worker** tại `https://linux.no.id.vn/`. Repository không dùng GitHub Pages làm lớp hosting public.
 
@@ -14,7 +14,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                  │
         state.json / topics.md
                  │
-          cadence đủ 2 ngày?
+          cadence đủ 1 ngày?
            │             │
           không          có
            │             │
@@ -79,7 +79,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 │   └── index.template.html
 ├── posts/
 │   ├── post-001-static-ip.html
-│   └── social/
+│   └── social/              # artifact lịch sử; hiện không sinh mới mặc định
 ├── tools/
 │   ├── cadence.py
 │   ├── build.py
@@ -109,9 +109,9 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 
 Các thay đổi vào `main` phải đi qua pull request và `quality-gate` phải xanh trước khi merge.
 
-## Cadence 2 ngày
+## Cadence hằng ngày
 
-Scheduler có thể chạy mỗi ngày nhưng **không dùng ngày trong bài làm clock**. Quyết định cadence dựa trên `state.json.last_generated_at`.
+Scheduler chạy mỗi ngày và **không dùng ngày trong bài làm clock**. Quyết định cadence dựa trên `state.json.last_generated_at`; mặc định `tools/cadence.py` dùng interval **1 ngày**.
 
 ```bash
 python3 tools/cadence.py status
@@ -119,8 +119,8 @@ python3 tools/cadence.py gate
 python3 tools/cadence.py next
 ```
 
-- `gate` exit `0`: tới nhịp, có thể tạo bài.
-- `gate` exit `10`: chưa tới nhịp, không thay đổi gì.
+- `gate` exit `0`: đã tới ngày phát hành kế tiếp, có thể tạo bài.
+- `gate` exit `10`: vẫn trong cùng ngày cadence, không thay đổi gì.
 
 Sau khi sinh bài hoàn chỉnh:
 
@@ -157,12 +157,12 @@ Bài #001–#018 được grandfather để không phải backfill toàn bộ se
 ## Quy trình bài mới
 
 1. ChatGPT đọc `AGENTS.md`, `state.json`, `topics.md` và trạng thái GitHub hiện tại.
-2. Kiểm tra cadence và duplicate branch/PR cho issue kế tiếp.
+2. Kiểm tra cadence hằng ngày và duplicate branch/PR cho issue kế tiếp.
 3. Chọn trục theo chu kỳ 7 và tránh chủ đề trùng.
-4. Tạo HTML theo template, metadata `ld-meta`, 2 SVG và bộ social Facebook/X + ảnh code.
+4. Tạo HTML theo template, metadata `ld-meta` và 2 SVG.
 5. Kiểm tra claim kỹ thuật bằng tài liệu official/upstream hiện hành; ghi `sources` và `review_status`.
-6. Cập nhật `topics.md`, `state.json`.
-7. Chạy `python3 tools/build.py` để regenerate `index.html`, `feed.xml`, `sitemap.xml`, `robots.txt`.
+6. Cập nhật `topics.md`, `state.json` và learning metadata/path nếu cần.
+7. Chạy `python3 tools/build.py` để regenerate các artifact site deterministic.
 8. Chạy `python3 tools/build.py --check`.
 9. Dùng branch:
 
@@ -172,13 +172,15 @@ chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 
 10. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
 
+**Facebook/X đang tạm dừng.** Bài mới không cần tạo `posts/social/post-<NNN>-facebook.txt`, `post-<NNN>-x.txt` hoặc ảnh code social. Các artifact lịch sử vẫn được giữ nguyên.
+
 Trong thời gian migration, agent vẫn phải phát hiện prefix cũ `claude/linux-daily-...` để tránh sinh trùng, nhưng **không tạo branch Claude mới**.
 
 ## ChatGPT Plus Scheduled Task
 
 Task vận hành chính là **Linux Daily Operator**, chạy lúc **07:00 hằng ngày** theo giờ Việt Nam. Task đọc repository mỗi lần chạy; business rules lâu dài nằm trong `AGENTS.md`, không nằm duy nhất trong prompt của task.
 
-Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị gói thay đổi và technical review; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
+Khi chưa tới cadence, task không tạo bài. Khi tới cadence, task chuẩn bị bài và technical review; remote write trên GitHub phải tuân theo quyền/ủy quyền hiện hành của người dùng.
 
 Chi tiết: `docs/CHATGPT-OPERATIONS.md`.
 
@@ -204,13 +206,7 @@ Có thể chạy source gate riêng:
 python3 tools/validate_sources.py
 ```
 
-Tạo ảnh code thủ công:
-
-```bash
-python3 tools/render_code.py --in snippet.txt \
-  --out posts/social/post-019-code.png \
-  --title "Linux Daily #019 · ..."
-```
+`tools/render_code.py` và social validators vẫn được giữ để audit/tái sử dụng artifact lịch sử nhưng không còn nằm trong contract tạo bài mới mặc định.
 
 ## Website
 
