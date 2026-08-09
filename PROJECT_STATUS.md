@@ -1,9 +1,9 @@
 # Linux Daily — Project Status
 
 **Public site:** https://linux.no.id.vn/  
-**Current phase:** P9 — Advanced Labs  
-**P9.1 status:** ✅ Advanced Lab Framework & Safety Contract implemented  
-**Next focus:** P9.2 — Security & Networking Advanced Lab  
+**Current phase:** P9 — Advanced Labs ✅  
+**P9 status:** ✅ P9.1–P9.5 implemented  
+**Next focus:** define the next roadmap phase after P9 review  
 **P8 status:** ✅ Learning Experience complete  
 **P7 status:** ✅ Content Quality at Scale complete  
 **P6 status:** ✅ Community complete  
@@ -11,50 +11,44 @@
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
-## P9.1 advanced lab framework baseline
+## P9 Advanced Labs result
 
-`tools/lab_contract.py` tạo contract machine-readable cho lab mới mà không rewrite hai lab lịch sử:
+P9 đã đóng với các safety/verification contract và lab artifact thực tế:
 
-- **2 lab posts lịch sử**: #007 và #014;
-- **2 legacy labs / 0 enforced labs / 0 advanced labs** ở thời điểm mở P9;
-- enforcement bắt đầu từ **issue #020** cho bài có semantics lab;
-- `ld-meta.lab` chuẩn hóa `profile`, topology roles, risk classes, rollback/cleanup, failure injection và verification classes;
-- Advanced Lab cần ít nhất **2 topology roles** và **2 verification classes**;
-- risk thực tế bắt buộc `rollback_required=true`;
-- `destructive-storage` bắt buộc verification class `restore`;
-- `failure_injection=true` bắt buộc verification class `recovery` và section marker tương ứng;
-- semantic HTML `data-lab-section` kiểm scenario/topology/safety/execution/verification/rollback/cleanup mà không parse wording;
-- `tools/publish.py check` chạy lab contract như deterministic local gate.
+- **P9.1:** `tools/lab_contract.py` chuẩn hóa topology roles, risk classes, rollback/cleanup, failure injection và verification evidence;
+- **P9.2:** Security & Networking Advanced Lab #020 có multi-node topology, negative test và recovery;
+- **P9.3:** Storage & Backup/Restore Advanced Lab #021 dùng disposable storage, backup-before-change và restore evidence;
+- **P9.4:** `resource-pressure` bắt buộc bounded failure injection + observability + recovery;
+- **P9.5:** `labs/p9-linux-freebsd-interoperability/` chạy workflow nginx/HTTP hai chiều trên Linux peer và FreeBSD peer thật;
+- `tools/interoperability_lab.py` hard-fail khi thiếu Linux/FreeBSD role, bidirectional evidence, safety flags hoặc package/service/firewall/path differences;
+- validator P9.5 static-scan helper script để cấm Linux-only command semantics trong FreeBSD role và ngược lại;
+- `tools/publish.py check` chạy cả Advanced Lab contract lẫn interoperability contract như deterministic local gates.
 
-Operating model: `docs/advanced-lab-framework.md`.
+Operating docs:
 
-P9.1 không thay P7 distro/command/source gates. FreeBSD vẫn được review riêng và bài mới từ #020 vẫn phải explicit coverage Ubuntu/Xubuntu, Debian, Fedora và FreeBSD theo policy hiện có.
+- `docs/advanced-lab-framework.md`
+- `docs/linux-freebsd-interoperability-lab.md`
 
 ## P8 learning experience baseline
 
 P8 đã đóng với public learning layer hoàn toàn derived:
 
-- **19 published posts / 4 learning paths / 19/19 covered**;
-- difficulty: **8 Cơ bản / 11 Trung cấp / 0 Nâng cao**;
-- prerequisite DAG: **16 edges**;
-- path-level prerequisite references: **23 = 17 local + 6 cross-path**;
-- progression hard findings: **0**;
-- missing tier: **advanced** nên Learning Dashboard giữ status **ATTENTION**;
+- learning paths + difficulty/prerequisite DAG + topic progression;
 - `learning-paths.html` và `learning-dashboard.html` là deterministic public pages;
-- dashboard không lưu completed step, account, cookie hay local storage.
+- dashboard không lưu completed step, account, cookie hay local storage;
+- bài Advanced Lab mới vẫn phải cập nhật learning metadata/path khi được publish theo cadence.
 
 Operating docs: `docs/learning-paths.md`, `docs/difficulty-prerequisites.md`, `docs/topic-progression.md`, `docs/learning-dashboard.md`.
 
 ## P7 quality baseline
 
-P7 vẫn là technical quality foundation cho P9:
+P7 tiếp tục là technical quality foundation:
 
-- distro coverage: **14/19** complete, 5 historical remediation items (#007, #008, #010, #014, #017);
-- FreeBSD code block: **19/19**, Linux-only portability violation trong BSD block: **0**;
-- command/config blockers: **0**;
-- freshness tại publication snapshot: **19 current / 0 review-due / 0 historically-valid**;
-- source-backed evidence: **19/19**, tổng **69** official/upstream sources;
-- `docs/quality-dashboard.md` tổng hợp owner/remediation nhưng không reimplement rule P7.1–P7.3.
+- distro coverage và FreeBSD portability;
+- command/config static quality;
+- freshness / technical-drift lifecycle;
+- source-backed official/upstream evidence;
+- canonical P7 quality dashboard + remediation ownership.
 
 ## Contributor entrypoint
 
@@ -66,19 +60,14 @@ python3 -m pip install -e ".[dev]"
 python3 tools/publish.py check
 ```
 
-Khi thêm bài mới, contributor phải cập nhật:
-
-- `learning-paths.json` — bài đứng ở path nào;
-- `learning-metadata.json` — difficulty và prerequisite thật sự;
-- nếu là lab từ #020: `ld-meta.lab` + `data-lab-section` theo `docs/advanced-lab-framework.md`.
-
-Progression/dashboard tiếp tục derive tự động từ learning sources; P9 lab contract cũng không có sidecar ledger riêng.
+Khi thêm bài mới, contributor phải cập nhật learning path/metadata và, nếu là lab, tuân thủ `ld-meta.lab` + semantic section markers. P9.5 interoperability artifact có validator riêng nhưng không thay thế source-backed/distro/command gates của bài viết.
 
 ## Automation baseline
 
-- `python3 tools/publish.py prepare` regenerate deterministic site/reports, gồm public Learning Dashboard.
-- `python3 tools/publish.py check` chạy local read-only gates P7 + P8 + P9.1 lab contract.
-- `python3 tools/lab_contract.py --json` xuất structured lab inventory/risk evidence.
+- `python3 tools/publish.py prepare` regenerate deterministic site/reports.
+- `python3 tools/publish.py check` chạy local read-only gates P7 + P8 + P9, gồm `tools/interoperability_lab.py`.
+- `python3 tools/lab_contract.py --json` xuất structured lab risk evidence.
+- `python3 tools/interoperability_lab.py --json` xuất structured Linux ↔ FreeBSD interoperability evidence.
 - `python3 tools/audit_report.py` tạo audit local + quality evidence; weekly workflow bổ sung GitHub/production evidence.
 - `python3 tools/workflow_safety.py` chặn unsafe GitHub Actions permissions/triggers/auto-merge.
 - Release vẫn yêu cầu human confirmation + exact-main-SHA gates.
@@ -94,9 +83,9 @@ Progression/dashboard tiếp tục derive tự động từ learning sources; P9
 - Content freshness lifecycle + technical-drift review queue.
 - P7 quality dashboard với ownership/remediation queue.
 - P8 learning path + prerequisite DAG + progression + public dashboard.
-- P9.1 lab topology/risk/rollback/failure/verification contract.
+- P9 lab topology/risk/rollback/failure/verification contract.
+- P9.5 Linux ↔ FreeBSD interoperability contract.
 - Canonical/OG/Twitter/RSS/sitemap/robots consistency.
-- Taxonomy, related navigation, search/archive và content-mix consistency.
 - Internal/external link checks.
 - Accessibility + self-hosted font validation.
 - Performance budget.
@@ -116,20 +105,8 @@ Progression/dashboard tiếp tục derive tự động từ learning sources; P9
 | P6 — Community | ✅ | Contributor onboarding, structured issue intake và technical review guide |
 | P7 — Content Quality at Scale | ✅ | Portability + command quality + freshness + quality dashboard |
 | P8 — Learning Experience | ✅ | Paths + prerequisites + progression + public Learning Dashboard |
-| P9 — Advanced Labs | 🚧 | P9.1 framework complete; P9.2 Security & Networking next |
-
-## Tài liệu chính
-
-- `docs/advanced-lab-framework.md` — P9.1 authoring, risk, rollback và verification contract.
-- `tools/lab_contract.py` — P9.1 deterministic lab validator + JSON evidence.
-- `docs/learning-dashboard.md` — P8.4 derived dashboard + public-quality contract.
-- `docs/topic-progression.md` — P8.3 progression signals.
-- `docs/difficulty-prerequisites.md` — P8.2 learning metadata + DAG contract.
-- `docs/learning-paths.md` — P8.1 learning path contract.
-- `docs/quality-dashboard.md` — P7.4 canonical quality snapshot.
-- `docs/technical-review-guide.md` — technical/source review contract.
-- `docs/publish-pipeline.md`, `docs/audit-report.md`, `docs/workflow-safety.md` — vận hành/automation.
+| P9 — Advanced Labs | ✅ | Safety contract + security/network + storage/restore + resource-pressure + Linux ↔ FreeBSD interoperability |
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P9 đang mở; focus kế tiếp là P9.2 — Security & Networking Advanced Lab.
+Xem `docs/ROADMAP.md`. P9 đã hoàn tất; phase kế tiếp cần được xác định bằng một roadmap PR riêng thay vì mở rộng P9 ngầm.
