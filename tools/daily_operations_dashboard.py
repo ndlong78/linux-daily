@@ -17,7 +17,6 @@ import quality_dashboard
 
 ROOT = Path(__file__).resolve().parents[1]
 STATE_PATH = ROOT / "state.json"
-OUTPUT_PATH = ROOT / "docs" / "daily-operations-dashboard.md"
 
 
 def _state() -> dict:
@@ -198,42 +197,36 @@ def render(result: dict) -> str:
     return "\n".join(lines)
 
 
-def run(*, check: bool = False, json_output: bool = False, as_of: date | None = None) -> int:
+def run(*, check: bool = False, json_output: bool = False, as_of: date | None = None, output: Path | None = None) -> int:
     result = collect(as_of=as_of)
-    if json_output:
-        print(json.dumps(result, ensure_ascii=False, indent=2))
-        return 1 if result["errors"] else 0
-    expected = render(result)
-    if check:
-        current = OUTPUT_PATH.read_text(encoding="utf-8") if OUTPUT_PATH.exists() else ""
-        if current != expected:
-            print(
-                "LỖI: docs/daily-operations-dashboard.md chưa đồng bộ. "
-                "Chạy `python3 tools/daily_operations_dashboard.py` rồi commit lại."
-            )
-            return 1
-        if result["errors"]:
+    text = json.dumps(result, ensure_ascii=False, indent=2) if json_output else render(result)
+    if output is not None:
+        output.write_text(text + ("\n" if not text.endswith("\n") else ""), encoding="utf-8")
+        print(f"Wrote daily operations dashboard: {output}")
+    elif not check:
+        print(text)
+    if result["errors"]:
+        if check:
             for error in result["errors"]:
                 print(f"LỖI: {error}")
-            return 1
+        return 1
+    if check:
         print(
-            "OK: daily operations dashboard đồng bộ; "
+            "OK: daily operations dashboard inputs consistent; "
             f"next=#{result['next_issue']:03d}, cadence={'DUE' if result['cadence_due'] else 'WAIT'}."
         )
-        return 0
-    OUTPUT_PATH.write_text(expected, encoding="utf-8")
-    print(f"Đã cập nhật {OUTPUT_PATH.relative_to(ROOT)}")
-    return 1 if result["errors"] else 0
+    return 0
 
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--check", action="store_true")
+    parser.add_argument("--check", action="store_true", help="Validate all dashboard inputs without writing files.")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument("--output", type=Path, help="Optional output path for an on-demand snapshot.")
     parser.add_argument("--as-of", help="Override YYYY-MM-DD; mặc định state.last_published_date để deterministic.")
     args = parser.parse_args(argv)
     as_of = date.fromisoformat(args.as_of) if args.as_of else None
-    return run(check=args.check, json_output=args.json, as_of=as_of)
+    return run(check=args.check, json_output=args.json, as_of=as_of, output=args.output)
 
 
 if __name__ == "__main__":
