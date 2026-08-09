@@ -20,6 +20,7 @@
     {"issue": 17, "difficulty": "intermediate", "prerequisites": [10]},
     {"issue": 18, "difficulty": "basic", "prerequisites": []},
     {"issue": 19, "difficulty": "intermediate", "prerequisites": []},
-    {"issue": 20, "difficulty": "advanced", "prerequisites": [2, 7, 8, 9]}
+    {"issue": 20, "difficulty": "advanced", "prerequisites": [2, 7, 8, 9]},
+    {"issue": 21, "difficulty": "advanced", "prerequisites": [3, 10, 12, 14, 17]}
   ]
 }
