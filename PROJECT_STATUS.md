@@ -2,43 +2,47 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P10 — Sustainable Daily Publishing 🚧  
-**Current focus:** P10.2 — Publication Readiness Gate  
+**Current focus:** P10.3 — Backlog & Coverage Intelligence  
+**P10.2 status:** ✅ Publication Readiness Gate complete  
 **P10.1 status:** ✅ Daily Curriculum Planner complete  
 **P9 status:** ✅ Advanced Labs complete  
-**P8 status:** ✅ Learning Experience complete  
-**P7 status:** ✅ Content Quality at Scale complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
 ## P10 sustainable daily publishing
 
-Linux Daily hiện dùng cadence mặc định **1 bài/ngày**. P10 giữ cadence này có chủ đích và bền vững bằng cách tách rõ planning, readiness và publication state.
+Linux Daily dùng cadence mặc định **1 bài/ngày**. P10 tách rõ planning, readiness, coverage intelligence và publication state để cadence nhanh hơn nhưng curriculum vẫn có chủ đích.
 
-### P10.1 Daily Curriculum Planner
+### P10.1–P10.2 foundation
 
 - `curriculum-plan.json` giữ queue 14 topic / 2 chu kỳ 7 trục;
-- `tools/curriculum_planner.py` validate canonical axis rotation, horizon, difficulty và duplicate/exact-title collision;
-- planner resolve issue number từ corpus tại runtime và không sửa `state.json`.
+- `tools/curriculum_planner.py` kiểm rotation/horizon/duplicate;
+- `tools/publication_readiness.py` kiểm prerequisite, semantic similarity, platform scope và source-review expectation;
+- planning/readiness không sửa `state.json` và không tự publish.
 
-### P10.2 Publication Readiness Gate
+### P10.3 Backlog & Coverage Intelligence
 
-- mỗi planned topic khai báo prerequisite issue IDs;
-- prerequisite phải tồn tại trong corpus đã publish; advanced topic bắt buộc có prerequisite;
-- `tools/publication_readiness.py` kiểm semantic similarity với title đã publish bằng token/Jaccard threshold;
-- readiness contract khóa expected scope cho Ubuntu/Xubuntu, Debian, Fedora và FreeBSD;
-- authoring phải dùng tối thiểu 2 primary official/upstream sources theo policy;
-- `python3 tools/publication_readiness.py --json` xuất next-topic readiness contract;
-- `tools/publish.py check` chạy readiness gate read-only ngay sau curriculum planner;
-- readiness không đọc clock, không thay cadence, không ghi state và không tự publish.
+- `coverage-catalog.json` định nghĩa capability baseline theo 7 axis;
+- mỗi capability có stable ID, topic, difficulty, keyword evidence và rationale;
+- `tools/coverage_intelligence.py` đối chiếu catalog với corpus published và curriculum queue;
+- capability được phân loại `covered`, `planned` hoặc `gap`;
+- recommendation ưu tiên axis ít coverage hơn, sau đó difficulty và stable ID;
+- mỗi recommendation trả reason/evidence thay vì một score không giải thích được;
+- `python3 tools/coverage_intelligence.py --json` xuất full report;
+- `tools/publish.py check` chạy coverage intelligence read-only;
+- tool không tự sửa `curriculum-plan.json`.
 
-P10.3 tiếp theo sẽ dùng corpus/path/taxonomy để tìm curriculum gap có giải thích, nhưng không tự sửa planning queue.
+### Pre-PR quality gate
 
-## Existing quality foundation
+Branch `chatgpt/**` chạy GitHub Actions ngay khi push. Quy trình chuẩn:
 
-- P7: distro/FreeBSD portability, command/config quality, freshness lifecycle và source-backed review.
-- P8: learning paths, difficulty/prerequisite DAG, progression và public learning dashboard.
-- P9: advanced-lab topology/risk/rollback/failure/verification + Linux ↔ FreeBSD interoperability.
-- Deterministic `tools/publish.py prepare/check`, workflow safety, release validation, performance budget và repository health vẫn là publication foundation.
+```bash
+python3 tools/pr_preflight.py
+# push branch -> remote quality-gate phải xanh
+# sau đó mới mở Draft PR
+```
+
+CI trên PR vẫn là cổng xác nhận lần hai trước review/merge.
 
 ## Contributor entrypoint
 
@@ -47,10 +51,11 @@ python3 tools/contributor.py doctor
 python3 -m pip install -e ".[dev]"
 python3 tools/curriculum_planner.py --json
 python3 tools/publication_readiness.py --json
-python3 tools/publish.py check
+python3 tools/coverage_intelligence.py --json
+python3 tools/pr_preflight.py
 ```
 
-Curriculum planner thể hiện intent tương lai; readiness xác nhận topic có đủ điều kiện để authoring; `state.json` + post metadata mới là publication truth.
+Curriculum planner thể hiện intent; readiness xác nhận khả năng authoring; coverage intelligence đề xuất gap; `state.json` + post metadata vẫn là publication truth.
 
 ## Milestones
 
@@ -70,4 +75,4 @@ Curriculum planner thể hiện intent tương lai; readiness xác nhận topic 
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P10.2 là scope hiện tại; readiness không thay thế cadence hoặc source-backed technical review khi viết bài.
+Xem `docs/ROADMAP.md`. P10.3 là scope hiện tại; recommendation chỉ hỗ trợ quyết định backlog và không tự thay đổi queue.

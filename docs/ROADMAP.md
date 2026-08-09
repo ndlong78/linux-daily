@@ -45,7 +45,7 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] `tools/publish.py check` chạy planner như read-only gate.
 - [x] Baseline horizon là 14 ngày / 2 chu kỳ; social output không nằm trong planner.
 
-### P10.2 — Publication Readiness Gate 🚧
+### P10.2 — Publication Readiness Gate ✅
 - [x] Mỗi planned topic khai báo prerequisite issue IDs; prerequisite phải là bài đã publish và không được trùng.
 - [x] Advanced topic bắt buộc có prerequisite thay vì nhảy thẳng vào nội dung nâng cao.
 - [x] Readiness policy khóa expected platform scope: Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.
@@ -55,9 +55,13 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] `tools/publish.py check` chạy readiness gate read-only sau curriculum planner.
 - [x] Readiness không đọc clock, không thay cadence, không sửa `state.json` và không tự publish.
 
-### P10.3 — Backlog & Coverage Intelligence ⬜
-- [ ] Tìm curriculum gaps theo taxonomy, learning paths và corpus thay vì chọn topic ngẫu nhiên.
-- [ ] Recommendation phải explainable và không tự sửa queue.
+### P10.3 — Backlog & Coverage Intelligence 🚧
+- [x] `coverage-catalog.json` định nghĩa capability baseline theo 7 axis với keyword evidence, difficulty và rationale.
+- [x] `tools/coverage_intelligence.py` đối chiếu catalog với corpus published + curriculum queue để phân biệt covered / planned / gap.
+- [x] Recommendation được xếp theo axis coverage, difficulty và stable ID; mỗi recommendation nêu evidence/rationale rõ ràng.
+- [x] Tool chỉ derivation/read-only, không tự sửa `curriculum-plan.json`.
+- [x] `--json` cung cấp full explainable report; `--check` tham gia deterministic publish gate.
+- [x] CI chạy trên `chatgpt/**` branch để có remote pre-PR quality gate trước khi mở PR.
 
 ### P10.4 — Long-term Content Lifecycle ⬜
 - [ ] Mở rộng freshness model cho superseded/replacement và historical-valid lifecycle khi corpus tăng lớn.
@@ -79,3 +83,5 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 10. Phase đã đóng chỉ mở lại khi có regression hoặc requirement mới rõ ràng; feature mới phải đi vào phase hiện tại.
 11. Curriculum plan là intent tương lai; `state.json` và post metadata mới là publication truth.
 12. Readiness gate chỉ trả lời “topic đã sẵn sàng để authoring chưa”; cadence gate mới trả lời “đã tới lúc sinh bài chưa”.
+13. Coverage intelligence chỉ đề xuất backlog có giải thích; con người/planner quyết định queue.
+14. Branch `chatgpt/**` phải qua remote CI preflight trước khi Draft PR được mở.
