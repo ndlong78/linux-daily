@@ -90,14 +90,14 @@ sudo pvresize /dev/sdb1
 <span class="cmt"># Cấp thêm 10G, không ăn sạch VG:</span>
 sudo lvextend --size +10G --resizefs /dev/vg0/data
 df -hT /data</code></pre></section>
-<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Mỗi lớp inventory phản ánh size mới theo đúng thứ tự, không còn khoảng trống ngoài ý muốn ở lớp dưới.</li><li>Filesystem báo capacity tăng và dữ liệu cũ vẫn đọc được; không có lỗi I/O/filesystem trong log.</li><li>Mountpoint/service dùng volume tiếp tục hoạt động sau thay đổi và sau reboot kiểm soát nếu có.</li></ul><span class="code-label bsd"><span class="dot"></span>FreeBSD UFS</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Mỗi lớp inventory phản ánh size mới theo đúng thứ tự, không còn khoảng trống ngoài ý muốn ở lớp dưới.</li><li>Filesystem báo capacity tăng và dữ liệu cũ vẫn đọc được; không có lỗi I/O/filesystem trong log.</li><li>Mountpoint/service dùng volume tiếp tục hoạt động sau thay đổi và sau reboot kiểm soát nếu có.</li></ul><span class="code-label bsd"><span class="dot"></span>FreeBSD UFS</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">gpart show ada0
 <span class="cmt"># Sau khi xác nhận đúng index, ví dụ 3:</span>
 gpart recover ada0
 gpart resize -i 3 ada0
 growfs -N /dev/ada0p3
 growfs /dev/ada0p3
-df -h /data</code></pre><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+df -h /data</code></pre><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash"><span class="cmt"># ZFS: expand đúng device; mirror/RAIDZ cần các member tương ứng cùng được mở rộng.</span>
 zpool online -e tank ada0p3
 zpool list tank</code></pre></section>

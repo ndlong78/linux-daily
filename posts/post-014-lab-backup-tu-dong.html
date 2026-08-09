@@ -96,7 +96,7 @@ restic backup /etc /srv/data</code></pre>
 <pre><code class="language-bash">sudo systemctl enable --now backup.timer
 systemctl list-timers backup.timer
 journalctl -u backup.service -n 50</code></pre>
-<span class="code-label bsd"><span class="dot"></span>FreeBSD — cron</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<span class="code-label bsd"><span class="dot"></span>FreeBSD — cron</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">crontab -e
 <span class="cmt"># 02:15 mỗi ngày; dùng đường dẫn tuyệt đối.</span>
 15 2 * * * /usr/local/sbin/backup-restic.sh >>/var/log/backup-restic.log 2>&1</code></pre></section>

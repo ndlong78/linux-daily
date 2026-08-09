@@ -135,7 +135,7 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now backup.timer
 systemctl list-timers backup.timer</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — cron + periodic</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">crontab -e
 0 2 * * * /usr/local/bin/backup.sh
 

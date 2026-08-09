@@ -107,7 +107,7 @@ Endpoint = peer-b.example:51820</code></pre>
 sudo wg-quick up wg0
 sudo wg show
 ip route get 10.10.0.2</code></pre>
-<span class="code-label bsd"><span class="dot"></span>FreeBSD — cài theo upstream, kiểm layout package</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<span class="code-label bsd"><span class="dot"></span>FreeBSD — cài theo upstream, kiểm layout package</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">pkg install -y wireguard
 pkg info -l wireguard-tools | grep -E 'wg-quick|rc.d|wireguard'
 # xác định confdir/rc script thật trên phiên bản đang cài
@@ -117,7 +117,7 @@ ifconfig wg0 2&gt;/dev/null || true</code></pre></section>
 <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li><code>wg show</code> hiển thị peer, latest handshake sau khi có traffic và counter tăng.</li><li>Route đến subnet tunnel đi qua đúng interface, không cướp default route ngoài ý muốn.</li><li>Ping/traffic thử qua tunnel thành công và tắt tunnel vẫn giữ được đường quản trị ban đầu.</li></ul><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">wg show
 ping -c3 10.10.0.2
-# kiểm endpoint/handshake/transfer và route trước khi đổi default route</code></pre><span class="code-label bsd"><span class="dot"></span>FreeBSD</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+# kiểm endpoint/handshake/transfer và route trước khi đổi default route</code></pre><span class="code-label bsd"><span class="dot"></span>FreeBSD</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">wg show
 ifconfig wg0
 netstat -rn</code></pre></section>

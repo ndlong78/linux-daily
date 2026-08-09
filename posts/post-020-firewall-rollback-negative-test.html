@@ -155,7 +155,7 @@ ss -ltn | grep ':22'
 ip -br addr
 ip route</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — lệnh base, không dùng ip/ss của Linux</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">sockstat -46 -l | grep ':22'
 ifconfig
 netstat -rn</code></pre>
@@ -225,7 +225,7 @@ sudo firewall-cmd --zone="$ZONE" --list-rich-rules</code></pre>
     <p>Không dùng <code>--permanent</code> trong lab này. firewalld tách runtime và permanent; runtime-only giúp giới hạn blast radius trong lần thử.</p>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — PF, runtime-only trong lab</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">cat &gt;/tmp/ldlab-good.pf &lt;&lt;'EOF'
 ext_if="em0"
 table &lt;ssh_ok&gt; const { 192.0.2.10, 192.0.2.30 }
@@ -299,7 +299,7 @@ ZONE="$(firewall-cmd --get-default-zone)"
 sudo firewall-cmd --zone="$ZONE" --remove-rich-rule='rule family="ipv4" priority="-100" source address="192.0.2.30" service name="ssh" accept'</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — load fail ruleset, watchdog reload good ruleset</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">cat &gt;/tmp/ldlab-fail.pf &lt;&lt;'EOF'
 ext_if="em0"
 table &lt;ssh_ok&gt; const { 192.0.2.10 }
@@ -337,7 +337,7 @@ sudo nft list table inet ldlab
 sudo firewall-cmd --list-all
 sudo journalctl -n 30 --no-pager | grep -Ei 'ufw|firewalld|ssh'</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — evidence riêng</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">pfctl -s rules
 pfctl -s states
 sockstat -46 -l | grep ':22'
@@ -359,7 +359,7 @@ sudo nft delete table inet ldlab
 # Fedora: runtime-only lab có thể quay về permanent baseline bằng reload
 sudo firewall-cmd --reload</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — nếu PF ban đầu tắt trong VM lab</span>
-    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">pfctl -d
 rm -f /tmp/ldlab-good.pf /tmp/ldlab-fail.pf</code></pre>
     <p><strong>Tự luyện:</strong> đổi PROBE thành một subnet quản trị <code>192.0.2.32/28</code>, viết lại allow-list trên bốn backend, rồi chứng minh bằng ba evidence: một source trong subnet được phép, OUTSIDER bị chặn, và failure injection vẫn tự recovery. Không thay đổi production để làm bài tập.</p>
