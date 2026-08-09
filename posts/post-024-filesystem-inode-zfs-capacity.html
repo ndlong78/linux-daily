@@ -5,11 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset — Linux Daily #024</title>
 <meta name="description" content="Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.">
+
+
 <link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/fonts.css">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="canonical" href="https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html">
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset">
+<meta property="og:description" content="Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset">
+<meta name="twitter:description" content="Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
 {
   "issue": 24,
@@ -124,7 +142,7 @@ command -v zfs &gt;/dev/null &amp;&amp; sudo zfs list -o name,used,avail,refer,m
 </div>
     <div class="code-wrap">
 <div class="code-label bsd">FreeBSD — KHÁC Linux</div>
-<pre><code>df -h /
+<pre class="bsd"><code>df -h /
 df -i /
 sysctl -n vfs.zfs.version.spa &gt;/dev/null 2&gt;&amp;1 &amp;&amp; zfs list -o name,used,avail,refer,mountpoint || true</code></pre>
 </div>
@@ -143,7 +161,7 @@ findmnt -T &#x27;&lt;DATA_PATH&gt;&#x27; -o TARGET,SOURCE,FSTYPE,OPTIONS</code><
     <h3>FreeBSD</h3>
     <div class="code-wrap">
 <div class="code-label bsd">FreeBSD</div>
-<pre><code>df -h &#x27;&lt;DATA_PATH&gt;&#x27;
+<pre class="bsd"><code>df -h &#x27;&lt;DATA_PATH&gt;&#x27;
 df -i &#x27;&lt;DATA_PATH&gt;&#x27;
 mount | grep &#x27; on &#x27; | sed -n &#x27;1,20p&#x27;
 zfs list -o name,used,avail,refer,mountpoint 2&gt;/dev/null || true</code></pre>
@@ -180,6 +198,25 @@ zfs list -o name,used,avail,refer,mountpoint 2&gt;/dev/null || true</code></pre>
 <li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li>
     </ul>
   </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-017-mo-rong-dung-luong.html"><span class="series-kicker">#017</span><span>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</span></a>
+    <a class="series-link next" href="post-031-mount-options-filesystem-protection.html"><span class="series-kicker">#031</span><span>Mount options: giảm bề mặt tấn công của filesystem</span></a>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-010-them-dia-moi.html">#010 · Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</a></li>
+      <li><a href="post-003-zfs-snapshots.html">#003 · Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
 
   <footer>
     <a class="foot-home" href="../index.html">← Về Linux Daily</a>

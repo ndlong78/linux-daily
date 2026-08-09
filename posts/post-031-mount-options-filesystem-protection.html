@@ -1,14 +1,57 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Mount options: giảm bề mặt tấn công của filesystem — Linux Daily #031</title><meta name="description" content="noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Mount options: giảm bề mặt tấn công của filesystem — Linux Daily #031</title><meta name="description" content="noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mount options: giảm bề mặt tấn công của filesystem">
+<meta property="og:description" content="noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Mount options: giảm bề mặt tấn công của filesystem">
+<meta name="twitter:description" content="noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
 {"issue":31,"date":"2026-07-31","axis":"Storage","eyebrow":"Storage · Mount hardening","slug":"mount-options-filesystem-protection","title":"Mount options: giảm bề mặt tấn công của filesystem","lede":"noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.","review_status":"reviewed","sources":[{"title":"Debian Manpages — mount(8)","url":"https://manpages.debian.org/stable/mount/mount.8.en.html","kind":"official"},{"title":"FreeBSD Manual Pages — mount(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=mount&sektion=8","kind":"official"}]}
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#031 · 31·07·2026</span></div></div><header class="post"><p class="eyebrow">Storage · Mount hardening</p><h1>Mount options: giảm bề mặt tấn công của filesystem</h1><p class="lede">noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
 <figure><svg viewBox="0 0 760 160" role="img" aria-label="Mountpoint và các option bảo vệ"><rect width="760" height="160" fill="#F7FAF9"/><text x="90" y="80">MOUNTPOINT</text><text x="335" y="55">noexec</text><text x="335" y="85">nosuid</text><text x="335" y="115">nodev</text><text x="585" y="80">WORKLOAD</text><path d="M180 78H285M410 78H535" stroke="#0C6E61" stroke-width="3"/></svg><figcaption>Hình 1 — Mount option chỉ có ích khi phù hợp workload và được kiểm chứng trước reboot.</figcaption></figure><section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Mount chứa upload, cache hoặc dữ liệu dùng chung thường không cần mọi đặc quyền của filesystem hệ thống. Tuy nhiên thêm option sai có thể làm ứng dụng ngừng chạy.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>noexec</code> chặn thực thi trực tiếp binary trên mount nhưng không phải sandbox tuyệt đối.</li><li><code>nosuid</code> vô hiệu hiệu lực setuid/setgid trên mount; <code>nodev</code> tác động special device theo semantics hệ thống.</li><li>Linux thường dùng <code>/etc/fstab</code> và systemd mount units; FreeBSD dùng <code>/etc/fstab</code> + rc boot, không systemd.</li></ul></section>
 <figure><svg viewBox="0 0 760 160" role="img" aria-label="Inventory mount Linux và FreeBSD"><rect width="760" height="160" fill="#FFFFFF"/><text x="150" y="70">Ubuntu · Debian · Fedora</text><text x="150" y="105">findmnt · /etc/fstab</text><text x="545" y="70">FreeBSD</text><text x="545" y="105">mount -p · /etc/fstab</text></svg><figcaption>Hình 2 — Inventory trước; persistence và service manager khác nhau giữa Linux và FreeBSD.</figcaption></figure><section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS
 findmnt -T /tmp -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS
 findmnt -T /tmp -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>findmnt -o TARGET,SOURCE,FSTYPE,OPTIONS
-findmnt -T /tmp -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre><code>mount -p
+findmnt -T /tmp -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>mount -p
 mount | sed -n '1,30p'</code></pre></div></section>
 <section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Chọn mount dữ liệu <code>&lt;MOUNTPOINT&gt;</code>; bài này chỉ đọc trạng thái, không remount production.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>findmnt -T '&lt;MOUNTPOINT&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS
-awk '$1 !~ /^#/ &amp;&amp; NF {print}' /etc/fstab</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre><code>mount | grep ' on &lt;MOUNTPOINT&gt; '
+awk '$1 !~ /^#/ &amp;&amp; NF {print}' /etc/fstab</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>mount | grep ' on &lt;MOUNTPOINT&gt; '
 awk '$1 !~ /^#/ &amp;&amp; NF {print}' /etc/fstab
-man mount | col -b | grep -E 'noexec|nosuid|nodev' | head</code></pre></div><h3>Expected Output</h3><p>Xác định được option runtime và cấu hình persistent tương ứng, rồi nêu option nào phù hợp để thử trong maintenance window.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Đặt <code>noexec</code> lên nơi package/app cần chạy binary.</li><li>Coi <code>noexec</code> là biện pháp chặn mọi code execution.</li><li>Sửa <code>/etc/fstab</code> không có console/boot recovery plan.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thay mount option là thay boundary hệ thống. Backup cấu hình, test trên mount lab và chuẩn bị rollback trước reboot.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Lập bảng lợi ích/rủi ro của <code>noexec</code>, <code>nosuid</code>, <code>nodev</code> cho một mount dữ liệu test và nêu ứng dụng có thể bị ảnh hưởng.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://manpages.debian.org/stable/mount/mount.8.en.html">Debian Manpages — mount(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=mount&amp;sektion=8">FreeBSD Manual Pages — mount(8)</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+man mount | col -b | grep -E 'noexec|nosuid|nodev' | head</code></pre></div><h3>Expected Output</h3><p>Xác định được option runtime và cấu hình persistent tương ứng, rồi nêu option nào phù hợp để thử trong maintenance window.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Đặt <code>noexec</code> lên nơi package/app cần chạy binary.</li><li>Coi <code>noexec</code> là biện pháp chặn mọi code execution.</li><li>Sửa <code>/etc/fstab</code> không có console/boot recovery plan.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thay mount option là thay boundary hệ thống. Backup cấu hình, test trên mount lab và chuẩn bị rollback trước reboot.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Lập bảng lợi ích/rủi ro của <code>noexec</code>, <code>nosuid</code>, <code>nodev</code> cho một mount dữ liệu test và nêu ứng dụng có thể bị ảnh hưởng.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://manpages.debian.org/stable/mount/mount.8.en.html">Debian Manpages — mount(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=mount&amp;sektion=8">FreeBSD Manual Pages — mount(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-024-filesystem-inode-zfs-capacity.html"><span class="series-kicker">#024</span><span>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-017-mo-rong-dung-luong.html">#017 · Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</a></li>
+      <li><a href="post-010-them-dia-moi.html">#010 · Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</a></li>
+      <li><a href="post-003-zfs-snapshots.html">#003 · Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

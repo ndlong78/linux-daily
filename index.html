@@ -34,9 +34,108 @@
       <div class="site-brand">Linux Daily</div>
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">22 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
+      <div class="count">33 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-033-process-tree-service-ownership.html">
+        <div class="card-top">
+          <span class="c-issue">#033</span>
+          <span class="c-axis">Monitoring · Process ownership</span>
+          <span class="c-date">02·08·2026</span>
+        </div>
+        <h2>Process tree và service ownership: PID này thuộc service nào?</h2>
+        <p>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</p>
+      </a>
+      <a class="card" href="posts/post-032-jq-json-operations.html">
+        <div class="card-top">
+          <span class="c-issue">#032</span>
+          <span class="c-axis">Công cụ mới · jq</span>
+          <span class="c-date">01·08·2026</span>
+        </div>
+        <h2>jq: biến JSON thành dữ liệu vận hành dùng được</h2>
+        <p>API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</p>
+      </a>
+      <a class="card" href="posts/post-031-mount-options-filesystem-protection.html">
+        <div class="card-top">
+          <span class="c-issue">#031</span>
+          <span class="c-axis">Storage · Mount hardening</span>
+          <span class="c-date">31·07·2026</span>
+        </div>
+        <h2>Mount options: giảm bề mặt tấn công của filesystem</h2>
+        <p>noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</p>
+      </a>
+      <a class="card" href="posts/post-030-login-privilege-escalation-audit.html">
+        <div class="card-top">
+          <span class="c-issue">#030</span>
+          <span class="c-axis">Bảo mật · Authentication audit</span>
+          <span class="c-date">30·07·2026</span>
+        </div>
+        <h2>Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</h2>
+        <p>Khi một thay đổi bất thường xuất hiện, cần biết ai đăng nhập, từ đâu và đã nâng quyền bằng cơ chế nào. Linux systemd và FreeBSD lưu dấu vết khác nhau.</p>
+      </a>
+      <a class="card" href="posts/post-029-policy-routing-multiple-default-gateways.html">
+        <div class="card-top">
+          <span class="c-issue">#029</span>
+          <span class="c-axis">Networking · Policy routing</span>
+          <span class="c-date">29·07·2026</span>
+        </div>
+        <h2>Nhiều default gateway: policy routing không cắt SSH</h2>
+        <p>Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.</p>
+      </a>
+      <a class="card" href="posts/post-028-dns-outage-incident-lab.html">
+        <div class="card-top">
+          <span class="c-issue">#028</span>
+          <span class="c-axis">Ôn tập · DNS incident lab</span>
+          <span class="c-date">28·07·2026</span>
+        </div>
+        <h2>Lab DNS outage: khoanh vùng trước, phục hồi sau</h2>
+        <p>Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</p>
+      </a>
+      <a class="card" href="posts/post-027-idempotent-shell-admin-tasks.html">
+        <div class="card-top">
+          <span class="c-issue">#027</span>
+          <span class="c-axis">Automation · Idempotency</span>
+          <span class="c-date">27·07·2026</span>
+        </div>
+        <h2>Shell idempotent: chạy lại không phá trạng thái</h2>
+        <p>Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</p>
+      </a>
+      <a class="card" href="posts/post-026-vmstat-systat-resource-pressure.html">
+        <div class="card-top">
+          <span class="c-issue">#026</span>
+          <span class="c-axis">Monitoring · Resource pressure</span>
+          <span class="c-date">26·07·2026</span>
+        </div>
+        <h2>vmstat và systat: đọc pressure trước khi đoán bottleneck</h2>
+        <p>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</p>
+      </a>
+      <a class="card" href="posts/post-025-ripgrep-log-config-search.html">
+        <div class="card-top">
+          <span class="c-issue">#025</span>
+          <span class="c-axis">Công cụ mới · ripgrep</span>
+          <span class="c-date">25·07·2026</span>
+        </div>
+        <h2>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</h2>
+        <p>`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</p>
+      </a>
+      <a class="card" href="posts/post-024-filesystem-inode-zfs-capacity.html">
+        <div class="card-top">
+          <span class="c-issue">#024</span>
+          <span class="c-axis">Storage · Capacity</span>
+          <span class="c-date">24·07·2026</span>
+        </div>
+        <h2>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</h2>
+        <p>Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</p>
+      </a>
+      <a class="card" href="posts/post-023-sudo-doas-least-privilege.html">
+        <div class="card-top">
+          <span class="c-issue">#023</span>
+          <span class="c-axis">Bảo mật · Least privilege</span>
+          <span class="c-date">23·07·2026</span>
+        </div>
+        <h2>Least privilege: sudo trên Linux, doas trên FreeBSD</h2>
+        <p>Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.</p>
+      </a>
       <a class="card" href="posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html">
         <div class="card-top">
           <span class="c-issue">#022</span>

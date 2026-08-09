@@ -1,5 +1,26 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>jq: biến JSON thành dữ liệu vận hành dùng được — Linux Daily #032</title><meta name="description" content="API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-032-jq-json-operations.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>jq: biến JSON thành dữ liệu vận hành dùng được — Linux Daily #032</title><meta name="description" content="API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-032-jq-json-operations.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="jq: biến JSON thành dữ liệu vận hành dùng được">
+<meta property="og:description" content="API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-032-jq-json-operations.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="jq: biến JSON thành dữ liệu vận hành dùng được">
+<meta name="twitter:description" content="API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
 {"issue":32,"date":"2026-08-01","axis":"Công cụ mới","eyebrow":"Công cụ mới · jq","slug":"jq-json-operations","title":"jq: biến JSON thành dữ liệu vận hành dùng được","lede":"API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.","review_status":"reviewed","sources":[{"title":"jq — Official Manual","url":"https://jqlang.org/manual/","kind":"upstream"},{"title":"jq — upstream repository","url":"https://github.com/jqlang/jq","kind":"upstream"}]}
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#032 · 01·08·2026</span></div></div><header class="post"><p class="eyebrow">Công cụ mới · jq</p><h1>jq: biến JSON thành dữ liệu vận hành dùng được</h1><p class="lede">API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span></div></header>
 <figure><svg viewBox="0 0 760 160" role="img" aria-label="JSON đi qua jq filter"><rect width="760" height="160" fill="#F7FAF9"/><text x="100" y="80">JSON INPUT</text><text x="335" y="80">jq FILTER</text><text x="590" y="80">OUTPUT</text><path d="M180 75H290M420 75H545" stroke="#0C6E61" stroke-width="3"/></svg><figcaption>Hình 1 — Lọc dữ liệu có cấu trúc thay vì grep JSON như chuỗi text.</figcaption></figure><section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>API, cloud CLI và inventory tools thường trả JSON. Một pipeline grep/cut dễ vỡ khi key đổi thứ tự hoặc khoảng trắng thay đổi.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>.</code>, <code>.field</code>, <code>.[]</code>, <code>select(...)</code> và pipe <code>|</code> là các khối cơ bản.</li><li>Dùng <code>-r</code> khi shell cần raw string; mặc định jq xuất JSON quoted.</li><li>Kiểm type/key trước khi đưa output API vào automation.</li></ul></section>
@@ -8,12 +29,34 @@ sudo apt install jq
 jq --version</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update
 sudo apt install jq
 jq --version</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install jq
-jq --version</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre><code>sudo pkg install jq
+jq --version</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>sudo pkg install jq
 jq --version</code></pre></div></section>
 <section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Tạo dữ liệu lab ba service và lấy tên service đang down.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>cat &gt; /tmp/ld-services.json &lt;&lt;'JSON'
 {"services":[{"name":"api","state":"up"},{"name":"db","state":"down"},{"name":"web","state":"up"}]}
 JSON
-jq -r '.services[] | select(.state == "down") | .name' /tmp/ld-services.json</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre><code>cat &gt; /tmp/ld-services.json &lt;&lt;'JSON'
+jq -r '.services[] | select(.state == "down") | .name' /tmp/ld-services.json</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>cat &gt; /tmp/ld-services.json &lt;&lt;'JSON'
 {"services":[{"name":"api","state":"up"},{"name":"db","state":"down"},{"name":"web","state":"up"}]}
 JSON
-jq -r '.services[] | select(.state == "down") | .name' /tmp/ld-services.json</code></pre></div><h3>Expected Output</h3><p>Một dòng duy nhất: <code>db</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Linux / FreeBSD</div><pre><code>rm -f /tmp/ld-services.json</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Quên <code>-r</code> rồi truyền chuỗi có dấu quote sang lệnh khác.</li><li>Giả định key luôn tồn tại mà không xử lý dữ liệu thiếu.</li><li>Parse JSON bằng grep/cut và phụ thuộc format text.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>JSON từ API có thể chứa token/PII. Chỉ log field cần thiết và bảo vệ file tạm chứa dữ liệu nhạy cảm.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thêm <code>latency_ms</code> và dùng jq in service có <code>state == "up"</code> nhưng latency lớn hơn 100 ms.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://jqlang.org/manual/">jq — Official Manual</a></li><li><a href="https://github.com/jqlang/jq">jq — upstream repository</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+jq -r '.services[] | select(.state == "down") | .name' /tmp/ld-services.json</code></pre></div><h3>Expected Output</h3><p>Một dòng duy nhất: <code>db</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Linux / FreeBSD</div><pre><code>rm -f /tmp/ld-services.json</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Quên <code>-r</code> rồi truyền chuỗi có dấu quote sang lệnh khác.</li><li>Giả định key luôn tồn tại mà không xử lý dữ liệu thiếu.</li><li>Parse JSON bằng grep/cut và phụ thuộc format text.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>JSON từ API có thể chứa token/PII. Chỉ log field cần thiết và bảo vệ file tạm chứa dữ liệu nhạy cảm.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thêm <code>latency_ms</code> và dùng jq in service có <code>state == "up"</code> nhưng latency lớn hơn 100 ms.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://jqlang.org/manual/">jq — Official Manual</a></li><li><a href="https://github.com/jqlang/jq">jq — upstream repository</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-025-ripgrep-log-config-search.html"><span class="series-kicker">#025</span><span>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-018-rclone-cloud-sync.html">#018 · rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</a></li>
+      <li><a href="post-011-tmux.html">#011 · tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</a></li>
+      <li><a href="post-004-restic-backup.html">#004 · Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

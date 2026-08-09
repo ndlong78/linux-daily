@@ -1,5 +1,26 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Nhiều default gateway: policy routing không cắt SSH — Linux Daily #029</title><meta name="description" content="Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Nhiều default gateway: policy routing không cắt SSH — Linux Daily #029</title><meta name="description" content="Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Nhiều default gateway: policy routing không cắt SSH">
+<meta property="og:description" content="Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Nhiều default gateway: policy routing không cắt SSH">
+<meta name="twitter:description" content="Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
 {"issue":29,"date":"2026-07-29","axis":"Networking","eyebrow":"Networking · Policy routing","slug":"policy-routing-multiple-default-gateways","title":"Nhiều default gateway: policy routing không cắt SSH","lede":"Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.","review_status":"reviewed","sources":[{"title":"Debian Manpages — ip-rule(8)","url":"https://manpages.debian.org/stable/iproute2/ip-rule.8.en.html","kind":"official"},{"title":"Debian Manpages — ip-route(8)","url":"https://manpages.debian.org/stable/iproute2/ip-route.8.en.html","kind":"official"},{"title":"FreeBSD Manual Pages — setfib(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=setfib&sektion=1","kind":"official"}]}
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#029 · 29·07·2026</span></div></div><header class="post"><p class="eyebrow">Networking · Policy routing</p><h1>Nhiều default gateway: policy routing không cắt SSH</h1><p class="lede">Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
 <figure><svg viewBox="0 0 760 160" role="img" aria-label="Host hai uplink và hai đường ra"><rect width="760" height="160" fill="#F7FAF9"/><text x="70" y="80">SOURCE</text><text x="300" y="80">RULE / FIB</text><text x="590" y="55">UPLINK A</text><text x="590" y="115">UPLINK B</text><path d="M145 78H265M390 75L540 50M390 85L540 110" stroke="#0C6E61" stroke-width="3"/></svg><figcaption>Hình 1 — Nhiều uplink cần quyết định đường đi có chủ đích, không chỉ thêm một default route nữa.</figcaption></figure><section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Máy có hai uplink có thể nhận request qua A nhưng reply ra B, làm SSH/VPN hoặc NAT hoạt động chập chờn. Thay route từ xa còn có thể cắt chính đường quản trị.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Linux xét policy rule trước khi tra routing table; đọc <code>ip rule</code> cùng <code>ip route show table all</code>.</li><li>FreeBSD dùng nhiều FIB và <code>setfib</code>; không có <code>ip rule</code>.</li><li>Trước thay đổi phải chụp đường tới IP quản trị và có rollback/OOB console.</li></ul></section>
@@ -9,11 +30,33 @@ ip route show table all | sed -n '1,80p'</code></pre></div><div class="code-wrap
 ip route show table main
 ip route show table all | sed -n '1,80p'</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>ip rule show
 ip route show table main
-ip route show table all | sed -n '1,80p'</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre><code>sysctl net.fibs
+ip route show table all | sed -n '1,80p'</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>sysctl net.fibs
 setfib 0 netstat -rn
 route -n get default</code></pre></div></section>
 <section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Bài thực hành chỉ đọc: thay <code>&lt;ADMIN_IP&gt;</code> bằng IP quản trị và xác định interface, gateway cùng table/FIB đang phục vụ đường đó.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>ip route get '&lt;ADMIN_IP&gt;'
 ip rule show
-ip route show table main</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre><code>route -n get '&lt;ADMIN_IP&gt;'
+ip route show table main</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>route -n get '&lt;ADMIN_IP&gt;'
 sysctl net.fibs
-setfib 0 netstat -rn</code></pre></div><h3>Expected Output</h3><p>Xác định được next-hop, interface và table/FIB cho <code>&lt;ADMIN_IP&gt;</code> trước khi đề xuất thay đổi.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thêm default route thứ hai mà không thiết kế source-based policy, tạo asymmetric routing.</li><li>Xóa route cũ trước khi có rollback.</li><li>Áp <code>ip rule</code> lên FreeBSD thay vì FIB/<code>setfib</code>.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Không thử route change production qua phiên SSH duy nhất. Dùng console/OOB hoặc rollback tự động và bảo vệ đường quản trị trước.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Vẽ policy cho hai source subnet đi ra hai uplink; ghi lệnh dự kiến và rollback cho Linux/FreeBSD nhưng không chạy trên production.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://manpages.debian.org/stable/iproute2/ip-rule.8.en.html">Debian Manpages — ip-rule(8)</a></li><li><a href="https://manpages.debian.org/stable/iproute2/ip-route.8.en.html">Debian Manpages — ip-route(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=setfib&amp;sektion=1">FreeBSD Manual Pages — setfib(1)</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+setfib 0 netstat -rn</code></pre></div><h3>Expected Output</h3><p>Xác định được next-hop, interface và table/FIB cho <code>&lt;ADMIN_IP&gt;</code> trước khi đề xuất thay đổi.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thêm default route thứ hai mà không thiết kế source-based policy, tạo asymmetric routing.</li><li>Xóa route cũ trước khi có rollback.</li><li>Áp <code>ip rule</code> lên FreeBSD thay vì FIB/<code>setfib</code>.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Không thử route change production qua phiên SSH duy nhất. Dùng console/OOB hoặc rollback tự động và bảo vệ đường quản trị trước.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Vẽ policy cho hai source subnet đi ra hai uplink; ghi lệnh dự kiến và rollback cho Linux/FreeBSD nhưng không chạy trên production.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://manpages.debian.org/stable/iproute2/ip-rule.8.en.html">Debian Manpages — ip-rule(8)</a></li><li><a href="https://manpages.debian.org/stable/iproute2/ip-route.8.en.html">Debian Manpages — ip-route(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=setfib&amp;sektion=1">FreeBSD Manual Pages — setfib(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-022-dns-troubleshooting-dig-resolvectl-drill.html"><span class="series-kicker">#022</span><span>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-015-wireguard-vpn.html">#015 · WireGuard: một cặp khoá, một đường hầm mã hoá</a></li>
+      <li><a href="post-008-chan-doan-mang.html">#008 · Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</a></li>
+      <li><a href="post-001-static-ip.html">#001 · Một IP tĩnh, bốn cách khai báo</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

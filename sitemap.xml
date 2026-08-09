@@ -2,19 +2,63 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-07-22</lastmod>
+    <lastmod>2026-08-02</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-07-22</lastmod>
+    <lastmod>2026-08-02</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-07-22</lastmod>
+    <lastmod>2026-08-02</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-07-22</lastmod>
+    <lastmod>2026-08-02</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</loc>
+    <lastmod>2026-08-02</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-032-jq-json-operations.html</loc>
+    <lastmod>2026-08-01</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</loc>
+    <lastmod>2026-07-31</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-030-login-privilege-escalation-audit.html</loc>
+    <lastmod>2026-07-30</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html</loc>
+    <lastmod>2026-07-29</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html</loc>
+    <lastmod>2026-07-28</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html</loc>
+    <lastmod>2026-07-27</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html</loc>
+    <lastmod>2026-07-26</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-025-ripgrep-log-config-search.html</loc>
+    <lastmod>2026-07-25</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html</loc>
+    <lastmod>2026-07-24</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-023-sudo-doas-least-privilege.html</loc>
+    <lastmod>2026-07-23</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html</loc>
