@@ -11,9 +11,27 @@ jobs:
   rebuild:
     if: github.event.pull_request.number == 81
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+
+      - name: Capture pre-render git tree
+        run: |
+          echo "ROOT_TREE=$(git rev-parse HEAD^{tree})"
+          git ls-tree HEAD -- \
+            archive.html \
+            docs/content-mix-report.md \
+            docs/distro-coverage-report.md \
+            docs/quality-dashboard.md \
+            feed.xml \
+            index.html \
+            learning-dashboard.html \
+            learning-paths.html \
+            posts/post-001-static-ip.html \
+            posts/post-008-chan-doan-mang.html \
+            posts/post-015-wireguard-vpn.html \
+            posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html \
+            search-index.json \
+            sitemap.xml
 
       - uses: actions/setup-python@v5
         with:
@@ -30,14 +48,16 @@ jobs:
       - name: Regenerate deterministic artifacts
         run: python tools/publish.py prepare
 
-      - name: Emit exact generated blobs
+      - name: Capture regenerated tree
         run: |
-          echo '===POST022_BASE64_BEGIN==='
-          base64 -w0 posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html
-          echo
-          echo '===POST022_BASE64_END==='
-          echo '===SEARCH_INDEX_BASE64_BEGIN==='
-          base64 -w0 search-index.json
-          echo
-          echo '===SEARCH_INDEX_BASE64_END==='
           git status --short
+          git diff --name-only > /tmp/regenerated-files.txt
+          tar --exclude=.git -czf /tmp/pr81-regenerated-tree.tar.gz .
+
+      - name: Upload regenerated tree
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr81-regenerated-tree
+          path: /tmp/pr81-regenerated-tree.tar.gz
+          if-no-files-found: error
+          retention-days: 1
