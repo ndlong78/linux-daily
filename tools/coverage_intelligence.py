@@ -14,6 +14,7 @@ import taxonomy
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOG_PATH = ROOT / "coverage-catalog.json"
+LEARNING_PATHS_PATH = ROOT / "learning-paths.json"
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 DIFFICULTY_ORDER = {"basic": 0, "intermediate": 1, "advanced": 2}
 
@@ -22,6 +23,13 @@ def load_catalog() -> dict:
     data = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
     if data.get("version") != 1 or not isinstance(data.get("capabilities"), list):
         raise ValueError("coverage-catalog.json phải có version=1 và capabilities là list")
+    return data
+
+
+def load_learning_paths() -> dict:
+    data = json.loads(LEARNING_PATHS_PATH.read_text(encoding="utf-8"))
+    if data.get("version") != 1 or not isinstance(data.get("paths"), list):
+        raise ValueError("learning-paths.json phải có version=1 và paths là list")
     return data
 
 
@@ -80,14 +88,37 @@ def _tokens(value: str) -> set[str]:
     return set(curriculum_planner.normalized(value).split())
 
 
+def _path_axis_demand(posts: list[dict], learning_paths: dict) -> Counter:
+    issue_to_axis = {int(item["issue"]): item["axis"] for item in posts}
+    demand: Counter = Counter()
+    for path in learning_paths.get("paths", []):
+        for issue in path.get("steps", []):
+            axis = issue_to_axis.get(int(issue))
+            if axis:
+                demand[axis] += 1
+    return demand
+
+
+def _planned_match(keywords: list[str], plan: dict, minimum_hits: int) -> tuple[bool, list[str]]:
+    best_hits: list[str] = []
+    keyword_set = set(keywords)
+    for planned in plan.get("topics", []):
+        hits = sorted(keyword_set & _tokens(str(planned.get("topic", ""))))
+        if len(hits) > len(best_hits):
+            best_hits = hits
+    return len(best_hits) >= minimum_hits, best_hits
+
+
 def analyze(
     catalog: dict | None = None,
     posts: list[dict] | None = None,
     plan: dict | None = None,
+    learning_paths: dict | None = None,
 ) -> dict:
     catalog = catalog if catalog is not None else load_catalog()
     posts = posts if posts is not None else corpus()
     plan = plan if plan is not None else curriculum_planner.load_plan()
+    learning_paths = learning_paths if learning_paths is not None else load_learning_paths()
     problems = validate(catalog)
     if problems:
         raise ValueError("; ".join(problems))
@@ -95,8 +126,7 @@ def analyze(
     minimum_hits = int(catalog["policy"]["minimum_keyword_hits"])
     limit = int(catalog["policy"]["recommendation_limit"])
     axis_counts = Counter(item["axis"] for item in posts)
-    planned_text = " ".join(str(item.get("topic", "")) for item in plan.get("topics", []))
-    planned_tokens = _tokens(planned_text)
+    axis_path_demand = _path_axis_demand(posts, learning_paths)
 
     capabilities = []
     for item in catalog["capabilities"]:
@@ -112,8 +142,7 @@ def analyze(
                 evidence_issues.append(post["issue"])
         keyword_hits = sorted(evidence_tokens)
         covered = len(keyword_hits) >= minimum_hits
-        planned_hits = sorted(set(item["keywords"]) & planned_tokens)
-        planned = len(planned_hits) >= minimum_hits
+        planned, planned_hits = _planned_match(item["keywords"], plan, minimum_hits)
         capabilities.append(
             {
                 **item,
@@ -123,6 +152,7 @@ def analyze(
                 "planned_keywords": planned_hits,
                 "evidence_issues": sorted(set(evidence_issues)),
                 "axis_post_count": axis_counts[item["axis"]],
+                "learning_path_steps": axis_path_demand[item["axis"]],
             }
         )
 
@@ -130,6 +160,7 @@ def analyze(
     gaps.sort(
         key=lambda item: (
             item["axis_post_count"],
+            -item["learning_path_steps"],
             DIFFICULTY_ORDER[item["difficulty"]],
             item["id"],
         )
@@ -142,7 +173,8 @@ def analyze(
             "difficulty": item["difficulty"],
             "reason": (
                 f"gap: {len(item['matched_keywords'])}/{minimum_hits} keyword evidence; "
-                f"axis hiện có {item['axis_post_count']} bài; {item['rationale']}"
+                f"axis hiện có {item['axis_post_count']} bài và xuất hiện "
+                f"{item['learning_path_steps']} bước trong learning paths; {item['rationale']}"
             ),
         }
         for item in gaps[:limit]
@@ -154,6 +186,7 @@ def analyze(
         "planned": sum(1 for item in capabilities if item["planned"] and not item["covered"]),
         "gaps": len(gaps),
         "axis_counts": dict(sorted(axis_counts.items())),
+        "learning_path_axis_demand": dict(sorted(axis_path_demand.items())),
         "recommendations": recommendations,
         "details": capabilities,
     }
