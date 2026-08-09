@@ -1,7 +1,88 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng — Linux Daily #038</title><meta name="description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
-{"issue":38,"date":"2026-08-07","axis":"Storage","eyebrow":"Storage · Device health","slug":"smart-nvme-health-disk-degradation","title":"SMART và NVMe health: phát hiện disk degradation trước khi hỏng","lede":"Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.","review_status":"reviewed","sources":[{"title":"smartmontools — smartctl documentation index","url":"https://www.smartmontools.org/wiki/TocDoc","kind":"upstream"},{"title":"smartmontools — NVMe SMART attributes","url":"https://www.smartmontools.org/wiki/SmartctlNvmeAttrs","kind":"upstream"},{"title":"FreeBSD Manual Pages — nvmecontrol(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&sektion=8","kind":"official"}]}
-</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#038 · 07·08·2026</span></div></div><header class="post"><p class="eyebrow">Storage · Device health</p><h1>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</h1><p class="lede">Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header><section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Disk có thể tăng media errors, reallocated sectors hoặc NVMe error log trước khi filesystem báo I/O error rõ ràng. Kiểm tra định kỳ giúp thay thiết bị có kế hoạch thay vì chờ outage.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>smartctl --scan-open</code> giúp inventory thiết bị mà smartmontools truy cập được.</li><li><code>-H</code> cho health assessment; <code>-A</code>/<code>-x</code> cho attributes/counters chi tiết. Không kết luận chỉ từ một flag PASS.</li><li>FreeBSD có thêm <code>nvmecontrol</code> trong base để inventory/diagnose NVMe; không dùng Linux <code>nvme-cli</code> máy móc.</li></ul></section><section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install smartmontools
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng — Linux Daily #038</title><meta name="description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="SMART và NVMe health: phát hiện disk degradation trước khi hỏng">
+<meta property="og:description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SMART và NVMe health: phát hiện disk degradation trước khi hỏng">
+<meta name="twitter:description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 38,
+  "date": "2026-08-07",
+  "axis": "Storage",
+  "eyebrow": "Storage · Device health",
+  "slug": "smart-nvme-health-disk-degradation",
+  "title": "SMART và NVMe health: phát hiện disk degradation trước khi hỏng",
+  "lede": "Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "smartmontools — smartctl documentation index",
+      "url": "https://www.smartmontools.org/wiki/TocDoc",
+      "kind": "upstream"
+    },
+    {
+      "title": "smartmontools — NVMe SMART attributes",
+      "url": "https://www.smartmontools.org/wiki/SmartctlNvmeAttrs",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — nvmecontrol(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&sektion=8",
+      "kind": "official"
+    }
+  ]
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#038 · 07·08·2026</span></div></div><header class="post"><p class="eyebrow">Storage · Device health</p><h1>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</h1><p class="lede">Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Disk có thể tăng media errors, reallocated sectors hoặc NVMe error log trước khi filesystem báo I/O error rõ ràng. Kiểm tra định kỳ giúp thay thiết bị có kế hoạch thay vì chờ outage.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>smartctl --scan-open</code> giúp inventory thiết bị mà smartmontools truy cập được.</li><li><code>-H</code> cho health assessment; <code>-A</code>/<code>-x</code> cho attributes/counters chi tiết. Không kết luận chỉ từ một flag PASS.</li><li>FreeBSD có thêm <code>nvmecontrol</code> trong base để inventory/diagnose NVMe; không dùng Linux <code>nvme-cli</code> máy móc.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install smartmontools
 sudo smartctl --scan-open
 sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install smartmontools
 sudo smartctl --scan-open
@@ -15,4 +96,26 @@ sudo smartctl -H '&lt;DEVICE&gt;'
 sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>sudo smartctl --scan-open
 nvmecontrol devlist 2&gt;/dev/null || true
 sudo smartctl -H '&lt;DEVICE&gt;'
-sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/wiki/SmartctlNvmeAttrs">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/wiki/SmartctlNvmeAttrs">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-031-mount-options-filesystem-protection.html"><span class="series-kicker">#031</span><span>Mount options: giảm bề mặt tấn công của filesystem</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-024-filesystem-inode-zfs-capacity.html">#024 · Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</a></li>
+      <li><a href="post-017-mo-rong-dung-luong.html">#017 · Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</a></li>
+      <li><a href="post-010-them-dia-moi.html">#010 · Thêm một đĩa mới, và làm cho nó ở lại sau khi khởi động</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

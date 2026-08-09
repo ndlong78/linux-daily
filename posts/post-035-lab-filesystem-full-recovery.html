@@ -1,8 +1,112 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn — Linux Daily #035</title><meta name="description" content="Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
-{"issue":35,"date":"2026-08-04","axis":"Ôn tập","eyebrow":"Ôn tập · Filesystem full lab","slug":"lab-filesystem-full-recovery","title":"Lab filesystem đầy: quan sát, xử lý và phòng tái diễn","lede":"Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.","review_status":"reviewed","sources":[{"title":"GNU Coreutils — df invocation","url":"https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html","kind":"upstream"},{"title":"GNU Coreutils — du invocation","url":"https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html","kind":"upstream"},{"title":"FreeBSD Manual Pages — df(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=df&sektion=1","kind":"official"},{"title":"FreeBSD Manual Pages — du(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=du&sektion=1","kind":"official"}],"lab":{"version":1,"profile":"standard","topology":["host","simulated-filesystem-incident"],"risks":["none"],"verification":["functional","negative"],"rollback_required":false,"cleanup_required":true,"failure_injection":false}}
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn — Linux Daily #035</title><meta name="description" content="Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab filesystem đầy: quan sát, xử lý và phòng tái diễn">
+<meta property="og:description" content="Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab filesystem đầy: quan sát, xử lý và phòng tái diễn">
+<meta name="twitter:description" content="Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 35,
+  "date": "2026-08-04",
+  "axis": "Ôn tập",
+  "eyebrow": "Ôn tập · Filesystem full lab",
+  "slug": "lab-filesystem-full-recovery",
+  "title": "Lab filesystem đầy: quan sát, xử lý và phòng tái diễn",
+  "lede": "Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "GNU Coreutils — df invocation",
+      "url": "https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "GNU Coreutils — du invocation",
+      "url": "https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — df(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=df&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — du(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=du&sektion=1",
+      "kind": "official"
+    }
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "standard",
+    "topology": [
+      "host",
+      "simulated-filesystem-incident"
+    ],
+    "risks": [
+      "none"
+    ],
+    "verification": [
+      "functional",
+      "negative"
+    ],
+    "rollback_required": false,
+    "cleanup_required": true,
+    "failure_injection": false
+  }
+}
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#035 · 04·08·2026</span></div></div><header class="post"><p class="eyebrow">Ôn tập · Filesystem full lab</p><h1>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</h1><p class="lede">Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
-<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Ứng dụng báo “No space left on device” nhưng admin cần phân biệt block usage, inode exhaustion, mountpoint sai hoặc dữ liệu tăng bất thường. Lab này dùng dữ liệu giả để luyện quy trình an toàn trước khi áp dụng vào production.</p></section><section data-lab-section="topology"><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>df -h</code> đo block usage; <code>df -i</code> đo inode trên filesystem hỗ trợ inode.</li><li><code>du</code> đo dung lượng nhìn thấy từ cây file và có thể khác <code>df</code> khi process còn giữ file đã unlink.</li><li>Trước cleanup production cần xác định đúng mountpoint, owner dữ liệu, retention policy và backup.</li></ul></section><section data-lab-section="safety"><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>df -h '&lt;PATH&gt;'
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+
+<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Ứng dụng báo “No space left on device” nhưng admin cần phân biệt block usage, inode exhaustion, mountpoint sai hoặc dữ liệu tăng bất thường. Lab này dùng dữ liệu giả để luyện quy trình an toàn trước khi áp dụng vào production.</p></section><section data-lab-section="topology"><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>df -h</code> đo block usage; <code>df -i</code> đo inode trên filesystem hỗ trợ inode.</li><li><code>du</code> đo dung lượng nhìn thấy từ cây file và có thể khác <code>df</code> khi process còn giữ file đã unlink.</li><li>Trước cleanup production cần xác định đúng mountpoint, owner dữ liệu, retention policy và backup.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section data-lab-section="safety"><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
 findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
@@ -20,4 +124,26 @@ EOF
 awk 'NR&gt;1 {gsub(/%/,"",$5); if ($5&gt;=90) print "CRITICAL",$6,$5"%"; else print "OK",$6,$5"%"}' /tmp/ld-fs-lab/df-sample.txt
 printf 'log-a\n' &gt; /tmp/ld-fs-lab/app.log
 printf 'cache-a\ncache-b\n' &gt; /tmp/ld-fs-lab/cache.log
-du -ah /tmp/ld-fs-lab | sort -h</code></pre></div><h3>Expected Output</h3><p>Parser phải in <code>CRITICAL /var 96%</code> và <code>OK /srv 44%</code>. Sau đó bạn có danh sách file lab theo dung lượng để luyện bước “xác định consumer trước khi cleanup”.</p></section><section data-lab-section="verification"><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy root filesystem ổn rồi bỏ qua mount riêng của ứng dụng.</li><li>Chỉ chạy <code>du</code> mà không so với <code>df</code> và inode.</li><li>Xóa log/cache trước khi xác nhận retention, process owner và backup.</li></ul></section><section data-lab-section="cleanup"><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Production cleanup phải ưu tiên quan sát và phê duyệt; lab này cố ý không tạo ENOSPC thật.</p><div class="code-wrap"><div class="code-label same">Cleanup / Revert</div><pre><code>rm -rf /tmp/ld-fs-lab</code></pre></div></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Mở rộng file mẫu thêm một filesystem 91% nhưng inode chỉ còn 2%; viết runbook nêu bằng chứng cần thu trước khi quyết định xóa dữ liệu hay xử lý inode.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html">GNU Coreutils — df invocation</a></li><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html">GNU Coreutils — du invocation</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=du&amp;sektion=1">FreeBSD Manual Pages — du(1)</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+du -ah /tmp/ld-fs-lab | sort -h</code></pre></div><h3>Expected Output</h3><p>Parser phải in <code>CRITICAL /var 96%</code> và <code>OK /srv 44%</code>. Sau đó bạn có danh sách file lab theo dung lượng để luyện bước “xác định consumer trước khi cleanup”.</p></section><section data-lab-section="verification"><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy root filesystem ổn rồi bỏ qua mount riêng của ứng dụng.</li><li>Chỉ chạy <code>du</code> mà không so với <code>df</code> và inode.</li><li>Xóa log/cache trước khi xác nhận retention, process owner và backup.</li></ul></section><section data-lab-section="cleanup"><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Production cleanup phải ưu tiên quan sát và phê duyệt; lab này cố ý không tạo ENOSPC thật.</p><div class="code-wrap"><div class="code-label same">Cleanup / Revert</div><pre><code>rm -rf /tmp/ld-fs-lab</code></pre></div></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Mở rộng file mẫu thêm một filesystem 91% nhưng inode chỉ còn 2%; viết runbook nêu bằng chứng cần thu trước khi quyết định xóa dữ liệu hay xử lý inode.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html">GNU Coreutils — df invocation</a></li><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html">GNU Coreutils — du invocation</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=du&amp;sektion=1">FreeBSD Manual Pages — du(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-028-dns-outage-incident-lab.html"><span class="series-kicker">#028</span><span>Lab DNS outage: khoanh vùng trước, phục hồi sau</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-021-storage-backup-restore-recovery-lab.html">#021 · Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</a></li>
+      <li><a href="post-014-lab-backup-tu-dong.html">#014 · Backup tự động mà bạn dám tin — vì đã thử khôi phục</a></li>
+      <li><a href="post-007-lab-web-server-tuong-lua.html">#007 · Từ máy mới đến web server an toàn, chỉ mở đúng cổng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

@@ -1,8 +1,89 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng — Linux Daily #034</title><meta name="description" content="Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin><link rel="stylesheet" href="../assets/fonts.css"><link rel="stylesheet" href="../assets/style.css"><link rel="canonical" href="https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html"><link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml"><script type="application/json" id="ld-meta">
-{"issue":34,"date":"2026-08-03","axis":"Automation","eyebrow":"Automation · Scheduling","slug":"systemd-timer-freebsd-periodic-cron","title":"systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng","lede":"Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.","review_status":"reviewed","sources":[{"title":"systemd.timer — Timer unit configuration","url":"https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html","kind":"upstream"},{"title":"FreeBSD Manual Pages — periodic(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=periodic&sektion=8","kind":"official"},{"title":"FreeBSD Manual Pages — crontab(5)","url":"https://man.freebsd.org/cgi/man.cgi?query=crontab&sektion=5","kind":"official"}]}
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng — Linux Daily #034</title><meta name="description" content="Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng">
+<meta property="og:description" content="Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng">
+<meta name="twitter:description" content="Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 34,
+  "date": "2026-08-03",
+  "axis": "Automation",
+  "eyebrow": "Automation · Scheduling",
+  "slug": "systemd-timer-freebsd-periodic-cron",
+  "title": "systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng",
+  "lede": "Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "systemd.timer — Timer unit configuration",
+      "url": "https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — periodic(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=periodic&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual Pages — crontab(5)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=crontab&sektion=5",
+      "kind": "official"
+    }
+  ]
+}
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#034 · 03·08·2026</span></div></div><header class="post"><p class="eyebrow">Automation · Scheduling</p><h1>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</h1><p class="lede">Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
-<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Backup, rotate dữ liệu hay sync định kỳ thường “chạy được” ở ngày đầu nhưng khó điều tra khi miss lịch hoặc lỗi âm thầm. Mục tiêu là nhìn được lần chạy kế tiếp, lần chạy trước và log của job.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Linux dùng systemd timer để kích hoạt service; <code>OnCalendar</code>, <code>Persistent</code> và journal giúp mô tả lịch + missed run + log.</li><li>FreeBSD không dùng systemd: cron đọc crontab, còn <code>periodic</code> chạy nhóm script daily/weekly/monthly hoặc một thư mục custom.</li><li>Đừng chỉ nhìn file cấu hình; phải xác minh scheduler runtime và output thực tế.</li></ul></section><section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>systemctl list-timers --all
+
+<figure>
+<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
+  <rect width="760" height="210" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
+    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
+    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
+    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
+</figure>
+
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Backup, rotate dữ liệu hay sync định kỳ thường “chạy được” ở ngày đầu nhưng khó điều tra khi miss lịch hoặc lỗi âm thầm. Mục tiêu là nhìn được lần chạy kế tiếp, lần chạy trước và log của job.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Linux dùng systemd timer để kích hoạt service; <code>OnCalendar</code>, <code>Persistent</code> và journal giúp mô tả lịch + missed run + log.</li><li>FreeBSD không dùng systemd: cron đọc crontab, còn <code>periodic</code> chạy nhóm script daily/weekly/monthly hoặc một thư mục custom.</li><li>Đừng chỉ nhìn file cấu hình; phải xác minh scheduler runtime và output thực tế.</li></ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
+  <rect width="760" height="230" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
+    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
+    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
+    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>systemctl list-timers --all
 systemd-analyze calendar '*-*-* 03:15:00'
 journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>systemctl list-timers --all
 systemd-analyze calendar '*-*-* 03:15:00'
@@ -22,4 +103,26 @@ SH
 chmod +x /tmp/ld-periodic/100.demo
 periodic /tmp/ld-periodic</code></pre></div><h3>Expected Output</h3><p>Linux hiển thị timer, service chạy sau khoảng 30 giây và journal có message. FreeBSD chạy custom periodic directory và in <code>demo completed</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Cleanup</div><pre><code>sudo systemctl stop ld-timer-demo.timer ld-timer-demo.service 2&gt;/dev/null || true
 sudo systemctl reset-failed ld-timer-demo.service 2&gt;/dev/null || true
-rm -rf /tmp/ld-periodic</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Tạo timer nhưng quên enable/start hoặc không kiểm lần chạy kế tiếp.</li><li>Đưa PATH/biến môi trường của shell tương tác vào cron rồi job chạy khác khi không có TTY.</li><li>Gắn <code>systemctl</code> vào FreeBSD thay vì cron/periodic.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Job định kỳ thường chạy quyền cao. Dùng đường dẫn tuyệt đối, quyền file chặt, không để thư mục script writable bởi user không tin cậy và không log secret.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thiết kế lịch chạy 03:15 mỗi ngày cho một script backup giả. Ghi lệnh kiểm lịch, lệnh xem lần chạy cuối và nơi lấy log trên Linux và FreeBSD.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd.timer — Timer unit configuration</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=periodic&amp;sektion=8">FreeBSD Manual Pages — periodic(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=crontab&amp;sektion=5">FreeBSD Manual Pages — crontab(5)</a></li></ul></section><footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
+rm -rf /tmp/ld-periodic</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Tạo timer nhưng quên enable/start hoặc không kiểm lần chạy kế tiếp.</li><li>Đưa PATH/biến môi trường của shell tương tác vào cron rồi job chạy khác khi không có TTY.</li><li>Gắn <code>systemctl</code> vào FreeBSD thay vì cron/periodic.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Job định kỳ thường chạy quyền cao. Dùng đường dẫn tuyệt đối, quyền file chặt, không để thư mục script writable bởi user không tin cậy và không log secret.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thiết kế lịch chạy 03:15 mỗi ngày cho một script backup giả. Ghi lệnh kiểm lịch, lệnh xem lần chạy cuối và nơi lấy log trên Linux và FreeBSD.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd.timer — Timer unit configuration</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=periodic&amp;sektion=8">FreeBSD Manual Pages — periodic(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=crontab&amp;sektion=5">FreeBSD Manual Pages — crontab(5)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-027-idempotent-shell-admin-tasks.html"><span class="series-kicker">#027</span><span>Shell idempotent: chạy lại không phá trạng thái</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-020-firewall-rollback-negative-test.html">#020 · Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</a></li>
+      <li><a href="post-013-bash-script-vung.html">#013 · Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</a></li>
+      <li><a href="post-006-ansible-multi-os.html">#006 · Ansible: một playbook, bốn hệ điều hành</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

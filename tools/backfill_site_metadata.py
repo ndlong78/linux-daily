@@ -1,92 +1,175 @@
 #!/usr/bin/env python3
-"""Temporary PR83 wrapper; restores the canonical tool before verification."""
+"""Backfill discovery/social metadata and repair small historical HTML drift.
+
+The transformation is deterministic and idempotent: public URLs come from site.json,
+post title/description come from ld-meta, social image metadata comes from the existing
+post-NNN-code.png assets, legacy broken source URLs are replaced with live stable sources,
+and old HTML fragments missing the common document shell are normalized back to the
+shared site structure.
+"""
 from __future__ import annotations
 
-import subprocess
+import argparse
+import glob
+import html
+import json
+import os
 import sys
-from pathlib import Path
+from urllib.parse import urljoin
 
-HERE = Path(__file__).resolve()
-TOOLS = HERE.parent
-ROOT = TOOLS.parent
-TMP = TOOLS / ".pr83_backfill_site_metadata_original.py"
+import postmeta
+import socialmeta
 
-FIGURE1 = '''
-<figure>
-<svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
-  <rect width="760" height="210" fill="#F7FAF9"/>
-  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
-    <rect x="30" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-    <text x="125" y="100" font-size="15" font-weight="700">OBSERVE</text><text x="125" y="125" font-size="11">đo trạng thái thật</text>
-    <rect x="285" y="65" width="190" height="85" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
-    <text x="380" y="100" font-size="15" font-weight="700">CHANGE</text><text x="380" y="125" font-size="11">thay đổi có giới hạn</text>
-    <rect x="540" y="65" width="190" height="85" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
-    <text x="635" y="100" font-size="15" font-weight="700">VERIFY</text><text x="635" y="125" font-size="11">expected output</text>
-    <path d="M220 108H278M475 108H533" stroke="#0C6E61" stroke-width="3"/>
-  </g>
-</svg>
-<figcaption>Hình 1 — Quan sát trước, thay đổi có giới hạn, rồi xác minh bằng tín hiệu cụ thể.</figcaption>
-</figure>
-'''
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+SITE_CONFIG = os.path.join(ROOT, "site.json")
+POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 
-FIGURE2 = '''
-<figure>
-<svg viewBox="0 0 760 230" role="img" aria-label="So sánh Ubuntu Xubuntu Debian Fedora và FreeBSD">
-  <rect width="760" height="230" fill="#FFFFFF"/>
-  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
-    <rect x="20" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
-    <text x="102" y="82" font-size="13" font-weight="700">Ubuntu / Xubuntu</text><text x="102" y="116" font-size="11">APT · systemd</text>
-    <rect x="205" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
-    <text x="287" y="82" font-size="13" font-weight="700">Debian</text><text x="287" y="116" font-size="11">APT · systemd</text>
-    <rect x="390" y="50" width="165" height="125" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
-    <text x="472" y="82" font-size="13" font-weight="700">Fedora</text><text x="472" y="116" font-size="11">DNF · systemd</text>
-    <rect x="575" y="50" width="165" height="125" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
-    <text x="657" y="82" font-size="13" font-weight="700">FreeBSD</text><text x="657" y="116" font-size="11">pkg · rc.d · khác lệnh</text>
-  </g>
-</svg>
-<figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
-</figure>
-'''
+FEDORA_SUDO_URL = "https://fedoramagazine.org/howto-use-sudo/"
+FEDORA_OPENSSH_URL = "https://packages.fedoraproject.org/pkgs/openssh/openssh-server/"
+DEBIAN_GETENT_URL = "https://manpages.debian.org/bookworm/manpages/getent.1.en.html"
+
+LEGACY_LINK_REPLACEMENTS = {
+    "https://docs.fedoraproject.org/en-US/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
+    "https://docs.fedoraproject.org/nn/fedora/f32/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
+    "https://manpages.debian.org/bookworm/libc-bin/getent.1.en.html": DEBIAN_GETENT_URL,
+    "https://docs.fedoraproject.org/ko/fedora/f30/system-administrators-guide/basic-system-configuration/Gaining_Privileges/": FEDORA_SUDO_URL,
+    "https://docs.fedoraproject.org/cs/fedora/f30/system-administrators-guide/infrastructure-services/OpenSSH/": FEDORA_OPENSSH_URL,
+}
+
+LEGACY_TITLE_REPLACEMENTS = {
+    "Fedora Docs — Gaining Privileges": "Fedora Magazine — Configure sudo",
+    "Fedora Docs — OpenSSH": "Fedora Packages — openssh-server",
+}
 
 
-def restore_original() -> bytes:
-    result = subprocess.run(
-        ["git", "show", "origin/main:tools/backfill_site_metadata.py"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
+def _load_site() -> dict:
+    with open(SITE_CONFIG, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _ensure_document_shell(text: str, meta: dict) -> str:
+    """Repair historical fragments that have </head>/<body> but no opening document shell."""
+    prefix_probe = text[:1000].lower()
+    if "<html" in prefix_probe:
+        return text
+
+    issue = int(meta["issue"])
+    title = html.escape(str(meta["title"]), quote=True)
+    lede = html.escape(str(meta["lede"]), quote=True)
+    shell = "\n".join(
+        [
+            "<!DOCTYPE html>",
+            '<html lang="vi">',
+            "<head>",
+            '<meta charset="UTF-8">',
+            '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            f"<title>{title} — Linux Daily #{issue:03d}</title>",
+            f'<meta name="description" content="{lede}">',
+            '<link rel="preconnect" href="https://fonts.googleapis.com">',
+            '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>',
+            '<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@400;500;700&amp;family=Noto+Serif:ital,wght@0,400;0,600;1,400&amp;display=swap" rel="stylesheet">',
+            '<link rel="stylesheet" href="../assets/style.css">',
+        ]
     )
-    original = result.stdout
-    TMP.write_bytes(original)
-    return original
+    return shell + "\n" + text
 
 
-def add_visuals() -> None:
-    for issue in range(34, 41):
-        path = next((ROOT / "posts").glob(f"post-{issue:03d}-*.html"))
-        text = path.read_text(encoding="utf-8")
-        if text.count("<svg ") >= 2 and text.count("<figcaption>") >= 2:
+def _strip_discovery_lines(text: str) -> str:
+    kept: list[str] = []
+    for line in text.splitlines():
+        if 'rel="canonical"' in line:
             continue
-        text = text.replace("</header>", "</header>\n" + FIGURE1, 1)
-        normal_s3 = '<section><h2><span class="num">03</span>'
-        lab_s3 = '<section data-lab-section="safety"><h2><span class="num">03</span>'
-        if lab_s3 in text:
-            text = text.replace(lab_s3, FIGURE2 + lab_s3, 1)
-        else:
-            text = text.replace(normal_s3, FIGURE2 + normal_s3, 1)
-        path.write_text(text, encoding="utf-8")
+        if 'type="application/rss+xml"' in line:
+            continue
+        if 'property="og:' in line:
+            continue
+        if 'name="twitter:' in line:
+            continue
+        kept.append(line)
+    return "\n".join(kept) + ("\n" if text.endswith("\n") else "")
 
 
-def main() -> int:
-    original = restore_original()
-    try:
-        proc = subprocess.run([sys.executable, str(TMP), *sys.argv[1:]], cwd=ROOT)
-        if proc.returncode == 0 and "--check" not in sys.argv:
-            add_visuals()
-        return proc.returncode
-    finally:
-        HERE.write_bytes(original)
-        TMP.unlink(missing_ok=True)
+def render_post(path: str) -> str:
+    site = _load_site()
+    meta = postmeta.read_meta(path)
+    with open(path, encoding="utf-8") as f:
+        text = f.read()
+
+    for old, new in LEGACY_LINK_REPLACEMENTS.items():
+        text = text.replace(old, new)
+    for old, new in LEGACY_TITLE_REPLACEMENTS.items():
+        text = text.replace(old, new)
+
+    text = _ensure_document_shell(text, meta)
+    text = _strip_discovery_lines(text)
+    basename = os.path.basename(path)
+    canonical = urljoin(site["url"], f"posts/{basename}")
+    feed_url = urljoin(site["url"], site["feed_path"])
+    title = html.escape(str(meta["title"]), quote=True)
+    lede = html.escape(str(meta["lede"]), quote=True)
+    site_title = html.escape(str(site["title"]), quote=True)
+    social = socialmeta.image_info(int(meta["issue"]), str(meta["title"]), site["url"])
+    social_url = html.escape(str(social["url"]), quote=True)
+    social_alt = html.escape(str(social["alt"]), quote=True)
+
+    block = "\n".join(
+        [
+            f'<link rel="canonical" href="{canonical}">',
+            f'<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="{feed_url}">',
+            '<meta property="og:type" content="article">',
+            f'<meta property="og:title" content="{title}">',
+            f'<meta property="og:description" content="{lede}">',
+            f'<meta property="og:url" content="{canonical}">',
+            f'<meta property="og:site_name" content="{site_title}">',
+            '<meta property="og:locale" content="vi_VN">',
+            f'<meta property="og:image" content="{social_url}">',
+            f'<meta property="og:image:type" content="{social["mime"]}">',
+            f'<meta property="og:image:width" content="{social["width"]}">',
+            f'<meta property="og:image:height" content="{social["height"]}">',
+            f'<meta property="og:image:alt" content="{social_alt}">',
+            '<meta name="twitter:card" content="summary_large_image">',
+            f'<meta name="twitter:title" content="{title}">',
+            f'<meta name="twitter:description" content="{lede}">',
+            f'<meta name="twitter:image" content="{social_url}">',
+            f'<meta name="twitter:image:alt" content="{social_alt}">',
+        ]
+    )
+
+    marker = '<script type="application/json" id="ld-meta">'
+    if marker not in text:
+        raise ValueError(f"{path}: thiếu ld-meta marker")
+    return text.replace(marker, block + "\n" + marker, 1)
+
+
+def run(check: bool = False) -> int:
+    changed: list[str] = []
+    for path in sorted(glob.glob(POSTS_GLOB)):
+        expected = render_post(path)
+        with open(path, encoding="utf-8") as f:
+            current = f.read()
+        if current == expected:
+            continue
+        changed.append(os.path.relpath(path, ROOT))
+        if not check:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(expected)
+
+    if check and changed:
+        for path in changed:
+            print(f"LỖI: metadata/social backfill chưa đồng bộ: {path}", file=sys.stderr)
+        return 1
+    print(
+        f"OK: historical metadata/social backfill "
+        f"{'đồng bộ' if check else 'đã cập nhật'} ({len(changed)} file thay đổi)."
+    )
+    return 0
+
+
+def main(argv=None) -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--check", action="store_true")
+    args = parser.parse_args(argv)
+    return run(check=args.check)
 
 
 if __name__ == "__main__":

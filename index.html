@@ -34,9 +34,72 @@
       <div class="site-brand">Linux Daily</div>
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">33 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
+      <div class="count">40 BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-040-pidstat-procstat-process-timeseries.html">
+        <div class="card-top">
+          <span class="c-issue">#040</span>
+          <span class="c-axis">Monitoring · Per-process time series</span>
+          <span class="c-date">09·08·2026</span>
+        </div>
+        <h2>pidstat và procstat: theo dõi process theo thời gian</h2>
+        <p>Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.</p>
+      </a>
+      <a class="card" href="posts/post-039-fd-find-files-fast.html">
+        <div class="card-top">
+          <span class="c-issue">#039</span>
+          <span class="c-axis">Công cụ mới · fd</span>
+          <span class="c-date">08·08·2026</span>
+        </div>
+        <h2>fd: tìm file nhanh nhưng phải hiểu ignore và hidden</h2>
+        <p>fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.</p>
+      </a>
+      <a class="card" href="posts/post-038-smart-nvme-health-disk-degradation.html">
+        <div class="card-top">
+          <span class="c-issue">#038</span>
+          <span class="c-axis">Storage · Device health</span>
+          <span class="c-date">07·08·2026</span>
+        </div>
+        <h2>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</h2>
+        <p>Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</p>
+      </a>
+      <a class="card" href="posts/post-037-acl-default-acl-shared-access.html">
+        <div class="card-top">
+          <span class="c-issue">#037</span>
+          <span class="c-axis">Bảo mật · ACL</span>
+          <span class="c-date">06·08·2026</span>
+        </div>
+        <h2>ACL và default ACL: quyền chia sẻ không cần chmod 777</h2>
+        <p>ACL cho phép cấp quyền bổ sung theo user/group mà vẫn giữ owner/group/mode cơ bản. Default ACL trên directory giúp file mới kế thừa policy, nhưng FreeBSD còn có NFSv4 ACL semantics riêng.</p>
+      </a>
+      <a class="card" href="posts/post-036-tcpdump-targeted-packet-capture.html">
+        <div class="card-top">
+          <span class="c-issue">#036</span>
+          <span class="c-axis">Networking · Packet capture</span>
+          <span class="c-date">05·08·2026</span>
+        </div>
+        <h2>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</h2>
+        <p>Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.</p>
+      </a>
+      <a class="card" href="posts/post-035-lab-filesystem-full-recovery.html">
+        <div class="card-top">
+          <span class="c-issue">#035</span>
+          <span class="c-axis">Ôn tập · Filesystem full lab</span>
+          <span class="c-date">04·08·2026</span>
+        </div>
+        <h2>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</h2>
+        <p>Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</p>
+      </a>
+      <a class="card" href="posts/post-034-systemd-timer-freebsd-periodic-cron.html">
+        <div class="card-top">
+          <span class="c-issue">#034</span>
+          <span class="c-axis">Automation · Scheduling</span>
+          <span class="c-date">03·08·2026</span>
+        </div>
+        <h2>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</h2>
+        <p>Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</p>
+      </a>
       <a class="card" href="posts/post-033-process-tree-service-ownership.html">
         <div class="card-top">
           <span class="c-issue">#033</span>
