@@ -19,19 +19,24 @@
 <header class="site">
   <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
   <h1 class="site">Search &amp; Archive</h1>
-  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 22 bài theo chủ đề.</p>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 33 bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">
     <label for="archive-search">Tìm bài</label>
     <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
-    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 22 bài.</p>
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 33 bài.</p>
   </form>
 </header>
 <main id="main-content">
   <section id="search-results" class="search-results" aria-label="Kết quả tìm kiếm" hidden></section>
   <div id="archive-groups">
   <section class="archive-group" id="networking">
-    <h2>Networking <span class="archive-count">4</span></h2>
+    <h2>Networking <span class="archive-count">5</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-029-policy-routing-multiple-default-gateways.html">
+        <span class="archive-meta">#029 · 2026-07-29</span>
+        <strong>Nhiều default gateway: policy routing không cắt SSH</strong>
+        <span>Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.</span>
+      </a>
       <a class="archive-item" href="posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html">
         <span class="archive-meta">#022 · 2026-07-22</span>
         <strong>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</strong>
@@ -55,8 +60,18 @@
     </div>
   </section>
   <section class="archive-group" id="security">
-    <h2>Bảo mật &amp; phân quyền <span class="archive-count">3</span></h2>
+    <h2>Bảo mật &amp; phân quyền <span class="archive-count">5</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-030-login-privilege-escalation-audit.html">
+        <span class="archive-meta">#030 · 2026-07-30</span>
+        <strong>Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</strong>
+        <span>Khi một thay đổi bất thường xuất hiện, cần biết ai đăng nhập, từ đâu và đã nâng quyền bằng cơ chế nào. Linux systemd và FreeBSD lưu dấu vết khác nhau.</span>
+      </a>
+      <a class="archive-item" href="posts/post-023-sudo-doas-least-privilege.html">
+        <span class="archive-meta">#023 · 2026-07-23</span>
+        <strong>Least privilege: sudo trên Linux, doas trên FreeBSD</strong>
+        <span>Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.</span>
+      </a>
       <a class="archive-item" href="posts/post-016-fail2ban.html">
         <span class="archive-meta">#016 · 2026-07-16</span>
         <strong>fail2ban: để kẻ dò mật khẩu tự khoá cửa lại</strong>
@@ -75,8 +90,18 @@
     </div>
   </section>
   <section class="archive-group" id="storage">
-    <h2>Storage &amp; hệ thống tệp <span class="archive-count">3</span></h2>
+    <h2>Storage &amp; hệ thống tệp <span class="archive-count">5</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-031-mount-options-filesystem-protection.html">
+        <span class="archive-meta">#031 · 2026-07-31</span>
+        <strong>Mount options: giảm bề mặt tấn công của filesystem</strong>
+        <span>noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</span>
+      </a>
+      <a class="archive-item" href="posts/post-024-filesystem-inode-zfs-capacity.html">
+        <span class="archive-meta">#024 · 2026-07-24</span>
+        <strong>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</strong>
+        <span>Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</span>
+      </a>
       <a class="archive-item" href="posts/post-017-mo-rong-dung-luong.html">
         <span class="archive-meta">#017 · 2026-07-17</span>
         <strong>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</strong>
@@ -95,8 +120,18 @@
     </div>
   </section>
   <section class="archive-group" id="tools">
-    <h2>Công cụ &amp; phần mềm <span class="archive-count">3</span></h2>
+    <h2>Công cụ &amp; phần mềm <span class="archive-count">5</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-032-jq-json-operations.html">
+        <span class="archive-meta">#032 · 2026-08-01</span>
+        <strong>jq: biến JSON thành dữ liệu vận hành dùng được</strong>
+        <span>API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</span>
+      </a>
+      <a class="archive-item" href="posts/post-025-ripgrep-log-config-search.html">
+        <span class="archive-meta">#025 · 2026-07-25</span>
+        <strong>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</strong>
+        <span>`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</span>
+      </a>
       <a class="archive-item" href="posts/post-018-rclone-cloud-sync.html">
         <span class="archive-meta">#018 · 2026-07-18</span>
         <strong>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</strong>
@@ -115,8 +150,18 @@
     </div>
   </section>
   <section class="archive-group" id="monitoring">
-    <h2>Monitoring &amp; hiệu năng <span class="archive-count">3</span></h2>
+    <h2>Monitoring &amp; hiệu năng <span class="archive-count">5</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-033-process-tree-service-ownership.html">
+        <span class="archive-meta">#033 · 2026-08-02</span>
+        <strong>Process tree và service ownership: PID này thuộc service nào?</strong>
+        <span>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</span>
+      </a>
+      <a class="archive-item" href="posts/post-026-vmstat-systat-resource-pressure.html">
+        <span class="archive-meta">#026 · 2026-07-26</span>
+        <strong>vmstat và systat: đọc pressure trước khi đoán bottleneck</strong>
+        <span>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</span>
+      </a>
       <a class="archive-item" href="posts/post-019-triage-hieu-nang-vmstat-iostat.html">
         <span class="archive-meta">#019 · 2026-07-19</span>
         <strong>Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</strong>
@@ -135,8 +180,13 @@
     </div>
   </section>
   <section class="archive-group" id="automation">
-    <h2>Automation &amp; scripting <span class="archive-count">3</span></h2>
+    <h2>Automation &amp; scripting <span class="archive-count">4</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-027-idempotent-shell-admin-tasks.html">
+        <span class="archive-meta">#027 · 2026-07-27</span>
+        <strong>Shell idempotent: chạy lại không phá trạng thái</strong>
+        <span>Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</span>
+      </a>
       <a class="archive-item" href="posts/post-020-firewall-rollback-negative-test.html">
         <span class="archive-meta">#020 · 2026-07-20</span>
         <strong>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</strong>
@@ -155,8 +205,13 @@
     </div>
   </section>
   <section class="archive-group" id="labs">
-    <h2>Lab end-to-end <span class="archive-count">3</span></h2>
+    <h2>Lab end-to-end <span class="archive-count">4</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-028-dns-outage-incident-lab.html">
+        <span class="archive-meta">#028 · 2026-07-28</span>
+        <strong>Lab DNS outage: khoanh vùng trước, phục hồi sau</strong>
+        <span>Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</span>
+      </a>
       <a class="archive-item" href="posts/post-021-storage-backup-restore-recovery-lab.html">
         <span class="archive-meta">#021 · 2026-07-21</span>
         <strong>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</strong>

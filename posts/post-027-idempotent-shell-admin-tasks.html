@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Shell idempotent: chạy lại không phá trạng thái — Linux Daily #027</title><meta name="description" content="Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Shell idempotent: chạy lại không phá trạng thái">
+<meta property="og:description" content="Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Shell idempotent: chạy lại không phá trạng thái">
+<meta name="twitter:description" content="Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":27,"date":"2026-07-27","axis":"Automation","eyebrow":"Automation · Idempotency","slug":"idempotent-shell-admin-tasks","title":"Shell idempotent: chạy lại không phá trạng thái","lede":"Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.","review_status":"reviewed","sources":[{"title":"POSIX.1-2024 — Shell Command Language","url":"https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html","kind":"upstream"},{"title":"GNU Bash Manual — Bourne Shell Builtins","url":"https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html","kind":"upstream"},{"title":"FreeBSD Manual Pages — sh(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=sh&sektion=1","kind":"official"}]}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#027 · 27·07·2026</span></div></div><header class="post"><p class="eyebrow">Automation · Idempotency</p><h1>Shell idempotent: chạy lại không phá trạng thái</h1><p class="lede">Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+<figure><svg viewBox="0 0 760 160" role="img" aria-label="Quy trình observe change verify cho shell idempotent"><rect width="760" height="160" fill="#F7FAF9"/><text x="80" y="85">OBSERVE</text><text x="325" y="85">CHANGE</text><text x="570" y="85">VERIFY</text><path d="M180 80H290M420 80H540" stroke="#0C6E61" stroke-width="3"/></svg><figcaption>Hình 1 — Quan sát trước, thay đổi có điều kiện, rồi verify trạng thái cuối.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Khi job bị retry hoặc chạy lại sau timeout, script không được nhân bản cấu hình hay restart service vô hạn. Idempotency biến “chạy lại” thành thao tác an toàn thay vì một rủi ro mới.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Kiểm trạng thái trước khi sửa: file có tồn tại, nội dung có khác, mode có đúng.</li><li>Tách <code>check → change → verify</code>; chỉ reload/restart khi thay đổi thật.</li><li>Dùng cú pháp POSIX <code>/bin/sh</code> nếu muốn cùng script chạy trên Linux và FreeBSD; tránh Bash-only như array hoặc <code>[[ ... ]]</code>.</li></ul></section>
+<figure><svg viewBox="0 0 760 160" role="img" aria-label="So sánh shell trên Linux và FreeBSD"><rect width="760" height="160" fill="#FFFFFF"/><text x="80" y="70">Ubuntu/Xubuntu</text><text x="270" y="70">Debian</text><text x="430" y="70">Fedora</text><text x="610" y="70">FreeBSD</text><text x="80" y="105">/bin/sh</text><text x="270" y="105">/bin/sh</text><text x="430" y="105">/bin/sh</text><text x="610" y="105">/bin/sh</text></svg><figcaption>Hình 2 — Ý tưởng giống nhau, nhưng không được giả định <code>/bin/sh</code> là Bash trên mọi hệ.</figcaption></figure>
+<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>readlink -f /bin/sh
+command -v cmp install mktemp</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>readlink -f /bin/sh
+command -v cmp install mktemp</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>readlink -f /bin/sh
+command -v cmp install mktemp</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>ls -l /bin/sh
+command -v cmp install mktemp</code></pre></div></section>
+<section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Lab tạo một file cấu hình trong <code>/tmp</code>; lần đầu phải thay đổi, lần hai phải giữ nguyên.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>cat &gt; /tmp/ld-idempotent.sh &lt;&lt;'SH'
+#!/bin/sh
+set -eu
+target=/tmp/ld-managed.conf
+tmp=$(mktemp)
+trap 'rm -f "$tmp"' 0 HUP INT TERM
+printf '%s\n' 'mode=managed' &gt; "$tmp"
+if [ ! -f "$target" ] || ! cmp -s "$tmp" "$target"; then
+  install -m 0644 "$tmp" "$target"
+  echo CHANGED
+else
+  echo UNCHANGED
+fi
+cmp -s "$tmp" "$target"
+SH
+chmod +x /tmp/ld-idempotent.sh
+/bin/sh /tmp/ld-idempotent.sh
+/bin/sh /tmp/ld-idempotent.sh</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>/bin/sh /tmp/ld-idempotent.sh
+/bin/sh /tmp/ld-idempotent.sh
+cat /tmp/ld-managed.conf</code></pre></div><h3>Expected Output</h3><p>Lần đầu in <code>CHANGED</code>; lần thứ hai in <code>UNCHANGED</code>; file chỉ có một dòng <code>mode=managed</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Linux / FreeBSD</div><pre><code>rm -f /tmp/ld-idempotent.sh /tmp/ld-managed.conf</code></pre></div></section>
+<section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Dùng <code>&gt;&gt;</code> mỗi lần chạy và tạo dòng trùng.</li><li>Restart service dù config không đổi.</li><li>Gắn shebang <code>/bin/sh</code> nhưng dùng cú pháp chỉ Bash hiểu.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Dùng mode/umask rõ ràng, file tạm khó đoán và không ghi secret vào stdout. Với file hệ thống, backup và verify trước khi replace.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Mở rộng script để quản lý thêm key <code>owner</code>; chứng minh lần chạy thứ hai không đổi checksum của file.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://pubs.opengroup.org/onlinepubs/9799919799/utilities/V3_chap02.html">POSIX.1-2024 — Shell Command Language</a></li><li><a href="https://www.gnu.org/software/bash/manual/html_node/Bourne-Shell-Builtins.html">GNU Bash Manual — Bourne Shell Builtins</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=sh&amp;sektion=1">FreeBSD Manual Pages — sh(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-020-firewall-rollback-negative-test.html"><span class="series-kicker">#020</span><span>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-013-bash-script-vung.html">#013 · Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</a></li>
+      <li><a href="post-006-ansible-multi-os.html">#006 · Ansible: một playbook, bốn hệ điều hành</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>

@@ -1,6 +1,149 @@
 {
-  "count": 22,
+  "count": 33,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-02",
+      "href": "posts/post-033-process-tree-service-ownership.html",
+      "issue": 33,
+      "lede": "Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.",
+      "tags": [
+        "Process ownership"
+      ],
+      "title": "Process tree và service ownership: PID này thuộc service nào?"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-01",
+      "href": "posts/post-032-jq-json-operations.html",
+      "issue": 32,
+      "lede": "API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.",
+      "tags": [
+        "jq"
+      ],
+      "title": "jq: biến JSON thành dữ liệu vận hành dùng được"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-07-31",
+      "href": "posts/post-031-mount-options-filesystem-protection.html",
+      "issue": 31,
+      "lede": "noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.",
+      "tags": [
+        "Mount hardening"
+      ],
+      "title": "Mount options: giảm bề mặt tấn công của filesystem"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-07-30",
+      "href": "posts/post-030-login-privilege-escalation-audit.html",
+      "issue": 30,
+      "lede": "Khi một thay đổi bất thường xuất hiện, cần biết ai đăng nhập, từ đâu và đã nâng quyền bằng cơ chế nào. Linux systemd và FreeBSD lưu dấu vết khác nhau.",
+      "tags": [
+        "Authentication audit"
+      ],
+      "title": "Audit đăng nhập và privilege escalation: lần theo ai đã làm gì"
+    },
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-07-29",
+      "href": "posts/post-029-policy-routing-multiple-default-gateways.html",
+      "issue": 29,
+      "lede": "Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.",
+      "tags": [
+        "Policy routing"
+      ],
+      "title": "Nhiều default gateway: policy routing không cắt SSH"
+    },
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-07-28",
+      "href": "posts/post-028-dns-outage-incident-lab.html",
+      "issue": 28,
+      "lede": "Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.",
+      "tags": [
+        "DNS incident lab"
+      ],
+      "title": "Lab DNS outage: khoanh vùng trước, phục hồi sau"
+    },
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-07-27",
+      "href": "posts/post-027-idempotent-shell-admin-tasks.html",
+      "issue": 27,
+      "lede": "Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.",
+      "tags": [
+        "Idempotency"
+      ],
+      "title": "Shell idempotent: chạy lại không phá trạng thái"
+    },
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-07-26",
+      "href": "posts/post-026-vmstat-systat-resource-pressure.html",
+      "issue": 26,
+      "lede": "CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.",
+      "tags": [
+        "Resource pressure"
+      ],
+      "title": "vmstat và systat: đọc pressure trước khi đoán bottleneck"
+    },
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-07-25",
+      "href": "posts/post-025-ripgrep-log-config-search.html",
+      "issue": 25,
+      "lede": "`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.",
+      "tags": [
+        "ripgrep"
+      ],
+      "title": "ripgrep: tìm log và cấu hình nhanh mà không quét nhầm"
+    },
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-07-24",
+      "href": "posts/post-024-filesystem-inode-zfs-capacity.html",
+      "issue": 24,
+      "lede": "Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.",
+      "tags": [
+        "Capacity"
+      ],
+      "title": "Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset"
+    },
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-07-23",
+      "href": "posts/post-023-sudo-doas-least-privilege.html",
+      "issue": 23,
+      "lede": "Quyền quản trị không nên đồng nghĩa với “được chạy mọi thứ”. Bài này thu hẹp quyền theo lệnh, kiểm tra cấu hình trước khi áp dụng và giữ đường lui để tránh tự khóa tài khoản vận hành.",
+      "tags": [
+        "Least privilege"
+      ],
+      "title": "Least privilege: sudo trên Linux, doas trên FreeBSD"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",

@@ -5,77 +5,77 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Wed, 22 Jul 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 02 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</title>
-      <link>https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html</guid>
-      <pubDate>Wed, 22 Jul 2026 00:00:00 +0700</pubDate>
-      <description>DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.</description>
+      <title>Process tree và service ownership: PID này thuộc service nào?</title>
+      <link>https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</guid>
+      <pubDate>Sun, 02 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</description>
     </item>
     <item>
-      <title>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</title>
-      <link>https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</guid>
-      <pubDate>Tue, 21 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</description>
+      <title>jq: biến JSON thành dữ liệu vận hành dùng được</title>
+      <link>https://linux.no.id.vn/posts/post-032-jq-json-operations.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-032-jq-json-operations.html</guid>
+      <pubDate>Sat, 01 Aug 2026 00:00:00 +0700</pubDate>
+      <description>API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</description>
     </item>
     <item>
-      <title>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</title>
-      <link>https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html</guid>
-      <pubDate>Mon, 20 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.</description>
+      <title>Mount options: giảm bề mặt tấn công của filesystem</title>
+      <link>https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</guid>
+      <pubDate>Fri, 31 Jul 2026 00:00:00 +0700</pubDate>
+      <description>noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</description>
     </item>
     <item>
-      <title>Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</title>
-      <link>https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html</guid>
-      <pubDate>Sun, 19 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Máy chủ 'chậm' không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.</description>
+      <title>Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</title>
+      <link>https://linux.no.id.vn/posts/post-030-login-privilege-escalation-audit.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-030-login-privilege-escalation-audit.html</guid>
+      <pubDate>Thu, 30 Jul 2026 00:00:00 +0700</pubDate>
+      <description>Khi một thay đổi bất thường xuất hiện, cần biết ai đăng nhập, từ đâu và đã nâng quyền bằng cơ chế nào. Linux systemd và FreeBSD lưu dấu vết khác nhau.</description>
     </item>
     <item>
-      <title>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</title>
-      <link>https://linux.no.id.vn/posts/post-018-rclone-cloud-sync.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-018-rclone-cloud-sync.html</guid>
-      <pubDate>Sat, 18 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là "rsync cho cloud": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</description>
+      <title>Nhiều default gateway: policy routing không cắt SSH</title>
+      <link>https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-029-policy-routing-multiple-default-gateways.html</guid>
+      <pubDate>Wed, 29 Jul 2026 00:00:00 +0700</pubDate>
+      <description>Host nhiều uplink có thể gửi reply ra sai gateway dù route mặc định nhìn có vẻ hợp lệ. Linux dùng policy routing với rule/table; FreeBSD dùng nhiều FIB — cùng mục tiêu nhưng khác lệnh.</description>
     </item>
     <item>
-      <title>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</title>
-      <link>https://linux.no.id.vn/posts/post-017-mo-rong-dung-luong.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-017-mo-rong-dung-luong.html</guid>
-      <pubDate>Fri, 17 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa "biết" để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.</description>
+      <title>Lab DNS outage: khoanh vùng trước, phục hồi sau</title>
+      <link>https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html</guid>
+      <pubDate>Tue, 28 Jul 2026 00:00:00 +0700</pubDate>
+      <description>Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</description>
     </item>
     <item>
-      <title>fail2ban: để kẻ dò mật khẩu tự khoá cửa lại</title>
-      <link>https://linux.no.id.vn/posts/post-016-fail2ban.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-016-fail2ban.html</guid>
-      <pubDate>Thu, 16 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Bài #002 khoá SSH bằng cấu hình tĩnh — chỉ nhận khoá, cấm root. Nhưng bot vẫn nện cổng 22 hàng nghìn lần mỗi ngày, ăn tài nguyên và rình sơ hở. fail2ban thêm lớp phòng thủ động: đọc log, thấy một IP thất bại nhiều lần thì tự ra lệnh cho tường lửa cấm nó một khoảng. Cùng ý tưởng đó, bốn hệ đọc log và cấm IP theo cách khác nhau.</description>
+      <title>Shell idempotent: chạy lại không phá trạng thái</title>
+      <link>https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-027-idempotent-shell-admin-tasks.html</guid>
+      <pubDate>Mon, 27 Jul 2026 00:00:00 +0700</pubDate>
+      <description>Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</description>
     </item>
     <item>
-      <title>WireGuard: một cặp khoá, một đường hầm mã hoá</title>
-      <link>https://linux.no.id.vn/posts/post-015-wireguard-vpn.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-015-wireguard-vpn.html</guid>
-      <pubDate>Wed, 15 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</description>
+      <title>vmstat và systat: đọc pressure trước khi đoán bottleneck</title>
+      <link>https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-026-vmstat-systat-resource-pressure.html</guid>
+      <pubDate>Sun, 26 Jul 2026 00:00:00 +0700</pubDate>
+      <description>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</description>
     </item>
     <item>
-      <title>Backup tự động mà bạn dám tin — vì đã thử khôi phục</title>
-      <link>https://linux.no.id.vn/posts/post-014-lab-backup-tu-dong.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-014-lab-backup-tu-dong.html</guid>
-      <pubDate>Tue, 14 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</description>
+      <title>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</title>
+      <link>https://linux.no.id.vn/posts/post-025-ripgrep-log-config-search.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-025-ripgrep-log-config-search.html</guid>
+      <pubDate>Sat, 25 Jul 2026 00:00:00 +0700</pubDate>
+      <description>`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</description>
     </item>
     <item>
-      <title>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</title>
-      <link>https://linux.no.id.vn/posts/post-013-bash-script-vung.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-013-bash-script-vung.html</guid>
-      <pubDate>Mon, 13 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để "chạy được ở đây" đồng nghĩa "chạy được mọi nơi".</description>
+      <title>Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</title>
+      <link>https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-024-filesystem-inode-zfs-capacity.html</guid>
+      <pubDate>Fri, 24 Jul 2026 00:00:00 +0700</pubDate>
+      <description>Một filesystem có thể còn GB trống nhưng vẫn không tạo được file vì hết inode, quota hoặc giới hạn dataset. Bài này tách ba loại áp lực dung lượng trước khi dọn dữ liệu.</description>
     </item>
   </channel>
 </rss>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Lab DNS outage: khoanh vùng trước, phục hồi sau — Linux Daily #028</title><meta name="description" content="Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab DNS outage: khoanh vùng trước, phục hồi sau">
+<meta property="og:description" content="Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-028-dns-outage-incident-lab.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab DNS outage: khoanh vùng trước, phục hồi sau">
+<meta name="twitter:description" content="Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 28,
+  "date": "2026-07-28",
+  "axis": "Ôn tập",
+  "eyebrow": "Ôn tập · DNS incident lab",
+  "slug": "dns-outage-incident-lab",
+  "title": "Lab DNS outage: khoanh vùng trước, phục hồi sau",
+  "lede": "Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "ISC BIND 9 — dig DNS lookup utility",
+      "url": "https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility",
+      "kind": "upstream"
+    },
+    {
+      "title": "systemd — resolvectl",
+      "url": "https://www.freedesktop.org/software/systemd/man/latest/resolvectl.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD Manual Pages — drill(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=drill&sektion=1",
+      "kind": "official"
+    }
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "standard",
+    "topology": [
+      "client",
+      "recursive-resolver",
+      "authoritative-dns"
+    ],
+    "risks": [
+      "none"
+    ],
+    "verification": [
+      "functional",
+      "negative"
+    ],
+    "rollback_required": false,
+    "cleanup_required": true,
+    "failure_injection": false
+  }
+}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#028 · 28·07·2026</span></div></div><header class="post"><p class="eyebrow">Ôn tập · DNS incident lab</p><h1>Lab DNS outage: khoanh vùng trước, phục hồi sau</h1><p class="lede">Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
+<figure><svg viewBox="0 0 760 160" role="img" aria-label="Luồng triage DNS"><rect width="760" height="160" fill="#F7FAF9"/><text x="60" y="80">NSS</text><text x="235" y="80">Resolver</text><text x="420" y="80">DNS server</text><text x="590" y="80">Authoritative</text><path d="M120 75H200M320 75H385M505 75H560" stroke="#0C6E61" stroke-width="3"/></svg><figcaption>Hình 1 — Khoanh vùng DNS theo từng lớp trước khi sửa cấu hình.</figcaption></figure>
+<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Ping IP có thể vẫn hoạt động trong khi ứng dụng báo lỗi tên. Nếu đổi resolver ngay, bạn có thể che triệu chứng thay vì tìm đúng lớp hỏng.</p></section><section data-lab-section="topology"><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>getent</code> đi qua NSS; <code>dig</code>/<code>drill</code> kiểm DNS trực tiếp.</li><li><code>resolvectl</code> chỉ có ý nghĩa khi systemd-resolved đang được dùng; Debian không được giả định luôn có service này.</li><li>Recovery phải có negative test và verification: tái hiện lỗi, sửa đúng lớp, xác nhận lookup hoạt động lại.</li></ul></section>
+<figure><svg viewBox="0 0 760 160" role="img" aria-label="Lệnh DNS Linux và FreeBSD"><rect width="760" height="160" fill="#FFFFFF"/><text x="90" y="70">Ubuntu/Xubuntu</text><text x="280" y="70">Debian</text><text x="450" y="70">Fedora</text><text x="620" y="70">FreeBSD</text><text x="90" y="105">dig/resolvectl</text><text x="280" y="105">dig + resolver thực tế</text><text x="450" y="105">dig/resolvectl</text><text x="620" y="105">drill/resolv.conf</text></svg><figcaption>Hình 2 — FreeBSD không dùng systemd-resolved; Debian cần kiểm runtime resolver trước khi dùng <code>resolvectl</code>.</figcaption></figure>
+<section data-lab-section="safety"><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>getent hosts example.com
+resolvectl status
+dig example.com A +short</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>getent hosts example.com
+resolvectl status 2&gt;/dev/null || cat /etc/resolv.conf
+dig example.com A +short</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>getent hosts example.com
+resolvectl status
+dig example.com A +short</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>getent hosts example.com
+cat /etc/resolv.conf
+drill example.com A</code></pre></div></section>
+<section data-lab-section="execution"><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Dùng hostname cố ý không tồn tại <code>&lt;BROKEN_NAME&gt;</code> để luyện phân loại NXDOMAIN; không thay DNS production.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>getent hosts '&lt;BROKEN_NAME&gt;' || true
+dig '&lt;BROKEN_NAME&gt;' A
+dig example.com A +short
+ip route get 1.1.1.1</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>getent hosts '&lt;BROKEN_NAME&gt;' || true
+drill '&lt;BROKEN_NAME&gt;' A
+drill example.com A
+route -n get default</code></pre></div><h3>Expected Output</h3><p>Tên giả trả lỗi/NXDOMAIN trong khi <code>example.com</code> phân giải được; đó là bằng chứng failure nằm ở tên được hỏi, không phải toàn bộ resolver.</p></section>
+<section data-lab-section="verification"><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Đổi public DNS trước khi kiểm VPN, firewall hoặc split DNS.</li><li>Dùng <code>+trace</code> làm phép thử đầu tiên dù doanh nghiệp chặn DNS trực tiếp ra Internet.</li><li>Gán lệnh systemd cho FreeBSD hoặc giả định Debian luôn có systemd-resolved.</li></ul></section><section data-lab-section="cleanup"><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Không thay resolver production để thử nhanh. Che tên zone nội bộ và IP nhạy cảm trước khi đưa log ra ngoài nhóm vận hành.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Viết runbook 6 bước cho tình huống ping IP được, lookup public được nhưng zone nội bộ lỗi; mỗi bước có command, expected output và tiêu chí dừng.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://bind9.readthedocs.io/en/latest/manpages.html#dig-dns-lookup-utility">ISC BIND 9 — dig DNS lookup utility</a></li><li><a href="https://www.freedesktop.org/software/systemd/man/latest/resolvectl.html">systemd — resolvectl</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=drill&amp;sektion=1">FreeBSD Manual Pages — drill(1)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-021-storage-backup-restore-recovery-lab.html"><span class="series-kicker">#021</span><span>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-014-lab-backup-tu-dong.html">#014 · Backup tự động mà bạn dám tin — vì đã thử khôi phục</a></li>
+      <li><a href="post-007-lab-web-server-tuong-lua.html">#007 · Từ máy mới đến web server an toàn, chỉ mở đúng cổng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về Linux Daily</a></footer></div></main></body></html>
