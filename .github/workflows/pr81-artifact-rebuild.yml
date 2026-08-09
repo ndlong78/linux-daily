@@ -13,7 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout clean PR81 source snapshot
+        uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr81-safe-rebuild-snapshot
 
       - uses: actions/setup-python@v5
         with:
