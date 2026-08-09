@@ -1,7 +1,7 @@
 # Nhật ký chủ đề Linux Daily
 # Định dạng: #số | YYYY-MM-DD | trục | tên chủ đề
 # state.json giữ clock cadence; danh sách này dùng để giữ thứ tự series và tránh trùng chủ đề.
-# Publication timeline đã được đồng bộ liên tục đến #033 · 2026-08-02.
+# Publication timeline đã được đồng bộ liên tục đến #040 · 2026-08-09.
 
 #001 | 2026-07-01 | Networking | Đặt IP tĩnh + cặp DNS trên Ubuntu/Debian/Fedora/FreeBSD
 #002 | 2026-07-02 | Bảo mật | Gia cố SSH (key-only, cấm root, AllowUsers) trên Ubuntu/Debian/Fedora/FreeBSD
@@ -36,3 +36,10 @@
 #031 | 2026-07-31 | Storage | Mount options: giảm bề mặt tấn công của filesystem
 #032 | 2026-08-01 | Công cụ mới | jq: biến JSON thành dữ liệu vận hành dùng được
 #033 | 2026-08-02 | Monitoring | Process tree và service ownership: PID này thuộc service nào?
+#034 | 2026-08-03 | Automation | systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng
+#035 | 2026-08-04 | Ôn tập | Lab filesystem đầy: quan sát, xử lý và phòng tái diễn
+#036 | 2026-08-05 | Networking | tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence
+#037 | 2026-08-06 | Bảo mật | ACL và default ACL: quyền chia sẻ không cần chmod 777
+#038 | 2026-08-07 | Storage | SMART và NVMe health: phát hiện disk degradation trước khi hỏng
+#039 | 2026-08-08 | Công cụ mới | fd: tìm file nhanh nhưng phải hiểu ignore và hidden
+#040 | 2026-08-09 | Monitoring | pidstat và procstat: theo dõi process theo thời gian
