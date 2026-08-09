@@ -29,7 +29,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 18,
-  "date": "2026-08-05",
+  "date": "2026-07-18",
   "axis": "Công cụ mới",
   "eyebrow": "Công cụ mới · Cloud sync",
   "slug": "rclone-cloud-sync",
@@ -49,7 +49,7 @@
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
-<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#018 · 05·08·2026</span></div></div>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#018 · 18·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · Cloud sync</p><h1>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h1><p class="lede">Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi <code>aws s3 cp</code> tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. <strong>rclone</strong> là "rsync cho cloud": một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp <em>crypt</em> mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
 
 <figure><svg viewBox="0 0 760 250" role="img" aria-label="rclone crypt mã hoá nội dung bằng XSalsa20 Poly1305 và tên bằng AES EME trước khi ghi lên remote nền, nhưng một số metadata như kích thước và thời gian vẫn có thể lộ"><rect width="760" height="250" fill="#F7FAF9"/><rect x="30" y="85" width="150" height="80" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="105" y="118" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">Local source</text><text x="105" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="11">/srv/data</text><line x1="180" y1="125" x2="255" y2="125" stroke="#0C6E61" stroke-width="2"/><rect x="260" y="55" width="250" height="140" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="385" y="85" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">crypt:</text><text x="385" y="115" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">content: XSalsa20 + Poly1305</text><text x="385" y="140" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">names: AES-256 EME</text><text x="385" y="167" text-anchor="middle" font-family="JetBrains Mono" font-size="10">size/mtime: không được che hoàn toàn</text><line x1="510" y1="125" x2="575" y2="125" stroke="#0C6E61" stroke-width="2"/><rect x="580" y="85" width="150" height="80" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="655" y="118" text-anchor="middle" font-family="Be Vietnam Pro" font-size="14" font-weight="700">Remote nền</text><text x="655" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="10.5">S3/B2/Drive/SFTP</text></svg><figcaption>Hình 1 — crypt bảo vệ plaintext nội dung và tên, nhưng không biến cloud thành nơi không quan sát được metadata.</figcaption></figure>
