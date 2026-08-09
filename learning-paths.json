@@ -13,7 +13,7 @@
       "title": "Networking & Security",
       "goal": "Xây tư duy chẩn đoán mạng, kiểm soát truy cập và bảo vệ dịch vụ từ host đến VPN.",
       "audience": "Admin chịu trách nhiệm kết nối, SSH, firewall và remote access.",
-      "steps": [1, 8, 2, 9, 7, 16, 15, 20]
+      "steps": [1, 8, 22, 2, 9, 7, 16, 15, 20]
     },
     {
       "slug": "storage-backup",
