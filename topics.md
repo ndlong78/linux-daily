@@ -1,6 +1,7 @@
 # Nhật ký chủ đề Linux Daily
 # Định dạng: #số | YYYY-MM-DD | trục | tên chủ đề
 # state.json giữ clock cadence; danh sách này dùng để giữ thứ tự series và tránh trùng chủ đề.
+# Publication timeline đã được đồng bộ liên tục đến #033 · 2026-08-02.
 
 #001 | 2026-07-01 | Networking | Đặt IP tĩnh + cặp DNS trên Ubuntu/Debian/Fedora/FreeBSD
 #002 | 2026-07-02 | Bảo mật | Gia cố SSH (key-only, cấm root, AllowUsers) trên Ubuntu/Debian/Fedora/FreeBSD
