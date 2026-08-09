@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng — Linux Daily #038</title><meta name="description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu."><link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng — Linux Daily #038</title><meta name="description" content="Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.">
+
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/fonts.css">
 <link rel="stylesheet" href="../assets/style.css">
 <link rel="canonical" href="https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html">
@@ -38,7 +40,7 @@
     },
     {
       "title": "smartmontools — NVMe SMART attributes",
-      "url": "https://www.smartmontools.org/wiki/SmartctlNvmeAttrs",
+      "url": "https://www.smartmontools.org/static/doxygen/structsmartmontools_1_1nvme__smart__log.html",
       "kind": "upstream"
     },
     {
@@ -96,7 +98,7 @@ sudo smartctl -H '&lt;DEVICE&gt;'
 sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>sudo smartctl --scan-open
 nvmecontrol devlist 2&gt;/dev/null || true
 sudo smartctl -H '&lt;DEVICE&gt;'
-sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/wiki/SmartctlNvmeAttrs">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section>
+sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/static/doxygen/structsmartmontools_1_1nvme__smart__log.html">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section>
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
