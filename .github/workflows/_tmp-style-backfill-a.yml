@@ -1,0 +1,50 @@
+name: Temporary STYLE Backfill A
+
+on:
+  push:
+    branches:
+      - chatgpt/pr85-style-backfill-001-010
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    if: ${{ !contains(github.event.head_commit.message, '[skip backfill]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr85-style-backfill-001-010
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Generate Batch A post migrations
+        run: python tools/_tmp_style_backfill_a.py
+
+      - name: Validate migrated range
+        run: python tools/validate_style.py --audit
+
+      - name: Commit generated post changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- posts/post-001-static-ip.html \
+            posts/post-002-ssh-hardening.html \
+            posts/post-003-zfs-snapshots.html \
+            posts/post-004-restic-backup.html \
+            posts/post-005-doc-log-journald-syslog.html \
+            posts/post-006-ansible-multi-os.html \
+            posts/post-007-lab-web-server-tuong-lua.html \
+            posts/post-008-chan-doan-mang.html \
+            posts/post-009-user-sudo-doas.html \
+            posts/post-010-them-dia-moi.html
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Backfill STYLE.md for Linux Daily #001-#010 [skip backfill]"
+          git push origin HEAD:chatgpt/pr85-style-backfill-001-010
