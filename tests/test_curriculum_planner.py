@@ -1,3 +1,5 @@
+"""Regression tests cho Daily Curriculum Planner."""
+
 import curriculum_planner
 
 
