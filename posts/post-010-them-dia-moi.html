@@ -85,11 +85,8 @@
 
 <figure><svg viewBox="0 0 760 235" role="img" aria-label="So sánh Linux dùng lsblk parted mkfs UUID và FreeBSD dùng geom disk list gpart newfs nhãn GPT"><rect width="760" height="235" fill="#fff"/><rect x="55" y="45" width="305" height="145" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="207" y="75" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu / Debian / Fedora</text><text x="207" y="112" text-anchor="middle" font-family="JetBrains Mono" font-size="12">lsblk → parted → mkfs.*</text><text x="207" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="12">fstab: UUID=...</text><rect x="400" y="45" width="305" height="145" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="552" y="75" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">FreeBSD</text><text x="552" y="112" text-anchor="middle" font-family="JetBrains Mono" font-size="12">geom/gpart → newfs</text><text x="552" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="12">fstab: /dev/gpt/data0</text></svg><figcaption>Hình 2 — Cùng bốn bước, nhưng công cụ và tên thiết bị khác hoàn toàn; FreeBSD không dùng <code>parted</code>/<code>mkfs.ext4</code>.</figcaption></figure>
 
-<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
 <span class="code-label"><span class="dot"></span>Linux — discovery trước khi ghi</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">lsblk -o NAME,SIZE,MODEL,SERIAL,FSTYPE,MOUNTPOINTS
 sudo blkid
 findmnt --real
@@ -100,9 +97,6 @@ sudo mkfs.ext4 /dev/sdb1
 <span class="cmt"># Fedora nếu chủ đích dùng XFS:</span>
 ## sudo mkfs.xfs /dev/sdb1</code></pre>
 <span class="code-label bsd"><span class="dot"></span>FreeBSD — discovery + GPT alignment</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">geom disk list
 gpart show
 mount
@@ -111,10 +105,7 @@ gpart create -s GPT ada1
 gpart add -t freebsd-ufs -a 1M -l data0 ada1
 newfs -U /dev/gpt/data0</code></pre></section>
 
-<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Linux:</span>
 sudo mkdir -p /data
 sudo blkid /dev/sdb1

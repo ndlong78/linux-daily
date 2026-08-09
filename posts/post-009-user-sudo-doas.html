@@ -146,13 +146,10 @@
     <figcaption>Hình 2 — FreeBSD tách riêng: không có systemd; <code>sudo</code>/<code>doas</code> không nằm trong base. Nhóm <code>wheel</code> cần cho <code>su</code>, còn doas policy có thể chỉ định user trực tiếp.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <p><strong>Mô hình A — administrator:</strong> chỉ dùng khi user thật sự cần quyền quản trị rộng.</p>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo adduser alice
 <span class="cmt"># Debian: nếu sudo chưa có, cài từ phiên root trước.</span>
 sudo usermod -aG sudo alice
@@ -161,9 +158,6 @@ sudo -l -U alice</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo useradd -m -s /bin/bash alice
 sudo passwd alice
 sudo usermod -aG wheel alice
@@ -173,9 +167,6 @@ sudo -l -U alice</code></pre>
     <p><strong>Mô hình B — limited operator:</strong> user <code>deploy</code> chỉ được restart nginx; <em>không</em> thêm user này vào <code>sudo</code>/<code>wheel</code> admin.</p>
     <span class="code-label"><span class="dot"></span>Linux — sudoers drop-in</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo visudo -f /etc/sudoers.d/deploy-nginx
 <span class="cmt"># nội dung:</span>
 deploy ALL=(root) /usr/bin/systemctl restart nginx
@@ -185,9 +176,6 @@ sudo -l -U deploy</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — doas riêng</span>
     <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">pkg install -y doas
 <span class="cmt"># /usr/local/etc/doas.conf:</span>
 permit deploy as root cmd /usr/sbin/service args nginx restart
@@ -196,12 +184,9 @@ permit deploy as root cmd /usr/sbin/service args nginx restart
 doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
     <p>Đừng suy luận từ group membership; kiểm policy mà công cụ thực sự áp.</p>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Linux:</span>
 sudo -l -U deploy
 sudo -U deploy -l /usr/bin/systemctl restart nginx

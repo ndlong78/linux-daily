@@ -127,30 +127,21 @@
     <figcaption>Hình 2 — Cùng mục tiêu điều tra, Linux khác nhau ở unit name; FreeBSD dùng file text và công cụ BSD gốc.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">journalctl -u ssh -b
 journalctl -p err --since "1 hour ago"
 journalctl --disk-usage
 test -d /var/log/journal &amp;&amp; echo persistent-path-present || echo check-journald-config</code></pre>
     <span class="code-label"><span class="dot"></span>Fedora</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">journalctl -u sshd -b
 journalctl -p err --since "1 hour ago"
 journalctl -f
 journalctl --disk-usage</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — syslog/newsyslog</span>
     <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
-<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">grep sshd /var/log/auth.log
 tail -f /var/log/messages
 service syslogd status
@@ -158,12 +149,9 @@ newsyslog -n                       # dry-run: xem file nào sẽ rotate
 grep -v '^[[:space:]]*#' /etc/newsyslog.conf</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
     <p>Trên Linux, kiểm cả log hiện tại và khả năng giữ log qua reboot bằng cấu hình hiệu lực + sự tồn tại của persistent journal. Trên FreeBSD, kiểm file đích trong <code>/etc/syslog.conf</code> và chạy <code>newsyslog -n</code> trước khi thay đổi rule rotation.</p>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">journalctl -b -n 20
 journalctl --list-boots
 journalctl --disk-usage</code></pre>
