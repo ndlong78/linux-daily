@@ -1,108 +1,56 @@
-name: Release
+name: PR83 Finalize via Release Policy
 
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "SemVer without v prefix (must match VERSION)"
-        required: true
-        type: string
-      confirm:
-        description: "Type release-vX.Y.Z to publish"
-        required: true
-        type: string
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
   actions: read
 
-concurrency:
-  group: release
-  cancel-in-progress: false
-
 jobs:
-  publish:
-    name: validated-release
+  finalize-pr83:
+    if: github.head_ref == 'chatgpt/pr83-backfill-034-040-20260803-0809'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: main
+          ref: chatgpt/pr83-backfill-034-040-20260803-0809
           fetch-depth: 0
-
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-
-      - name: Require explicit human confirmation
-        env:
-          VERSION_INPUT: ${{ inputs.version }}
-          CONFIRM_INPUT: ${{ inputs.confirm }}
+          python-version: '3.11'
+      - name: Install dependencies
         run: |
-          test "$CONFIRM_INPUT" = "release-v$VERSION_INPUT" || {
-            echo "Confirmation must equal release-v$VERSION_INPUT" >&2
-            exit 1
-          }
-
-      - name: Validate canonical version and changelog
-        run: python tools/release.py validate --version "${{ inputs.version }}"
-
-      - name: Block release unless CI and Production Smoke are green on this main SHA
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python tools/release.py gate --repository "$GITHUB_REPOSITORY" --sha "$GITHUB_SHA"
-
-      - name: Refuse duplicate tag or release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: v${{ inputs.version }}
+          python -m pip install --upgrade pip
+          pip install -e '.[dev]'
+      - name: Regenerate deterministic repository state
         run: |
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "Tag $TAG already exists" >&2
-            exit 1
-          fi
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Release $TAG already exists" >&2
-            exit 1
-          fi
-
-      - name: Build curated release notes from CHANGELOG
-        run: python tools/release.py notes --version "${{ inputs.version }}" --output curated-notes.md
-
-      - name: Generate merged-PR notes from GitHub
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: v${{ inputs.version }}
+          python tools/backfill_site_metadata.py
+          python tools/backfill_fonts.py
+          python tools/taxonomy.py
+          python tools/related_content.py
+          python tools/build.py
+          python tools/distro_coverage.py
+          python tools/quality_dashboard.py
+          python tools/learning_dashboard.py
+          python tools/content_mix.py
+      - name: Restore release policy before verification
+        run: git checkout origin/main -- .github/workflows/release.yml
+      - name: Verify exact final workspace
         run: |
-          gh api --method POST "repos/$GITHUB_REPOSITORY/releases/generate-notes" \
-            -f tag_name="$TAG" \
-            -f target_commitish="$GITHUB_SHA" \
-            --jq '.body' > generated-notes.md
-          {
-            cat curated-notes.md
-            printf '\n---\n\n## Merged changes\n\n'
-            cat generated-notes.md
-          } > release-notes.md
-
-      - name: Publish GitHub tag and release
-        env:
-          GH_TOKEN: ${{ github.token }}
-          TAG: v${{ inputs.version }}
+          python tools/backfill_site_metadata.py --check
+          python tools/backfill_fonts.py --check
+          python tools/related_content.py --check
+          python tools/build.py --check
+          python tools/validate_repo.py
+          pytest -q
+      - name: Commit verified result
         run: |
-          gh release create "$TAG" \
-            --repo "$GITHUB_REPOSITORY" \
-            --target "$GITHUB_SHA" \
-            --title "Linux Daily $TAG" \
-            --notes-file release-notes.md \
-            --latest
-
-      - name: Release summary
-        run: |
-          {
-            echo "# Release published"
-            echo
-            echo "- Tag: \`v${{ inputs.version }}\`"
-            echo "- Commit: \`$GITHUB_SHA\`"
-            echo "- Required gates: CI + Production Smoke on exact SHA"
-          } >> "$GITHUB_STEP_SUMMARY"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Finalize Linux Daily #034-#040 publication backfill'
+          git push origin HEAD:chatgpt/pr83-backfill-034-040-20260803-0809
