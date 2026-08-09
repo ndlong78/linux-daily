@@ -17,7 +17,7 @@ def test_prepare_plan_regenerates_before_metadata_checks():
 
 def test_check_plan_is_read_only_and_covers_local_publish_gates():
     plan = publish.command_plan("check")
-    assert len(plan) == 18
+    assert len(plan) == 19
     flattened = [" ".join(command) for command in plan]
     assert any("tools/build.py --check" in command for command in flattened)
     assert any("tools/content_mix.py --check" in command for command in flattened)
@@ -27,6 +27,7 @@ def test_check_plan_is_read_only_and_covers_local_publish_gates():
     assert any("tools/distro_coverage.py --check" in command for command in flattened)
     assert any("tools/command_quality.py" in command for command in flattened)
     assert any("tools/content_freshness.py" in command for command in flattened)
+    assert any("tools/content_lifecycle.py" in command for command in flattened)
     assert any("tools/quality_dashboard.py --check" in command for command in flattened)
     assert any("tools/learning_metadata.py" in command for command in flattened)
     assert any("tools/topic_progression.py" in command for command in flattened)

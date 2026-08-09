@@ -2,47 +2,35 @@
 
 **Public site:** https://linux.no.id.vn/  
 **Current phase:** P10 — Sustainable Daily Publishing 🚧  
-**Current focus:** P10.3 — Backlog & Coverage Intelligence  
+**Current focus:** P10.4 — Long-term Content Lifecycle  
+**P10.3 status:** ✅ Backlog & Coverage Intelligence complete  
 **P10.2 status:** ✅ Publication Readiness Gate complete  
 **P10.1 status:** ✅ Daily Curriculum Planner complete  
-**P9 status:** ✅ Advanced Labs complete  
 **Hosting:** Cloudflare Worker  
 **Source / review:** GitHub + GitHub Actions
 
 ## P10 sustainable daily publishing
 
-Linux Daily dùng cadence mặc định **1 bài/ngày**. P10 tách rõ planning, readiness, coverage intelligence và publication state để cadence nhanh hơn nhưng curriculum vẫn có chủ đích.
+Linux Daily dùng cadence mặc định **1 bài/ngày**. P10 tách planning, readiness, coverage intelligence, lifecycle và publication state để corpus tăng lâu dài mà vẫn kiểm soát được guidance hiện hành.
 
-### P10.1–P10.2 foundation
+### P10.4 Long-term Content Lifecycle
 
-- `curriculum-plan.json` giữ queue 14 topic / 2 chu kỳ 7 trục;
-- `tools/curriculum_planner.py` kiểm rotation/horizon/duplicate;
-- `tools/publication_readiness.py` kiểm prerequisite, semantic similarity, platform scope và source-review expectation;
-- planning/readiness không sửa `state.json` và không tự publish.
-
-### P10.3 Backlog & Coverage Intelligence
-
-- `coverage-catalog.json` định nghĩa capability baseline theo 7 axis;
-- mỗi capability có stable ID, topic, difficulty, keyword evidence và rationale;
-- `tools/coverage_intelligence.py` đối chiếu catalog với corpus published và curriculum queue;
-- capability được phân loại `covered`, `planned` hoặc `gap`;
-- recommendation ưu tiên axis ít coverage hơn, sau đó difficulty và stable ID;
-- mỗi recommendation trả reason/evidence thay vì một score không giải thích được;
-- `python3 tools/coverage_intelligence.py --json` xuất full report;
-- `tools/publish.py check` chạy coverage intelligence read-only;
-- tool không tự sửa `curriculum-plan.json`.
+- `tools/content_freshness.py` hỗ trợ `current`, `review-due`, `historically-valid`, `superseded`;
+- `superseded` bắt buộc có `reason` và `replacement_issue` mới hơn, tồn tại trong corpus;
+- `historically-valid` giữ bài cũ có giá trị lịch sử mà không coi là current guidance;
+- `tools/content_lifecycle.py` resolve replacement lineage tới canonical issue;
+- lifecycle hard-fail backward replacement, missing target, cycle và replacement chain kết thúc ở non-canonical state;
+- `python3 tools/content_lifecycle.py --json` cho operator xem replacement lineage;
+- `tools/publish.py check` chạy lifecycle gate read-only;
+- không rewrite bài lịch sử, không thay `state.json`, cadence hoặc publication dates.
 
 ### Pre-PR quality gate
 
-Branch `chatgpt/**` chạy GitHub Actions ngay khi push. Quy trình chuẩn:
-
 ```bash
 python3 tools/pr_preflight.py
-# push branch -> remote quality-gate phải xanh
-# sau đó mới mở Draft PR
+# push branch chatgpt/** -> remote quality-gate
+# chỉ mở Draft PR sau khi preflight sạch
 ```
-
-CI trên PR vẫn là cổng xác nhận lần hai trước review/merge.
 
 ## Contributor entrypoint
 
@@ -52,10 +40,11 @@ python3 -m pip install -e ".[dev]"
 python3 tools/curriculum_planner.py --json
 python3 tools/publication_readiness.py --json
 python3 tools/coverage_intelligence.py --json
+python3 tools/content_lifecycle.py --json
 python3 tools/pr_preflight.py
 ```
 
-Curriculum planner thể hiện intent; readiness xác nhận khả năng authoring; coverage intelligence đề xuất gap; `state.json` + post metadata vẫn là publication truth.
+Planning thể hiện intent; readiness xác nhận khả năng authoring; coverage intelligence đề xuất gap; lifecycle xác định guidance canonical; `state.json` + post metadata vẫn là publication truth.
 
 ## Milestones
 
@@ -71,8 +60,8 @@ Curriculum planner thể hiện intent; readiness xác nhận khả năng author
 | P7 — Content Quality at Scale | ✅ | Portability + command quality + freshness + quality dashboard |
 | P8 — Learning Experience | ✅ | Paths + prerequisites + progression + public Learning Dashboard |
 | P9 — Advanced Labs | ✅ | Safety contract + advanced labs + Linux ↔ FreeBSD interoperability |
-| P10 — Sustainable Daily Publishing | 🚧 | Daily curriculum planning → readiness → coverage intelligence → lifecycle → operations dashboard |
+| P10 — Sustainable Daily Publishing | 🚧 | Planning → readiness → coverage intelligence → lifecycle → operations dashboard |
 
 ## Roadmap
 
-Xem `docs/ROADMAP.md`. P10.3 là scope hiện tại; recommendation chỉ hỗ trợ quyết định backlog và không tự thay đổi queue.
+Xem `docs/ROADMAP.md`. P10.4 là scope hiện tại; P10.5 sẽ hợp nhất các tín hiệu này thành Daily Operations Dashboard.
