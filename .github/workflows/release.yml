@@ -101,9 +101,11 @@ jobs:
           python tools/quality_dashboard.py
           python tools/learning_dashboard.py
           python tools/content_mix.py
-      - name: Remove temporary helper before policy verification
-        run: rm -f .github/workflows/pr82-materialize.yml
-      - name: Verify exact workspace
+      - name: Restore policy-safe workflow files before verification
+        run: |
+          rm -f .github/workflows/pr82-materialize.yml
+          git checkout origin/main -- .github/workflows/release.yml
+      - name: Verify exact final workspace
         run: |
           python tools/backfill_site_metadata.py --check
           python tools/backfill_fonts.py --check
@@ -111,9 +113,8 @@ jobs:
           python tools/build.py --check
           python tools/validate_repo.py
           pytest -q
-      - name: Restore release workflow and commit verified result
+      - name: Commit verified result
         run: |
-          git checkout origin/main -- .github/workflows/release.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
