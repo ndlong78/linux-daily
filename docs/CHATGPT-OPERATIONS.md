@@ -12,7 +12,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                  │
         state.json / topics.md
                  │
-          cadence đủ 2 ngày?
+          cadence đủ 1 ngày?
            │             │
           không          có
            │             │
@@ -48,14 +48,15 @@ Task chuẩn chạy **07:00 mỗi ngày** theo `Asia/Ho_Chi_Minh`.
 Mỗi lần chạy, ChatGPT phải:
 
 1. Đọc `AGENTS.md` và trạng thái mới nhất của `main`.
-2. Đọc `state.json` và kiểm tra cadence 2 ngày.
-3. Nếu chưa tới nhịp: kết thúc, không tạo thay đổi.
-4. Nếu tới nhịp: xác định issue kế tiếp, kiểm tra trục, tránh chủ đề trùng.
+2. Đọc `state.json` và kiểm tra cadence mặc định 1 ngày.
+3. Nếu chưa sang ngày phát hành kế tiếp: kết thúc, không tạo thay đổi.
+4. Nếu tới nhịp: xác định issue kế tiếp, kiểm tra trục, tránh chủ đề trùng và ưu tiên progression hợp lý với các bài trước.
 5. Kiểm tra branch/PR đang mở cho issue đó, bao gồm cả prefix `chatgpt/` và legacy `claude/`.
 6. Chuẩn bị bài theo template/meta/validator hiện hành.
 7. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, và tạo section **Nguồn kỹ thuật** khớp metadata.
 8. Chạy structural quality gate + source-backed gate.
-9. Nếu chưa có quyền GitHub write rõ ràng trong phiên tự động, chỉ báo gói thay đổi cho người dùng; không tự push/merge.
+9. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
+10. Nếu chưa có quyền GitHub write rõ ràng trong phiên tự động, chỉ báo gói thay đổi cho người dùng; không tự push/merge.
 
 ## Source of truth
 
@@ -84,6 +85,15 @@ Các vùng cần review sâu hơn:
 
 Bài #001–#018 được grandfather trong source validator. Backfill lịch sử làm theo PR riêng để diff nhỏ và dễ audit.
 
+## Social output
+
+Facebook/X và ảnh code social đang **tạm dừng** để giảm khối lượng generation/review khi cadence tăng lên hằng ngày.
+
+- Không tạo social artifact mới theo mặc định.
+- Không coi thiếu social artifact của bài mới là lỗi CI.
+- Giữ nguyên `posts/social/` lịch sử để audit và có thể tái sử dụng sau này.
+- Nếu bật lại social publishing, cập nhật contract + validator bằng một PR riêng.
+
 ## Quyền ghi GitHub
 
 ChatGPT có thể đọc repository, PR và CI khi connector cho phép. Các hành động ghi như commit, push, mở PR và merge phải tuân theo quyền/ủy quyền của người dùng trong phiên làm việc.
@@ -110,13 +120,13 @@ Prefix cũ `claude/linux-daily-...` chỉ được giữ để phát hiện dupl
 ```bash
 python3 tools/cadence.py gate
 python3 tools/cadence.py next
-# tạo HTML + social + ảnh code + technical sources
+# tạo HTML + technical sources; không tạo social theo mặc định
 python3 tools/build_index.py
 python3 tools/cadence.py record
 python3 tools/build.py --check
 ```
 
-`tools/build.py --check` gọi cả validator cấu trúc hiện có và `tools/validate_sources.py`.
+`tools/build.py --check` gọi validator cấu trúc hiện có và `tools/validate_sources.py`; social artifact không còn là merge gate cho bài mới.
 
 Nếu tất cả kiểm tra sạch và người dùng đã cấp quyền remote write, tạo branch `chatgpt/...`, commit chính xác các file liên quan, push và mở PR vào `main`.
 

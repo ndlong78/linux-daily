@@ -12,16 +12,16 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 - Scheduled Task chỉ chuẩn bị và kiểm tra; khi cần remote write mà chưa có quyền, báo người dùng để phê duyệt trong chat.
 - Từ bài **#019**, mọi claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
 
-## 2. Cổng cadence 2 ngày
+## 2. Cổng cadence hằng ngày
 
-Trước khi tạo bài:
+Linux Daily phát hành mặc định **1 bài/ngày**. Trước khi tạo bài:
 
 ```bash
 python3 tools/cadence.py gate
 ```
 
-- exit `10`: chưa tới nhịp → dừng, không tạo file, không sửa state.
-- exit `0`: tới nhịp → tiếp tục.
+- exit `10`: bài hôm nay chưa tới nhịp → dừng, không tạo file, không sửa state.
+- exit `0`: đã sang ngày phát hành kế tiếp → tiếp tục.
 
 Số bài kế tiếp:
 
@@ -57,7 +57,7 @@ Trục xoay theo số bài, chu kỳ 7:
 | 5 | Automation & scripting |
 | 6 | Ôn tập — lab end-to-end |
 
-Luôn kiểm tra `topics.md` để tránh trùng chủ đề đã có.
+Luôn kiểm tra `topics.md` để tránh trùng chủ đề đã có. Khi phù hợp, bài mới nên nối progression/prerequisite từ các bài trước thay vì trở thành một tip rời rạc.
 
 ## 4. Phạm vi hệ điều hành
 
@@ -133,17 +133,13 @@ Metadata cơ bản phải khớp filename, `topics.md` và nội dung hiển th�
 
 Ngày bài mặc định là ngày chạy thực tế. Không backdate để vượt cadence.
 
-## 7. Social output
+## 7. Social output — tạm dừng
 
-Mỗi bài sinh:
+Từ khi áp dụng cadence hằng ngày, **không tạo mới nội dung Facebook/X hoặc ảnh code social theo mặc định**. Mục tiêu là giảm khối lượng generation/review và tập trung vào chất lượng bài học + source-backed technical review.
 
-- `posts/social/post-<NNN>-facebook.txt`
-- `posts/social/post-<NNN>-x.txt`
-- `posts/social/post-<NNN>-code.png`
+Các file lịch sử trong `posts/social/` được giữ nguyên để bảo toàn lịch sử repository. Không xóa hoặc rewrite chỉ vì social output đang tạm dừng.
 
-Facebook: khoảng 150–200 từ, có `{{LINK}}`, 4–6 hashtag và ghi chú ảnh code.
-
-X: thread 5–7 tweet, `[Tweet 1] ... [Tweet N]`, đánh số liên tục, mỗi tweet ≤ 280 ký tự theo validator; FreeBSD có tweet riêng; tweet cuối chứa `{{LINK}}` + hashtag.
+Nếu sau này bật lại social publishing, phải làm bằng một PR riêng để khôi phục contract, validator và workflow tương ứng.
 
 ## 8. Ghi state và build
 
@@ -155,7 +151,7 @@ python3 tools/cadence.py record
 python3 tools/build.py --check
 ```
 
-`tools/build.py --check` chạy cả quality gate cấu trúc và **source-backed gate**. Không commit nếu chưa sạch.
+`tools/build.py --check` chạy quality gate cấu trúc và **source-backed gate**. Social artifact không còn là điều kiện merge cho bài mới.
 
 `state.json` phải khớp bài mới nhất trong `topics.md` và `last_generated_at` phải phản ánh thời điểm sinh thực tế.
 
@@ -167,17 +163,15 @@ Branch chuẩn:
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-Chỉ stage đúng file thuộc bài đang làm:
+Chỉ stage đúng file thuộc bài đang làm, thông thường gồm:
 
 - `posts/post-<NNN>-<slug>.html`
-- `posts/social/post-<NNN>-facebook.txt`
-- `posts/social/post-<NNN>-x.txt`
-- `posts/social/post-<NNN>-code.png`
-- `index.html`
+- `index.html` và các generated site artifact do build thay đổi
 - `topics.md`
 - `state.json`
+- learning metadata/path nếu bài mới yêu cầu
 
-Không stage cả thư mục bằng `git add .`, `git add -A` hoặc `git add posts/social/`.
+Không stage cả thư mục bằng `git add .`, `git add -A` hoặc `git add --all`.
 
 Commit message:
 
@@ -189,6 +183,8 @@ Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge.
 
 ## 10. Scheduled Task của ChatGPT
 
-Task có thể chạy hằng ngày, nhưng cadence vẫn do `state.json` quyết định. Khi chưa tới nhịp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị gói bài và báo người dùng nếu cần quyền remote write.
+Task chạy hằng ngày lúc 07:00. Cadence do `state.json` quyết định với mặc định **1 ngày**. Khi chưa sang ngày phát hành kế tiếp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị bài, source-backed review và quality gates.
+
+Task không tạo Facebook/X theo mặc định trong giai đoạn social output tạm dừng.
 
 Task không thay thế GitHub Actions. GitHub Actions là cổng kỹ thuật cuối cùng; người dùng là người quyết định merge.

@@ -2,7 +2,7 @@
 """
 validate_repo.py — Quality gate cho Linux Daily.
 
-Biến các quy tắc trong SKILL.md thành kiểm tra bằng phần mềm, để CI chặn merge khi
+Biến các quy tắc trong AGENTS.md thành kiểm tra bằng phần mềm, để CI chặn merge khi
 bài viết hoặc nhật ký chủ đề lệch chuẩn. Chạy:
 
   python3 tools/validate_repo.py          # kiểm tra toàn repo, exit != 0 nếu có lỗi
@@ -16,9 +16,8 @@ Kiểm tra:
                 placeholder {{...}}, đúng 2 <svg> (đều role="img"+aria-label), 2 <figcaption>,
                 đủ 7 mục 01–07, có khối FreeBSD (code-label bsd), giữ link CSS chung và hai
                 link "về trang chủ", body.post, lang="vi".
-  social/     — mỗi bài có facebook.txt và x.txt; thread X có 5–7 tweet đánh số liên tục
-                [Tweet 1..N], không có nội dung trước [Tweet 1], mỗi tweet ≤ 280 ký tự
-                (tính {{LINK}} = 23 ký tự như t.co của X).
+  social/     — artifact lịch sử; helper validator vẫn được giữ để audit khi cần nhưng
+                không còn là điều kiện bắt buộc cho bài mới trong giai đoạn social tạm dừng.
   index.html  — đồng bộ với posts/ (gọi build_index.render_index).
   state.json  — last_issue & last_published_date khớp bài mới nhất trong topics.md;
                 last_generated_at là mốc ISO 8601 hợp lệ.
@@ -43,7 +42,6 @@ TOPICS_PATH = os.path.join(ROOT, "topics.md")
 INDEX_PATH = os.path.join(ROOT, "index.html")
 STATE_PATH = os.path.join(ROOT, "state.json")
 
-# Trục xoay tuần tự theo số bài (chu kỳ 7). Tên khớp cột "trục" trong topics.md.
 AXIS_CYCLE = [
     "Networking",
     "Bảo mật",
@@ -55,12 +53,8 @@ AXIS_CYCLE = [
 ]
 
 TWEET_LIMIT = 280
-# X bọc MỌI URL qua t.co thành đúng 23 ký tự, bất kể độ dài thật. Placeholder
-# {{LINK}} (8 ký tự) sẽ được thay bằng URL bài khi đăng, nên phải đếm theo 23 để
-# không "đạt" nhầm một tweet thực chất vượt 280 sau khi thay link.
 TWEET_URL_LEN = 23
 LINK_PLACEHOLDER = "{{LINK}}"
-# Thread X theo SKILL.md: 5–7 tweet, đánh số liên tục [Tweet 1], [Tweet 2]…
 TWEET_MIN = 5
 TWEET_MAX = 7
 TWEET_MARKER_RE = re.compile(r"\[Tweet (\d+)\]")
@@ -73,12 +67,7 @@ def tweet_length(text: str) -> int:
 
 
 def parse_tweets(txt: str) -> tuple[str, list[tuple[int, str]]]:
-    """Tách nội dung x.txt theo các mốc [Tweet n].
-
-    Trả (leading, tweets):
-      leading — phần văn bản đứng trước [Tweet 1] (phải rỗng nếu đúng chuẩn);
-      tweets  — danh sách (số tweet, nội dung sau mốc tới mốc kế / hết file).
-    """
+    """Tách nội dung x.txt theo các mốc [Tweet n]."""
     matches = list(TWEET_MARKER_RE.finditer(txt))
     if not matches:
         return txt.strip(), []
@@ -112,7 +101,6 @@ def parse_topics(report: Report) -> list[dict]:
         for lineno, raw in enumerate(f, 1):
             line = raw.strip()
             if not line or line.startswith("#") and not TOPIC_LINE_RE.match(line):
-                # Dòng chú thích (bắt đầu bằng '# ' nhưng không phải '#NNN | ...').
                 continue
             m = TOPIC_LINE_RE.match(line)
             if not m:
@@ -145,7 +133,6 @@ def validate_topics(entries: list[dict], report: Report) -> None:
             f"topics.md dòng {e['lineno']}: số bài #{e['n']:03d} không liên tục (mong đợi #{expected_n:03d}).",
         )
 
-        # Ngày ISO hợp lệ, không ở tương lai, không giảm dần.
         try:
             d = dt.date.fromisoformat(e["date_s"])
         except ValueError:
@@ -171,9 +158,7 @@ def validate_topics(entries: list[dict], report: Report) -> None:
 
         key = e["title"].lower()
         if key in seen_titles:
-            report.fail(
-                f"topics.md dòng {e['lineno']}: tiêu đề trùng với dòng {seen_titles[key]}."
-            )
+            report.fail(f"topics.md dòng {e['lineno']}: tiêu đề trùng với dòng {seen_titles[key]}.")
         else:
             seen_titles[key] = e["lineno"]
 
@@ -199,7 +184,6 @@ def validate_post_file(path: str, expected_n: int, report: Report,
             f"{name}: số trong tên file (#{file_n:03d}) khác số trong topics.md (#{expected_n:03d}).",
         )
 
-    # --- Metadata có cấu trúc (khối <script id="ld-meta">) ---
     try:
         meta = postmeta.read_meta(path)
     except postmeta.MetaError as exc:
@@ -207,8 +191,7 @@ def validate_post_file(path: str, expected_n: int, report: Report,
         meta = None
 
     if meta is not None:
-        missing = [k for k in postmeta.REQUIRED_FIELDS
-                   if k not in meta or meta[k] in (None, "")]
+        missing = [k for k in postmeta.REQUIRED_FIELDS if k not in meta or meta[k] in (None, "")]
         report.check(not missing, f"{name}: khối meta thiếu/rỗng trường {missing}.")
 
         report.check(
@@ -231,7 +214,6 @@ def validate_post_file(path: str, expected_n: int, report: Report,
                 f"{name}: meta.axis ('{meta.get('axis')}') khác topics.md ('{topic_axis}').",
             )
 
-        # Meta không được lệch với phần người đọc THẤY (index dựng từ meta).
         vis = postmeta.read_visible(path)
         if topic_date:
             try:
@@ -250,17 +232,13 @@ def validate_post_file(path: str, expected_n: int, report: Report,
                 f"{name}: {label} hiển thị lệch với meta.{key} (khối meta không khớp nội dung).",
             )
 
-    # Không còn placeholder.
     report.check("{{" not in t and "}}" not in t, f"{name}: còn placeholder '{{{{...}}}}' chưa điền.")
-
-    # Khung template cố định.
     report.check('href="../assets/style.css"' in t, f"{name}: thiếu link CSS chung ../assets/style.css.")
     report.check('lang="vi"' in t, f"{name}: thiếu lang=\"vi\".")
     report.check('<body class="post">' in t, f'{name}: thiếu <body class="post">.')
     report.check('class="brand-home"' in t, f"{name}: thiếu link về trang chủ ở header (.brand-home).")
     report.check('class="foot-home"' in t, f"{name}: thiếu link về trang chủ ở footer (.foot-home).")
 
-    # Đúng 2 SVG, cả hai có role="img" + aria-label.
     svg_count = _count(r"<svg", t)
     report.check(svg_count == 2, f"{name}: cần đúng 2 ảnh SVG, đang có {svg_count}.")
     for mo in re.finditer(r"<svg\b[^>]*>", t):
@@ -270,19 +248,18 @@ def validate_post_file(path: str, expected_n: int, report: Report,
     fig_count = _count(r"<figcaption>", t)
     report.check(fig_count == 2, f"{name}: cần 2 <figcaption>, đang có {fig_count}.")
 
-    # Đủ 7 mục 01–07.
     nums = sorted(re.findall(r'<span class="num">(\d{2})</span>', t))
     report.check(
         nums == [f"{i:02d}" for i in range(1, 8)],
         f"{name}: cần đủ 7 mục đánh số 01–07, đang có {nums}.",
     )
 
-    # Bài tập tự luyện + khối FreeBSD tách riêng.
     report.check('class="exercise"' in t, f"{name}: thiếu mục bài tập (.exercise).")
     report.check("code-label bsd" in t, f"{name}: thiếu khối FreeBSD riêng (code-label bsd).")
 
 
 def validate_social(expected_n: int, report: Report) -> None:
+    """Audit helper cho social artifact lịch sử; không gọi từ merge gate mặc định."""
     fb = os.path.join(SOCIAL_DIR, f"post-{expected_n:03d}-facebook.txt")
     x = os.path.join(SOCIAL_DIR, f"post-{expected_n:03d}-x.txt")
     report.check(os.path.exists(fb), f"social: thiếu {os.path.basename(fb)}.")
@@ -296,28 +273,26 @@ def validate_social(expected_n: int, report: Report) -> None:
             report.fail(f"social: {name} không có tweet nào đánh dấu [Tweet n].")
             return
 
-        # Không được có nội dung lạc trước [Tweet 1] (dễ bị đăng nhầm/tính nhầm).
-        report.check(not leading, f"social: {name} có nội dung trước [Tweet 1] — mỗi tweet phải bắt đầu bằng mốc [Tweet n].")
-
-        # Số lượng tweet trong khoảng 5–7 theo SKILL.md.
+        report.check(
+            not leading,
+            f"social: {name} có nội dung trước [Tweet 1] — mỗi tweet phải bắt đầu bằng mốc [Tweet n].",
+        )
         report.check(
             TWEET_MIN <= len(tweets) <= TWEET_MAX,
             f"social: {name} có {len(tweets)} tweet (cần {TWEET_MIN}–{TWEET_MAX}).",
         )
-
-        # Đánh số phải liên tục 1..N.
         actual_nums = [num for num, _ in tweets]
         expected_nums = list(range(1, len(tweets) + 1))
         report.check(
             actual_nums == expected_nums,
             f"social: {name} đánh số tweet không liên tục: {actual_nums} (cần {expected_nums}).",
         )
-
-        # Giới hạn 280 ký tự, tính {{LINK}} = 23 như t.co.
         for num, body in tweets:
             n = tweet_length(body)
             if n > TWEET_LIMIT:
-                report.fail(f"social: {name} tweet {num} dài {n} ký tự (> {TWEET_LIMIT}, đã tính {LINK_PLACEHOLDER} = {TWEET_URL_LEN}).")
+                report.fail(
+                    f"social: {name} tweet {num} dài {n} ký tự (> {TWEET_LIMIT}, đã tính {LINK_PLACEHOLDER} = {TWEET_URL_LEN})."
+                )
     else:
         report.fail(f"social: thiếu {os.path.basename(x)}.")
 
@@ -341,7 +316,6 @@ def validate_posts(entries: list[dict], report: Report) -> None:
         path = by_num.get(e["n"])
         if path:
             validate_post_file(path, e["n"], report, e["date_s"], e["axis"])
-            validate_social(e["n"], report)
 
 
 def validate_index(report: Report) -> None:
@@ -363,11 +337,7 @@ def validate_index(report: Report) -> None:
 
 
 def validate_state(entries: list[dict], report: Report) -> None:
-    """state.json phải đồng bộ với topics.md (bài mới nhất & ngày của nó).
-
-    last_generated_at chỉ cần là mốc ISO hợp lệ — không so với nội dung, vì đó là
-    thời điểm thực routine sinh bài (dùng cho cổng nhịp), không suy được từ repo.
-    """
+    """state.json phải đồng bộ với topics.md (bài mới nhất & ngày của nó)."""
     if not os.path.exists(STATE_PATH):
         report.fail("state.json không tồn tại. Chạy `python3 tools/cadence.py init` rồi commit lại.")
         return
@@ -379,7 +349,7 @@ def validate_state(entries: list[dict], report: Report) -> None:
         return
 
     if not entries:
-        return  # topics.md rỗng đã có lỗi riêng ở validate_topics.
+        return
     last = max(entries, key=lambda e: e["n"])
 
     report.check(
