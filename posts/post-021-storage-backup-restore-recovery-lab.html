@@ -23,7 +23,7 @@
 <meta property="og:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
-<meta name="twitter:description" content="Advanced Lab storage disposable: backup trước thay đổi, failure injection, restore và checksum verification trên Linux và FreeBSD.">
+<meta name="twitter:description" content="Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
 <script type="application/json" id="ld-meta">
@@ -235,8 +235,42 @@ rm -rf "$LAB"</code></pre>
     <p>Thay payload bằng ba file có kích thước khác nhau, lưu manifest checksum trước backup, sau restore dùng manifest để chứng minh đủ file và đúng nội dung. Không tăng scope sang disk thật; mục tiêu là luyện evidence, không luyện thao tác phá thiết bị.</p>
   </section>
 
-  <footer class="post-footer">
-    <p>Linux Daily #021 · Advanced Lab Storage &amp; Backup/Restore · 09/08/2026</p>
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <p>Lab chỉ dùng tài liệu chính thức cho semantics block device, mount, SELinux và GEOM/UFS; URL dưới đây khớp với <code>ld-meta.sources</code>.</p>
+    <ul class="clean">
+      <li><a href="https://manpages.debian.org/trixie/mount/losetup.8.en.html">Debian trixie — losetup(8)</a></li>
+      <li><a href="https://manpages.debian.org/trixie/mount/mount.8.en.html">Debian trixie — mount(8)</a></li>
+      <li><a href="https://docs.fedoraproject.org/en-US/quick-docs/selinux-changing-states-and-modes/">Fedora Docs — SELinux changing file labels</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/geom/">FreeBSD Handbook — GEOM</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/bsdinstall/">FreeBSD Handbook — Disk Organization / GPT and UFS</a></li>
+    </ul>
+  </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-014-lab-backup-tu-dong.html"><span class="series-kicker">#014</span><span>Backup tự động mà bạn dám tin — vì đã thử khôi phục</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-007-lab-web-server-tuong-lua.html">#007 · Từ máy mới đến web server an toàn, chỉ mở đúng cổng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #021 · ÔN TẬP</span>
+      <span class="hashtags">#Linux #FreeBSD #Storage #Backup #Recovery</span>
+    </div>
   </footer>
 </div>
 </main>
