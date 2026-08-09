@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 POLICY_PATH = ROOT / "freshness.json"
 ALLOWED_VOLATILITY = {"high", "medium", "low"}
-ALLOWED_DECLARED_STATES = {"current", "historically-valid"}
+ALLOWED_DECLARED_STATES = {"current", "historically-valid", "superseded"}
 MERGEABLE_REVIEW_STATUSES = {"reviewed", "published"}
 
 
@@ -133,7 +133,7 @@ def review(
         declared_state = override.get("state", "current")
         if declared_state not in ALLOWED_DECLARED_STATES:
             problems.append(
-                f"#{issue:03d}: override.state phải là current hoặc historically-valid, "
+                f"#{issue:03d}: override.state phải là current, historically-valid hoặc superseded, "
                 f"đang là {declared_state!r}"
             )
             declared_state = "current"
@@ -151,11 +151,11 @@ def review(
             )
 
         reason = override.get("reason")
-        if declared_state == "historically-valid" and not (
+        if declared_state in {"historically-valid", "superseded"} and not (
             isinstance(reason, str) and reason.strip()
         ):
             problems.append(
-                f"#{issue:03d}: historically-valid bắt buộc có override.reason giải thích"
+                f"#{issue:03d}: {declared_state} bắt buộc có override.reason giải thích"
             )
 
         replacement_issue = override.get("replacement_issue")
@@ -164,6 +164,12 @@ def review(
                 problems.append(
                     f"#{issue:03d}: replacement_issue phải tham chiếu một issue đang tồn tại"
                 )
+            elif replacement_issue <= issue:
+                problems.append(
+                    f"#{issue:03d}: replacement_issue phải mới hơn issue nguồn, đang là #{replacement_issue:03d}"
+                )
+        if declared_state == "superseded" and replacement_issue is None:
+            problems.append(f"#{issue:03d}: superseded bắt buộc có replacement_issue")
 
         if issue >= effective_from and post.get("review_status") not in MERGEABLE_REVIEW_STATUSES:
             problems.append(
@@ -173,6 +179,8 @@ def review(
         review_due_on = last_reviewed + timedelta(days=window_days)
         if declared_state == "historically-valid":
             effective_state = "historically-valid"
+        elif declared_state == "superseded":
+            effective_state = "superseded"
         elif as_of > review_due_on:
             effective_state = "review-due"
         else:
@@ -205,6 +213,7 @@ def review(
         "historically_valid": [
             item for item in items if item["state"] == "historically-valid"
         ],
+        "superseded": [item for item in items if item["state"] == "superseded"],
         "errors": problems,
     }
 
@@ -218,6 +227,7 @@ def render_text(result: dict) -> str:
         f"current              {result['counts'].get('current', 0)}",
         f"review_due           {result['counts'].get('review-due', 0)}",
         f"historically_valid   {result['counts'].get('historically-valid', 0)}",
+        f"superseded           {result['counts'].get('superseded', 0)}",
     ]
     if result["review_due"]:
         lines.extend(["", "Review queue:"])
@@ -235,6 +245,12 @@ def render_text(result: dict) -> str:
                 else ""
             )
             lines.append(f"- #{item['issue']:03d} — {item['reason']}{suffix}")
+    if result["superseded"]:
+        lines.extend(["", "Superseded:"])
+        for item in result["superseded"]:
+            lines.append(
+                f"- #{item['issue']:03d} -> #{item['replacement_issue']:03d} — {item['reason']}"
+            )
     return "\n".join(lines)
 
 
