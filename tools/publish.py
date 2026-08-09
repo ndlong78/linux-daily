@@ -34,6 +34,7 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/taxonomy.py"],
             [PYTHON, "tools/content_mix.py", "--check"],
             [PYTHON, "tools/curriculum_planner.py"],
+            [PYTHON, "tools/publication_readiness.py"],
             [PYTHON, "tools/distro_coverage.py", "--check"],
             [PYTHON, "tools/command_quality.py"],
             [PYTHON, "tools/content_freshness.py"],
