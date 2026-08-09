@@ -26,11 +26,16 @@
 <link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/fonts.css">
 <link rel="stylesheet" href="../assets/style.css">
-<!-- Metadata có cấu trúc: nguồn duy nhất cho trang chủ & quality gate. Các trường
-     phải KHỚP đúng phần hiển thị bên dưới và topics.md. Từ bài #019 còn bắt buộc
-     review_status + sources; sources là JSON array các object title/url/kind.
-     CANONICAL_URL, FEED_URL và SOCIAL_IMAGE_* phải được derive từ site.json +
-     posts/social/post-NNN-code.png, không hard-code domain hay kích thước ảnh. -->
+<!--
+  Linux Daily #041+ phải tuân STYLE.md:
+  - tested_on/last_verified/changes_system trong ld-meta;
+  - metadata hiển thị Tested on + Last verified;
+  - numbered steps dùng <ol class="steps">;
+  - mọi <pre><code> có language-*;
+  - command block shell đặt trong wrapper data-run-as="user|sudo|root";
+  - verification có Expected Output/Kết quả mong đợi;
+  - changes_system=true thì render CLEANUP_SECTION.
+-->
 <script type="application/json" id="ld-meta">
 {
   "issue": {{ISSUE_N}},
@@ -41,6 +46,9 @@
   "title": "{{TITLE}}",
   "lede": "{{LEDE_PLAIN}}",
   "review_status": "{{REVIEW_STATUS}}",
+  "tested_on": {{TESTED_ON_JSON}},
+  "last_verified": "{{LAST_VERIFIED}}",
+  "changes_system": {{CHANGES_SYSTEM}},
   "sources": {{SOURCES_JSON}}
 }
 </script>
@@ -66,29 +74,77 @@
       <span class="tag">ĐỘ KHÓ · {{DIFFICULTY}}</span>
       <span class="tag">{{READ_TIME}}</span>
     </div>
+    <div class="style-meta" aria-label="Môi trường kiểm chứng">
+      <span><strong>Tested on:</strong> {{TESTED_ON_DISPLAY}}</span>
+      <span><strong>Last verified:</strong> {{LAST_VERIFIED}}</span>
+    </div>
   </header>
 
+  <section class="objective">
+    <h2>Mục tiêu</h2>
+    <p>{{OBJECTIVE}}</p>
+  </section>
+
+  <section class="prerequisites">
+    <h2>Yêu cầu tiên quyết</h2>
+    {{PREREQUISITES}}
+  </section>
+
   <figure>
-    <!-- HÌNH 1 (hero): vẽ SVG khái niệm chủ đề. Teal #0C6E61 cho Linux, đỏ #B23A2E cho FreeBSD.
-         Bắt buộc role="img" + aria-label. -->
     {{FIGURE_HERO_SVG}}
     <figcaption>{{FIGURE_HERO_CAPTION}}</figcaption>
   </figure>
 
-  <!-- MỤC 01–02 -->
-  {{SECTIONS_01_02}}
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    {{CONTEXT_SECTION}}
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    {{CORE_KNOWLEDGE_SECTION}}
+  </section>
 
   <figure>
-    <!-- HÌNH 2 (so sánh): dải 4 cột Ubuntu/Xubuntu · Debian · Fedora · FreeBSD.
-         Cột FreeBSD tô đỏ, tách riêng. role="img" + aria-label. -->
     {{FIGURE_COMPARE_SVG}}
     <figcaption>{{FIGURE_COMPARE_CAPTION}}</figcaption>
   </figure>
 
-  <!-- MỤC 03–06 (mục 07 dùng <div class="exercise">) -->
-  {{SECTIONS_03_07}}
+  <section>
+    <h2><span class="num">03</span> Các bước thực hiện</h2>
+    <!-- Một <li> = một checkpoint chính. Command block shell phải có data-run-as. -->
+    <ol class="steps">
+      {{STEP_BY_STEP_ITEMS}}
+    </ol>
+  </section>
 
-  <!-- Không đánh số: đây là bằng chứng kỹ thuật cho các claim/lệnh trong bài. -->
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    {{VERIFICATION_SECTION}}
+    <div class="expected-output">
+      <h3>Expected Output / Kết quả mong đợi</h3>
+      {{EXPECTED_OUTPUT}}
+    </div>
+  </section>
+
+  <!-- Render khi ld-meta.changes_system=true; bỏ hẳn khi false. -->
+  {{CLEANUP_SECTION}}
+
+  <section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+    {{TROUBLESHOOTING_SECTION}}
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+    {{SECURITY_OPERATIONS_SECTION}}
+  </section>
+
+  <section class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    {{EXERCISE_SECTION}}
+  </section>
+
   <section class="sources" aria-labelledby="technical-sources">
     <h2 id="technical-sources">Nguồn kỹ thuật</h2>
     <p>Ưu tiên tài liệu chính thức của upstream hoặc từng hệ điều hành; title và URL phải khớp <code>ld-meta.sources</code>.</p>
