@@ -82,8 +82,8 @@
     <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
   <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
-    <p><strong>Last verified:</strong> 2026-08-09</p>
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
   </section>
   <section><h2>Mục tiêu</h2><p>Cấu hình địa chỉ mạng tĩnh theo đúng network stack của từng hệ điều hành và luôn có đường lui trước khi thay đổi từ xa.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có console hoặc phiên SSH dự phòng; biết interface, IP/prefix, gateway và DNS dự kiến.</p></section>
@@ -128,7 +128,7 @@
     <figcaption>Hình 2 — Không có một lệnh chung cho bốn hệ. Điểm chung là phải biết công cụ quản lý interface và chuẩn bị rollback trước khi thay đổi.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Ghi lại trạng thái hiện tại: tên interface, địa chỉ, default route, DNS và công cụ đang quản lý interface.</li><li>Chuẩn bị cấu hình tĩnh cho đúng hệ điều hành; với máy từ xa phải giữ console hoặc một phiên SSH cứu hộ.</li><li>Áp dụng bằng cơ chế có rollback nếu hệ hỗ trợ: <code>netplan try</code> trên Ubuntu hoặc checkpoint của NetworkManager trên Fedora.</li><li>Kiểm tra IP, route, DNS và mở một phiên SSH mới; chỉ sau đó mới coi cấu hình persistent là hoàn tất.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — Netplan</span>
     <pre><code class="language-yaml"># /etc/netplan/01-static.yaml
 network:
@@ -180,7 +180,7 @@ ifconfig em0 inet 192.168.10.20/24
 route -n get default</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Interface có đúng IP/prefix dự kiến và chỉ có default route mong muốn.</li><li>Resolver phân giải được tên qua cơ chế NSS của hệ điều hành.</li><li>Gateway reachable và một phiên SSH mới đăng nhập thành công trước khi đóng phiên cũ.</li></ul>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">ip addr; ip route                 # Linux
 getent hosts example.com          # kiểm resolver qua NSS

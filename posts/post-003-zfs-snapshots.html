@@ -82,8 +82,8 @@
     <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
   <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
-    <p><strong>Last verified:</strong> 2026-08-09</p>
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
   </section>
   <section><h2>Mục tiêu</h2><p>Tạo và kiểm tra ZFS snapshot đúng cú pháp, hiểu snapshot là điểm khôi phục chứ không thay thế backup độc lập.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có ZFS pool/dataset lab; xác nhận đúng dataset trước khi tạo hoặc xóa snapshot.</p></section>
@@ -107,7 +107,7 @@
     <figcaption>Hình 2 — Lệnh quản trị ZFS gần như cùng semantics trên OpenZFS; phần khác biệt lớn là đóng gói, module kernel và cơ chế service của từng hệ.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Xác nhận đúng pool/dataset và kiểm dung lượng trống trước khi thao tác snapshot.</li><li>Cài hoặc nạp OpenZFS theo đúng hệ điều hành; FreeBSD dùng ZFS trong base thay vì áp quy trình Linux.</li><li>Tạo snapshot có tên rõ nghĩa, liệt kê snapshot và tạo một thay đổi nhỏ trong dataset lab để quan sát copy-on-write.</li><li>Thử khôi phục một file từ snapshot trước; chỉ dùng rollback toàn dataset khi hiểu rõ dữ liệu mới hơn sẽ bị loại bỏ.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo apt update
 sudo apt install -y zfsutils-linux
@@ -131,7 +131,7 @@ zfs version
 zpool status</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li><code>zfs list -t snapshot</code> hiển thị snapshot đúng dataset và đúng tên.</li><li>Dữ liệu trong snapshot vẫn đọc được sau khi dataset sống bị thay đổi.</li><li>Nếu thử restore file, nội dung khôi phục khớp trạng thái tại thời điểm snapshot mà không cần rollback toàn dataset.</li></ul><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Dùng một dataset thử, không thực hành rollback trên production.</span>
 sudo zfs snapshot tank/data@before-change
 zfs list -t snapshot -r tank/data

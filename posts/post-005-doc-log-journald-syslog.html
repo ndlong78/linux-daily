@@ -77,8 +77,8 @@
     <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
   <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
-    <p><strong>Last verified:</strong> 2026-08-09</p>
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
   </section>
   <section><h2>Mục tiêu</h2><p>Xác định đúng nguồn log hệ thống trên Linux và FreeBSD, lọc sự kiện theo thời gian/service mà không sửa trạng thái hệ thống.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có quyền đọc log cần thiết; biết tên service/process đang điều tra.</p></section>
@@ -127,7 +127,7 @@
     <figcaption>Hình 2 — Cùng mục tiêu điều tra, Linux khác nhau ở unit name; FreeBSD dùng file text và công cụ BSD gốc.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Xác định log stack thực tế trước: journald/rsyslog trên Linux hay syslog/daemon tương ứng trên FreeBSD.</li><li>Tạo một sự kiện vô hại có dấu nhận biết riêng bằng <code>logger</code> để có mẫu truy vết.</li><li>Tìm sự kiện bằng công cụ native của từng hệ, sau đó thử filter theo service, priority hoặc khoảng thời gian.</li><li>Kiểm vị trí lưu/persistence và rotation để biết log còn tồn tại sau reboot hoặc sau chu kỳ rotate hay không.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">journalctl -u ssh -b
@@ -149,7 +149,7 @@ newsyslog -n                       # dry-run: xem file nào sẽ rotate
 grep -v '^[[:space:]]*#' /etc/newsyslog.conf</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Thông điệp test xuất hiện đúng một cách nhất quán trong nguồn log đang được hệ thống sử dụng.</li><li>Filter theo thời gian/service không kéo theo lượng log ngoài phạm vi cần điều tra.</li><li>Bạn xác định được log nào chỉ ở journal runtime và log nào được ghi persistent/rotate trên máy.</li></ul>
     <p>Trên Linux, kiểm cả log hiện tại và khả năng giữ log qua reboot bằng cấu hình hiệu lực + sự tồn tại của persistent journal. Trên FreeBSD, kiểm file đích trong <code>/etc/syslog.conf</code> và chạy <code>newsyslog -n</code> trước khi thay đổi rule rotation.</p>
     <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">journalctl -b -n 20
