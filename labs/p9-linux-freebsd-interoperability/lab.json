@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "name": "linux-freebsd-nginx-http",
+  "purpose": "Prove bidirectional application interoperability between a Linux peer and a real FreeBSD peer without mapping Linux administration semantics onto FreeBSD.",
+  "roles": {
+    "linux-peer": {
+      "platform": "linux",
+      "distros": ["ubuntu", "xubuntu", "debian", "fedora"],
+      "package_managers": ["apt", "dnf"],
+      "service_manager": "systemd",
+      "config_root": "/etc/nginx",
+      "firewalls": ["ufw", "nftables", "firewalld"],
+      "script": "labs/p9-linux-freebsd-interoperability/linux-peer.sh"
+    },
+    "freebsd-peer": {
+      "platform": "freebsd",
+      "package_managers": ["pkg", "ports"],
+      "service_manager": "rc.d",
+      "config_root": "/usr/local/etc/nginx",
+      "firewalls": ["pf", "ipfw"],
+      "script": "labs/p9-linux-freebsd-interoperability/freebsd-peer.sh"
+    }
+  },
+  "workflow": {
+    "application": "nginx",
+    "protocol": "http",
+    "port": 8088,
+    "directions": ["linux-to-freebsd", "freebsd-to-linux"],
+    "evidence": ["functional", "negative", "recovery", "observability"],
+    "negative_test": "stop-peer-service-and-prove-http-fails",
+    "recovery": "start-peer-service-and-prove-http-recovers"
+  },
+  "differences": ["package", "service", "firewall", "path"],
+  "safety": {
+    "private_network_only": true,
+    "dedicated_lab_hosts": true,
+    "rollback_required": true,
+    "cleanup_required": true
+  },
+  "sources": [
+    "https://docs.freebsd.org/en/books/handbook/ports/",
+    "https://docs.freebsd.org/en/books/handbook/config/",
+    "https://nginx.org/en/docs/install.html"
+  ]
+}
