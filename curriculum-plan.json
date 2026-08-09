@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "policy": {
+    "planning_horizon_days": 14,
+    "axis_source": "taxonomy.json",
+    "published_source": "posts/post-*.html",
+    "learning_paths_source": "learning-paths.json",
+    "learning_metadata_source": "learning-metadata.json"
+  },
+  "topics": [
+    {"axis": "Networking", "topic": "DNS troubleshooting với dig, resolvectl và drill", "difficulty": "intermediate", "goal": "Chẩn đoán đường phân giải DNS từ client đến resolver trên Linux và FreeBSD."},
+    {"axis": "Bảo mật", "topic": "sudo, doas và least privilege cho tài khoản vận hành", "difficulty": "intermediate", "goal": "Thiết kế quyền quản trị tối thiểu và audit được trên Linux/FreeBSD."},
+    {"axis": "Storage", "topic": "Theo dõi dung lượng filesystem, inode và ZFS dataset", "difficulty": "intermediate", "goal": "Phân biệt hết block, hết inode và quota/dataset pressure trước khi dịch vụ lỗi."},
+    {"axis": "Công cụ mới", "topic": "ripgrep cho tìm kiếm log và cấu hình tốc độ cao", "difficulty": "basic", "goal": "Dùng ripgrep an toàn để tìm pattern trong log, source và cây cấu hình."},
+    {"axis": "Monitoring", "topic": "vmstat và systat: đọc CPU, memory và I/O pressure", "difficulty": "intermediate", "goal": "Đọc tín hiệu resource pressure bằng công cụ native phù hợp từng hệ điều hành."},
+    {"axis": "Automation", "topic": "Shell script idempotent cho tác vụ quản trị lặp lại", "difficulty": "intermediate", "goal": "Viết automation chạy lặp an toàn, có preflight, verification và rollback boundary."},
+    {"axis": "Ôn tập", "topic": "Lab DNS outage: phát hiện, khoanh vùng và phục hồi", "difficulty": "advanced", "goal": "Ghép DNS, logging, firewall và verification thành một incident lab có rollback."},
+    {"axis": "Networking", "topic": "Policy routing và nhiều default gateway", "difficulty": "advanced", "goal": "Hiểu route selection và xử lý host nhiều uplink mà không phá remote access."},
+    {"axis": "Bảo mật", "topic": "Audit đăng nhập và privilege escalation", "difficulty": "intermediate", "goal": "Theo dõi login, sudo/doas và dấu vết xác thực bằng logging native."},
+    {"axis": "Storage", "topic": "Mount options và bảo vệ filesystem", "difficulty": "intermediate", "goal": "Áp dụng noexec, nosuid, nodev và khác biệt mount semantics có kiểm chứng."},
+    {"axis": "Công cụ mới", "topic": "jq cho JSON trong vận hành hệ thống", "difficulty": "basic", "goal": "Lọc và biến đổi JSON từ CLI/API mà không phụ thuộc parser thủ công."},
+    {"axis": "Monitoring", "topic": "Phân tích process tree và service ownership", "difficulty": "intermediate", "goal": "Liên hệ process, parent, service manager và resource usage khi troubleshooting."},
+    {"axis": "Automation", "topic": "systemd timer và FreeBSD periodic/cron", "difficulty": "intermediate", "goal": "Lập lịch tác vụ có logging và failure semantics đúng theo từng platform."},
+    {"axis": "Ôn tập", "topic": "Lab filesystem đầy: quan sát, xử lý và phòng tái diễn", "difficulty": "advanced", "goal": "Thực hành incident storage có bounded failure, recovery evidence và cleanup."}
+  ]
+}
