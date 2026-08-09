@@ -37,12 +37,40 @@
   "lede": "Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Ansible — ansible.builtin.raw", "url": "https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/raw_module.html", "kind": "upstream"},
-    {"title": "Ansible — ansible.builtin.package", "url": "https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/package_module.html", "kind": "upstream"},
-    {"title": "Ansible — ansible.builtin.service", "url": "https://docs.ansible.com/projects/ansible-core/2.20/collections/ansible/builtin/service_module.html", "kind": "upstream"},
-    {"title": "Ansible community.general — pkgng", "url": "https://docs.ansible.com/projects/ansible/latest/collections/community/general/pkgng_module.html", "kind": "upstream"},
-    {"title": "Ansible community.general — doas become", "url": "https://docs.ansible.com/projects/ansible/latest/collections/community/general/doas_become.html", "kind": "upstream"}
-  ]
+    {
+      "title": "Ansible — ansible.builtin.raw",
+      "url": "https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/raw_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible — ansible.builtin.package",
+      "url": "https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/package_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible — ansible.builtin.service",
+      "url": "https://docs.ansible.com/projects/ansible-core/2.20/collections/ansible/builtin/service_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible community.general — pkgng",
+      "url": "https://docs.ansible.com/projects/ansible/latest/collections/community/general/pkgng_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible community.general — doas become",
+      "url": "https://docs.ansible.com/projects/ansible/latest/collections/community/general/doas_become.html",
+      "kind": "upstream"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -58,6 +86,13 @@
     <p class="lede">Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả <em>trạng thái mong muốn</em> một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</p>
     <div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Chạy một playbook Ansible đa nền tảng có phân nhánh package/service đúng cho Linux và FreeBSD.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Có inventory lab và SSH key; target đã có Python khi module Ansible yêu cầu; FreeBSD được inventory riêng khi cần.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 240" role="img" aria-label="Ansible control node kết nối SSH tới Linux và FreeBSD; module thông thường cần Python nhưng raw có thể bootstrap Python">
@@ -89,8 +124,8 @@
     <figcaption>Hình 2 — Dùng abstraction ở phần chung; chỉ chọn module/collection cụ thể khi cần capability riêng.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Playbook đa nền tảng</h2>
-    <pre><code>- hosts: all
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+    <pre><code class="language-yaml">- hosts: all
   become: true
   tasks:
     - name: Cài nginx bằng package abstraction
@@ -104,7 +139,8 @@
         state: started
         enabled: true</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — bootstrap/collection khi cần</span>
-    <pre class="bsd"><code># Nếu host tối thiểu chưa có Python, bootstrap trước facts/module:
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash"># Nếu host tối thiểu chưa có Python, bootstrap trước facts/module:
 ansible bsd1 -i inventory.ini -m ansible.builtin.raw \
   -a 'pkg install -y python3'
 
@@ -113,8 +149,9 @@ ansible-galaxy collection install community.general
 ansible-galaxy collection list | grep community.general</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2>
-    <pre><code>ansible all -i inventory.ini -m ansible.builtin.ping
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible all -i inventory.ini -m ansible.builtin.ping
 ansible all -i inventory.ini -m ansible.builtin.setup \
   -a 'filter=ansible_os_family'
 ansible-playbook -i inventory.ini playbook.yml --check --diff --limit lab
@@ -122,7 +159,8 @@ ansible-playbook -i inventory.ini playbook.yml --limit lab</code></pre>
     <p>Chạy lại playbook và kỳ vọng task khai báo trạng thái ổn định báo <code>changed=0</code>. Nhưng nếu module không hỗ trợ check/diff đầy đủ, hãy kiểm tài liệu module thay vì suy luận từ một lần dry-run.</p>
   </section>
 
-  <section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2><ul class="clean">
+  <section><h2>Gỡ / Hoàn tác</h2><p>Dùng reverse task/playbook hoặc khôi phục file cấu hình đã backup trước khi Ansible thay đổi; chạy lại playbook ở check mode để xác nhận trạng thái mong muốn.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
     <li>Fact gathering có thể thất bại trước khi Python được bootstrap; với play bootstrap bằng <code>raw</code>, có thể cần <code>gather_facts: false</code> ở giai đoạn đầu.</li>
     <li><code>package</code> không tự dịch tên gói giữa distro; tên package vẫn phải đúng với từng hệ.</li>
     <li><code>community.general.pkgng</code>/<code>doas</code> có thể chưa cài nếu chỉ cài ansible-core.</li>

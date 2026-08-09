@@ -37,11 +37,35 @@
   "lede": "Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Fedora — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html", "kind": "upstream"},
-    {"title": "zfs-rollback.8 — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/man/v2.3/8/zfs-rollback.8.html", "kind": "upstream"},
-    {"title": "Snapshots, Clones and Bookmarks — OpenZFS documentation", "url": "https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Datasets/Snapshots%20and%20Clones.html", "kind": "upstream"},
-    {"title": "Chapter 23. The Z File System (ZFS) — FreeBSD Handbook", "url": "https://docs.freebsd.org/en/books/handbook/zfs/", "kind": "official"}
-  ]
+    {
+      "title": "Fedora — OpenZFS documentation",
+      "url": "https://openzfs.github.io/openzfs-docs/Getting%20Started/Fedora/index.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "zfs-rollback.8 — OpenZFS documentation",
+      "url": "https://openzfs.github.io/openzfs-docs/man/v2.3/8/zfs-rollback.8.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Snapshots, Clones and Bookmarks — OpenZFS documentation",
+      "url": "https://openzfs.github.io/openzfs-docs/Basic%20Concepts/Datasets/Snapshots%20and%20Clones.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Chapter 23. The Z File System (ZFS) — FreeBSD Handbook",
+      "url": "https://docs.freebsd.org/en/books/handbook/zfs/",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -57,6 +81,13 @@
     <p class="lede">Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</p>
     <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Tạo và kiểm tra ZFS snapshot đúng cú pháp, hiểu snapshot là điểm khôi phục chứ không thay thế backup độc lập.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Có ZFS pool/dataset lab; xác nhận đúng dataset trước khi tạo hoặc xóa snapshot.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 260" role="img" aria-label="Snapshot ZFS giữ tham chiếu tới các block cũ; khi dataset thay đổi, snapshot giữ lại block cũ nên dung lượng snapshot tăng theo dữ liệu bị thay đổi">
@@ -76,27 +107,32 @@
     <figcaption>Hình 2 — Lệnh quản trị ZFS gần như cùng semantics trên OpenZFS; phần khác biệt lớn là đóng gói, module kernel và cơ chế service của từng hệ.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Cài đặt và kiểm tra theo distro</h2>
-    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span><pre><code>sudo apt update
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install -y zfsutils-linux
 zfs version</code></pre>
-    <span class="code-label"><span class="dot"></span>Debian</span><pre><code><span class="cmt"># Bật contrib/backports theo release hiện hành trước khi cài.</span>
+    <span class="code-label"><span class="dot"></span>Debian</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"><span class="cmt"># Bật contrib/backports theo release hiện hành trước khi cài.</span>
 sudo apt update
 sudo apt install -y zfs-dkms zfsutils-linux
 sudo modprobe zfs
 zfs version</code></pre>
-    <span class="code-label"><span class="dot"></span>Fedora — repo OpenZFS hiện hành</span><pre><code>sudo dnf install -y \
+    <span class="code-label"><span class="dot"></span>Fedora — repo OpenZFS hiện hành</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install -y \
   https://zfsonlinux.org/fedora/zfs-release-3-1$(rpm --eval "%{dist}").noarch.rpm
 sudo dnf install -y kernel-devel-$(uname -r | awk -F'-' '{print $1}')
 sudo dnf install -y zfs
 sudo modprobe zfs</code></pre>
-    <span class="code-label bsd"><span class="dot"></span>FreeBSD — ZFS trong base</span><pre class="bsd"><code>sysrc zfs_enable="YES"
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — ZFS trong base</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">sysrc zfs_enable="YES"
 service zfs start
 zfs version
 zpool status</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Ví dụ thực hành</h2><pre><code><span class="cmt"># Dùng một dataset thử, không thực hành rollback trên production.</span>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"><span class="cmt"># Dùng một dataset thử, không thực hành rollback trên production.</span>
 sudo zfs snapshot tank/data@before-change
 zfs list -t snapshot -r tank/data
 
@@ -106,7 +142,8 @@ cp /tank/data/.zfs/snapshot/before-change/example.conf /tmp/example.conf.old
 <span class="cmt"># Xem trước snapshot nào mới hơn trước khi cân nhắc rollback:</span>
 zfs list -t snapshot -o name,creation -s creation tank/data</code></pre></section>
 
-  <section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2><ul class="clean"><li><strong>Dùng rollback như undo vô hại:</strong> sai; rollback loại bỏ thay đổi mới hơn. Với snapshot cũ hơn, <code>-r</code> còn xóa snapshot/bookmark trung gian.</li><li><strong>Nhầm snapshot với backup:</strong> snapshot cùng pool không bảo vệ khỏi mất pool.</li><li><strong>Hard-code repo Fedora cũ:</strong> repo release của OpenZFS thay đổi theo thời gian; dùng hướng dẫn upstream hiện hành.</li><li><strong>DKMS không khớp kernel:</strong> Debian/Fedora cần module build được cho kernel đang chạy; kiểm <code>modprobe zfs</code> sau cập nhật kernel.</li></ul></section>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Nếu snapshot chỉ là artifact của lab và không còn clone/dependency, xóa đúng snapshot đã tạo. Không dùng wildcard khi chưa liệt kê lại dataset và snapshot mục tiêu.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Dùng rollback như undo vô hại:</strong> sai; rollback loại bỏ thay đổi mới hơn. Với snapshot cũ hơn, <code>-r</code> còn xóa snapshot/bookmark trung gian.</li><li><strong>Nhầm snapshot với backup:</strong> snapshot cùng pool không bảo vệ khỏi mất pool.</li><li><strong>Hard-code repo Fedora cũ:</strong> repo release của OpenZFS thay đổi theo thời gian; dùng hướng dẫn upstream hiện hành.</li><li><strong>DKMS không khớp kernel:</strong> Debian/Fedora cần module build được cho kernel đang chạy; kiểm <code>modprobe zfs</code> sau cập nhật kernel.</li></ul></section>
 
   <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean"><li>Trước rollback, xác nhận đúng dataset và snapshot bằng <code>zfs list -t snapshot</code>; không copy-paste tên từ môi trường khác.</li><li>Ưu tiên restore file đơn lẻ hoặc clone snapshot để kiểm thử trước khi rollback dataset production.</li><li>Giữ bản sao ngoài pool: <code>zfs send</code> sang pool/máy khác hoặc dùng hệ backup độc lập.</li></ul></section>
 

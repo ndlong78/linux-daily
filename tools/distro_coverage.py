@@ -37,10 +37,29 @@ FREEBSD_COMMAND_PATTERNS = (
 _PRE_RE = re.compile(r"<pre\b(?P<attrs>[^>]*)>(?P<body>.*?)</pre>", re.IGNORECASE | re.DOTALL)
 _CLASS_RE = re.compile(r"\bclass\s*=\s*([\"'])(?P<value>.*?)\1", re.IGNORECASE | re.DOTALL)
 _TAG_RE = re.compile(r"<[^>]+>")
+_STYLE_CONTRACT_RE = re.compile(
+    r'<section\b[^>]*class=["\'][^"\']*\bstyle-contract\b[^"\']*["\'][^>]*>.*?</section>',
+    re.IGNORECASE | re.DOTALL,
+)
+_TESTED_ON_META_RE = re.compile(
+    r'"tested_on"\s*:\s*\[.*?\]\s*,?', re.IGNORECASE | re.DOTALL
+)
 
 
 def visible_text(source: str) -> str:
     return html.unescape(_TAG_RE.sub(" ", source))
+
+
+def coverage_source(source: str) -> str:
+    """Remove STYLE-only OS inventory before measuring editorial distro coverage.
+
+    `Tested on` intentionally names every supported platform. Counting those names as
+    article coverage would turn style backfills into false-positive portability gains.
+    Keep the historical ld-meta/body behavior otherwise unchanged so this correction
+    does not silently redefine the existing P7.1 baseline.
+    """
+    source = _STYLE_CONTRACT_RE.sub("", source)
+    return _TESTED_ON_META_RE.sub("", source)
 
 
 def has_distro(text: str, key: str) -> bool:
@@ -78,7 +97,7 @@ def portability_violations(blocks: list[str]) -> list[str]:
 
 
 def analyze_source(source: str) -> dict:
-    text = visible_text(source)
+    text = visible_text(coverage_source(source))
     coverage = {key: has_distro(text, key) for key in DISTROS}
     blocks = freebsd_blocks(source)
     return {

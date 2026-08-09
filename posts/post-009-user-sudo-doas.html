@@ -57,7 +57,15 @@
       "url": "https://man.freebsd.org/cgi/man.cgi?query=doas&sektion=1",
       "kind": "official"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -74,6 +82,13 @@
     <p class="lede">Bài #002 kiểm soát <em>ai được vào</em> máy; bài này kiểm soát <em>vào rồi làm được gì</em>. Nguyên tắc chung là như nhau: đừng đăng nhập root cho mọi việc, hãy tạo user thường rồi trao quyền leo thang có kiểm soát. Nhưng cơ chế thì rẽ nhánh — nhóm <code>sudo</code> hay <code>wheel</code>, công cụ <code>sudo</code> hay <code>doas</code>, và trên FreeBSD cả hai đều không nằm sẵn trong hệ.</p>
     <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div>
   </header>
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS (documentation-verified) · Debian 13 stable (documentation-verified) · Fedora 42 (documentation-verified) · FreeBSD 14.3-RELEASE (documentation-verified)</p>
+    <p><strong>Last verified:</strong> 2026-08-09</p>
+  </section>
+  <section><h2>Mục tiêu</h2><p>Tạo tài khoản và cấp quyền quản trị tối thiểu bằng sudo/wheel hoặc doas, rồi kiểm chứng quyền thực tế.</p></section>
+  <section><h2>Yêu cầu tiên quyết</h2><p>Có tài khoản quản trị hiện tại và một phiên dự phòng; xác định policy sudo/doas trước khi sửa quyền.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 270" role="img" aria-label="Hai mô hình phân quyền: administrator được quyền quản trị rộng qua nhóm sudo hoặc wheel, limited operator không vào nhóm admin và chỉ được một command cụ thể">
@@ -131,18 +146,19 @@
     <figcaption>Hình 2 — FreeBSD tách riêng: không có systemd; <code>sudo</code>/<code>doas</code> không nằm trong base. Nhóm <code>wheel</code> cần cho <code>su</code>, còn doas policy có thể chỉ định user trực tiếp.</figcaption>
   </figure>
 
-  <section>
-    <h2><span class="num">03</span> Thực hành từng bước</h2>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
     <p><strong>Mô hình A — administrator:</strong> chỉ dùng khi user thật sự cần quyền quản trị rộng.</p>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
-    <pre><code>sudo adduser alice
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo adduser alice
 <span class="cmt"># Debian: nếu sudo chưa có, cài từ phiên root trước.</span>
 sudo usermod -aG sudo alice
 id alice
 sudo -l -U alice</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora</span>
-    <pre><code>sudo useradd -m -s /bin/bash alice
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo useradd -m -s /bin/bash alice
 sudo passwd alice
 sudo usermod -aG wheel alice
 id alice
@@ -150,7 +166,8 @@ sudo -l -U alice</code></pre>
 
     <p><strong>Mô hình B — limited operator:</strong> user <code>deploy</code> chỉ được restart nginx; <em>không</em> thêm user này vào <code>sudo</code>/<code>wheel</code> admin.</p>
     <span class="code-label"><span class="dot"></span>Linux — sudoers drop-in</span>
-    <pre><code>sudo visudo -f /etc/sudoers.d/deploy-nginx
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo visudo -f /etc/sudoers.d/deploy-nginx
 <span class="cmt"># nội dung:</span>
 deploy ALL=(root) /usr/bin/systemctl restart nginx
 
@@ -158,7 +175,8 @@ sudo visudo -cf /etc/sudoers.d/deploy-nginx
 sudo -l -U deploy</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — doas riêng</span>
-    <pre class="bsd"><code>pkg install -y doas
+    <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">pkg install -y doas
 <span class="cmt"># /usr/local/etc/doas.conf:</span>
 permit deploy as root cmd /usr/sbin/service args nginx restart
 
@@ -166,10 +184,10 @@ permit deploy as root cmd /usr/sbin/service args nginx restart
 doas -C /usr/local/etc/doas.conf /usr/sbin/service nginx restart</code></pre>
   </section>
 
-  <section>
-    <h2><span class="num">04</span> Kiểm chứng quyền thực tế</h2>
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p>
     <p>Đừng suy luận từ group membership; kiểm policy mà công cụ thực sự áp.</p>
-    <pre><code><span class="cmt"># Linux:</span>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"><span class="cmt"># Linux:</span>
 sudo -l -U deploy
 sudo -U deploy -l /usr/bin/systemctl restart nginx
 
@@ -179,8 +197,8 @@ doas -C /usr/local/etc/doas.conf /bin/sh</code></pre>
     <p>Kỳ vọng: command nginx được permit; shell tùy ý phải bị deny với limited operator.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Gỡ rule sudo/doas vừa thêm trước khi xóa user thử. Luôn xác minh vẫn còn ít nhất một tài khoản quản trị hoạt động.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong>Vừa thêm vào admin group vừa tạo rule hẹp:</strong> rule hẹp không thu hồi quyền rộng đã có từ <code>sudo</code>/<code>wheel</code>.</li>
       <li><strong>Quên <code>-a</code> với usermod:</strong> <code>usermod -G</code> có thể thay danh sách supplementary group; khi thêm nhóm dùng <code>-aG</code>.</li>
