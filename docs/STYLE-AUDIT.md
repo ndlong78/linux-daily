@@ -2,30 +2,30 @@
 
 Baseline date: **2026-08-09**  
 Scope: **Linux Daily #001–#040**  
-Enforcement boundary: **#041+**
+Current enforcement: **#001–#010 và #041+**
 
-## Kết luận
+## Trạng thái
 
-Toàn bộ 40 bài hiện có được tạo trước khi `STYLE.md` trở thành enforceable contract. Code search trên `main` tại thời điểm baseline không tìm thấy `Tested on` hoặc `last_verified`; vì vậy **#001–#040 chưa đạt đầy đủ STYLE.md mới** và được phân loại `legacy`.
+PR Batch A đã backfill **#001–#010** theo contract `STYLE.md`. Các bài này không còn được grandfather: `tools/validate_style.py` sẽ fail CI nếu một trong #001–#010 regress.
 
-Legacy không có nghĩa là nội dung kỹ thuật không hợp lệ. Nhiều bài đã có source-backed review, FreeBSD separation, rollback hoặc verification. Trạng thái `legacy` chỉ nói rằng bài chưa đáp ứng đầy đủ contract mới về metadata, step structure, command context và visual/code semantics.
+Các bài **#011–#040** vẫn là legacy migration backlog. Legacy không có nghĩa nội dung kỹ thuật không hợp lệ; trạng thái này chỉ nói bài chưa đáp ứng đầy đủ contract mới về metadata, step structure, command context và code semantics.
 
-## Những khoảng trống áp dụng cho baseline
+## Contract được backfill
 
-Các bài lịch sử cần được rà lần lượt theo các tiêu chí sau:
+Mỗi bài đã migrate phải có:
 
-- thêm metadata hiển thị `Tested on` + `Last verified`;
-- thêm `ld-meta.tested_on`, `last_verified`, `changes_system`;
-- bổ sung Mục tiêu và Yêu cầu tiên quyết rõ ràng;
-- chuyển quy trình tuyến tính thành `<ol class="steps">`;
-- thêm `language-*` cho mọi code block;
-- khai báo `data-run-as="user|sudo|root"` cho shell command block;
-- bảo đảm verification có Expected Output/Kết quả mong đợi;
-- thêm **Gỡ / Hoàn tác** cho bài thay đổi hệ thống;
-- loại shell prompt `$`/`#` khỏi command block;
-- chuẩn hóa placeholder sang `<...>`;
-- loại `curl | sh` trực tiếp và tăng cảnh báo cho thao tác phá hủy;
-- giữ FreeBSD tách riêng, không áp cơ chế Linux.
+- metadata hiển thị `Tested on` + `Last verified`;
+- `ld-meta.tested_on`, `last_verified`, `changes_system`;
+- Mục tiêu và Yêu cầu tiên quyết;
+- mục `03 Các bước thực hiện` dùng `<ol class="steps">`;
+- `language-*` cho mọi code block;
+- `data-run-as="user|sudo|root"` cho shell command block;
+- mục `04 Kiểm chứng` có Expected Output/Kết quả mong đợi;
+- **Gỡ / Hoàn tác** khi `changes_system=true`;
+- không có shell prompt `$`/`#` trong command block;
+- placeholder theo dạng `<...>`;
+- không chạy trực tiếp `curl | sh`;
+- FreeBSD luôn tách riêng, không áp cơ chế Linux.
 
 ## Enforcement policy
 
@@ -36,20 +36,19 @@ python3 tools/validate_style.py
 python3 tools/validate_style.py --audit
 ```
 
-- mặc định: audit toàn bộ posts nhưng chỉ fail CI nếu bài **#041+** vi phạm;
-- `--audit`: in chi tiết lỗi style của tất cả bài, kể cả legacy;
+- mặc định: fail CI nếu **#001–#010** hoặc **#041+** vi phạm;
+- `--audit`: in chi tiết trạng thái của toàn bộ lịch sử;
+- **#011–#040** tiếp tục được audit nhưng chưa fail cho tới khi batch tương ứng hoàn tất;
 - legacy exemption không áp dụng cho nội dung mới sao chép từ bài cũ.
 
 ## Kế hoạch backfill
 
-Backfill chia thành 4 PR/batch để diff nhỏ và review kỹ thuật được:
-
-| Batch | Bài | Mục tiêu |
-|---|---:|---|
-| A | #001–#010 | Metadata + command semantics + rollback |
-| B | #011–#020 | Metadata + step/verification + automation safety |
-| C | #021–#030 | Incident/lab structure + Expected Output + placeholders |
-| D | #031–#040 | Chuẩn hóa các bài gần nhất và đóng legacy baseline |
+| Batch | Bài | Trạng thái | Mục tiêu |
+|---|---:|---|---|
+| A | #001–#010 | **Hoàn tất trong PR #85** | Metadata + command semantics + rollback |
+| B | #011–#020 | Chờ | Metadata + step/verification + automation safety |
+| C | #021–#030 | Chờ | Incident/lab structure + Expected Output + placeholders |
+| D | #031–#040 | Chờ | Chuẩn hóa các bài gần nhất và đóng legacy baseline |
 
 Sau mỗi batch, chạy:
 
@@ -58,13 +57,8 @@ python3 tools/validate_style.py --audit
 python3 tools/publish.py check
 ```
 
-Khi #001–#040 đều đạt contract mới, bỏ legacy boundary hoặc đặt enforcement từ #001 bằng một PR governance riêng.
+Sau Batch B, nâng `BACKFILLED_THROUGH` lên 20; Batch C lên 30; Batch D lên 40. Khi #001–#040 đều đạt contract mới, có thể đơn giản hóa validator thành enforcement toàn bộ series.
 
-## Không làm trong PR enforcement
+## Nguyên tắc migration
 
-PR đưa `STYLE.md` vào pipeline **không rewrite đồng thời 40 bài**. Lý do:
-
-- tránh diff nội dung quá lớn;
-- tách thay đổi governance/tooling khỏi technical content review;
-- không làm mất dấu claim đã source-backed;
-- dễ rollback nếu validator cần tinh chỉnh.
+Backfill style không phải technical rewrite. Ưu tiên giữ nguyên claim/lệnh đã được review, chỉ thay cấu trúc trình bày, command context, verification và rollback khi cần. Nếu phát hiện claim kỹ thuật cần sửa, tách rõ trong diff/PR để review theo nguồn official/upstream thay vì âm thầm thay đổi trong style migration.
