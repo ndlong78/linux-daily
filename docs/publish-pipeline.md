@@ -20,177 +20,87 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, P9 Advanced Lab contract, P9.5 Linux ↔ FreeBSD interoperability contract, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, taxonomy/content mix, P10 curriculum planner + publication readiness + coverage intelligence, distro/command quality, freshness + lifecycle, P7 quality dashboard, P8 learning metadata/progression/dashboard, P9 Advanced Lab + Linux ↔ FreeBSD interoperability, **P10.5 Daily Operations Dashboard input consistency**, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
-## P7.1 distro portability
+## P7 quality foundation
 
-`tools/distro_coverage.py --check` là một phần của publish contract. Nó kiểm explicit coverage của Ubuntu/Xubuntu, Debian, Fedora và FreeBSD, yêu cầu FreeBSD code block riêng và chặn các Linux-only command/path có tín hiệu cao nếu bị đặt trong block FreeBSD.
+- `tools/distro_coverage.py --check`: explicit Ubuntu/Xubuntu, Debian, Fedora, FreeBSD coverage + FreeBSD portability.
+- `tools/command_quality.py`: static command/config safety.
+- `tools/content_freshness.py`: `current` / `review-due` / `historically-valid` / `superseded` policy.
+- `tools/quality_dashboard.py --check`: canonical P7 derived snapshot.
 
-Chi tiết policy và false-positive boundary: `docs/distro-portability.md`.
+Chi tiết: `docs/distro-portability.md`, `docs/command-config-quality.md`, `docs/content-freshness.md`, `docs/quality-dashboard.md`.
 
-## P7.2 command/config quality
+## P8 learning experience
 
-`tools/command_quality.py` chạy read-only trong `publish.py check`. Gate không thực thi code block; nó static-scan các anti-pattern có tín hiệu cao, inventory privilege/destructive examples và áp enforcement chặt hơn cho bài mới từ #020.
+- `tools/learning_metadata.py`: difficulty + prerequisite DAG.
+- `tools/topic_progression.py`: prerequisite ordering + difficulty progression.
+- `tools/learning_dashboard.py --check`: public derived learning dashboard.
 
-Các bài lịch sử có finding context-sensitive được đưa vào review queue thay vì rewrite tự động. Repository-wide blocker như remote pipe-to-shell, `chmod 777` hoặc catastrophic recursive operations vẫn fail ngay.
+Chi tiết: `docs/learning-paths.md`, `docs/difficulty-prerequisites.md`, `docs/topic-progression.md`, `docs/learning-dashboard.md`.
 
-Chi tiết policy: `docs/command-config-quality.md`.
+## P9 advanced labs
 
-## P7.3 content freshness
+- `tools/lab_contract.py`: topology/risk/rollback/failure/verification contract.
+- `tools/interoperability_lab.py`: Linux ↔ FreeBSD real-role interoperability artifact contract.
 
-`tools/content_freshness.py` đọc `freshness.json` và tính trạng thái `current`, `review-due` hoặc `historically-valid` mà không sửa bài viết.
+Chi tiết: `docs/advanced-lab-framework.md`, `docs/linux-freebsd-interoperability-lab.md`.
 
-`review-due` được hiển thị như actionable queue nhưng không làm publish CI fail mặc định chỉ vì thời gian trôi qua. Policy/ledger inconsistency vẫn fail cứng. Khi cần audit nghiêm ngặt có thể chạy:
+## P10 sustainable daily publishing
 
-```bash
-python3 tools/content_freshness.py --fail-review-due
-```
-
-Structured data cho audit/dashboard:
-
-```bash
-python3 tools/content_freshness.py --json
-```
-
-Chi tiết policy: `docs/content-freshness.md`.
-
-## P7.4 quality dashboard
-
-`tools/quality_dashboard.py` **import trực tiếp** kết quả của P7.1–P7.3 và source-backed gate; nó không định nghĩa lại rule kỹ thuật.
-
-Canonical dashboard được regenerate bằng:
+### Curriculum planner
 
 ```bash
-python3 tools/quality_dashboard.py
+python3 tools/curriculum_planner.py --json
 ```
 
-Committed `docs/quality-dashboard.md` dùng `state.json:last_published_date` làm `as-of`, vì vậy snapshot deterministic và không tự drift chỉ do đồng hồ chạy. `publish.py check` xác nhận snapshot này còn đồng bộ.
+`curriculum-plan.json` là planning intent 14 ngày; planner resolve issue number runtime và không sửa `state.json`.
 
-Khi cần xem quality tại một ngày thực tế khác:
+### Publication readiness
 
 ```bash
-python3 tools/quality_dashboard.py --as-of 2026-11-15
-python3 tools/quality_dashboard.py --as-of 2026-11-15 --json
+python3 tools/publication_readiness.py --json
 ```
 
-Weekly `tools/audit_report.py` gọi cùng aggregator với ngày audit thực tế, nên `review-due` vẫn xuất hiện đúng lúc mà không biến committed dashboard thành time-bomb.
+Readiness kiểm prerequisite, semantic collision, 4-platform review scope và minimum primary sources. Nó trả lời “topic có sẵn sàng để authoring chưa”, không trả lời “đã tới cadence chưa”.
 
-Dashboard chỉ là derived view. Source of truth vẫn là post metadata/content, `freshness.json`, source gate và validators P7.1–P7.3.
-
-## P8.1 learning paths
-
-`tools/build.py` gọi `tools/learning_paths.py`, nên contributor không phải nhớ thêm một pipeline riêng. `learning-paths.json` chỉ lưu curriculum ordering bằng issue ID; generator resolve title/date/URL từ post metadata.
-
-Regenerate trực tiếp khi đang chỉnh path:
+### Coverage intelligence
 
 ```bash
-python3 tools/learning_paths.py
+python3 tools/coverage_intelligence.py --json
 ```
 
-Kiểm drift/schema/coverage:
+Coverage Intelligence derive capability gap từ catalog + corpus + learning paths + plan nhưng không tự chỉnh queue.
+
+### Content lifecycle
 
 ```bash
-python3 tools/learning_paths.py --check
+python3 tools/content_lifecycle.py --json
 ```
 
-Gate fail nếu path tham chiếu issue không tồn tại, lặp issue trong cùng path hoặc có bài published chưa thuộc learning path nào. Chi tiết: `docs/learning-paths.md`.
+Lifecycle resolve replacement lineage và canonical guidance; invalid replacement graph hard-fail.
 
-## P8.2 difficulty & prerequisites
-
-`learning-metadata.json` là source of truth cho learning difficulty + prerequisite graph. Gate read-only:
+### P10.5 Daily Operations Dashboard
 
 ```bash
-python3 tools/learning_metadata.py
-python3 tools/learning_metadata.py --json
+python3 tools/daily_operations_dashboard.py
+python3 tools/daily_operations_dashboard.py --json
+python3 tools/daily_operations_dashboard.py --check
 ```
 
-`publish.py check` chạy gate này trực tiếp. Nó hard-fail khi một bài published thiếu learning metadata, difficulty không hợp lệ, prerequisite không tồn tại/tự tham chiếu/bị lặp hoặc dependency graph có cycle.
+Dashboard import trực tiếp cadence/planner/readiness/P7/P8/lifecycle/coverage signals thành daily decision view. `publish.py check` chạy `--check` như gate read-only; dashboard không nằm trong `prepare` và không tự ghi artifact canonical.
 
-`tools/learning_paths.py` import cùng result để render difficulty + “Học trước” lên public page, vì vậy không có validator rule thứ hai. Khi thêm bài mới, contributor phải cập nhật **cả** `learning-paths.json` và `learning-metadata.json`.
-
-Chi tiết: `docs/difficulty-prerequisites.md`.
-
-## P8.3 topic progression
-
-`tools/topic_progression.py` là analyzer read-only dùng trực tiếp kết quả P8.1 + P8.2:
+Muốn lưu một snapshot vận hành theo nhu cầu:
 
 ```bash
-python3 tools/topic_progression.py
-python3 tools/topic_progression.py --json
+python3 tools/daily_operations_dashboard.py --output /tmp/linux-daily-operations.md
 ```
 
-Normal `publish.py check` hard-fail khi prerequisite xuất hiện sau bài phụ thuộc trong cùng path, khi hai step liên tiếp tăng difficulty quá một bậc, hoặc khi upstream P8.1/P8.2 validation lỗi.
+Mặc định các signal phụ thuộc thời gian dùng `state.last_published_date` để deterministic. Operator có thể truyền `--as-of YYYY-MM-DD` khi cần xem trạng thái ở ngày khác.
 
-Prerequisite nằm ngoài path chỉ là cross-path dependency informational vì public Learning Paths đã có link `Học trước`. Missing difficulty tier như baseline chưa có `advanced` được surface là `ATTENTION`, không làm CI đỏ mặc định.
-
-Audit muốn coi curriculum gap là blocker có thể chạy:
-
-```bash
-python3 tools/topic_progression.py --fail-gaps
-```
-
-Chi tiết: `docs/topic-progression.md`.
-
-## P8.4 learning dashboard
-
-`tools/learning_dashboard.py` không có ledger riêng. Nó import kết quả P8.1–P8.3 rồi dựng public curriculum dashboard:
-
-```bash
-python3 tools/learning_dashboard.py
-python3 tools/learning_dashboard.py --json
-```
-
-Kiểm deterministic artifact:
-
-```bash
-python3 tools/learning_dashboard.py --check
-```
-
-`publish.py prepare` regenerate `learning-dashboard.html`; `publish.py check` chạy `--check` sau learning metadata + topic progression. Dashboard status kế thừa P8.3, nên baseline `ATTENTION` vì chưa có `advanced` vẫn pass normal pipeline nếu hard finding = 0.
-
-Public page được đưa vào sitemap/repository-health và chịu website/SEO, accessibility, self-host font cùng internal-link contracts. Chi tiết: `docs/learning-dashboard.md`.
-
-## P9.1 advanced lab contract
-
-`tools/lab_contract.py` là gate read-only cho lab mới:
-
-```bash
-python3 tools/lab_contract.py
-python3 tools/lab_contract.py --json
-```
-
-Hai lab lịch sử #007/#014 được inventory là legacy. Enforcement bắt đầu từ #020 cho bài có semantics lab; không backfill metadata giả vào lịch sử.
-
-Gate kiểm `ld-meta.lab` và semantic `data-lab-section` markers. Hard-fail khi:
-
-- lab mới thiếu contract;
-- profile/topology/risk/verification khai báo sai schema;
-- Advanced Lab có dưới 2 topology roles hoặc dưới 2 verification classes;
-- risk thực tế nhưng `rollback_required` không phải `true`;
-- `destructive-storage` thiếu `restore` evidence class;
-- failure injection thiếu `recovery` evidence hoặc section tương ứng;
-- `resource-pressure` thiếu bounded failure injection + observability/recovery evidence;
-- thiếu/duplicate semantic lab section;
-- cleanup không được khai báo bắt buộc.
-
-P9.1 không reimplement distro portability, command safety hay source-backed review. Lab vẫn đi qua các gate P7/P8 trước khi đến lab contract. Chi tiết authoring/safety model: `docs/advanced-lab-framework.md`.
-
-## P9.5 Linux ↔ FreeBSD interoperability
-
-`tools/interoperability_lab.py` validate artifact trong `labs/p9-linux-freebsd-interoperability/`:
-
-```bash
-python3 tools/interoperability_lab.py
-python3 tools/interoperability_lab.py --json
-```
-
-Gate bắt buộc có một Linux peer thật và một FreeBSD peer thật, workflow HTTP hai chiều, functional/negative/recovery/observability evidence, private-network/dedicated-host safety và bốn difference classes: package, service, firewall, path.
-
-Validator cũng static-scan script theo role để chặn Linux-only command semantics như `systemctl`, APT/DNF, UFW/firewalld/nftables trong FreeBSD helper, và chặn FreeBSD-only `pkg`, `sysrc`, PF/ipfw semantics trong Linux helper. Nó không thực thi package manager, service hoặc network trong CI.
-
-Runbook: `docs/linux-freebsd-interoperability-lab.md`.
+Operating model: `docs/daily-operations-dashboard.md`.
 
 ## Human control
 

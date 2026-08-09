@@ -32,7 +32,7 @@ Legend: ✅ Completed · 🚧 Current · ⬜ Planned
 ## P9 — Advanced Labs ✅
 - Advanced lab safety contract, security/network, storage/restore, resource-pressure và Linux ↔ FreeBSD interoperability labs.
 
-## P10 — Sustainable Daily Publishing 🚧
+## P10 — Sustainable Daily Publishing ✅
 
 Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Daily thành tập hợp topic ngẫu nhiên. Planning/readiness/lifecycle phải deterministic, review được và tách khỏi publication state.
 
@@ -49,7 +49,7 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] Coverage intelligence read-only, không tự sửa curriculum queue.
 - [x] `chatgpt/**` branch có remote CI pre-PR gate.
 
-### P10.4 — Long-term Content Lifecycle 🚧
+### P10.4 — Long-term Content Lifecycle ✅
 - [x] Freshness model hỗ trợ `current`, `review-due`, `historically-valid` và `superseded`.
 - [x] `superseded` bắt buộc có reason + replacement issue mới hơn và đang tồn tại.
 - [x] `historically-valid` giữ nội dung có giá trị lịch sử mà không giả vờ là guidance hiện hành.
@@ -57,8 +57,10 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] Replacement graph hard-fail backward target, cycle/missing target và terminal không còn canonical.
 - [x] Lifecycle tham gia `tools/publish.py check` nhưng không rewrite bài cũ hay `state.json`.
 
-### P10.5 — Daily Operations Dashboard ⬜
-- [ ] Hợp nhất last published, next planned, cadence, quality status, learning coverage, lifecycle và review queue thành derived operational view.
+### P10.5 — Daily Operations Dashboard ✅
+- [x] `tools/daily_operations_dashboard.py` hợp nhất last published, next planned, cadence, readiness, P7 quality, P8 learning coverage, lifecycle và coverage intelligence thành một derived operational view.
+- [x] Dashboard import trực tiếp validator hiện hành, có `--json`/`--output`/`--as-of` và tham gia `tools/publish.py check` như read-only consistency gate.
+- [x] Dashboard không tự publish, không sửa curriculum/state/lifecycle và không duplicate GitHub/production evidence của Operations Dashboard hiện hữu.
 
 ## Nguyên tắc roadmap
 
@@ -77,3 +79,4 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 13. Coverage intelligence chỉ đề xuất backlog có giải thích; con người/planner quyết định queue.
 14. Branch `chatgpt/**` phải qua remote CI preflight trước khi Draft PR được mở.
 15. Nội dung superseded/historically-valid được giữ để bảo toàn lịch sử; canonical replacement mới là guidance vận hành hiện hành.
+16. Daily Operations Dashboard chỉ tổng hợp decision signals; không trở thành ledger mới và không thay các validator nguồn.
