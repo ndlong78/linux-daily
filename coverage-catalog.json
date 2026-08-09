@@ -1,0 +1,27 @@
+{
+  "version": 1,
+  "policy": {"minimum_keyword_hits": 2, "recommendation_limit": 7},
+  "capabilities": [
+    {"id":"net-dns","axis":"Networking","topic":"DNS troubleshooting","difficulty":"intermediate","keywords":["dns","dig","resolver"],"rationale":"DNS là dependency nền của package, service discovery và remote access."},
+    {"id":"net-routing","axis":"Networking","topic":"Routing và policy routing","difficulty":"advanced","keywords":["routing","route","gateway"],"rationale":"Routing là lớp nền cho multi-homing, VPN và troubleshooting liên site."},
+    {"id":"net-packet","axis":"Networking","topic":"Packet capture và flow diagnosis","difficulty":"intermediate","keywords":["tcpdump","packet","capture"],"rationale":"Packet evidence giúp phân biệt lỗi ứng dụng, firewall, route và DNS."},
+    {"id":"sec-privilege","axis":"Bảo mật","topic":"Least privilege với sudo/doas","difficulty":"intermediate","keywords":["sudo","doas","privilege"],"rationale":"Least privilege giảm blast radius cho tài khoản vận hành."},
+    {"id":"sec-mac","axis":"Bảo mật","topic":"SELinux/AppArmor và MAC","difficulty":"advanced","keywords":["selinux","apparmor","mac"],"rationale":"Mandatory access control là khác biệt quan trọng giữa Fedora, Ubuntu và FreeBSD policy model."},
+    {"id":"sec-audit","axis":"Bảo mật","topic":"Authentication và privilege audit","difficulty":"intermediate","keywords":["audit","login","authentication"],"rationale":"Audit trail là nền cho incident review và hardening verification."},
+    {"id":"sto-capacity","axis":"Storage","topic":"Filesystem capacity và inode pressure","difficulty":"intermediate","keywords":["filesystem","inode","capacity"],"rationale":"Hết block và hết inode gây symptom khác nhau nhưng đều làm service ngừng ghi."},
+    {"id":"sto-snapshot","axis":"Storage","topic":"Snapshot và rollback semantics","difficulty":"intermediate","keywords":["snapshot","rollback","zfs"],"rationale":"Snapshot cần được phân biệt với backup và có semantics khác giữa LVM/ZFS."},
+    {"id":"sto-restore","axis":"Storage","topic":"Restore verification","difficulty":"advanced","keywords":["restore","backup","verify"],"rationale":"Backup chỉ có giá trị khi restore được kiểm chứng."},
+    {"id":"tool-json","axis":"Công cụ mới","topic":"jq cho JSON operations","difficulty":"basic","keywords":["jq","json","filter"],"rationale":"JSON là format phổ biến của CLI/API trong vận hành hiện đại."},
+    {"id":"tool-search","axis":"Công cụ mới","topic":"ripgrep cho log và config search","difficulty":"basic","keywords":["ripgrep","rg","search"],"rationale":"Tìm kiếm nhanh và có filter giúp giảm thời gian triage."},
+    {"id":"tool-sync","axis":"Công cụ mới","topic":"Reliable file sync","difficulty":"intermediate","keywords":["rclone","sync","copy"],"rationale":"File movement cần checksum, retry và semantics rõ ràng."},
+    {"id":"mon-cpu","axis":"Monitoring","topic":"CPU, memory và I/O pressure","difficulty":"intermediate","keywords":["vmstat","cpu","memory"],"rationale":"Resource pressure là bước đầu trong performance triage."},
+    {"id":"mon-logs","axis":"Monitoring","topic":"Structured log investigation","difficulty":"intermediate","keywords":["journalctl","log","journald"],"rationale":"Log evidence cần được liên kết với service lifecycle và timeline."},
+    {"id":"mon-process","axis":"Monitoring","topic":"Process tree và service ownership","difficulty":"intermediate","keywords":["process","service","pid"],"rationale":"Process ownership giúp nối symptom tới service manager và resource usage."},
+    {"id":"auto-idempotent","axis":"Automation","topic":"Idempotent shell automation","difficulty":"intermediate","keywords":["idempotent","shell","script"],"rationale":"Automation production phải chạy lặp an toàn và có exit semantics."},
+    {"id":"auto-config","axis":"Automation","topic":"Configuration management","difficulty":"intermediate","keywords":["ansible","configuration","automation"],"rationale":"Configuration management giảm drift giữa nhiều host."},
+    {"id":"auto-schedule","axis":"Automation","topic":"Timers, cron và periodic","difficulty":"intermediate","keywords":["timer","cron","periodic"],"rationale":"Scheduling khác nhau rõ giữa systemd và FreeBSD rc/periodic."},
+    {"id":"lab-network","axis":"Ôn tập","topic":"Network outage lab","difficulty":"advanced","keywords":["lab","network","failure"],"rationale":"Lab mạng kiểm tra khả năng ghép DNS, route, firewall và verification."},
+    {"id":"lab-storage","axis":"Ôn tập","topic":"Storage recovery lab","difficulty":"advanced","keywords":["lab","storage","restore"],"rationale":"Lab storage kiểm tra recovery evidence và rollback an toàn."},
+    {"id":"lab-interop","axis":"Ôn tập","topic":"Linux FreeBSD interoperability lab","difficulty":"advanced","keywords":["freebsd","linux","interoperability"],"rationale":"Interoperability buộc người học nhận diện đúng khác biệt platform thay vì áp lệnh Linux sang BSD."}
+  ]
+}
