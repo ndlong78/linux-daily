@@ -52,7 +52,15 @@
       "url": "https://github.com/freebsd/freebsd-ports/tree/main/security/py-fail2ban",
       "kind": "official"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -78,6 +86,13 @@
       <span class="tag">~10 PHÚT</span>
     </div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Triển khai Fail2ban cho một dịch vụ có log thật, kiểm jail/filter/backend và chứng minh ban/unban mà không tự khóa IP quản trị.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có log authentication của dịch vụ, một IP test tách khỏi IP quản trị và console/đường lui nếu firewall rule gây mất truy cập.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 260" role="img" aria-label="Sơ đồ log xác thực đi qua Fail2Ban rồi tạo luật chặn tạm thời ở tường lửa">
@@ -136,9 +151,10 @@
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Cấu hình trên từng hệ điều hành</h2>
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Cài Fail2ban, xác định đúng log backend/path của distro và không giả định journald tồn tại trên FreeBSD.</li><li>Tạo jail override tối thiểu, đặt bantime/findtime/maxretry phù hợp lab và allowlist IP quản trị khi cần.</li><li>Validate config rồi khởi động/reload service bằng systemd trên Linux hoặc rc.d trên FreeBSD.</li><li>Tạo thất bại có kiểm soát từ IP test, quan sát jail ban rồi unban và xác nhận rule được gỡ sạch.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span>
-    <pre><code>sudo apt install -y fail2ban
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt install -y fail2ban
 # /etc/fail2ban/jail.local
 [sshd]
 enabled = true
@@ -151,7 +167,8 @@ ignoreip = 127.0.0.1/8 203.0.113.7
 sudo systemctl enable --now fail2ban</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora</span>
-    <pre><code>sudo dnf install -y fail2ban
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install -y fail2ban
 # /etc/fail2ban/jail.local
 [sshd]
 enabled = true
@@ -164,7 +181,8 @@ ignoreip = 127.0.0.1/8 203.0.113.7
 sudo systemctl enable --now fail2ban</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — py-fail2ban, tách riêng</span>
-    <pre class="bsd"><code>pkg install security/py-fail2ban
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">pkg install security/py-fail2ban
 # /usr/local/etc/fail2ban/jail.local
 [sshd]
 enabled = true
@@ -183,15 +201,17 @@ service fail2ban start</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng và rollback</h2>
-    <pre><code>fail2ban-client status sshd
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li><code>fail2ban-client status</code> thấy jail đã enable và đọc đúng nguồn log.</li><li>IP test xuất hiện trong banned list sau ngưỡng thử sai, trong khi IP quản trị không bị chặn.</li><li>Sau unban/stop jail, rule firewall tương ứng được dọn và kết nối test hoạt động trở lại.</li></ul>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">fail2ban-client status sshd
 fail2ban-client get sshd banip
 fail2ban-client set sshd unbanip 203.0.113.9</code></pre>
     <p>Luôn giữ một phiên quản trị thứ hai hoặc console/out-of-band khi thay firewall từ xa. Trước khi kết thúc phiên chính, xác nhận IP quản trị nằm trong <code>ignoreip</code> và kiểm firewall thực sự chứa rule/table do Fail2Ban tạo. Nếu jail sai, dừng service và rollback cấu hình trước khi đóng phiên cứu hộ.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Unban IP test, disable jail lab và gỡ file override nếu không dùng tiếp. Kiểm firewall sau khi stop Fail2ban để chắc không còn rule test treo.</p></section>
+<section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong>Nhầm <code>blacklistd</code> với <code>blocklistd</code>:</strong> tên hiện hành trong FreeBSD Handbook là <code>blocklistd</code>. FreeBSD đã import nó vào base từ lâu.</li>
       <li><strong>Cho rằng <code>sshguard</code> nằm trong base:</strong> không đúng; <code>sshguard</code> là lựa chọn từ Ports/packages.</li>

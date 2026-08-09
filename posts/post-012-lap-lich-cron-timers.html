@@ -37,10 +37,30 @@
   "lede": "Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Debian manpages — systemd.timer(5)", "url": "https://manpages.debian.org/trixie/systemd/systemd.timer.5.en.html", "kind": "official"},
-    {"title": "Debian manpages — systemd-analyze(1)", "url": "https://manpages.debian.org/trixie/systemd/systemd-analyze.1.en.html", "kind": "official"},
-    {"title": "FreeBSD Handbook — Cron and Periodic", "url": "https://docs.freebsd.org/en/books/handbook/config/", "kind": "official"}
-  ]
+    {
+      "title": "Debian manpages — systemd.timer(5)",
+      "url": "https://manpages.debian.org/trixie/systemd/systemd.timer.5.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "Debian manpages — systemd-analyze(1)",
+      "url": "https://manpages.debian.org/trixie/systemd/systemd-analyze.1.en.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Cron and Periodic",
+      "url": "https://docs.freebsd.org/en/books/handbook/config/",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -56,6 +76,13 @@
     <p class="lede">Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: <code>cron</code> cổ điển (có ở mọi nơi) và <code>systemd timers</code> hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: <code>cron</code> cộng <code>periodic(8)</code> cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</p>
     <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Lập lịch một tác vụ định kỳ, chọn đúng giữa cron và systemd timer trên Linux, đồng thời dùng cron/periodic theo mô hình của FreeBSD.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có một lệnh/script idempotent để chạy thử và biết tài khoản nào phải sở hữu job; dùng lịch ngắn trong lab trước khi áp dụng lịch production.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 240" role="img" aria-label="Cron chạy lịch phổ quát; systemd timer trên Linux có calendar timer và catch-up; FreeBSD dùng cron và periodic">
@@ -87,9 +114,10 @@
     <figcaption>Hình 2 — FreeBSD tách riêng: cron cho lịch tùy ý, periodic cho maintenance framework.</figcaption>
   </figure>
 
-  <section><h2><span class="num">03</span> Thực hành từng hệ điều hành</h2>
+  <section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Chạy script thủ công và kiểm exit code trước khi đưa vào scheduler.</li><li>Trên Linux, chọn cron cho lịch đơn giản hoặc systemd timer khi cần dependency, journal và missed-run semantics; FreeBSD không dùng systemd.</li><li>Khai báo lịch với đường dẫn tuyệt đối, môi trường tối thiểu và user chạy rõ ràng.</li><li>Kích hoạt scheduler rồi quan sát ít nhất một lần chạy thực tế qua log/output thay vì chỉ tin cấu hình đã lưu.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian · Fedora — systemd timer</span>
-    <pre><code># /etc/systemd/system/backup.service
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># /etc/systemd/system/backup.service
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/backup.sh
@@ -107,7 +135,8 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now backup.timer
 systemctl list-timers backup.timer</code></pre>
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — cron + periodic</span>
-    <pre class="bsd"><code>crontab -e
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">crontab -e
 0 2 * * * /usr/local/bin/backup.sh
 
 # Kiểm cron environment gần giống thực tế trước khi lịch chạy:
@@ -119,15 +148,17 @@ periodic daily
 # Third-party:  /usr/local/etc/periodic/</code></pre>
   </section>
 
-  <section><h2><span class="num">04</span> Kiểm chứng</h2>
-    <pre><code>systemctl status backup.timer
+  <section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Scheduler hiển thị job/timer ở trạng thái đã nạp và thời điểm chạy kế tiếp hợp lý.</li><li>Tác vụ tạo đúng output/log bằng đúng user, không phụ thuộc PATH của shell tương tác.</li><li>Một lần chạy lỗi có dấu vết đủ để điều tra qua journal/syslog hoặc log riêng.</li></ul>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">systemctl status backup.timer
 systemctl list-timers backup.timer
 journalctl -u backup.service --since today
 systemd-analyze calendar '*-*-* 02:00:00'</code></pre>
     <p>Với cron, kiểm <code>crontab -l</code>, exit status/log của script và chạy thử trong môi trường tối giản. Với FreeBSD periodic, kiểm output policy trong <code>/etc/periodic.conf</code> thay vì giả định output luôn nằm ở một file.</p>
   </section>
 
-  <section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2><ul class="clean">
+  <section><h2>Gỡ / Hoàn tác</h2><p>Xóa cron entry hoặc disable/remove systemd timer vừa tạo; trên FreeBSD gỡ entry cron/periodic tương ứng. Chạy lại lệnh liệt kê scheduler để xác nhận không còn lịch test.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
     <li><code>Persistent=true</code> không replay mọi lần bị lỡ; nó tạo catch-up activation theo semantics timer.</li>
     <li>Calendar expression đúng cú pháp chưa chắc đúng ý timezone; kiểm timezone hệ thống và dùng <code>systemd-analyze calendar</code>.</li>
     <li>Cron có PATH/environment khác shell tương tác; dùng đường dẫn tuyệt đối hoặc khai PATH rõ ràng.</li>

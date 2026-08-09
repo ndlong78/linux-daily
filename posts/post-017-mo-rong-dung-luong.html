@@ -27,15 +27,61 @@
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-017-code.png">
 <meta name="twitter:image:alt" content="Linux Daily #017 — Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp">
 <script type="application/json" id="ld-meta">{
-"issue":17,"date":"2026-07-17","axis":"Storage","eyebrow":"Storage · Hệ thống tệp","slug":"mo-rong-dung-luong","title":"Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp","lede":"Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa \"biết\" để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.","review_status":"reviewed","sources":[{"title":"Chapter 4. Basic logical volume management — Red Hat Enterprise Linux 10","url":"https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/configuring_and_managing_logical_volumes/basic-logical-volume-management","kind":"official"},{"title":"Chapter 21. Storage — FreeBSD Handbook","url":"https://docs.freebsd.org/en/books/handbook/disks/","kind":"official"},{"title":"growfs(8) — FreeBSD manual pages","url":"https://man.freebsd.org/cgi/man.cgi?manpath=FreeBSD+14.3-STABLE&query=growfs&sektion=8","kind":"official"},{"title":"zpool-online.8 — OpenZFS documentation","url":"https://openzfs.github.io/openzfs-docs/man/v2.0/8/zpool-online.8.html","kind":"upstream"}]}</script><link rel="stylesheet" href="../assets/related.css">
+  "issue": 17,
+  "date": "2026-07-17",
+  "axis": "Storage",
+  "eyebrow": "Storage · Hệ thống tệp",
+  "slug": "mo-rong-dung-luong",
+  "title": "Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp",
+  "lede": "Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa \"biết\" để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.",
+  "review_status": "reviewed",
+  "sources": [
+    {
+      "title": "Chapter 4. Basic logical volume management — Red Hat Enterprise Linux 10",
+      "url": "https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/configuring_and_managing_logical_volumes/basic-logical-volume-management",
+      "kind": "official"
+    },
+    {
+      "title": "Chapter 21. Storage — FreeBSD Handbook",
+      "url": "https://docs.freebsd.org/en/books/handbook/disks/",
+      "kind": "official"
+    },
+    {
+      "title": "growfs(8) — FreeBSD manual pages",
+      "url": "https://man.freebsd.org/cgi/man.cgi?manpath=FreeBSD+14.3-STABLE&query=growfs&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "zpool-online.8 — OpenZFS documentation",
+      "url": "https://openzfs.github.io/openzfs-docs/man/v2.0/8/zpool-online.8.html",
+      "kind": "upstream"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
+}</script><link rel="stylesheet" href="../assets/related.css">
 </head><body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#017 · 17·07·2026</span></div></div><header class="post"><p class="eyebrow">Storage · Hệ thống tệp</p><h1>Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</h1><p class="lede">Bài #010 dạy thêm một đĩa mới; bài này giải bài toán ngược lại — đĩa hoặc VM đã được cấp thêm dung lượng, nhưng df vẫn báo đầy. Lý do: chỗ trống mới nằm ở lớp thiết bị, còn filesystem chưa "biết" để dùng. Phải nới lần lượt hai lớp. Linux có LVM cho việc này linh hoạt; FreeBSD dùng gpart + growfs hoặc ZFS — mỗi hệ một bộ công cụ.</p></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Mở rộng dung lượng đúng lớp từ block device/partition đến volume và filesystem, tránh nhầm 'disk đã lớn' với 'filesystem đã lớn'.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có backup/snapshot đã kiểm chứng, biết stack storage thực tế (partition, LVM/ZFS/UFS, filesystem) và có console cho thay đổi boot/storage quan trọng.</p></section>
+
 <figure><svg viewBox="0 0 760 240" role="img" aria-label="Storage stack từ disk partition PV LV đến filesystem"><rect width="760" height="240" fill="#fff"/><text x="380" y="35" text-anchor="middle">Linux có thể có nhiều hơn hai lớp thực tế</text><rect x="80" y="70" width="120" height="50" fill="#eee" stroke="#14201D"/><text x="140" y="100" text-anchor="middle">disk</text><rect x="220" y="70" width="120" height="50" fill="#eee" stroke="#14201D"/><text x="280" y="100" text-anchor="middle">partition</text><rect x="360" y="70" width="120" height="50" fill="#eee" stroke="#14201D"/><text x="420" y="100" text-anchor="middle">PV / LV</text><rect x="500" y="70" width="150" height="50" fill="#F4F8F6" stroke="#0C6E61"/><text x="575" y="100" text-anchor="middle">filesystem</text></svg><figcaption>Hình 1 — Trước khi resize, phải xác định đúng stack. PV có thể là cả disk hoặc một partition; lệnh phải trỏ đúng object thực tế.</figcaption></figure>
 <section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Tăng virtual disk ở hypervisor chỉ làm block device lớn hơn. Phần còn lại phụ thuộc layout: partition, LVM PV/LV và filesystem có thể vẫn giữ kích thước cũ.</p></section>
 <section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Không giả định PV là <code>/dev/sdb</code>; kiểm <code>pvs</code>/<code>lsblk</code>. Nếu PV là <code>/dev/sdb1</code>, partition phải được nới trước rồi mới <code>pvresize /dev/sdb1</code>.</li><li>Không mặc định dùng <code>+100%FREE</code>; ví dụ production nên cấp kích thước rõ ràng và giữ headroom VG.</li><li>Red Hat hỗ trợ <code>lvextend --size +... --resizefs</code> để nới LV và filesystem cùng workflow.</li><li>FreeBSD: xác định đúng partition index từ <code>gpart show</code>; <code>growfs -N</code> cho test mode. Mounted UFS có thể grow nhưng write bị tạm dừng trong lúc mở rộng.</li></ul></section>
 <figure><svg viewBox="0 0 760 220" role="img" aria-label="So sánh Linux LVM với FreeBSD gpart growfs và ZFS"><rect width="760" height="220" fill="#fff"/><rect x="50" y="50" width="310" height="120" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="205" y="80" text-anchor="middle">Linux: inspect → partition/PV → LV → FS</text><text x="205" y="120" text-anchor="middle">lsblk · pvs · lvextend --resizefs</text><rect x="400" y="50" width="310" height="120" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="555" y="80" text-anchor="middle">FreeBSD: gpart → growfs / ZFS</text><text x="555" y="120" text-anchor="middle">gpart show · growfs -N · zpool online -e</text></svg><figcaption>Hình 2 — FreeBSD không có LVM; UFS và ZFS có quy trình riêng.</figcaption></figure>
-<section><h2><span class="num">03</span> Linux — kiểm stack rồi mới nới</h2><pre><code>lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Inventory từ dưới lên: disk/partition, volume layer và filesystem; ghi lại size hiện tại trước khi thay đổi.</li><li>Mở rộng đúng lớp thấp nhất trước và reread partition/device nếu cần; không chạy công cụ filesystem lên nhầm block device.</li><li>Mở rộng volume/filesystem bằng công cụ đúng loại và đúng OS; FreeBSD xử lý GEOM/UFS/ZFS theo stack riêng, không dùng LVM.</li><li>Kiểm capacity mới, mount/read-write và log kernel; chỉ reboot nếu quy trình thực sự yêu cầu.</li></ol><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">lsblk -o NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS
 sudo pvs
 sudo vgs
 sudo lvs -o lv_name,lv_size,vg_name,vg_free
@@ -44,16 +90,19 @@ sudo pvresize /dev/sdb1
 <span class="cmt"># Cấp thêm 10G, không ăn sạch VG:</span>
 sudo lvextend --size +10G --resizefs /dev/vg0/data
 df -hT /data</code></pre></section>
-<section><h2><span class="num">04</span> FreeBSD — UFS và ZFS</h2><span class="code-label bsd"><span class="dot"></span>FreeBSD UFS</span><pre class="bsd"><code>gpart show ada0
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Mỗi lớp inventory phản ánh size mới theo đúng thứ tự, không còn khoảng trống ngoài ý muốn ở lớp dưới.</li><li>Filesystem báo capacity tăng và dữ liệu cũ vẫn đọc được; không có lỗi I/O/filesystem trong log.</li><li>Mountpoint/service dùng volume tiếp tục hoạt động sau thay đổi và sau reboot kiểm soát nếu có.</li></ul><span class="code-label bsd"><span class="dot"></span>FreeBSD UFS</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">gpart show ada0
 <span class="cmt"># Sau khi xác nhận đúng index, ví dụ 3:</span>
 gpart recover ada0
 gpart resize -i 3 ada0
 growfs -N /dev/ada0p3
 growfs /dev/ada0p3
-df -h /data</code></pre><pre class="bsd"><code><span class="cmt"># ZFS: expand đúng device; mirror/RAIDZ cần các member tương ứng cùng được mở rộng.</span>
+df -h /data</code></pre><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash"><span class="cmt"># ZFS: expand đúng device; mirror/RAIDZ cần các member tương ứng cùng được mở rộng.</span>
 zpool online -e tank ada0p3
 zpool list tank</code></pre></section>
-<section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2><ul class="clean"><li>Chạy <code>pvresize</code> lên sai layer.</li><li>Dùng <code>+100%FREE</code> làm mất headroom cho LV khác/snapshot.</li><li>Hard-code <code>gpart resize -i 1</code> dù partition cần nới không phải index 1.</li><li>Partition không có contiguous free space phía sau thì không thể đơn giản grow vào khoảng trống đó.</li></ul></section>
+<section><h2>Gỡ / Hoàn tác</h2><p>Mở rộng storage thường không có rollback đơn giản. Nếu phát hiện sai trước khi ghi filesystem, dừng và khôi phục metadata theo backup/snapshot; nếu đã ghi nhầm thiết bị, ưu tiên quy trình recovery thay vì cố thu nhỏ tùy tiện.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Chạy <code>pvresize</code> lên sai layer.</li><li>Dùng <code>+100%FREE</code> làm mất headroom cho LV khác/snapshot.</li><li>Hard-code <code>gpart resize -i 1</code> dù partition cần nới không phải index 1.</li><li>Partition không có contiguous free space phía sau thì không thể đơn giản grow vào khoảng trống đó.</li></ul></section>
 <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean"><li>Backup trước storage resize; lưu output <code>lsblk/pvs/lvs</code> hoặc <code>gpart show</code> vào change record.</li><li>Không resize khi chưa xác định failure/rollback path và console access.</li><li>Với ZFS mirror/RAIDZ, xác minh topology trước khi kỳ vọng pool nhận dung lượng mới.</li></ul></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Trên VM lab, tăng disk rồi vẽ đúng stack trước khi chạy lệnh. Với Linux, xác định PV là whole disk hay partition và chỉ cấp thêm 2G cho LV. Với FreeBSD, tìm đúng partition index, chạy <code>growfs -N</code> trước khi grow thật.</p></div>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://docs.redhat.com/en/documentation/red_hat_enterprise_linux/10/html/configuring_and_managing_logical_volumes/basic-logical-volume-management" rel="noopener noreferrer">Chapter 4. Basic logical volume management — Red Hat Enterprise Linux 10</a> — official.</li><li><a href="https://docs.freebsd.org/en/books/handbook/disks/" rel="noopener noreferrer">Chapter 21. Storage — FreeBSD Handbook</a> — official.</li><li><a href="https://man.freebsd.org/cgi/man.cgi?manpath=FreeBSD+14.3-STABLE&amp;query=growfs&amp;sektion=8" rel="noopener noreferrer">growfs(8) — FreeBSD manual pages</a> — official.</li><li><a href="https://openzfs.github.io/openzfs-docs/man/v2.0/8/zpool-online.8.html" rel="noopener noreferrer">zpool-online.8 — OpenZFS documentation</a> — upstream.</li></ul></section>

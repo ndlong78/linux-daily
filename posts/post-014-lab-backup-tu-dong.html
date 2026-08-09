@@ -37,10 +37,30 @@
   "lede": "Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "Introduction — restic documentation", "url": "https://restic.readthedocs.io/en/stable/010_introduction.html", "kind": "upstream"},
-    {"title": "Restoring from backup — restic documentation", "url": "https://restic.readthedocs.io/en/stable/050_restore.html", "kind": "upstream"},
-    {"title": "Removing backup snapshots — restic documentation", "url": "https://restic.readthedocs.io/en/stable/060_forget.html", "kind": "upstream"}
-  ]
+    {
+      "title": "Introduction — restic documentation",
+      "url": "https://restic.readthedocs.io/en/stable/010_introduction.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Restoring from backup — restic documentation",
+      "url": "https://restic.readthedocs.io/en/stable/050_restore.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Removing backup snapshots — restic documentation",
+      "url": "https://restic.readthedocs.io/en/stable/060_forget.html",
+      "kind": "upstream"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script><link rel="stylesheet" href="../assets/related.css">
 </head>
@@ -49,6 +69,13 @@
 <main id="main-content"><div class="wrap">
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#014 · 14·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Lab end-to-end</p><h1>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h1><p class="lede">Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Ghép backup, scheduler, retention và restore test thành một lab tự động hóa có thể chứng minh dữ liệu phục hồi được.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Dùng dữ liệu lab và repository backup riêng; có đủ dung lượng, credential tối thiểu và một thư mục restore tách khỏi nguồn.</p></section>
+
 
 <figure><svg viewBox="0 0 760 255" role="img" aria-label="Vòng lặp backup đáng tin gồm backup tự động, kiểm repository, đọc thử data, restore canary và so checksum"><rect width="760" height="255" fill="#fff"/><g font-family="Be Vietnam Pro" font-size="12"><rect x="35" y="95" width="125" height="60" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="98" y="125" text-anchor="middle" font-weight="700">BACKUP</text><rect x="180" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="242" y="125" text-anchor="middle" font-weight="700">CHECK</text><rect x="325" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="387" y="125" text-anchor="middle" font-weight="700">READ DATA</text><rect x="470" y="95" width="125" height="60" rx="8" fill="#fff" stroke="#14201D"/><text x="532" y="125" text-anchor="middle" font-weight="700">RESTORE</text><rect x="615" y="95" width="110" height="60" rx="8" fill="#14201D"/><text x="670" y="125" text-anchor="middle" font-weight="700" fill="#7FE0D2">VERIFY</text></g></svg><figcaption>Hình 1 — Backup đáng tin là một vòng lặp: job chạy thành công chưa đủ; phải kiểm repository, đọc dữ liệu theo kế hoạch và restore thật để so với giá trị mong đợi.</figcaption></figure>
 
@@ -58,20 +85,24 @@
 
 <figure><svg viewBox="0 0 760 230" role="img" aria-label="So sánh scheduling backup bằng systemd timer trên Linux và cron trên FreeBSD"><rect width="760" height="230" fill="#fff"/><rect x="60" y="50" width="300" height="135" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="210" y="80" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu / Debian / Fedora</text><text x="210" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="12">systemd service + timer</text><text x="210" y="150" text-anchor="middle" font-family="JetBrains Mono" font-size="12">journalctl</text><rect x="400" y="50" width="300" height="135" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="550" y="80" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">FreeBSD</text><text x="550" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="12">cron / periodic</text><text x="550" y="150" text-anchor="middle" font-family="JetBrains Mono" font-size="12">rc.d, không systemd</text></svg><figcaption>Hình 2 — Engine restic giống nhau; scheduling/logging khác theo hệ điều hành.</figcaption></figure>
 
-<section><h2><span class="num">03</span> Dựng job backup</h2><pre><code><span class="cmt"># /usr/local/sbin/backup-restic.sh</span>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Chạy backup thủ công lần đầu và ghi nhận repository/source trước khi tự động hóa.</li><li>Đưa lệnh backup vào scheduler đúng nền tảng, truyền secret an toàn và không hard-code credential vào crontab/script world-readable.</li><li>Thiết lập retention/prune theo chính sách lab và kiểm backup mới xuất hiện sau scheduler run.</li><li>Restore một mẫu dữ liệu sang đường dẫn khác, so sánh nội dung/checksum rồi mới coi pipeline backup đạt.</li></ol><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"><span class="cmt"># /usr/local/sbin/backup-restic.sh</span>
 #!/usr/bin/env bash
 set -euo pipefail
 export RESTIC_REPOSITORY=/srv/restic-repo
 export RESTIC_PASSWORD_FILE=/root/.restic-pass
 restic backup /etc /srv/data</code></pre>
-<span class="code-label"><span class="dot"></span>Linux — systemd</span><pre><code>sudo systemctl enable --now backup.timer
+<span class="code-label"><span class="dot"></span>Linux — systemd</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo systemctl enable --now backup.timer
 systemctl list-timers backup.timer
 journalctl -u backup.service -n 50</code></pre>
-<span class="code-label bsd"><span class="dot"></span>FreeBSD — cron</span><pre class="bsd"><code>crontab -e
+<span class="code-label bsd"><span class="dot"></span>FreeBSD — cron</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">crontab -e
 <span class="cmt"># 02:15 mỗi ngày; dùng đường dẫn tuyệt đối.</span>
 15 2 * * * /usr/local/sbin/backup-restic.sh >>/var/log/backup-restic.log 2>&1</code></pre></section>
 
-<section><h2><span class="num">04</span> Kiểm chứng bằng restore thật</h2><pre><code><span class="cmt"># 1. Chọn snapshot cụ thể:</span>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Scheduler tạo snapshot/backup mới và log cho biết run thành công bằng đúng source/repository.</li><li>Retention chỉ xóa bản nằm ngoài chính sách và không làm mất restore point cần giữ.</li><li>Restore test đọc được dữ liệu và checksum/nội dung khớp nguồn đã backup.</li></ul><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"><span class="cmt"># 1. Chọn snapshot cụ thể:</span>
 restic snapshots --host "$(hostname)" --path /etc
 
 <span class="cmt"># 2. Metadata/repository structure:</span>
@@ -94,7 +125,8 @@ restic restore latest --host "$(hostname)" --path /etc/backup-canary.txt \
   --target /tmp/restore-test
 (cd /tmp/restore-test && sha256sum -c /root/backup-canary.sha256)</code></pre></section>
 
-<section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp</h2><ul class="clean"><li><strong>Gắn nhãn “full integrity” cho <code>restic check</code> mặc định:</strong> sai; full data cần <code>--read-data</code>.</li><li><strong>Dùng <code>restore latest</code> không filter:</strong> repo nhiều host/path có thể chọn snapshot khác ý định.</li><li><strong>So restored file với live file:</strong> live file có thể đã thay đổi sau backup; dùng checksum kỳ vọng của canary.</li><li><strong>Không giám sát scheduler:</strong> timer/cron tồn tại không có nghĩa job thành công; kiểm log và tuổi snapshot mới nhất.</li></ul></section>
+<section><h2>Gỡ / Hoàn tác</h2><p>Disable scheduler test trước, sau đó xóa repository/restore directory lab nếu không còn cần. Không chạy prune/delete trên repository production chỉ để dọn lab.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Gắn nhãn “full integrity” cho <code>restic check</code> mặc định:</strong> sai; full data cần <code>--read-data</code>.</li><li><strong>Dùng <code>restore latest</code> không filter:</strong> repo nhiều host/path có thể chọn snapshot khác ý định.</li><li><strong>So restored file với live file:</strong> live file có thể đã thay đổi sau backup; dùng checksum kỳ vọng của canary.</li><li><strong>Không giám sát scheduler:</strong> timer/cron tồn tại không có nghĩa job thành công; kiểm log và tuổi snapshot mới nhất.</li></ul></section>
 
 <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><ul class="clean"><li>Restore drill vào thư mục tạm, không ghi đè production.</li><li>Lưu secret/password tách khỏi repository và code; quyền file tối thiểu.</li><li>Tách lịch backup, lịch subset read và full read-data theo tải I/O thực tế.</li><li>Đặt cảnh báo khi snapshot mới nhất vượt RPO cho phép.</li></ul></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Dựng job hằng ngày, tạo canary và checksum, chạy backup, sau đó restore bằng snapshot ID hoặc filter host/path. Chứng minh sự khác nhau giữa <code>restic check</code>, <code>--read-data-subset</code> và <code>--read-data</code>.</p></div>

@@ -37,10 +37,30 @@
   "lede": "Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "tmux Wiki — Getting Started", "url": "https://github.com/tmux/tmux/wiki/Getting-Started", "kind": "upstream"},
-    {"title": "tmux Wiki — FAQ", "url": "https://github.com/tmux/tmux/wiki/FAQ", "kind": "upstream"},
-    {"title": "OpenBSD manual — tmux(1)", "url": "https://man.openbsd.org/tmux", "kind": "upstream"}
-  ]
+    {
+      "title": "tmux Wiki — Getting Started",
+      "url": "https://github.com/tmux/tmux/wiki/Getting-Started",
+      "kind": "upstream"
+    },
+    {
+      "title": "tmux Wiki — FAQ",
+      "url": "https://github.com/tmux/tmux/wiki/FAQ",
+      "kind": "upstream"
+    },
+    {
+      "title": "OpenBSD manual — tmux(1)",
+      "url": "https://man.openbsd.org/tmux",
+      "kind": "upstream"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -55,6 +75,13 @@
 <p class="lede">Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. <strong>tmux</strong> gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</p>
 <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~8 PHÚT</span></div>
 </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Dùng tmux để giữ phiên làm việc sống khi SSH bị gián đoạn, biết detach/attach và hiểu giới hạn của tmux so với service manager.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có shell trên máy lab và quyền cài gói; nếu thao tác qua SSH, mở một phiên riêng để thử detach/attach mà không ảnh hưởng công việc thật.</p></section>
+
 
 <figure>
 <svg viewBox="0 0 760 240" role="img" aria-label="SSH client có thể rớt trong khi tmux server trên máy chủ tiếp tục giữ session, window và pane">
@@ -83,21 +110,26 @@
 <figcaption>Hình 2 — Cài đặt khác theo hệ; workflow tmux cốt lõi giống nhau.</figcaption>
 </figure>
 
-<section><h2><span class="num">03</span> Thực hành từng bước</h2>
-<span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span><pre><code>sudo apt update
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Cài tmux bằng package manager đúng hệ điều hành và kiểm phiên bản bằng <code>tmux -V</code>.</li><li>Tạo session có tên rõ ràng bằng <code>tmux new -As work</code>, sau đó chạy một job quan sát được trong session.</li><li>Detach bằng prefix <code>Ctrl-b</code> rồi <code>d</code>, kiểm session còn tồn tại bằng <code>tmux ls</code>.</li><li>Đăng nhập/attach lại session và xác nhận job vẫn tiếp tục; dọn session test khi hoàn tất.</li></ol>
+<span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install -y tmux
 tmux -V</code></pre>
-<span class="code-label"><span class="dot"></span>Fedora</span><pre><code>sudo dnf install -y tmux
+<span class="code-label"><span class="dot"></span>Fedora</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install -y tmux
 tmux -V</code></pre>
-<span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg, không dùng systemd</span><pre class="bsd"><code>pkg install -y tmux
+<span class="code-label bsd"><span class="dot"></span>FreeBSD — pkg, không dùng systemd</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">pkg install -y tmux
 tmux -V</code></pre>
-<p>Workflow dùng chung:</p><pre><code>tmux new -As work        # attach nếu có, tạo nếu chưa có
+<p>Workflow dùng chung:</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">tmux new -As work        # attach nếu có, tạo nếu chưa có
 # Ctrl-b rồi d           # detach
 tmux ls
 tmux attach -t work</code></pre></section>
 
-<section><h2><span class="num">04</span> Kiểm chứng</h2>
-<pre><code>tmux new -s test
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li><code>tmux ls</code> liệt kê session sau khi client detach hoặc SSH được nối lại.</li><li>Attach lại hiển thị đúng shell/job đang chạy trước đó, không tạo nhầm session mới.</li><li>Sau <code>tmux kill-session</code>, session test không còn trong danh sách.</li></ul>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">tmux new -s test
 # trong tmux: while true; do date; sleep 2; done
 # Ctrl-b rồi d
 
@@ -107,7 +139,8 @@ tmux attach -t test
 tmux kill-session -t test</code></pre>
 <p>Muốn kiểm đúng tình huống remote, detach hoặc ngắt SSH rồi đăng nhập lại và attach; đừng dùng reboot để test vì reboot cũng dừng tmux server.</p></section>
 
-<section><h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+<section><h2>Gỡ / Hoàn tác</h2><p>Gỡ các session test bằng <code>tmux kill-session -t &lt;name&gt;</code>. Nếu chỉ cài tmux để thử, có thể gỡ package bằng APT/DNF/pkg; thao tác này không thay thế cleanup của các tiến trình chạy bên trong tmux.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
 <ul class="clean"><li><strong>Nhầm tmux với service manager:</strong> job cần tự khởi động sau reboot phải dùng systemd service trên Linux hoặc rc.d/rc.conf trên FreeBSD.</li><li><strong>Nested tmux:</strong> prefix có thể bị lớp ngoài giữ; gửi prefix vào lớp trong bằng prefix hai lần hoặc đổi cấu hình có chủ đích.</li><li><strong>Socket mất:</strong> session có thể vẫn còn nếu server còn chạy; upstream FAQ mô tả cách tmux server tạo lại socket khi nhận <code>SIGUSR1</code>. Đừng vội kết luận dữ liệu session mất chỉ vì socket path biến mất.</li><li><strong>Khác version:</strong> kiểm <code>tmux -V</code> trước khi copy option từ blog mới vào máy có package cũ.</li></ul></section>
 
 <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>

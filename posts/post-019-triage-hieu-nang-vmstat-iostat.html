@@ -37,11 +37,35 @@
   "lede": "Máy chủ 'chậm' không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.",
   "review_status": "reviewed",
   "sources": [
-    {"title": "procps-ng vmstat(8) — Linux manual page", "url": "https://man7.org/linux/man-pages/man8/vmstat.8@@procps-ng.html", "kind": "upstream"},
-    {"title": "sysstat — Performance monitoring tools for Linux", "url": "https://github.com/sysstat/sysstat", "kind": "upstream"},
-    {"title": "FreeBSD vmstat(8)", "url": "https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8", "kind": "official"},
-    {"title": "FreeBSD iostat(8)", "url": "https://man.freebsd.org/cgi/man.cgi?query=iostat&sektion=8", "kind": "official"}
-  ]
+    {
+      "title": "procps-ng vmstat(8) — Linux manual page",
+      "url": "https://man7.org/linux/man-pages/man8/vmstat.8@@procps-ng.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "sysstat — Performance monitoring tools for Linux",
+      "url": "https://github.com/sysstat/sysstat",
+      "kind": "upstream"
+    },
+    {
+      "title": "FreeBSD vmstat(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD iostat(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=iostat&sektion=8",
+      "kind": "official"
+    }
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script>
 <link rel="stylesheet" href="../assets/related.css">
@@ -57,6 +81,13 @@
     <p class="lede">Máy chủ 'chậm' không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.</p>
     <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div>
   </header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
+</section>
+<section><h2>Mục tiêu</h2><p>Triage nhanh CPU, memory pressure và I/O bằng vmstat/iostat cùng công cụ tương đương trên FreeBSD, tập trung vào xu hướng nhiều mẫu thay vì một snapshot.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có workload lab hoặc host cần quan sát; biết baseline bình thường của hệ trước khi kết luận bottleneck và chỉ cài thêm tool khi thực sự thiếu.</p></section>
+
 
   <figure>
     <svg viewBox="0 0 760 250" role="img" aria-label="Luồng triage hiệu năng: kiểm tải tổng thể, đo CPU và memory bằng vmstat, sau đó kiểm disk I/O bằng iostat trước khi kết luận nút thắt">
@@ -101,22 +132,25 @@
   </figure>
 
   <section>
-    <h2><span class="num">03</span> Thao tác từng HĐH</h2>
+    <h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Ghi load/uptime và lấy nhiều mẫu <code>vmstat</code> thay vì đọc dòng đầu như một kết luận.</li><li>Dùng <code>iostat</code> để xem throughput/latency/utilization theo thiết bị và liên hệ với queue/wait ở vmstat.</li><li>Đối chiếu process-level bằng top/ps khi thấy CPU hoặc I/O bất thường; trên FreeBSD dùng metric/tool native tương ứng.</li><li>So sánh với baseline và thời điểm workload; chỉ đề xuất tuning sau khi bottleneck được lặp lại và định vị.</li></ol>
     <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu và Debian — APT</span>
-    <pre><code>sudo apt update
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update
 sudo apt install -y sysstat
 uptime
 vmstat 1 5
 iostat -xz 1 5</code></pre>
 
     <span class="code-label"><span class="dot"></span>Fedora — DNF</span>
-    <pre><code>sudo dnf install -y sysstat
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install -y sysstat
 uptime
 vmstat 1 5
 iostat -xz 1 5</code></pre>
 
     <span class="code-label bsd"><span class="dot"></span>FreeBSD — công cụ base, không systemd</span>
-    <pre class="bsd"><code>uptime
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">uptime
 vmstat -w 1 -c 5
 iostat -x -w 1 -c 5
 systat -vmstat 1</code></pre>
@@ -124,8 +158,9 @@ systat -vmstat 1</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">04</span> Kiểm chứng — workflow 5 phút</h2>
-    <pre><code># 1. Xác nhận tải và thời gian máy đã chạy
+    <h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Các mẫu liên tiếp cho thấy xu hướng nhất quán thay vì một spike đơn lẻ.</li><li>Nếu có bottleneck, metric CPU/memory/I/O và process liên quan kể cùng một câu chuyện có thể kiểm chứng.</li><li>Nếu không có tín hiệu bền vững, kết luận là chưa đủ bằng chứng thay vì tuning theo cảm giác.</li></ul>
+    <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash"># 1. Xác nhận tải và thời gian máy đã chạy
 uptime
 
 # 2. Lấy nhiều mẫu; bỏ qua việc suy diễn từ mẫu đầu tiên
@@ -139,8 +174,9 @@ date</code></pre>
     <p>Kết luận chỉ khi nhiều tín hiệu cùng hướng: ví dụ run queue tăng kéo dài + CPU gần hết idle; hoặc paging/swap tăng liên tục; hoặc application latency tăng đồng thời với device latency/queue. Nếu số liệu bình thường, mở rộng sang network, lock, database hoặc ứng dụng thay vì ép nguyên nhân vào CPU/RAM/disk.</p>
   </section>
 
-  <section>
-    <h2><span class="num">05</span> Cạm bẫy thường gặp</h2>
+  <section><h2>Gỡ / Hoàn tác</h2><p>Các lệnh quan sát không cần rollback. Nếu đã cài sysstat hoặc gói đo đạc chỉ để lab, có thể gỡ package sau khi lưu kết quả cần thiết; không xóa log/metric phục vụ điều tra đang diễn ra.</p></section>
+<section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
     <ul class="clean">
       <li><strong>Đọc dòng đầu của <code>vmstat</code>/<code>iostat</code> như “1 giây vừa rồi”:</strong> nhiều công cụ báo mẫu đầu trung bình từ boot; tập trung vào các mẫu sau.</li>
       <li><strong>Thấy RAM free thấp rồi kết luận thiếu RAM:</strong> Linux và FreeBSD dùng RAM cho cache; tìm paging/swap và áp lực thực tế.</li>
@@ -151,7 +187,7 @@ date</code></pre>
   </section>
 
   <section>
-    <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+    <h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2>
     <ul class="clean">
       <li>Các lệnh quan sát trong bài chủ yếu là read-only; không chạy stress/load generator trên production chỉ để “thử xem biểu đồ có nhúc nhích”.</li>
       <li>Ghi timestamp, hostname, workload và khoảng lấy mẫu khi lưu evidence; một ảnh chụp không có bối cảnh rất dễ bị diễn giải sai.</li>
