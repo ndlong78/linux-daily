@@ -29,7 +29,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 4,
-  "date": "2026-07-08",
+  "date": "2026-07-04",
   "axis": "Công cụ mới",
   "eyebrow": "Công cụ mới · Backup",
   "slug": "restic-backup",
@@ -49,7 +49,7 @@
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
-<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#004 · 08·07·2026</span></div></div>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#004 · 04·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · Backup</p><h1>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h1><p class="lede">Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
 
 <figure><svg viewBox="0 0 760 260" role="img" aria-label="Luồng restic từ dữ liệu nguồn qua mã hoá và deduplication tới repository có nhiều snapshot"><rect width="760" height="260" fill="#fff"/><rect x="30" y="85" width="170" height="85" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="115" y="120" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">DỮ LIỆU NGUỒN</text><text x="115" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11">/etc · /srv/data</text><path d="M200 128H292" stroke="#0C6E61" stroke-width="3"/><rect x="295" y="60" width="180" height="135" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="385" y="92" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">restic backup</text><text x="385" y="120" text-anchor="middle" font-family="JetBrains Mono" font-size="11">deduplicate</text><text x="385" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11">encrypt + authenticate</text><path d="M475 128H565" stroke="#0C6E61" stroke-width="3"/><rect x="568" y="75" width="165" height="105" rx="8" fill="#fff" stroke="#14201D" stroke-width="2"/><text x="650" y="110" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">REPOSITORY</text><text x="650" y="138" text-anchor="middle" font-family="JetBrains Mono" font-size="11">snapshot history</text></svg><figcaption>Hình 1 — restic mã hoá và xác thực dữ liệu phía client trước khi ghi repository; deduplication giúp chỉ lưu thêm các khối chưa có.</figcaption></figure>

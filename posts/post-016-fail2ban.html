@@ -29,7 +29,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 16,
-  "date": "2026-08-01",
+  "date": "2026-07-16",
   "axis": "Bảo mật",
   "eyebrow": "Bảo mật · Phân quyền",
   "slug": "fail2ban",
@@ -64,7 +64,7 @@
   <div class="masthead">
     <div class="brand">
       <a class="brand-home" href="../index.html">← Linux Daily</a>
-      <span class="issue">#016 · 01·08·2026</span>
+      <span class="issue">#016 · 16·07·2026</span>
     </div>
   </div>
 
@@ -97,7 +97,6 @@
     </svg>
     <figcaption>Hình 1 — Fail2Ban không thay thế SSH hardening. Nó quan sát log và yêu cầu firewall chặn nguồn có nhiều lần xác thực thất bại theo policy của jail.</figcaption>
   </figure>
-
   <section>
     <h2><span class="num">01</span> Bối cảnh thực tế</h2>
     <p>Máy SSH public thường nhận nhiều lần thử đăng nhập tự động. Dù đã dùng key-only và cấm root, log vẫn có thể rất ồn. Fail2Ban là lớp bổ sung: nhận diện mẫu thất bại, tính số lần trong một cửa sổ thời gian rồi gọi action để ban IP. Upstream cũng nhấn mạnh rằng công cụ này chỉ giảm nhịp thử sai; nó không chữa được mật khẩu yếu hay cấu hình xác thực kém.</p>

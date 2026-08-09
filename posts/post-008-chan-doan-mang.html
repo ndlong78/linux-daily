@@ -28,7 +28,7 @@
 <script type="application/json" id="ld-meta">
 {
   "issue": 8,
-  "date": "2026-07-16",
+  "date": "2026-07-08",
   "axis": "Networking",
   "eyebrow": "Networking · Chẩn đoán",
   "slug": "chan-doan-mang",
@@ -48,7 +48,7 @@
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <main id="main-content"><div class="wrap">
-<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#008 · 16·07·2026</span></div></div>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#008 · 08·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · Chẩn đoán</p><h1>Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</h1><p class="lede">Bài #001 dạy cách đặt cấu hình mạng; bài này dạy cách đọc nó khi có sự cố. Chẩn đoán mạng là đi từ dưới lên: interface có "up" không, có IP chưa, route tới gateway ổn không, cổng dịch vụ có nghe không, gói tin có thật sự tới. Linux đọc bằng ip và ss; FreeBSD giữ bộ BSD cổ điển ifconfig, netstat, sockstat.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div></header>
 
 <figure><svg viewBox="0 0 760 270" role="img" aria-label="Thang chẩn đoán mạng sáu tầng gồm link, địa chỉ, route, listener, packet path và name resolution"><rect width="760" height="270" fill="#fff"/><g font-family="JetBrains Mono" font-size="11"><text x="380" y="30" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700" font-size="16">Leo từ tầng thấp lên, dừng ở tầng đầu tiên sai</text><rect x="285" y="45" width="190" height="32" rx="5" fill="#14201D"/><text x="380" y="66" text-anchor="middle" fill="#7FE0D2">6 · name resolution?</text><rect x="285" y="82" width="190" height="32" rx="5" fill="#fff" stroke="#14201D"/><text x="380" y="103" text-anchor="middle">5 · packet tới?</text><rect x="285" y="119" width="190" height="32" rx="5" fill="#fff" stroke="#14201D"/><text x="380" y="140" text-anchor="middle">4 · service listen?</text><rect x="285" y="156" width="190" height="32" rx="5" fill="#fff" stroke="#14201D"/><text x="380" y="177" text-anchor="middle">3 · route/gateway?</text><rect x="285" y="193" width="190" height="32" rx="5" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="214" text-anchor="middle">2 · có địa chỉ?</text><rect x="285" y="230" width="190" height="32" rx="5" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="251" text-anchor="middle">1 · link/interface up?</text><text x="150" y="70" text-anchor="middle" fill="#0C6E61">Linux: ip · ss · getent</text><text x="610" y="70" text-anchor="middle" fill="#B23A2E">FreeBSD: ifconfig · sockstat · getent</text></g></svg><figcaption>Hình 1 — DNS/name resolution là một tầng riêng. Đừng đổ lỗi DNS khi interface hoặc route chưa đúng; cũng đừng kết luận host chết chỉ vì ping không trả lời.</figcaption></figure>

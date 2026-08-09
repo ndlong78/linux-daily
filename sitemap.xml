@@ -2,102 +2,102 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-07-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html</loc>
-    <lastmod>2026-08-08</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html</loc>
-    <lastmod>2026-08-07</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-018-rclone-cloud-sync.html</loc>
-    <lastmod>2026-08-05</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-017-mo-rong-dung-luong.html</loc>
-    <lastmod>2026-08-03</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-016-fail2ban.html</loc>
-    <lastmod>2026-08-01</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-015-wireguard-vpn.html</loc>
-    <lastmod>2026-07-30</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-014-lab-backup-tu-dong.html</loc>
-    <lastmod>2026-07-28</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-013-bash-script-vung.html</loc>
-    <lastmod>2026-07-26</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-012-lap-lich-cron-timers.html</loc>
-    <lastmod>2026-07-24</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-011-tmux.html</loc>
-    <lastmod>2026-07-22</lastmod>
-  </url>
-  <url>
-    <loc>https://linux.no.id.vn/posts/post-010-them-dia-moi.html</loc>
     <lastmod>2026-07-20</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-009-user-sudo-doas.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-019-triage-hieu-nang-vmstat-iostat.html</loc>
+    <lastmod>2026-07-19</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-018-rclone-cloud-sync.html</loc>
     <lastmod>2026-07-18</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-008-chan-doan-mang.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-017-mo-rong-dung-luong.html</loc>
+    <lastmod>2026-07-17</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-016-fail2ban.html</loc>
     <lastmod>2026-07-16</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-007-lab-web-server-tuong-lua.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-015-wireguard-vpn.html</loc>
+    <lastmod>2026-07-15</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-014-lab-backup-tu-dong.html</loc>
     <lastmod>2026-07-14</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-006-ansible-multi-os.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-013-bash-script-vung.html</loc>
+    <lastmod>2026-07-13</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-012-lap-lich-cron-timers.html</loc>
     <lastmod>2026-07-12</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-005-doc-log-journald-syslog.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-011-tmux.html</loc>
+    <lastmod>2026-07-11</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-010-them-dia-moi.html</loc>
     <lastmod>2026-07-10</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-004-restic-backup.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-009-user-sudo-doas.html</loc>
+    <lastmod>2026-07-09</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-008-chan-doan-mang.html</loc>
     <lastmod>2026-07-08</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-003-zfs-snapshots.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-007-lab-web-server-tuong-lua.html</loc>
+    <lastmod>2026-07-07</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-006-ansible-multi-os.html</loc>
     <lastmod>2026-07-06</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-002-ssh-hardening.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-005-doc-log-journald-syslog.html</loc>
+    <lastmod>2026-07-05</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-004-restic-backup.html</loc>
     <lastmod>2026-07-04</lastmod>
   </url>
   <url>
-    <loc>https://linux.no.id.vn/posts/post-001-static-ip.html</loc>
+    <loc>https://linux.no.id.vn/posts/post-003-zfs-snapshots.html</loc>
+    <lastmod>2026-07-03</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-002-ssh-hardening.html</loc>
     <lastmod>2026-07-02</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-001-static-ip.html</loc>
+    <lastmod>2026-07-01</lastmod>
   </url>
 </urlset>
