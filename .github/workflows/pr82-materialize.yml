@@ -29,9 +29,9 @@ jobs:
           python tools/distro_coverage.py || true
           python tools/quality_dashboard.py || true
       - name: Package materialized workspace
-        run: tar --exclude=.git -czf pr82-materialized.tgz .
+        run: tar --exclude=.git -czf /tmp/pr82-materialized.tgz .
       - uses: actions/upload-artifact@v4
         with:
           name: pr82-materialized
-          path: pr82-materialized.tgz
+          path: /tmp/pr82-materialized.tgz
           retention-days: 1
