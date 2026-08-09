@@ -72,6 +72,14 @@ Allowed values:
 
 Nếu `failure_injection = true`, phải có `recovery`. Nếu risk có `destructive-storage`, phải có `restore`.
 
+Nếu risk có `resource-pressure`, contract chặt hơn:
+
+- `failure_injection` phải là `true`;
+- `verification` phải có `observability` để chứng minh pressure/failure bằng metric, log hoặc service state;
+- `verification` phải có `recovery` để chứng minh hệ thống trở lại trạng thái phục vụ được.
+
+Mục đích là ngăn một “monitoring lab” chỉ chạy stressor rồi kết thúc mà không có evidence hoặc recovery.
+
 ## Semantic section markers
 
 Bài lab mới dùng `<section data-lab-section="...">` để CI kiểm đúng cấu trúc mà không parse câu chữ tiếng Việt.
@@ -105,7 +113,7 @@ Một Advanced Lab nên đi theo flow:
 3. **Safety:** snapshot/backup/console/session cứu hộ, placeholder và blast radius.
 4. **Execution:** triển khai từng bước, tách rõ Linux và FreeBSD.
 5. **Failure injection:** chủ động làm hỏng một thành phần nếu scope yêu cầu.
-6. **Verification:** functional + negative + persistence/recovery/restore evidence phù hợp.
+6. **Verification:** functional + negative + persistence/recovery/restore/observability evidence phù hợp.
 7. **Rollback:** đưa hệ thống về trạng thái trước lab hoặc trạng thái safe đã định nghĩa.
 8. **Cleanup:** xóa lab resources, temporary rules, snapshots/test data nếu không cần giữ.
 
@@ -142,6 +150,17 @@ Nếu lab có `destructive-storage`:
 - `verification` bắt buộc có `restore`;
 - restore phải vào safe target trước khi cân nhắc overwrite.
 
+### Resource pressure / monitoring
+
+Nếu lab có `resource-pressure`:
+
+- chỉ dùng CPU/RAM/I/O target thuộc lab và phải giới hạn worker/size/path/thời gian;
+- không cố ý tạo OOM, raw-device pressure hoặc saturation không có timeout;
+- baseline observability phải được ghi trước failure injection;
+- fault phải tạo evidence quan sát được;
+- automation/supervisor recovery phải được kiểm lại bằng service-state và functional probe;
+- cleanup phải xác nhận stressor không còn chạy và temporary I/O data đã được xóa.
+
 ### Failure injection
 
 Failure injection phải có:
@@ -173,6 +192,7 @@ Hard-fail gồm:
 - risk thực tế nhưng không yêu cầu rollback;
 - destructive storage không có restore evidence class;
 - failure injection không có recovery class/section;
+- resource pressure không bật failure injection hoặc thiếu observability/recovery evidence;
 - thiếu semantic section bắt buộc.
 
 ## Baseline khi mở P9
