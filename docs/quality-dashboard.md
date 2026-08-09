@@ -1,6 +1,6 @@
 # Linux Daily — P7 Audit & Quality Dashboard
 
-Derived quality snapshot · as of **2026-08-09**.
+Derived quality snapshot · as of **2026-07-21**.
 
 ## Executive status
 
