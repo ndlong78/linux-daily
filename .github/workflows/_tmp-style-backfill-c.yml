@@ -1,0 +1,26 @@
+name: Temporary STYLE Backfill C
+on:
+  push:
+    branches: [chatgpt/pr88-style-backfill-021-030]
+permissions:
+  contents: write
+jobs:
+  migrate:
+    if: ${{ github.event.head_commit.message == 'chore(tmp): run Batch C migration' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr88-style-backfill-021-030
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python3 tools/_tmp_style_backfill_c.py
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add posts/post-*.html
+          git diff --cached --quiet && exit 1
+          git commit -m "style(posts): apply Batch C migration"
+          git push origin HEAD:chatgpt/pr88-style-backfill-021-030
