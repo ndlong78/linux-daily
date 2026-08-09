@@ -20,7 +20,7 @@
       "title": "Storage & Backup",
       "goal": "Quản lý vòng đời dữ liệu từ disk/filesystem đến snapshot, backup, restore và cloud copy.",
       "audience": "Admin vận hành storage, VM, backup hoặc hệ thống cần khôi phục tin cậy.",
-      "steps": [10, 3, 17, 4, 13, 12, 14, 18]
+      "steps": [10, 3, 17, 4, 13, 12, 14, 18, 21]
     },
     {
       "slug": "automation-operations",
