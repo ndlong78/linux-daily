@@ -1,48 +1,48 @@
 # Linux Daily — P7 Audit & Quality Dashboard
 
-Derived quality snapshot · as of **2026-07-21**.
+Derived quality snapshot · as of **2026-07-22**.
 
 ## Executive status
 
 - P7 quality: **ATTENTION**
-- Published posts: **21**
+- Published posts: **22**
 - Hard errors: **0**
 - Remediation queue: **5**
 
 | Signal | Status | Detail |
 |---|---|---|
-| Distro coverage & portability | **ATTENTION** | 16/21 complete · FreeBSD blocks 21/21 · violations 0 |
-| Command & configuration | **PASS** | 112 blocks · 598 lines · blockers 0 · review 0 |
-| Content freshness | **PASS** | current 21 · review-due 0 · historically-valid 0 |
-| Source quality | **PASS** | backed 21/21 · reviewed 21/21 · sources 79 |
+| Distro coverage & portability | **ATTENTION** | 17/22 complete · FreeBSD blocks 22/22 · violations 0 |
+| Command & configuration | **PASS** | 121 blocks · 645 lines · blockers 0 · review 0 |
+| Content freshness | **PASS** | current 22 · review-due 0 · historically-valid 0 |
+| Source quality | **PASS** | backed 22/22 · reviewed 22/22 · sources 85 |
 
 ## Quality evidence
 
 ### Distro portability
 
-- Complete four-platform coverage: **16/21**
-- Explicit FreeBSD blocks: **21/21**
+- Complete four-platform coverage: **17/22**
+- Explicit FreeBSD blocks: **22/22**
 - Linux-only semantics inside FreeBSD blocks: **0**
 
 ### Command / configuration safety
 
-- Code blocks scanned: **112**
-- Command/config lines scanned: **598**
-- Privileged lines: **153**
+- Code blocks scanned: **121**
+- Command/config lines scanned: **645**
+- Privileged lines: **158**
 - Destructive storage examples: **8**
 - Blocking findings: **0**
 
 ### Freshness / technical drift
 
-- Current: **21**
+- Current: **22**
 - Review due: **0**
 - Historically valid: **0**
 
 ### Source evidence
 
-- Posts with structured source evidence: **21/21**
-- Source-backed posts with mergeable review status: **21/21**
-- Official/upstream technical sources: **79**
+- Posts with structured source evidence: **22/22**
+- Source-backed posts with mergeable review status: **22/22**
+- Official/upstream technical sources: **85**
 
 ## Remediation queue
 

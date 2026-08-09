@@ -12,7 +12,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill">
-<meta property="og:description" content="DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
+<meta property="og:description" content="DNS hỏng thường bị báo thành &#x27;mất mạng&#x27;, nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -23,7 +23,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill">
-<meta name="twitter:description" content="DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
+<meta name="twitter:description" content="DNS hỏng thường bị báo thành &#x27;mất mạng&#x27;, nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -249,6 +249,25 @@ drill -t example.com A</code></pre>
       <li><a href="https://man.freebsd.org/cgi/man.cgi?query=drill&amp;sektion=1">FreeBSD drill(1)</a></li>
     </ul>
   </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-015-wireguard-vpn.html"><span class="series-kicker">#015</span><span>WireGuard: một cặp khoá, một đường hầm mã hoá</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-008-chan-doan-mang.html">#008 · Mạng không chạy: đọc từng tầng bằng đúng bộ lệnh</a></li>
+      <li><a href="post-001-static-ip.html">#001 · Một IP tĩnh, bốn cách khai báo</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
 
   <footer>
     <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>

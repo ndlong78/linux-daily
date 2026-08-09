@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Tue, 21 Jul 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Wed, 22 Jul 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</title>
+      <link>https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html</guid>
+      <pubDate>Wed, 22 Jul 2026 00:00:00 +0700</pubDate>
+      <description>DNS hỏng thường bị báo thành 'mất mạng', nhưng lỗi có thể nằm ở NSS của ứng dụng, resolver cục bộ, DNS server được cấp qua DHCP/VPN hoặc chuỗi authoritative. Bài này đi từ client ra ngoài theo từng lớp để khoanh vùng trước khi sửa.</description>
+    </item>
     <item>
       <title>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</title>
       <link>https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-013-bash-script-vung.html</guid>
       <pubDate>Mon, 13 Jul 2026 00:00:00 +0700</pubDate>
       <description>Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để "chạy được ở đây" đồng nghĩa "chạy được mọi nơi".</description>
-    </item>
-    <item>
-      <title>Chạy đúng giờ, mỗi ngày: cron, timers, hay periodic?</title>
-      <link>https://linux.no.id.vn/posts/post-012-lap-lich-cron-timers.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-012-lap-lich-cron-timers.html</guid>
-      <pubDate>Sun, 12 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</description>
     </item>
   </channel>
 </rss>
