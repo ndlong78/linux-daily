@@ -1,0 +1,53 @@
+name: Temporary STYLE Fix B
+
+on:
+  push:
+    branches:
+      - chatgpt/pr87-style-backfill-011-020
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr87-style-backfill-011-020
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Normalize BSD execution context
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          for issue in range(11, 21):
+              matches = list(Path('posts').glob(f'post-{issue:03d}-*.html'))
+              if len(matches) != 1:
+                  raise SystemExit(f'expected one post for #{issue:03d}: {matches}')
+              p = matches[0]
+              s = p.read_text(encoding='utf-8')
+              s = re.sub(
+                  r'<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>\s*(<pre[^>]*class="[^"]*bsd[^"]*"[^>]*>)',
+                  r'<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>\n\1',
+                  s,
+                  flags=re.I,
+              )
+              if '>> Các bước thực hiện' in s or '>> Kiểm chứng' in s:
+                  raise SystemExit(f'malformed heading remains: {p}')
+              p.write_text(s, encoding='utf-8')
+          PY
+      - name: Commit fixes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add posts/post-01*.html posts/post-020-*.html
+          if git diff --cached --quiet; then
+            echo 'No fixes.'
+          else
+            git commit -m 'fix(content): normalize FreeBSD execution context in Batch B'
+            git push
+          fi
