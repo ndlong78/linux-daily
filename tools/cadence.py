@@ -2,10 +2,9 @@
 """
 cadence.py — Quản lý nhịp phát hành Linux Daily qua state.json.
 
-Vì sao cần state.json? Cổng nhịp cũ (Bước 0 của SKILL.md) đọc NGÀY của bài mới
-nhất trong topics.md — mà ngày đó do AI tự ghi, có thể sai hoặc backdate. state.json
-ghi lại thời điểm THỰC mà routine sinh bài (last_generated_at, mốc UTC do máy đặt),
-nên quyết định "đã tới nhịp chưa" đáng tin hơn nhiều.
+state.json ghi lại thời điểm THỰC routine sinh bài (`last_generated_at`) để quyết định
+đã tới nhịp chưa. Mặc định Linux Daily phát hành **mỗi ngày một bài**; `--interval`
+vẫn được giữ để operator/test có thể kiểm tra một khoảng khác khi cần.
 
 state.json (ở gốc repo):
   {
@@ -40,7 +39,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TOPICS_PATH = os.path.join(ROOT, "topics.md")
 STATE_PATH = os.path.join(ROOT, "state.json")
 
-DEFAULT_INTERVAL_DAYS = 2
+DEFAULT_INTERVAL_DAYS = 1
 GATE_NOT_DUE = 10  # exit code khi chưa tới nhịp
 
 TOPIC_LINE_RE = re.compile(r"^#(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(.+?)\s*$")
@@ -179,7 +178,6 @@ def cmd_init(args) -> int:
     if os.path.exists(STATE_PATH) and not args.force:
         print("state.json đã tồn tại. Dùng --force để ghi đè.", file=sys.stderr)
         return 1
-    # Bootstrap: mốc sinh mặc định = 00:00 UTC ngày bài mới nhất (nếu không truyền --at).
     entries = read_topics()
     default_at = f"{entries[-1]['date_s']}T00:00:00+00:00" if entries else _now().isoformat()
     state = state_from_topics(generated_at=args.at or default_at)
