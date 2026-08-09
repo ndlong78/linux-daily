@@ -1,25 +1,23 @@
 name: PR81 Artifact Rebuild
 
 on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - chatgpt/linux-daily-022-20260722
 
 permissions:
   contents: write
 
 jobs:
   rebuild:
-    if: >-
-      github.event.pull_request.number == 81 &&
-      github.event.pull_request.head.repo.full_name == github.repository &&
-      github.event.pull_request.head.ref == 'chatgpt/linux-daily-022-20260722'
+    if: github.ref == 'refs/heads/chatgpt/linux-daily-022-20260722'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout exact PR head branch
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.ref }}
+          ref: chatgpt/linux-daily-022-20260722
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
@@ -155,9 +153,7 @@ Quy tắc kết thúc:
               "search-index.json",
               "sitemap.xml",
           }
-          out = subprocess.check_output(
-              ["git", "status", "--porcelain=v1"], text=True
-          )
+          out = subprocess.check_output(["git", "status", "--porcelain=v1"], text=True)
           changed = {line[3:] for line in out.splitlines() if line.strip()}
           unexpected = sorted(changed - allowed)
           if unexpected:
@@ -167,10 +163,8 @@ Quy tắc kết thúc:
           PY
 
       - name: Commit regenerated artifacts and self-remove helper
-        env:
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -m "Fix PR81 CI and codify exact-head self-fix loop"
-          git push origin "HEAD:${HEAD_REF}"
+          git push origin HEAD:chatgpt/linux-daily-022-20260722
