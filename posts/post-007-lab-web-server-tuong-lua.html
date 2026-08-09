@@ -84,8 +84,9 @@
 
 <figure><svg viewBox="0 0 760 230" role="img" aria-label="So sánh UFW, firewalld và PF theo chiến lược rollback"><rect width="760" height="230" fill="#fff"/><g font-family="JetBrains Mono" font-size="11"><rect x="30" y="45" width="205" height="145" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="132" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu / Debian</text><text x="132" y="108" text-anchor="middle">ufw allow OpenSSH</text><text x="132" y="132" text-anchor="middle">ufw enable</text><text x="132" y="156" text-anchor="middle">verify rồi giữ</text><rect x="278" y="45" width="205" height="145" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Fedora</text><text x="380" y="108" text-anchor="middle">runtime rules</text><text x="380" y="132" text-anchor="middle">verify</text><text x="380" y="156" text-anchor="middle">runtime-to-permanent</text><rect x="526" y="45" width="205" height="145" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="628" y="72" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700" fill="#B23A2E">FreeBSD</text><text x="628" y="108" text-anchor="middle">pfctl -vnf</text><text x="628" y="132" text-anchor="middle">pfctl -f</text><text x="628" y="156" text-anchor="middle">console cứu hộ</text></g></svg><figcaption>Hình 2 — Ba công cụ khác nhau nhưng chung một nguyên tắc: validate/try trước, persist sau.</figcaption></figure>
 
-<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
 <span class="code-label"><span class="dot"></span>Ubuntu / Debian — UFW</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo ufw default deny incoming
 sudo ufw default allow outgoing
 sudo ufw allow OpenSSH
@@ -95,6 +96,7 @@ sudo ufw --dry-run enable
 sudo ufw enable
 sudo ufw status verbose</code></pre>
 <span class="code-label"><span class="dot"></span>Fedora — runtime-first</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo firewall-cmd --add-service=ssh
 sudo firewall-cmd --add-service=http
 sudo firewall-cmd --add-service=https
@@ -102,6 +104,7 @@ sudo firewall-cmd --list-all
 # kiểm tra SSH/HTTP từ máy khác; chỉ khi ổn:
 sudo firewall-cmd --runtime-to-permanent</code></pre>
 <span class="code-label bsd"><span class="dot"></span>FreeBSD — PF</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash"># /etc/pf.conf
 ext_if="em0"
 set skip on lo
@@ -113,10 +116,12 @@ pfctl -vnf /etc/pf.conf   # parse, KHÔNG load
 pfctl -f /etc/pf.conf    # chỉ load khi parse sạch
 pfctl -s rules</code></pre></section>
 
-<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p>Giữ phiên SSH hiện tại, đồng thời mở một phiên SSH mới từ máy quản trị khác. Kiểm tra HTTP/HTTPS từ bên ngoài server, không chỉ <code>curl localhost</code>. Với firewalld kiểm đúng zone/interface; với PF kiểm rules và states.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p>Giữ phiên SSH hiện tại, đồng thời mở một phiên SSH mới từ máy quản trị khác. Kiểm tra HTTP/HTTPS từ bên ngoài server, không chỉ <code>curl localhost</code>. Với firewalld kiểm đúng zone/interface; với PF kiểm rules và states.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">ss -tlnp | grep -E ':(22|80|443)\b'
 sudo firewall-cmd --get-active-zones
 sudo firewall-cmd --list-all</code></pre><span class="code-label bsd"><span class="dot"></span>FreeBSD</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">sockstat -46 -l | grep -E ':(22|80|443)'
 pfctl -s rules
 pfctl -s states</code></pre></section>

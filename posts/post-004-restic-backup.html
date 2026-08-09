@@ -91,15 +91,19 @@
 
 <figure><svg viewBox="0 0 760 235" role="img" aria-label="So sánh cài restic trên Ubuntu Debian Fedora và FreeBSD"><rect width="760" height="235" fill="#fff"/><g font-family="JetBrains Mono" font-size="11"><rect x="20" y="45" width="165" height="140" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="102" y="73" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Ubuntu/Xubuntu</text><text x="102" y="115" text-anchor="middle">apt install restic</text><rect x="205" y="45" width="165" height="140" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="287" y="73" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Debian</text><text x="287" y="115" text-anchor="middle">apt install restic</text><rect x="390" y="45" width="165" height="140" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="472" y="73" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">Fedora</text><text x="472" y="115" text-anchor="middle">dnf install restic</text><rect x="575" y="45" width="165" height="140" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="73" text-anchor="middle" font-family="Be Vietnam Pro" font-weight="700">FreeBSD</text><text x="657" y="115" text-anchor="middle">pkg install restic</text><text x="657" y="145" text-anchor="middle">cron/periodic</text></g></svg><figcaption>Hình 2 — Bộ lệnh restic giống nhau; khác biệt chủ yếu là package manager và scheduler của hệ điều hành.</figcaption></figure>
 
-<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol><ol class="steps"><li>Đọc khối dành cho đúng hệ điều hành và xác nhận tên interface, service, dataset hoặc device trước khi chạy lệnh.</li><li>Thực hiện thay đổi theo phạm vi lab/maintenance đã chuẩn bị; không trộn lệnh Linux với FreeBSD.</li><li>Chuyển sang mục Kiểm chứng và chỉ coi thao tác hoàn tất khi tín hiệu quan sát khớp kết quả mong đợi.</li></ol>
 <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu · Debian</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo apt update
 sudo apt install -y restic</code></pre>
 <span class="code-label"><span class="dot"></span>Fedora</span><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">sudo dnf install -y restic</code></pre>
 <span class="code-label bsd"><span class="dot"></span>FreeBSD</span><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
 <pre class="bsd"><code class="language-bash">pkg install -y restic
 which restic</code></pre>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Ví dụ local repo để lab:</span>
 export RESTIC_REPOSITORY=/srv/restic-repo
@@ -108,7 +112,8 @@ install -m 600 /dev/null "$RESTIC_PASSWORD_FILE"
 printf '%s\n' 'replace-with-a-strong-secret' > "$RESTIC_PASSWORD_FILE"
 restic init</code></pre></section>
 
-<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><h3>Expected Output</h3><p>Kết quả mong đợi: lệnh kiểm chứng phải phản ánh đúng trạng thái vừa cấu hình; nếu tín hiệu không khớp, dừng và xử lý trước khi đóng phiên quản trị hoặc tiếp tục bước phá dữ liệu.</p><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash">restic backup /etc /srv/data
 restic snapshots
 
@@ -124,6 +129,7 @@ restic check --read-data</code></pre></section>
 <section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Cho rằng một password là khóa duy nhất:</strong> repository có thể có nhiều key; hãy kiểm <code>restic key list</code> trước khi remove/rotate.</li><li><strong>Dùng <code>forget --prune</code> ngay:</strong> retention là thao tác xóa. Xem trước bằng <code>restic forget ... --dry-run</code>, sau đó mới thực thi.</li><li><strong>Repo local cùng ổ nguồn:</strong> không bảo vệ khỏi hỏng ổ/máy. Đích backup nên tách failure domain.</li><li><strong>Chỉ chạy <code>restic check</code> và nghĩ đã đọc hết dữ liệu:</strong> muốn verify pack data phải dùng <code>--read-data</code> hoặc chiến lược subset định kỳ.</li></ul></section>
 
 <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-bash"><span class="cmt"># Preview retention trước:</span>
 restic forget --keep-daily 7 --keep-weekly 4 --keep-monthly 6 --dry-run
 <span class="cmt"># Sau khi review output mới chạy thực:</span>
