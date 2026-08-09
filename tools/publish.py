@@ -41,6 +41,7 @@ def command_plan(mode: str) -> list[list[str]]:
             [PYTHON, "tools/topic_progression.py"],
             [PYTHON, "tools/learning_dashboard.py", "--check"],
             [PYTHON, "tools/lab_contract.py"],
+            [PYTHON, "tools/interoperability_lab.py"],
             [PYTHON, "tools/release.py", "validate"],
             [PYTHON, "tools/performance_budget.py"],
             [PYTHON, "tools/repo_health.py"],
