@@ -67,10 +67,10 @@ def _valid_lab(**overrides) -> dict:
 def test_real_repository_keeps_historical_labs_as_legacy():
     report = lab_contract.review()
     assert report.errors == []
-    assert report.total_labs == 2
+    assert report.total_labs == report.legacy_labs + report.enforced_labs
     assert report.legacy_labs == 2
-    assert report.enforced_labs == 0
-    assert report.advanced_labs == 0
+    assert report.enforced_labs >= 1
+    assert report.advanced_labs >= 1
 
 
 def test_valid_advanced_lab_passes(tmp_path):

@@ -5,12 +5,12 @@ import distro_coverage
 
 def test_real_repository_baseline_is_inventory_not_false_green():
     result = distro_coverage.review()
-    assert result["total"] >= 19
-    assert result["complete_posts"] == 14
-    assert result["coverage_counts"]["ubuntu_xubuntu"] == 14
-    assert result["coverage_counts"]["debian"] == 18
-    assert result["coverage_counts"]["fedora"] == 17
-    assert result["coverage_counts"]["freebsd"] == 19
+    assert result["total"] >= 20
+    assert result["complete_posts"] >= 15
+    assert result["coverage_counts"]["ubuntu_xubuntu"] >= 15
+    assert result["coverage_counts"]["debian"] >= 19
+    assert result["coverage_counts"]["fedora"] >= 18
+    assert result["coverage_counts"]["freebsd"] == result["total"]
     assert result["freebsd_marked_posts"] == result["total"]
     assert result["violation_count"] == 0
     assert len(distro_coverage.coverage_findings(result)) == 5

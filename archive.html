@@ -19,11 +19,11 @@
 <header class="site">
   <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
   <h1 class="site">Search &amp; Archive</h1>
-  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 19 bài theo chủ đề.</p>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 20 bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">
     <label for="archive-search">Tìm bài</label>
     <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
-    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 19 bài.</p>
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 20 bài.</p>
   </form>
 </header>
 <main id="main-content">
@@ -130,8 +130,13 @@
     </div>
   </section>
   <section class="archive-group" id="automation">
-    <h2>Automation &amp; scripting <span class="archive-count">2</span></h2>
+    <h2>Automation &amp; scripting <span class="archive-count">3</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-020-firewall-rollback-negative-test.html">
+        <span class="archive-meta">#020 · 2026-08-08</span>
+        <strong>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</strong>
+        <span>Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.</span>
+      </a>
       <a class="archive-item" href="posts/post-013-bash-script-vung.html">
         <span class="archive-meta">#013 · 2026-07-26</span>
         <strong>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</strong>

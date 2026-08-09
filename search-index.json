@@ -1,6 +1,19 @@
 {
-  "count": 19,
+  "count": 20,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-08",
+      "href": "posts/post-020-firewall-rollback-negative-test.html",
+      "issue": 20,
+      "lede": "Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.",
+      "tags": [
+        "Advanced Lab Security & Networking"
+      ],
+      "title": "Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",

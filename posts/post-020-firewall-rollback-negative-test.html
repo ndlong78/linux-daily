@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ — Linux Daily #020</title>
+<meta name="description" content="Advanced Lab đa node về thay firewall từ xa an toàn: rollback watchdog, allow-list SSH, negative test và failure injection trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<meta property="og:description" content="Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-020-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily #020 — Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<meta name="twitter:description" content="Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-020-code.png">
+<meta name="twitter:image:alt" content="Linux Daily #020 — Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 20,
+  "date": "2026-08-08",
+  "axis": "Automation",
+  "eyebrow": "Automation · Advanced Lab Security & Networking",
+  "slug": "firewall-rollback-negative-test",
+  "title": "Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ",
+  "lede": "Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Ubuntu Server — Firewall / ufw", "url": "https://ubuntu.com/server/docs/security-firewall/", "kind": "official"},
+    {"title": "Debian trixie — nft(8)", "url": "https://manpages.debian.org/trixie/nftables/nft.8.en.html", "kind": "official"},
+    {"title": "firewalld — Runtime versus Permanent", "url": "https://firewalld.org/documentation/configuration/runtime-versus-permanent.html", "kind": "upstream"},
+    {"title": "firewalld — Rich Language", "url": "https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html", "kind": "upstream"},
+    {"title": "FreeBSD Handbook — Firewalls / PF", "url": "https://docs.freebsd.org/en/books/handbook/firewalls/", "kind": "official"}
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "advanced",
+    "topology": ["server", "admin", "probe", "outsider", "rescue-console"],
+    "risks": ["lockout", "network-isolation", "downtime"],
+    "verification": ["functional", "negative", "recovery", "observability"],
+    "rollback_required": true,
+    "cleanup_required": true,
+    "failure_injection": true
+  }
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#020 · 08·08·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Automation · Advanced Lab Security &amp; Networking</p>
+    <h1>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</h1>
+    <p class="lede">Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.</p>
+    <div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 760 270" role="img" aria-label="Topology Advanced Lab gồm ADMIN, PROBE và OUTSIDER kết nối tới SERVER, kèm rescue console độc lập; firewall cho ADMIN và PROBE, chặn OUTSIDER">
+      <rect width="760" height="270" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="25" y="45" width="145" height="72" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="98" y="74" font-size="13" font-weight="700">ADMIN</text><text x="98" y="98" font-family="JetBrains Mono" font-size="11">192.0.2.10</text>
+        <rect x="25" y="145" width="145" height="72" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="98" y="174" font-size="13" font-weight="700">PROBE</text><text x="98" y="198" font-family="JetBrains Mono" font-size="11">192.0.2.30</text>
+        <rect x="590" y="45" width="145" height="72" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="662" y="74" font-size="13" font-weight="700">OUTSIDER</text><text x="662" y="98" font-family="JetBrains Mono" font-size="11">192.0.2.40</text>
+        <rect x="285" y="82" width="190" height="105" rx="8" fill="#14201D"/><text x="380" y="116" fill="#7FE0D2" font-size="14" font-weight="700">SERVER</text><text x="380" y="143" fill="#FFFFFF" font-family="JetBrains Mono" font-size="11">192.0.2.20:22</text><text x="380" y="166" fill="#9FE9DC" font-size="11">firewall under test</text>
+        <rect x="285" y="210" width="190" height="42" rx="8" fill="#FFFFFF" stroke="#B23A2E" stroke-dasharray="5 4"/><text x="380" y="236" font-size="11" fill="#B23A2E">RESCUE CONSOLE · ngoài data path</text>
+        <path d="M170 82H278" stroke="#0C6E61" stroke-width="3"/><path d="M170 181H278" stroke="#0C6E61" stroke-width="3"/><path d="M482 82H590" stroke="#B23A2E" stroke-width="3"/><path d="M380 187V210" stroke="#B23A2E" stroke-width="2" stroke-dasharray="5 4"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — ADMIN là đường quản trị giữ nguyên; PROBE là đường được phép nhưng sẽ bị cố ý làm hỏng; OUTSIDER luôn phải bị chặn; rescue console là đường lui cuối cùng ngoài firewall đang thử.</figcaption>
+  </figure>
+
+  <section data-lab-section="scenario">
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Một thay đổi firewall từ xa chỉ đáng tin khi bạn chứng minh được cả ba trạng thái: luồng hợp lệ vẫn đi qua, luồng không hợp lệ bị chặn, và nếu rule mới sai thì có cơ chế tự quay về cấu hình tốt đã biết. Lab này không thử trên production: dùng VM snapshot, mạng test <code>192.0.2.0/24</code> và console hypervisor/serial luôn mở.</p>
+    <p>Mục tiêu cuối: SSH tới SERVER chỉ được từ ADMIN và PROBE; OUTSIDER phải thất bại. Sau đó ta cố ý làm PROBE mất SSH, nhưng ADMIN không bị đụng và watchdog tự phục hồi PROBE sau khoảng 90 giây.</p>
+  </section>
+
+  <section data-lab-section="topology">
+    <h2><span class="num">02</span> Topology &amp; điều kiện đầu vào</h2>
+    <ul class="clean">
+      <li><strong>SERVER:</strong> VM cần kiểm thử, IPv4 <code>192.0.2.20/24</code>, SSH đang lắng nghe TCP/22.</li>
+      <li><strong>ADMIN:</strong> <code>192.0.2.10</code>, giữ một phiên SSH đang hoạt động và một terminal thứ hai để mở kết nối mới.</li>
+      <li><strong>PROBE:</strong> <code>192.0.2.30</code>, ban đầu được phép SSH; đây là đường sẽ bị failure injection.</li>
+      <li><strong>OUTSIDER:</strong> <code>192.0.2.40</code>, phải bị chặn ngay từ baseline.</li>
+      <li><strong>RESCUE CONSOLE:</strong> console hypervisor/serial, không đi qua interface đang áp firewall.</li>
+    </ul>
+    <pre><code># Chạy trên SERVER trước khi đổi firewall
+ss -ltn | grep ':22'
+ip -br addr
+ip route</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — lệnh base, không dùng ip/ss của Linux</span>
+    <pre class="bsd"><code>sockstat -46 -l | grep ':22'
+ifconfig
+netstat -rn</code></pre>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 760 285" role="img" aria-label="So sánh firewall trong lab: Ubuntu Xubuntu dùng UFW, Debian dùng nftables, Fedora dùng firewalld runtime rich rules, FreeBSD dùng PF và pfctl syntax check">
+      <rect width="760" height="285" fill="#FFFFFF"/>
+      <g font-family="JetBrains Mono" font-size="10.5" text-anchor="middle">
+        <rect x="18" y="35" width="172" height="205" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="104" y="62" font-family="Be Vietnam Pro" font-size="12.5" font-weight="700">Ubuntu / Xubuntu</text><text x="104" y="101">ufw --dry-run</text><text x="104" y="127">allow admin/probe</text><text x="104" y="153">insert deny probe</text><text x="104" y="179">delete deny → recover</text>
+        <rect x="203" y="35" width="172" height="205" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="289" y="62" font-family="Be Vietnam Pro" font-size="12.5" font-weight="700">Debian stable</text><text x="289" y="101">nft -c -f</text><text x="289" y="127">table inet ldlab</text><text x="289" y="153">atomic file load</text><text x="289" y="179">reload good ruleset</text>
+        <rect x="388" y="35" width="172" height="205" rx="7" fill="#F4F8F6" stroke="#0C6E61"/><text x="474" y="62" font-family="Be Vietnam Pro" font-size="12.5" font-weight="700">Fedora</text><text x="474" y="101">firewalld runtime</text><text x="474" y="127">rich-rule priority</text><text x="474" y="153">remove probe allow</text><text x="474" y="179">re-add → recover</text>
+        <rect x="573" y="35" width="169" height="205" rx="7" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="62" font-family="Be Vietnam Pro" font-size="12.5" font-weight="700">FreeBSD</text><text x="657" y="101">PF · /tmp rules</text><text x="657" y="127">pfctl -vnf</text><text x="657" y="153">pfctl -f fail</text><text x="657" y="179">pfctl -f good</text>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Cùng một test plan nhưng backend khác hẳn: UFW, nftables, firewalld và PF. FreeBSD dùng <code>pfctl</code>, không gán systemd/nftables sang BSD.</figcaption>
+  </figure>
+
+  <section data-lab-section="safety">
+    <h2><span class="num">03</span> Safety gate: arm rollback trước khi mutate</h2>
+    <p>Chỉ tiếp tục nếu VM có snapshot và console cứu hộ hoạt động. ADMIN phải giữ phiên hiện tại; thay đổi chỉ nhắm vào PROBE. Watchdog dưới đây là cơ chế lab đơn giản: một tiến trình <code>nohup</code> ngủ 90 giây rồi gọi script phục hồi, vì vậy nó không phụ thuộc phiên SSH còn sống.</p>
+    <p><strong>Không copy nguyên lab này lên production.</strong> Production cần change window, out-of-band management và cơ chế rollback được chuẩn hóa bởi tổ chức.</p>
+  </section>
+
+  <section data-lab-section="execution">
+    <h2><span class="num">04</span> Dựng baseline allow-list theo từng HĐH</h2>
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — UFW</span>
+    <pre><code># Điều kiện lab: UFW chưa có policy production cần giữ lại.
+sudo ufw status numbered
+sudo ufw default deny incoming
+sudo ufw default allow outgoing
+sudo ufw allow proto tcp from 192.0.2.10 to any port 22 comment 'ldlab-admin'
+sudo ufw allow proto tcp from 192.0.2.30 to any port 22 comment 'ldlab-probe'
+sudo ufw --dry-run enable
+sudo ufw enable
+sudo ufw status verbose</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Debian stable — nftables, bảng lab riêng</span>
+    <pre><code>sudo apt update
+sudo apt install -y nftables
+sudo tee /tmp/ldlab-good.nft &gt;/dev/null &lt;&lt;'EOF'
+table inet ldlab {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip saddr { 192.0.2.10, 192.0.2.30 } tcp dport 22 accept
+  }
+  chain output {
+    type filter hook output priority 0; policy accept;
+  }
+}
+EOF
+sudo nft -c -f /tmp/ldlab-good.nft
+sudo nft -f /tmp/ldlab-good.nft
+sudo nft list table inet ldlab</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — firewalld runtime-only rich rules</span>
+    <pre><code>ZONE="$(firewall-cmd --get-default-zone)"
+sudo firewall-cmd --zone="$ZONE" --add-rich-rule='rule family="ipv4" priority="-100" source address="192.0.2.10" service name="ssh" accept'
+sudo firewall-cmd --zone="$ZONE" --add-rich-rule='rule family="ipv4" priority="-100" source address="192.0.2.30" service name="ssh" accept'
+sudo firewall-cmd --zone="$ZONE" --add-rich-rule='rule family="ipv4" priority="-98" service name="ssh" reject'
+sudo firewall-cmd --zone="$ZONE" --list-rich-rules</code></pre>
+    <p>Không dùng <code>--permanent</code> trong lab này. firewalld tách runtime và permanent; runtime-only giúp giới hạn blast radius trong lần thử.</p>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — PF, runtime-only trong lab</span>
+    <pre class="bsd"><code>cat &gt;/tmp/ldlab-good.pf &lt;&lt;'EOF'
+ext_if="em0"
+table &lt;ssh_ok&gt; const { 192.0.2.10, 192.0.2.30 }
+set skip on lo
+block in all
+pass out all keep state
+pass in on $ext_if inet proto tcp from &lt;ssh_ok&gt; to ($ext_if) port 22 keep state
+EOF
+pfctl -vnf /tmp/ldlab-good.pf
+pfctl -f /tmp/ldlab-good.pf
+pfctl -e
+pfctl -s rules</code></pre>
+    <p>Thay <code>em0</code> bằng interface thật của VM. Không sửa <code>/etc/rc.conf</code> trong lab; PF chỉ được bật runtime và cleanup sẽ trả về trạng thái ban đầu của VM lab.</p>
+  </section>
+
+  <section data-lab-section="failure-injection">
+    <h2><span class="num">05</span> Failure injection: làm PROBE mất SSH có kiểm soát</h2>
+    <p>Trước khi inject, từ ADMIN và PROBE phải kết nối được TCP/22; từ OUTSIDER phải thất bại. Sau đó arm watchdog và chỉ phá đường PROBE.</p>
+
+    <span class="code-label"><span class="dot"></span>Ubuntu / Xubuntu — watchdog xóa deny thử nghiệm</span>
+    <pre><code>sudo tee /root/ldlab-rollback.sh &gt;/dev/null &lt;&lt;'EOF'
+#!/bin/sh
+ufw delete deny proto tcp from 192.0.2.30 to any port 22 comment 'ldlab-failure' || true
+EOF
+sudo chmod 700 /root/ldlab-rollback.sh
+sudo sh -c 'nohup sh -c "sleep 90; /root/ldlab-rollback.sh" &gt;/var/log/ldlab-rollback.log 2&gt;&amp;1 &lt;/dev/null &amp;'
+sudo ufw insert 1 deny proto tcp from 192.0.2.30 to any port 22 comment 'ldlab-failure'</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Debian — atomic fail ruleset, watchdog reload good ruleset</span>
+    <pre><code>sudo tee /tmp/ldlab-fail.nft &gt;/dev/null &lt;&lt;'EOF'
+delete table inet ldlab
+table inet ldlab {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip saddr 192.0.2.10 tcp dport 22 accept
+  }
+  chain output { type filter hook output priority 0; policy accept; }
+}
+EOF
+sudo tee /tmp/ldlab-restore.nft &gt;/dev/null &lt;&lt;'EOF'
+delete table inet ldlab
+table inet ldlab {
+  chain input {
+    type filter hook input priority 0; policy drop;
+    iifname "lo" accept
+    ct state established,related accept
+    ip saddr { 192.0.2.10, 192.0.2.30 } tcp dport 22 accept
+  }
+  chain output { type filter hook output priority 0; policy accept; }
+}
+EOF
+sudo nft -c -f /tmp/ldlab-fail.nft
+sudo sh -c 'nohup sh -c "sleep 90; nft -f /tmp/ldlab-restore.nft" &gt;/var/log/ldlab-rollback.log 2&gt;&amp;1 &lt;/dev/null &amp;'
+sudo nft -f /tmp/ldlab-fail.nft</code></pre>
+
+    <span class="code-label"><span class="dot"></span>Fedora — bỏ allow của PROBE, watchdog thêm lại</span>
+    <pre><code>sudo tee /root/ldlab-rollback.sh &gt;/dev/null &lt;&lt;'EOF'
+#!/bin/sh
+ZONE="$(firewall-cmd --get-default-zone)"
+firewall-cmd --zone="$ZONE" --add-rich-rule='rule family="ipv4" priority="-100" source address="192.0.2.30" service name="ssh" accept'
+EOF
+sudo chmod 700 /root/ldlab-rollback.sh
+sudo sh -c 'nohup sh -c "sleep 90; /root/ldlab-rollback.sh" &gt;/var/log/ldlab-rollback.log 2&gt;&amp;1 &lt;/dev/null &amp;'
+ZONE="$(firewall-cmd --get-default-zone)"
+sudo firewall-cmd --zone="$ZONE" --remove-rich-rule='rule family="ipv4" priority="-100" source address="192.0.2.30" service name="ssh" accept'</code></pre>
+
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — load fail ruleset, watchdog reload good ruleset</span>
+    <pre class="bsd"><code>cat &gt;/tmp/ldlab-fail.pf &lt;&lt;'EOF'
+ext_if="em0"
+table &lt;ssh_ok&gt; const { 192.0.2.10 }
+set skip on lo
+block in all
+pass out all keep state
+pass in on $ext_if inet proto tcp from &lt;ssh_ok&gt; to ($ext_if) port 22 keep state
+EOF
+pfctl -vnf /tmp/ldlab-fail.pf
+nohup sh -c 'sleep 90; pfctl -f /tmp/ldlab-good.pf' &gt;/var/log/ldlab-rollback.log 2&gt;&amp;1 &lt;/dev/null &amp;
+pfctl -f /tmp/ldlab-fail.pf</code></pre>
+  </section>
+
+  <section data-lab-section="rollback">
+    <h2>Rollback contract — điều gì phải xảy ra nếu test xấu</h2>
+    <p>Trong 90 giây sau failure injection, PROBE phải thất bại nhưng ADMIN vẫn mở được kết nối SSH mới. Khi watchdog chạy, PROBE phải kết nối lại được mà không cần can thiệp qua rescue console. Nếu ADMIN cũng mất kết nối, dừng lab và dùng rescue console để phục hồi snapshot; không tiếp tục “thử thêm rule” qua đường mạng đang lỗi.</p>
+  </section>
+
+  <section data-lab-section="verification">
+    <h2><span class="num">06</span> Verification evidence: positive, negative, recovery</h2>
+    <p>Trên ADMIN, PROBE và OUTSIDER dùng cùng một phép thử. <code>nc</code> chỉ kiểm TCP reachability; SSH login vẫn cần key/credential hợp lệ riêng.</p>
+    <pre><code># ADMIN: phải SUCCESS trước, trong và sau failure injection
+nc -vz -w 3 192.0.2.20 22
+
+# PROBE: SUCCESS baseline → FAIL khi inject → SUCCESS sau watchdog
+nc -vz -w 3 192.0.2.20 22
+
+# OUTSIDER: phải FAIL ở baseline và sau recovery
+nc -vz -w 3 192.0.2.20 22</code></pre>
+    <p>Thu evidence trên SERVER sau recovery:</p>
+    <pre><code>sudo ufw status numbered
+sudo nft list table inet ldlab
+sudo firewall-cmd --list-all
+sudo journalctl -n 30 --no-pager | grep -Ei 'ufw|firewalld|ssh'</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — evidence riêng</span>
+    <pre class="bsd"><code>pfctl -s rules
+pfctl -s states
+sockstat -46 -l | grep ':22'
+tail -n 30 /var/log/auth.log</code></pre>
+    <p>Chỉ chạy lệnh evidence phù hợp với HĐH của SERVER; đừng chạy cả bốn block trên một máy.</p>
+  </section>
+
+  <section class="exercise" data-lab-section="cleanup">
+    <h2><span class="num">07</span> Cleanup + bài tập tự luyện</h2>
+    <p><strong>Cleanup:</strong> hoàn tác đúng rule/bảng lab thay vì xóa mù firewall production. Với VM disposable, cách sạch nhất là revert snapshot sau khi lưu evidence.</p>
+    <pre><code># Ubuntu/Xubuntu: xóa đúng rule lab đã thêm
+sudo ufw delete allow proto tcp from 192.0.2.10 to any port 22 comment 'ldlab-admin'
+sudo ufw delete allow proto tcp from 192.0.2.30 to any port 22 comment 'ldlab-probe'
+
+# Debian: xóa đúng table lab
+sudo nft delete table inet ldlab
+
+# Fedora: runtime-only lab có thể quay về permanent baseline bằng reload
+sudo firewall-cmd --reload</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — nếu PF ban đầu tắt trong VM lab</span>
+    <pre class="bsd"><code>pfctl -d
+rm -f /tmp/ldlab-good.pf /tmp/ldlab-fail.pf</code></pre>
+    <p><strong>Tự luyện:</strong> đổi PROBE thành một subnet quản trị <code>192.0.2.32/28</code>, viết lại allow-list trên bốn backend, rồi chứng minh bằng ba evidence: một source trong subnet được phép, OUTSIDER bị chặn, và failure injection vẫn tự recovery. Không thay đổi production để làm bài tập.</p>
+  </section>
+
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <p>Lab chỉ dùng tài liệu chính thức/upstream cho semantics firewall; URL dưới đây khớp với <code>ld-meta.sources</code>.</p>
+    <ul class="clean">
+      <li><a href="https://ubuntu.com/server/docs/security-firewall/">Ubuntu Server — Firewall / ufw</a></li>
+      <li><a href="https://manpages.debian.org/trixie/nftables/nft.8.en.html">Debian trixie — nft(8)</a></li>
+      <li><a href="https://firewalld.org/documentation/configuration/runtime-versus-permanent.html">firewalld — Runtime versus Permanent</a></li>
+      <li><a href="https://firewalld.org/documentation/man-pages/firewalld.richlanguage.html">firewalld — Rich Language</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/firewalls/">FreeBSD Handbook — Firewalls / PF</a></li>
+    </ul>
+  </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-013-bash-script-vung.html"><span class="series-kicker">#013</span><span>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-006-ansible-multi-os.html">#006 · Ansible: một playbook, bốn hệ điều hành</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #020 · AUTOMATION</span>
+      <span class="hashtags">#Linux #FreeBSD #Firewall #Automation</span>
+    </div>
+  </footer>
+</div>
+</main>
+</body>
+</html>

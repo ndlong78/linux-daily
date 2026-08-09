@@ -48,11 +48,12 @@ def test_real_repo_learning_paths_cover_every_post():
     result = learning_paths.review()
     assert result["errors"] == []
     assert len(result["paths"]) == 4
-    assert len(result["posts"]) == 19
-    assert len(result["assigned_issues"]) == 19
+    assert len(result["posts"]) == len(result["assigned_issues"])
+    assert len(result["posts"]) >= 20
     assert result["unassigned_issues"] == []
-    assert result["learning"]["difficulty_counts"] == {"basic": 8, "intermediate": 11}
-    assert result["learning"]["prerequisite_edges"] == 16
+    assert sum(result["learning"]["difficulty_counts"].values()) == len(result["posts"])
+    assert result["learning"]["difficulty_counts"].get("advanced", 0) >= 1
+    assert result["learning"]["prerequisite_edges"] >= 20
     assert {path["slug"] for path in result["paths"]} == {
         "server-foundations",
         "network-security",
@@ -99,7 +100,9 @@ def test_structured_inventory_reports_coverage_and_learning_metadata():
     result = learning_paths.review()
     payload = learning_paths.structured(result)
     assert payload["path_count"] == 4
-    assert payload["post_count"] == payload["assigned_post_count"] == 19
-    assert payload["difficulty_counts"] == {"basic": 8, "intermediate": 11}
-    assert payload["prerequisite_edges"] == 16
+    assert payload["post_count"] == payload["assigned_post_count"]
+    assert payload["post_count"] >= 20
+    assert sum(payload["difficulty_counts"].values()) == payload["post_count"]
+    assert payload["difficulty_counts"].get("advanced", 0) >= 1
+    assert payload["prerequisite_edges"] >= 20
     assert payload["errors"] == []

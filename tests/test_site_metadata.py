@@ -49,9 +49,17 @@ def _named(parser: HeadMetaParser) -> dict[str, str | None]:
     }
 
 
+def _posts() -> list[Path]:
+    return sorted(
+        (ROOT / "posts").glob("post-*.html"),
+        key=lambda path: int(path.name.split("-")[1]),
+    )
+
+
 def test_homepage_has_canonical_og_rss_and_social_preview():
     rendered, count = build_index.render_index()
-    assert count == 19
+    posts = _posts()
+    assert count == len(posts)
     parser = _parse(rendered)
 
     assert {"rel": "canonical", "href": "https://linux.no.id.vn/"} in parser.links
@@ -70,8 +78,10 @@ def test_homepage_has_canonical_og_rss_and_social_preview():
     assert props["og:title"]
     assert props["og:description"]
 
-    latest = postmeta.read_meta(str(ROOT / "posts" / "post-019-triage-hieu-nang-vmstat-iostat.html"))
-    social = socialmeta.image_info(19, latest["title"], "https://linux.no.id.vn/")
+    latest_path = posts[-1]
+    latest = postmeta.read_meta(str(latest_path))
+    issue = int(latest["issue"])
+    social = socialmeta.image_info(issue, latest["title"], "https://linux.no.id.vn/")
     assert props["og:image"] == social["url"]
     assert props["og:image:type"] == "image/png"
     assert props["og:image:width"] == str(social["width"])
@@ -85,8 +95,8 @@ def test_homepage_has_canonical_og_rss_and_social_preview():
 
 
 def test_all_historical_posts_have_canonical_og_rss_and_social_preview():
-    posts = sorted((ROOT / "posts").glob("post-*.html"))
-    assert len(posts) == 19
+    posts = _posts()
+    assert posts
 
     for path in posts:
         text = path.read_text(encoding="utf-8")

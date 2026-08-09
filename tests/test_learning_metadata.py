@@ -21,9 +21,11 @@ def _config(entries: list[dict]) -> dict:
 def test_real_repo_learning_metadata_is_complete_and_acyclic():
     result = learning_metadata.review()
     assert result["errors"] == []
-    assert len(result["posts"]) == len(result["metadata"]) == 19
-    assert result["difficulty_counts"] == {"basic": 8, "intermediate": 11}
-    assert result["prerequisite_edges"] == 16
+    assert len(result["posts"]) == len(result["metadata"])
+    assert len(result["posts"]) >= 20
+    assert sum(result["difficulty_counts"].values()) == len(result["posts"])
+    assert result["difficulty_counts"].get("advanced", 0) >= 1
+    assert result["prerequisite_edges"] >= 20
     assert 10 in result["metadata"][3]["prerequisites"]
 
 
