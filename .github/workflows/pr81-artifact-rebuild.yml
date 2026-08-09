@@ -5,19 +5,120 @@ on:
     types: [opened, synchronize, reopened]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   rebuild:
-    if: github.event.pull_request.number == 81
+    if: >-
+      github.event.pull_request.number == 81 &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'chatgpt/linux-daily-022-20260722'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact PR head branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
 
-      - name: Capture pre-render git tree
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install render dependency
+        run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
+
+      - name: Install project dependencies
         run: |
-          echo "ROOT_TREE=$(git rev-parse HEAD^{tree})"
-          git ls-tree HEAD -- \
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Codify exact-head self-fix CI completion contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          agents = Path("AGENTS.md")
+          text = agents.read_text(encoding="utf-8")
+          marker = "### Self-fix CI completion contract"
+          if marker not in text:
+              needle = "Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge.\n"
+              block = """
+
+### Self-fix CI completion contract
+
+Một PR **chưa được coi là hoàn tất** chỉ vì local test pass hoặc một workflow run cũ đã xanh. Sau **mỗi lần push** vào branch PR, agent bắt buộc:
+
+1. đọc lại PR và lấy đúng `head_sha` hiện tại;
+2. kiểm tra toàn bộ workflow/check gắn với **chính SHA đó**, gồm cả trigger `push` và `pull_request`;
+3. coi `queued`, `pending`, `in_progress`, `failure`, `cancelled` hoặc `timed_out` là **chưa hoàn tất**;
+4. nếu có check đỏ: đọc log job lỗi, sửa nguyên nhân gốc, regenerate deterministic artifacts, chạy local gates, push và lặp lại từ bước 1;
+5. trước khi báo ready for review, kiểm tra diff PR không còn workflow/helper/artifact chẩn đoán tạm;
+6. chỉ được báo **ready for review** khi tất cả required checks của exact `head_sha` đã `completed/success`.
+
+Không skip, suppress, nới lỏng hoặc bypass gate để làm CI xanh. Nếu connector không hiển thị đủ check của exact head SHA thì trạng thái phải được coi là **chưa xác minh**, không được suy đoán PASS.
+"""
+              if needle not in text:
+                  raise SystemExit("AGENTS.md insertion point not found")
+              text = text.replace(needle, needle + block, 1)
+              agents.write_text(text, encoding="utf-8")
+
+          ops = Path("docs/CHATGPT-OPERATIONS.md")
+          text = ops.read_text(encoding="utf-8")
+          marker = "## Self-fix CI loop"
+          if marker not in text:
+              needle = "CI xanh là điều kiện kỹ thuật để merge; người dùng vẫn là người quyết định cuối cùng.\n"
+              block = """
+
+## Self-fix CI loop
+
+Sau mỗi push, trạng thái PR phải được xác minh lại trên **exact head SHA**, không tái sử dụng kết quả của commit cũ:
+
+```text
+push
+  ↓
+đọc lại PR → lấy exact head SHA
+  ↓
+kiểm push + pull_request checks của SHA đó
+  ├─ pending/running → chưa kết luận
+  ├─ failed → đọc log → sửa → regenerate → local check → push lại
+  └─ all success → diff không còn helper tạm → ready for review
+```
+
+Quy tắc kết thúc:
+
+- local PASS không đồng nghĩa GitHub Actions PASS;
+- check xanh của SHA cũ không có giá trị cho head mới;
+- phải kiểm cả `push` và `pull_request` khi workflow tạo cả hai trigger;
+- còn check pending/running thì chưa được báo hoàn tất;
+- workflow/helper chẩn đoán tạm phải được xóa khỏi diff trước vòng CI cuối;
+- không gọi PR là `ready`, `clean` hoặc sẵn sàng merge trước khi exact head SHA không còn check đỏ/pending;
+- khi CI fail, tự đọc log và sửa lặp lại tới xanh; tuyệt đối không làm yếu quality gate.
+"""
+              if needle not in text:
+                  raise SystemExit("CHATGPT-OPERATIONS.md insertion point not found")
+              text = text.replace(needle, needle + block, 1)
+              ops.write_text(text, encoding="utf-8")
+          PY
+
+      - name: Remove one-off helper before final validation
+        run: git rm -- .github/workflows/pr81-artifact-rebuild.yml
+
+      - name: Regenerate deterministic artifacts
+        run: python tools/publish.py prepare
+
+      - name: Run final local quality gates on the clean target tree
+        run: |
+          ruff check .
+          pytest -q
+          python tools/publish.py check
+
+      - name: Stage only intended files and reject scope drift
+        run: |
+          git add -- \
+            AGENTS.md \
+            docs/CHATGPT-OPERATIONS.md \
             archive.html \
             docs/content-mix-report.md \
             docs/distro-coverage-report.md \
@@ -32,32 +133,44 @@ jobs:
             posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html \
             search-index.json \
             sitemap.xml
+          python - <<'PY'
+          import subprocess
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
+          allowed = {
+              ".github/workflows/pr81-artifact-rebuild.yml",
+              "AGENTS.md",
+              "docs/CHATGPT-OPERATIONS.md",
+              "archive.html",
+              "docs/content-mix-report.md",
+              "docs/distro-coverage-report.md",
+              "docs/quality-dashboard.md",
+              "feed.xml",
+              "index.html",
+              "learning-dashboard.html",
+              "learning-paths.html",
+              "posts/post-001-static-ip.html",
+              "posts/post-008-chan-doan-mang.html",
+              "posts/post-015-wireguard-vpn.html",
+              "posts/post-022-dns-troubleshooting-dig-resolvectl-drill.html",
+              "search-index.json",
+              "sitemap.xml",
+          }
+          out = subprocess.check_output(
+              ["git", "status", "--porcelain=v1"], text=True
+          )
+          changed = {line[3:] for line in out.splitlines() if line.strip()}
+          unexpected = sorted(changed - allowed)
+          if unexpected:
+              raise SystemExit(f"Unexpected scope drift: {unexpected}")
+          print("Final intended changes:")
+          print(out)
+          PY
 
-      - name: Install render dependency
-        run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
-
-      - name: Install project dependencies
+      - name: Commit regenerated artifacts and self-remove helper
+        env:
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
-          python -m pip install --upgrade pip
-          pip install -e ".[dev]"
-
-      - name: Regenerate deterministic artifacts
-        run: python tools/publish.py prepare
-
-      - name: Capture regenerated tree
-        run: |
-          git status --short
-          git diff --name-only > /tmp/regenerated-files.txt
-          tar --exclude=.git -czf /tmp/pr81-regenerated-tree.tar.gz .
-
-      - name: Upload regenerated tree
-        uses: actions/upload-artifact@v4
-        with:
-          name: pr81-regenerated-tree
-          path: /tmp/pr81-regenerated-tree.tar.gz
-          if-no-files-found: error
-          retention-days: 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Fix PR81 CI and codify exact-head self-fix loop"
+          git push origin "HEAD:${HEAD_REF}"
