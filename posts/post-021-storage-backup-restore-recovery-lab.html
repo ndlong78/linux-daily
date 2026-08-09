@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ — Linux Daily #021</title>
+<meta name="description" content="Advanced Lab storage an toàn trên tài nguyên disposable: phân biệt block/partition/filesystem/mount, backup trước thay đổi, failure injection, restore và checksum verification trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
+<meta property="og:description" content="Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
+<meta name="twitter:description" content="Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 21,
+  "date": "2026-08-09",
+  "axis": "Ôn tập",
+  "eyebrow": "Ôn tập · Advanced Lab Storage & Backup/Restore",
+  "slug": "storage-backup-restore-recovery-lab",
+  "title": "Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ",
+  "lede": "Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.",
+  "review_status": "reviewed",
+  "sources": [
+    {"title": "Debian trixie — losetup(8)", "url": "https://manpages.debian.org/trixie/mount/losetup.8.en.html", "kind": "official"},
+    {"title": "Debian trixie — mount(8)", "url": "https://manpages.debian.org/trixie/mount/mount.8.en.html", "kind": "official"},
+    {"title": "Fedora Docs — SELinux changing file labels", "url": "https://docs.fedoraproject.org/en-US/quick-docs/selinux-changing-states-and-modes/", "kind": "official"},
+    {"title": "FreeBSD Handbook — GEOM", "url": "https://docs.freebsd.org/en/books/handbook/geom/", "kind": "official"},
+    {"title": "FreeBSD Handbook — Disk Organization / GPT and UFS", "url": "https://docs.freebsd.org/en/books/handbook/bsdinstall/", "kind": "official"}
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "advanced",
+    "topology": ["storage-host", "backup-target", "verification-shell", "rescue-console"],
+    "risks": ["destructive-storage", "downtime"],
+    "verification": ["functional", "negative", "recovery", "restore", "observability"],
+    "rollback_required": true,
+    "cleanup_required": true,
+    "failure_injection": true
+  }
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+  <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#021 · 09·08·2026</span></div></div>
+  <header class="post">
+    <p class="eyebrow">Ôn tập · Advanced Lab Storage &amp; Backup/Restore</p>
+    <h1>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</h1>
+    <p class="lede">Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</p>
+    <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~22 PHÚT</span></div>
+  </header>
+
+  <figure>
+    <svg viewBox="0 0 760 250" role="img" aria-label="Chuỗi layer của lab storage từ image file tới dữ liệu">
+      <rect width="760" height="250" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="20" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="75" y="110" font-size="12" font-weight="700">IMAGE</text><text x="75" y="134" font-size="10">disk.img</text>
+        <rect x="145" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="200" y="110" font-size="12" font-weight="700">PROVIDER</text><text x="200" y="134" font-size="10">loop / md</text>
+        <rect x="270" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="325" y="110" font-size="12" font-weight="700">PARTITION</text><text x="325" y="134" font-size="10">GPT</text>
+        <rect x="395" y="82" width="110" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="450" y="110" font-size="12" font-weight="700">FILESYSTEM</text><text x="450" y="134" font-size="10">ext4 / UFS</text>
+        <rect x="520" y="82" width="100" height="70" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="570" y="110" font-size="12" font-weight="700">MOUNT</text><text x="570" y="134" font-size="10">mnt</text>
+        <rect x="635" y="82" width="105" height="70" rx="8" fill="#14201D"/><text x="687" y="110" fill="#7FE0D2" font-size="12" font-weight="700">DATA</text><text x="687" y="134" fill="#FFFFFF" font-size="10">payload</text>
+        <path d="M130 117H145M255 117H270M380 117H395M505 117H520M620 117H635" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Phân biệt từng layer để failure injection chỉ tác động filesystem disposable, không nhầm sang disk thật.</figcaption>
+  </figure>
+
+  <figure>
+    <svg viewBox="0 0 760 270" role="img" aria-label="Quy trình recovery từ baseline checksum qua backup failure restore tới verification">
+      <rect width="760" height="270" fill="#FFFFFF"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="25" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="87" y="108" font-size="12" font-weight="700">BASELINE</text><text x="87" y="133" font-size="10">checksum</text>
+        <rect x="175" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="237" y="108" font-size="12" font-weight="700">BACKUP</text><text x="237" y="133" font-size="10">independent</text>
+        <rect x="325" y="78" width="125" height="80" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="387" y="108" font-size="12" font-weight="700">FAILURE</text><text x="387" y="133" font-size="10">disposable</text>
+        <rect x="475" y="78" width="125" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="537" y="108" font-size="12" font-weight="700">RESTORE</text><text x="537" y="133" font-size="10">archive</text>
+        <rect x="625" y="78" width="110" height="80" rx="8" fill="#14201D"/><text x="680" y="108" fill="#7FE0D2" font-size="12" font-weight="700">VERIFY</text><text x="680" y="133" fill="#FFFFFF" font-size="10">checksum OK</text>
+        <path d="M150 118H175M300 118H325M450 118H475M600 118H625" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Backup chỉ được coi là có giá trị khi restore thành công và checksum quay về đúng baseline.</figcaption>
+  </figure>
+
+  <section data-lab-section="scenario">
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Khi thay filesystem, repartition, migrate volume hoặc kiểm tra quy trình DR, lỗi nguy hiểm nhất là coi “backup đã chạy” đồng nghĩa với “restore được”. Lab này tách toàn bộ bài tập khỏi disk thật: Linux dùng file image gắn vào loop device; FreeBSD dùng file image gắn qua <code>mdconfig</code>.</p>
+    <p>Mục tiêu: tạo dữ liệu mẫu và checksum, backup ra thư mục độc lập, phá filesystem disposable, chứng minh mount/read thất bại, dựng lại filesystem, restore dữ liệu và so checksum về đúng baseline.</p>
+  </section>
+
+  <section data-lab-section="topology">
+    <h2><span class="num">02</span> Topology &amp; các layer phải phân biệt</h2>
+    <ul class="clean">
+      <li><strong>STORAGE HOST:</strong> VM lab chứa image file 512 MiB; tuyệt đối không thay bằng <code>/dev/sda</code>, <code>/dev/nvme*</code>, <code>/dev/ada*</code> hay disk production.</li>
+      <li><strong>BACKUP TARGET:</strong> thư mục nằm ngoài filesystem đang thử, ví dụ <code>/var/tmp/ldlab21-backup</code>.</li>
+      <li><strong>VERIFICATION SHELL:</strong> terminal dùng checksum và negative test sau failure injection.</li>
+      <li><strong>RESCUE CONSOLE:</strong> snapshot/console VM để thu hồi nếu lab bị gián đoạn.</li>
+    </ul>
+    <p><strong>Layer:</strong> image file → block provider (loop/md) → partition table → partition → filesystem → mount point → file dữ liệu. Xóa/recreate filesystem không đồng nghĩa với xóa partition table; mount point chỉ là nơi filesystem được gắn vào namespace.</p>
+  </section>
+
+  <section data-lab-section="safety">
+    <h2><span class="num">03</span> Safety contract trước khi chạy</h2>
+    <pre><code># Linux — chỉ tiếp tục nếu biến trỏ tới image lab
+export LAB=/var/tmp/ldlab21
+sudo mkdir -p "$LAB" "$LAB/mnt" "$LAB/backup"
+truncate -s 512M "$LAB/disk.img"
+ls -lh "$LAB/disk.img"
+
+# Không nhập tên disk thật vào bất kỳ lệnh mkfs nào trong lab này.</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — dùng vnode-backed memory disk, không dùng ada/nvme thật</span>
+    <pre class="bsd"><code>setenv LAB /var/tmp/ldlab21
+mkdir -p "$LAB" "$LAB/mnt" "$LAB/backup"
+truncate -s 512M "$LAB/disk.img"
+ls -lh "$LAB/disk.img"
+
+# Chỉ md device được tạo từ disk.img mới nằm trong scope lab.</code></pre>
+    <p>Chụp snapshot VM trước lab. Backup target phải nằm ngoài mount đang thử. Không chạy các bước failure injection nếu chưa tạo checksum baseline và backup archive.</p>
+  </section>
+
+  <section data-lab-section="execution">
+    <h2><span class="num">04</span> Dựng storage disposable và tạo backup</h2>
+    <h3>Ubuntu / Xubuntu — APT, systemd nhưng storage lab dùng util-linux + ext4</h3>
+    <pre><code>export LAB=/var/tmp/ldlab21
+LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
+sudo parted -s "$LOOP" mklabel gpt mkpart primary ext4 1MiB 100%
+sudo partprobe "$LOOP"
+PART="${LOOP}p1"
+sudo mkfs.ext4 -F "$PART"
+sudo mount "$PART" "$LAB/mnt"
+printf 'linux-daily-021\n' | sudo tee "$LAB/mnt/payload.txt"
+sudo sha256sum "$LAB/mnt/payload.txt" | sudo tee "$LAB/expected.sha256"
+sudo tar -C "$LAB/mnt" -cpf "$LAB/backup/payload.tar" .
+lsblk -f "$LOOP"
+findmnt "$LAB/mnt"</code></pre>
+
+    <h3>Debian stable — lệnh giống Linux, package policy khác Ubuntu</h3>
+    <pre><code>export LAB=/var/tmp/ldlab21
+LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
+sudo sfdisk "$LOOP" &lt;&lt;'EOF'
+label: gpt
+, , L
+EOF
+sudo partprobe "$LOOP"
+PART="${LOOP}p1"
+sudo mkfs.ext4 -F "$PART"
+sudo mount "$PART" "$LAB/mnt"
+printf 'linux-daily-021\n' | sudo tee "$LAB/mnt/payload.txt"
+sudo sha256sum "$LAB/mnt/payload.txt" | sudo tee "$LAB/expected.sha256"
+sudo tar -C "$LAB/mnt" -cpf "$LAB/backup/payload.tar" .
+lsblk -f "$LOOP"
+findmnt "$LAB/mnt"</code></pre>
+
+    <h3>Fedora — DNF/systemd, SELinux cần relabel khi restore vào path có policy</h3>
+    <pre><code>export LAB=/var/tmp/ldlab21
+LOOP=$(sudo losetup --find --show --partscan --nooverlap "$LAB/disk.img")
+sudo parted -s "$LOOP" mklabel gpt mkpart primary ext4 1MiB 100%
+sudo partprobe "$LOOP"
+PART="${LOOP}p1"
+sudo mkfs.ext4 -F "$PART"
+sudo mount "$PART" "$LAB/mnt"
+printf 'linux-daily-021\n' | sudo tee "$LAB/mnt/payload.txt"
+sudo sha256sum "$LAB/mnt/payload.txt" | sudo tee "$LAB/expected.sha256"
+sudo tar -C "$LAB/mnt" -cpf "$LAB/backup/payload.tar" .
+lsblk -f "$LOOP"
+findmnt "$LAB/mnt"</code></pre>
+
+    <h3>FreeBSD — pkg/ports không liên quan; dùng GEOM md + gpart + UFS, không systemd</h3>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — md(4) / gpart / UFS</span>
+    <pre class="bsd"><code>setenv LAB /var/tmp/ldlab21
+set MD `mdconfig -a -t vnode -f "$LAB/disk.img"`
+gpart create -s GPT "$MD"
+gpart add -t freebsd-ufs "$MD"
+newfs -U "/dev/${MD}p1"
+mount "/dev/${MD}p1" "$LAB/mnt"
+printf 'linux-daily-021\n' &gt; "$LAB/mnt/payload.txt"
+sha256 "$LAB/mnt/payload.txt" | tee "$LAB/expected.sha256"
+tar -C "$LAB/mnt" -cpf "$LAB/backup/payload.tar" .
+gpart show "$MD"
+mount | grep "$LAB/mnt"</code></pre>
+  </section>
+
+  <section data-lab-section="verification">
+    <h2><span class="num">05</span> Baseline verification trước failure</h2>
+    <pre><code># Linux — backup phải đọc được trước khi phá filesystem
+sudo tar -tf "$LAB/backup/payload.tar"
+sudo sha256sum -c "$LAB/expected.sha256"</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — checksum dùng sha256(1)</span>
+    <pre class="bsd"><code>tar -tf "$LAB/backup/payload.tar"
+sha256 "$LAB/mnt/payload.txt"</code></pre>
+    <p>Chỉ tiếp tục khi archive liệt kê được file và checksum khớp dữ liệu đang mount.</p>
+  </section>
+
+  <section data-lab-section="failure-injection">
+    <h2><span class="num">06</span> Failure injection — chỉ phá filesystem disposable</h2>
+    <pre><code># Linux: unmount rồi recreate ext4 trên đúng PART của image lab
+sudo umount "$LAB/mnt"
+sudo mkfs.ext4 -F "$PART"
+
+# Negative test: filesystem mới không còn payload cũ
+sudo mount "$PART" "$LAB/mnt"
+test ! -e "$LAB/mnt/payload.txt" &amp;&amp; echo 'EXPECTED: payload absent after recreate'</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — recreate UFS trên md partition của image lab</span>
+    <pre class="bsd"><code>umount "$LAB/mnt"
+newfs -U "/dev/${MD}p1"
+mount "/dev/${MD}p1" "$LAB/mnt"
+test ! -e "$LAB/mnt/payload.txt" &amp;&amp; echo 'EXPECTED: payload absent after recreate'</code></pre>
+  </section>
+
+  <section data-lab-section="rollback">
+    <h2><span class="num">07</span> Rollback / restore</h2>
+    <pre><code># Ubuntu / Xubuntu / Debian / Fedora
+sudo tar -C "$LAB/mnt" -xpf "$LAB/backup/payload.tar"
+sudo sha256sum -c "$LAB/expected.sha256"</code></pre>
+    <p>Trên Fedora, nếu restore vào đường dẫn được SELinux quản lý cố định thay vì <code>/var/tmp</code>, relabel theo policy sau restore bằng <code>restorecon</code> trên đúng cây đích; không dùng <code>chcon</code> như giải pháp lâu dài.</p>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — restore archive vào UFS mới</span>
+    <pre class="bsd"><code>tar -C "$LAB/mnt" -xpf "$LAB/backup/payload.tar"
+sha256 "$LAB/mnt/payload.txt"
+cat "$LAB/expected.sha256"</code></pre>
+  </section>
+
+  <section data-lab-section="cleanup">
+    <h2>Cleanup</h2>
+    <pre><code># Linux
+sudo umount "$LAB/mnt"
+sudo losetup --detach "$LOOP"
+rm -rf "$LAB"</code></pre>
+    <span class="code-label bsd"><span class="dot"></span>FreeBSD — detach md rồi xóa duy nhất thư mục lab</span>
+    <pre class="bsd"><code>umount "$LAB/mnt"
+mdconfig -d -u "${MD#md}"
+rm -rf "$LAB"</code></pre>
+    <p>Kiểm tra cuối: không còn mount point, loop/md provider của lab và image file. Snapshot rescue chỉ xóa sau khi restore verification đã đạt.</p>
+  </section>
+
+  <section>
+    <h2>Cạm bẫy và bảo mật</h2>
+    <ul class="clean">
+      <li>Không suy ra “backup tốt” chỉ từ exit code của job; cần restore test và checksum/application verification.</li>
+      <li>Không dùng cùng filesystem cho source và backup target khi đang kiểm destructive recovery.</li>
+      <li>Linux loop device và FreeBSD md device đều chỉ là provider; luôn map ngược về image file trước lệnh tạo filesystem.</li>
+      <li>Không copy Linux service/package semantics sang FreeBSD; lab FreeBSD ở đây dùng base-system GEOM/gpart/UFS.</li>
+      <li>Backup có dữ liệu nhạy cảm phải được phân quyền, mã hóa và có retention/rotation phù hợp; lab chỉ dùng payload giả.</li>
+    </ul>
+  </section>
+
+  <section class="exercise">
+    <h2>Bài tập tự luyện</h2>
+    <p>Thay payload bằng ba file có kích thước khác nhau, lưu manifest checksum trước backup, sau restore dùng manifest để chứng minh đủ file và đúng nội dung. Không tăng scope sang disk thật; mục tiêu là luyện evidence, không luyện thao tác phá thiết bị.</p>
+  </section>
+
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <p>Lab chỉ dùng tài liệu chính thức cho semantics block device, mount, SELinux và GEOM/UFS; URL dưới đây khớp với <code>ld-meta.sources</code>.</p>
+    <ul class="clean">
+      <li><a href="https://manpages.debian.org/trixie/mount/losetup.8.en.html">Debian trixie — losetup(8)</a></li>
+      <li><a href="https://manpages.debian.org/trixie/mount/mount.8.en.html">Debian trixie — mount(8)</a></li>
+      <li><a href="https://docs.fedoraproject.org/en-US/quick-docs/selinux-changing-states-and-modes/">Fedora Docs — SELinux changing file labels</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/geom/">FreeBSD Handbook — GEOM</a></li>
+      <li><a href="https://docs.freebsd.org/en/books/handbook/bsdinstall/">FreeBSD Handbook — Disk Organization / GPT and UFS</a></li>
+    </ul>
+  </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-014-lab-backup-tu-dong.html"><span class="series-kicker">#014</span><span>Backup tự động mà bạn dám tin — vì đã thử khôi phục</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-007-lab-web-server-tuong-lua.html">#007 · Từ máy mới đến web server an toàn, chỉ mở đúng cổng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #021 · ÔN TẬP</span>
+      <span class="hashtags">#Linux #FreeBSD #Storage #Backup #Recovery</span>
+    </div>
+  </footer>
+</div>
+</main>
+</body>
+</html>

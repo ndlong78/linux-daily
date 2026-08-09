@@ -19,11 +19,11 @@
 <header class="site">
   <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
   <h1 class="site">Search &amp; Archive</h1>
-  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 20 bài theo chủ đề.</p>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 21 bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">
     <label for="archive-search">Tìm bài</label>
     <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
-    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 20 bài.</p>
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 21 bài.</p>
   </form>
 </header>
 <main id="main-content">
@@ -150,8 +150,13 @@
     </div>
   </section>
   <section class="archive-group" id="labs">
-    <h2>Lab end-to-end <span class="archive-count">2</span></h2>
+    <h2>Lab end-to-end <span class="archive-count">3</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-021-storage-backup-restore-recovery-lab.html">
+        <span class="archive-meta">#021 · 2026-08-09</span>
+        <strong>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</strong>
+        <span>Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</span>
+      </a>
       <a class="archive-item" href="posts/post-014-lab-backup-tu-dong.html">
         <span class="archive-meta">#014 · 2026-07-28</span>
         <strong>Backup tự động mà bạn dám tin — vì đã thử khôi phục</strong>

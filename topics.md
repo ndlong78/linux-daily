@@ -22,3 +22,4 @@
 #018 | 2026-08-05 | Công cụ mới | rclone: đồng bộ & mã hoá dữ liệu lên cloud storage (S3/B2/Drive), remote crypt trên Ubuntu/Debian/Fedora/FreeBSD
 #019 | 2026-08-07 | Monitoring | Triage hiệu năng trong 5 phút: CPU, RAM và disk I/O bằng vmstat + iostat trên Ubuntu/Debian/Fedora/FreeBSD
 #020 | 2026-08-08 | Automation | Advanced Lab Security & Networking: firewall rollback tự động, negative test và recovery trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD
+#021 | 2026-08-09 | Ôn tập | Advanced Lab Storage & Backup/Restore: backup trước thay đổi, failure injection, restore và checksum verification trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD

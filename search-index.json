@@ -1,6 +1,19 @@
 {
-  "count": 20,
+  "count": 21,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-08-09",
+      "href": "posts/post-021-storage-backup-restore-recovery-lab.html",
+      "issue": 21,
+      "lede": "Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.",
+      "tags": [
+        "Advanced Lab Storage & Backup/Restore"
+      ],
+      "title": "Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

@@ -1,0 +1,9 @@
+Linux Daily #021 — Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ
+
+Một bản backup chưa được restore thành công chỉ là giả định. Lab hôm nay dùng storage disposable để luyện đầy đủ chu trình: tạo baseline checksum, backup ra đích độc lập, failure injection có kiểm soát, restore và xác minh dữ liệu sau phục hồi.
+
+Bài tách rõ Ubuntu/Xubuntu, Debian, Fedora và FreeBSD; đặc biệt FreeBSD dùng GEOM md + gpart + UFS thay vì áp lệnh Linux sang BSD.
+
+{{LINK}}
+
+#Linux #FreeBSD #Storage #Backup #Recovery

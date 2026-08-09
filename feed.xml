@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sat, 08 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 09 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</title>
+      <link>https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-021-storage-backup-restore-recovery-lab.html</guid>
+      <pubDate>Sun, 09 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Một bản backup chưa được restore thành công chỉ là giả định. Lab này dùng disk image disposable để đi qua đầy đủ block/partition/filesystem/mount, backup trước mutation, tạo lỗi có kiểm soát, dựng lại filesystem rồi xác minh checksum sau restore trên Linux và FreeBSD.</description>
+    </item>
     <item>
       <title>Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</title>
       <link>https://linux.no.id.vn/posts/post-020-firewall-rollback-negative-test.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-012-lap-lich-cron-timers.html</guid>
       <pubDate>Fri, 24 Jul 2026 00:00:00 +0700</pubDate>
       <description>Dọn log, gia hạn chứng chỉ, chạy backup lúc 2 giờ sáng — những việc lặp lại này phải tự động, đừng để trí nhớ con người lo. Có hai trường phái: cron cổ điển (có ở mọi nơi) và systemd timers hiện đại (ghi log gọn, bù được lần lỡ). FreeBSD thì đi lối riêng: cron cộng periodic(8) cho việc bảo trì hệ — và hoàn toàn không có systemd timers.</description>
-    </item>
-    <item>
-      <title>tmux: khi SSH rớt, công việc của bạn vẫn còn nguyên</title>
-      <link>https://linux.no.id.vn/posts/post-011-tmux.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-011-tmux.html</guid>
-      <pubDate>Wed, 22 Jul 2026 00:00:00 +0700</pubDate>
-      <description>Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. tmux gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</description>
     </item>
   </channel>
 </rss>
