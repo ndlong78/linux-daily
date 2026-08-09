@@ -23,3 +23,4 @@
 #019 | 2026-07-19 | Monitoring | Triage hiệu năng trong 5 phút: CPU, RAM và disk I/O bằng vmstat + iostat trên Ubuntu/Debian/Fedora/FreeBSD
 #020 | 2026-07-20 | Automation | Advanced Lab Security & Networking: firewall rollback tự động, negative test và recovery trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD
 #021 | 2026-07-21 | Ôn tập | Advanced Lab Storage & Backup/Restore: backup trước thay đổi, failure injection, restore và checksum verification trên Ubuntu/Xubuntu, Debian, Fedora, FreeBSD
+#022 | 2026-07-22 | Networking | DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill
