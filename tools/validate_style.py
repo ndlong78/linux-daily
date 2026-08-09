@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Validate Linux Daily posts against STYLE.md.
 
-Historical posts are migrated in batches. Linux Daily #001-#030 have completed
-STYLE.md backfill and are enforced together with all new posts #041+.
+Historical backfill is complete. Linux Daily #001-#040 and every new post are
+enforced by the STYLE.md contract.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 POSTS_DIR = ROOT / "posts"
-BACKFILLED_THROUGH = 30
+BACKFILLED_THROUGH = 40
 ENFORCED_FROM_ISSUE = 41
 
 SCRIPT_META_RE = re.compile(
@@ -196,8 +196,7 @@ def check(results: list[StyleResult], *, stream=sys.stdout, err_stream=sys.stder
     )
     if not enforced_failures:
         print(
-            f"OK: STYLE.md enforced cho #001-#{BACKFILLED_THROUGH:03d} và từ "
-            f"#{ENFORCED_FROM_ISSUE:03d}+.",
+            "OK: STYLE.md enforced cho toàn bộ Linux Daily series.",
             file=stream,
         )
         return 0
