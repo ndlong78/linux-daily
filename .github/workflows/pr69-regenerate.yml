@@ -1,0 +1,35 @@
+name: PR69 Regenerate deterministic artifacts
+
+on:
+  push:
+    branches:
+      - chatgpt/pr69-p9-3-storage-backup-restore-advanced-lab
+
+permissions:
+  contents: write
+
+jobs:
+  regenerate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr69-p9-3-storage-backup-restore-advanced-lab
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install generator dependencies
+        run: python -m pip install Pillow
+      - name: Regenerate deterministic artifacts
+        run: python tools/publish.py prepare
+      - name: Commit generated outputs
+        run: |
+          if git diff --quiet; then
+            echo "No generated drift."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "chore: regenerate deterministic artifacts for issue 21"
+          git push
