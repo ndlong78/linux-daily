@@ -48,9 +48,21 @@
       "url": "https://man.freebsd.org/cgi/man.cgi?query=crontab&sektion=5",
       "kind": "official"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": true
 }
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#034 · 03·08·2026</span></div></div><header class="post"><p class="eyebrow">Automation · Scheduling</p><h1>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</h1><p class="lede">Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Lập lịch tác vụ có bằng chứng: biết lịch nào kích hoạt, missed run xử lý ra sao và log nằm ở đâu trên Linux/FreeBSD.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Có script lab idempotent; quyền tạo timer/cron/periodic entry và đường lui để xóa lịch.</p></section>
+
 
 <figure>
 <svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
@@ -85,27 +97,35 @@
 </svg>
 <figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
 </figure>
-<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>systemctl list-timers --all
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Tạo job lab ghi timestamp vào file riêng.</li><li>Trên Linux cấu hình systemd service+timer; trên FreeBSD dùng cron/periodic phù hợp.</li><li>Kiểm lịch đã được scheduler nhận trước khi chờ run.</li><li>Quan sát ít nhất một lần chạy, log/output và trạng thái lần kế tiếp.</li></ol><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">systemctl list-timers --all
 systemd-analyze calendar '*-*-* 03:15:00'
-journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>systemctl list-timers --all
+journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">systemctl list-timers --all
 systemd-analyze calendar '*-*-* 03:15:00'
-journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>systemctl list-timers --all
+journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">systemctl list-timers --all
 systemd-analyze calendar '*-*-* 03:15:00'
-journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>crontab -l 2&gt;/dev/null || true
+journalctl -u '&lt;JOB&gt;.service' -n 20 --no-pager</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">crontab -l 2&gt;/dev/null || true
 grep -v '^#' /etc/crontab | sed -n '1,30p'
-grep -E '^(daily|weekly|monthly)_' /etc/defaults/periodic.conf | head</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Lab chỉ tạo job tạm ghi một dòng vào syslog; không sửa lịch production.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>sudo systemd-run --unit=ld-timer-demo --on-active=30s /usr/bin/logger 'linux-daily timer demo'
+grep -E '^(daily|weekly|monthly)_' /etc/defaults/periodic.conf | head</code></pre></div></section><section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Scheduler liệt kê job/timer đúng lịch.</li><li>Job tạo bằng chứng timestamp hoặc log như dự kiến.</li><li>Có thể xác định lần chạy trước/sau và dọn lịch không để orphan job.</li></ul><p>Lab chỉ tạo job tạm ghi một dòng vào syslog; không sửa lịch production.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo systemd-run --unit=ld-timer-demo --on-active=30s /usr/bin/logger 'linux-daily timer demo'
 systemctl list-timers ld-timer-demo.timer --all
 sleep 35
-journalctl -u ld-timer-demo.service -n 10 --no-pager</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>mkdir -p /tmp/ld-periodic
+journalctl -u ld-timer-demo.service -n 10 --no-pager</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">mkdir -p /tmp/ld-periodic
 cat &gt; /tmp/ld-periodic/100.demo &lt;&lt;'SH'
 #!/bin/sh
 logger 'linux-daily periodic demo'
 echo 'demo completed'
 SH
 chmod +x /tmp/ld-periodic/100.demo
-periodic /tmp/ld-periodic</code></pre></div><h3>Expected Output</h3><p>Linux hiển thị timer, service chạy sau khoảng 30 giây và journal có message. FreeBSD chạy custom periodic directory và in <code>demo completed</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Cleanup</div><pre><code>sudo systemctl stop ld-timer-demo.timer ld-timer-demo.service 2&gt;/dev/null || true
+periodic /tmp/ld-periodic</code></pre></div><h3>Expected Output</h3><p>Linux hiển thị timer, service chạy sau khoảng 30 giây và journal có message. FreeBSD chạy custom periodic directory và in <code>demo completed</code>.</p><h3>Cleanup / Revert</h3><div class="code-wrap"><div class="code-label same">Cleanup</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo systemctl stop ld-timer-demo.timer ld-timer-demo.service 2&gt;/dev/null || true
 sudo systemctl reset-failed ld-timer-demo.service 2&gt;/dev/null || true
-rm -rf /tmp/ld-periodic</code></pre></div></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Tạo timer nhưng quên enable/start hoặc không kiểm lần chạy kế tiếp.</li><li>Đưa PATH/biến môi trường của shell tương tác vào cron rồi job chạy khác khi không có TTY.</li><li>Gắn <code>systemctl</code> vào FreeBSD thay vì cron/periodic.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Job định kỳ thường chạy quyền cao. Dùng đường dẫn tuyệt đối, quyền file chặt, không để thư mục script writable bởi user không tin cậy và không log secret.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thiết kế lịch chạy 03:15 mỗi ngày cho một script backup giả. Ghi lệnh kiểm lịch, lệnh xem lần chạy cuối và nơi lấy log trên Linux và FreeBSD.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd.timer — Timer unit configuration</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=periodic&amp;sektion=8">FreeBSD Manual Pages — periodic(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=crontab&amp;sektion=5">FreeBSD Manual Pages — crontab(5)</a></li></ul></section>
+rm -rf /tmp/ld-periodic</code></pre></div></section><section><h2>Gỡ / Hoàn tác</h2><p>Hoàn tác thay đổi lab theo thứ tự ngược, khôi phục baseline đã ghi trước bài và kiểm chứng lại trước khi đóng phiên quản trị.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Tạo timer nhưng quên enable/start hoặc không kiểm lần chạy kế tiếp.</li><li>Đưa PATH/biến môi trường của shell tương tác vào cron rồi job chạy khác khi không có TTY.</li><li>Gắn <code>systemctl</code> vào FreeBSD thay vì cron/periodic.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Job định kỳ thường chạy quyền cao. Dùng đường dẫn tuyệt đối, quyền file chặt, không để thư mục script writable bởi user không tin cậy và không log secret.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Thiết kế lịch chạy 03:15 mỗi ngày cho một script backup giả. Ghi lệnh kiểm lịch, lệnh xem lần chạy cuối và nơi lấy log trên Linux và FreeBSD.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.freedesktop.org/software/systemd/man/latest/systemd.timer.html">systemd.timer — Timer unit configuration</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=periodic&amp;sektion=8">FreeBSD Manual Pages — periodic(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=crontab&amp;sektion=5">FreeBSD Manual Pages — crontab(5)</a></li></ul></section>
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">

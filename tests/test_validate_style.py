@@ -46,13 +46,13 @@ def _post(issue: int, *, valid: bool = True, changes_system: bool = False) -> st
 </body></html>'''
 
 
-def test_unmigrated_legacy_post_is_audited_but_not_enforced(tmp_path: Path):
+def test_batch_d_issue_40_is_enforced(tmp_path: Path):
     post = tmp_path / "post-040-style-test.html"
     post.write_text(_post(40, valid=False), encoding="utf-8")
     result = validate_style.audit_post(post)
-    assert not result.enforced
-    assert result.errors
-    assert validate_style.check([result]) == 0
+    assert result.enforced
+    assert any("tested_on" in error for error in result.errors)
+    assert validate_style.check([result]) == 1
 
 
 def test_batch_a_issue_10_is_enforced(tmp_path: Path):

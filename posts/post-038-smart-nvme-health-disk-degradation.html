@@ -48,9 +48,21 @@
       "url": "https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&sektion=8",
       "kind": "official"
     }
-  ]
+  ],
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": false
 }
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#038 · 07·08·2026</span></div></div><header class="post"><p class="eyebrow">Storage · Device health</p><h1>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</h1><p class="lede">Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Đọc SMART/NVMe health và error counters để phát hiện degradation sớm mà không chạy destructive test.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Xác định đúng device; quyền đọc SMART/NVMe log và ưu tiên lệnh read-only.</p></section>
+
 
 <figure>
 <svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
@@ -84,21 +96,27 @@
 </svg>
 <figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
 </figure>
-<section><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>sudo apt update &amp;&amp; sudo apt install smartmontools
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Map disk/device với workload trước khi đọc health.</li><li>Đọc overall health/critical warning và key counters.</li><li>Đối chiếu temperature, media/error log và lifetime counters theo loại thiết bị.</li><li>Ghi baseline để so trend; chỉ schedule self-test khi hiểu impact.</li></ol><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt install smartmontools
 sudo smartctl --scan-open
-sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>sudo apt update &amp;&amp; sudo apt install smartmontools
+sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo apt update &amp;&amp; sudo apt install smartmontools
 sudo smartctl --scan-open
-sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>sudo dnf install smartmontools
+sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo dnf install smartmontools
 sudo smartctl --scan-open
-sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>sudo pkg install smartmontools
+sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">sudo pkg install smartmontools
 sudo smartctl --scan-open
 nvmecontrol devlist 2&gt;/dev/null || true
-sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div></section><section><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Thực hành chỉ đọc. Chọn đúng device từ <code>--scan-open</code>; không đoán tên thiết bị.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><pre><code>sudo smartctl --scan-open
+sudo smartctl -H -A '&lt;DEVICE&gt;'</code></pre></div></section><section><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Tool nhận đúng device và trả health data hợp lệ.</li><li>Phân biệt warning hiện tại với lifetime counter không nhất thiết là lỗi đang diễn ra.</li><li>Có baseline để so sánh lần kiểm sau thay vì kết luận từ một snapshot cô lập.</li></ul><p>Thực hành chỉ đọc. Chọn đúng device từ <code>--scan-open</code>; không đoán tên thiết bị.</p><h3>Linux</h3><div class="code-wrap"><div class="code-label linux">Linux</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">sudo smartctl --scan-open
 sudo smartctl -H '&lt;DEVICE&gt;'
-sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><pre class="bsd"><code>sudo smartctl --scan-open
+sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>FreeBSD</h3><div class="code-wrap"><div class="code-label bsd">FreeBSD</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">sudo smartctl --scan-open
 nvmecontrol devlist 2&gt;/dev/null || true
 sudo smartctl -H '&lt;DEVICE&gt;'
-sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/static/doxygen/structsmartmontools_1_1nvme__smart__log.html">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section>
+sudo smartctl -A '&lt;DEVICE&gt;' | sed -n '1,80p'</code></pre></div><h3>Expected Output</h3><p>Xác định được device, health assessment và ít nhất hai counter có ý nghĩa với loại thiết bị. Ghi baseline để so xu hướng ở lần kiểm tra sau.</p></section><section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Thấy SMART PASS rồi bỏ qua error log/counter đang tăng.</li><li>Đọc raw value của vendor-specific attribute như một chuẩn chung cho mọi SSD/HDD.</li><li>Chạy self-test dài trên production mà không hiểu tác động workload.</li></ul></section><section><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Thông tin serial/model có thể là inventory nhạy cảm. Lọc serial trước khi đưa output ra ticket công khai; bài này không yêu cầu chạy destructive test.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Tạo baseline cho một disk lab: model, firmware, health, temperature, error counter và thời điểm đo. Đề xuất điều kiện nào sẽ tạo cảnh báo.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a></li><li><a href="https://www.smartmontools.org/static/doxygen/structsmartmontools_1_1nvme__smart__log.html">smartmontools — NVMe SMART attributes</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=nvmecontrol&amp;sektion=8">FreeBSD Manual Pages — nvmecontrol(8)</a></li></ul></section>
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">

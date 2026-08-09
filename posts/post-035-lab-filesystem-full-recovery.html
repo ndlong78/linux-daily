@@ -71,9 +71,21 @@
     "rollback_required": false,
     "cleanup_required": true,
     "failure_injection": false
-  }
+  },
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-09",
+  "changes_system": false
 }
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#035 · 04·08·2026</span></div></div><header class="post"><p class="eyebrow">Ôn tập · Filesystem full lab</p><h1>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</h1><p class="lede">Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
+<section><h2>Mục tiêu</h2><p>Triage filesystem đầy theo block, inode và top consumer rồi lập kế hoạch recovery an toàn thay vì xóa file ngẫu nhiên.</p></section>
+<section><h2>Yêu cầu tiên quyết</h2><p>Lab/số liệu mô phỏng hoặc filesystem test; không làm đầy filesystem production để luyện tập.</p></section>
+
 
 <figure>
 <svg viewBox="0 0 760 210" role="img" aria-label="Luồng vận hành quan sát thay đổi xác minh">
@@ -108,15 +120,20 @@
 </svg>
 <figcaption>Hình 2 — Linux chia sẻ nhiều công cụ userland nhưng package/service semantics khác nhau; FreeBSD luôn được tách riêng và không dùng systemd.</figcaption>
 </figure>
-<section data-lab-section="safety"><h2><span class="num">03</span> Bảng lệnh song song theo distro</h2><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><pre><code>df -h '&lt;PATH&gt;'
+<section data-lab-section="safety"><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li>Xác định mountpoint và mức dùng block/inode.</li><li>Khoanh top directory/file consumer bằng du hoặc công cụ phù hợp.</li><li>Phân loại dữ liệu có thể cleanup, rotate, move hoặc cần mở rộng capacity.</li><li>Sau xử lý, đo lại cùng chỉ số baseline và ghi biện pháp phòng tái diễn.</li></ol><div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
-findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><pre><code>df -h '&lt;PATH&gt;'
+findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label debian">Debian</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
-findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><pre><code>df -h '&lt;PATH&gt;'
+findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label fedora">Fedora</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
-findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><pre class="bsd"><code>df -h '&lt;PATH&gt;'
+findmnt -T '&lt;PATH&gt;' -o TARGET,SOURCE,FSTYPE,OPTIONS</code></pre></div><div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">df -h '&lt;PATH&gt;'
 df -i '&lt;PATH&gt;'
-mount | sed -n '1,30p'</code></pre></div></section><section data-lab-section="execution"><h2><span class="num">04</span> Ví dụ thực hành từng bước</h2><p>Tạo một incident report giả trong <code>/tmp</code>; không ghi dữ liệu lớn và không thay đổi filesystem thật.</p><h3>Linux / FreeBSD</h3><div class="code-wrap"><div class="code-label same">Lab an toàn</div><pre><code>rm -rf /tmp/ld-fs-lab
+mount | sed -n '1,30p'</code></pre></div></section><section data-lab-section="execution"><h2><span class="num">04</span> Kiểm chứng</h2><h3>Kết quả mong đợi</h3><ul class="clean"><li>Xác định đúng nguyên nhân block/inode thay vì chỉ nhìn phần trăm chung.</li><li>Recovery plan giải phóng hoặc bổ sung dung lượng có kiểm soát.</li><li>Verification cho thấy headroom trở lại và không xóa nhầm dữ liệu cần thiết.</li></ul><p>Tạo một incident report giả trong <code>/tmp</code>; không ghi dữ liệu lớn và không thay đổi filesystem thật.</p><h3>Linux / FreeBSD</h3><div class="code-wrap"><div class="code-label same">Lab an toàn</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">rm -rf /tmp/ld-fs-lab
 mkdir -p /tmp/ld-fs-lab
 cat &gt; /tmp/ld-fs-lab/df-sample.txt &lt;&lt;'EOF'
 Filesystem Size Used Avail Use% Mounted_on
@@ -126,7 +143,8 @@ EOF
 awk 'NR&gt;1 {gsub(/%/,"",$5); if ($5&gt;=90) print "CRITICAL",$6,$5"%"; else print "OK",$6,$5"%"}' /tmp/ld-fs-lab/df-sample.txt
 printf 'log-a\n' &gt; /tmp/ld-fs-lab/app.log
 printf 'cache-a\ncache-b\n' &gt; /tmp/ld-fs-lab/cache.log
-du -ah /tmp/ld-fs-lab | sort -h</code></pre></div><h3>Expected Output</h3><p>Parser phải in <code>CRITICAL /var 96%</code> và <code>OK /srv 44%</code>. Sau đó bạn có danh sách file lab theo dung lượng để luyện bước “xác định consumer trước khi cleanup”.</p></section><section data-lab-section="verification"><h2><span class="num">05</span> Cạm bẫy / lỗi thường gặp và cách xử lý</h2><ul class="clean"><li>Thấy root filesystem ổn rồi bỏ qua mount riêng của ứng dụng.</li><li>Chỉ chạy <code>du</code> mà không so với <code>df</code> và inode.</li><li>Xóa log/cache trước khi xác nhận retention, process owner và backup.</li></ul></section><section data-lab-section="cleanup"><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Production cleanup phải ưu tiên quan sát và phê duyệt; lab này cố ý không tạo ENOSPC thật.</p><div class="code-wrap"><div class="code-label same">Cleanup / Revert</div><pre><code>rm -rf /tmp/ld-fs-lab</code></pre></div></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Mở rộng file mẫu thêm một filesystem 91% nhưng inode chỉ còn 2%; viết runbook nêu bằng chứng cần thu trước khi quyết định xóa dữ liệu hay xử lý inode.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html">GNU Coreutils — df invocation</a></li><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html">GNU Coreutils — du invocation</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=du&amp;sektion=1">FreeBSD Manual Pages — du(1)</a></li></ul></section>
+du -ah /tmp/ld-fs-lab | sort -h</code></pre></div><h3>Expected Output</h3><p>Parser phải in <code>CRITICAL /var 96%</code> và <code>OK /srv 44%</code>. Sau đó bạn có danh sách file lab theo dung lượng để luyện bước “xác định consumer trước khi cleanup”.</p></section><section data-lab-section="verification"><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Thấy root filesystem ổn rồi bỏ qua mount riêng của ứng dụng.</li><li>Chỉ chạy <code>du</code> mà không so với <code>df</code> và inode.</li><li>Xóa log/cache trước khi xác nhận retention, process owner và backup.</li></ul></section><section data-lab-section="cleanup"><h2><span class="num">06</span> Lưu ý bảo mật</h2><p>Production cleanup phải ưu tiên quan sát và phê duyệt; lab này cố ý không tạo ENOSPC thật.</p><div class="code-wrap"><div class="code-label same">Cleanup / Revert</div><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">rm -rf /tmp/ld-fs-lab</code></pre></div></section><section class="exercise"><h2><span class="num">07</span> Bài tập nhỏ để tự luyện</h2><p>Mở rộng file mẫu thêm một filesystem 91% nhưng inode chỉ còn 2%; viết runbook nêu bằng chứng cần thu trước khi quyết định xóa dữ liệu hay xử lý inode.</p></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/df-invocation.html">GNU Coreutils — df invocation</a></li><li><a href="https://www.gnu.org/software/coreutils/manual/html_node/du-invocation.html">GNU Coreutils — du invocation</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=df&amp;sektion=1">FreeBSD Manual Pages — df(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=du&amp;sektion=1">FreeBSD Manual Pages — du(1)</a></li></ul></section>
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
