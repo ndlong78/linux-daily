@@ -20,7 +20,7 @@ Trước khi push:
 python tools/publish.py check
 ```
 
-Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, P9.1 lab contract, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
+Mode này không ghi file. Nó kiểm build/artifact freshness, Learning Paths coverage/page drift, P8.2 difficulty/prerequisite graph, P8.3 topic progression, P8.4 Learning Dashboard drift, P9 Advanced Lab contract, P9.5 Linux ↔ FreeBSD interoperability contract, taxonomy, content mix, distro coverage/FreeBSD portability, command/config static quality, content freshness policy, P7 quality-dashboard consistency, release metadata, performance budget và repository health. Nếu một bước fail, pipeline dừng ngay tại lỗi đầu tiên để feedback rõ ràng.
 
 External HTTP link checking không nằm trong local pipeline vì phụ thuộc mạng và website bên thứ ba; CI vẫn chạy policy retry/non-flaky riêng.
 
@@ -171,10 +171,26 @@ Gate kiểm `ld-meta.lab` và semantic `data-lab-section` markers. Hard-fail khi
 - risk thực tế nhưng `rollback_required` không phải `true`;
 - `destructive-storage` thiếu `restore` evidence class;
 - failure injection thiếu `recovery` evidence hoặc section tương ứng;
+- `resource-pressure` thiếu bounded failure injection + observability/recovery evidence;
 - thiếu/duplicate semantic lab section;
 - cleanup không được khai báo bắt buộc.
 
 P9.1 không reimplement distro portability, command safety hay source-backed review. Lab vẫn đi qua các gate P7/P8 trước khi đến lab contract. Chi tiết authoring/safety model: `docs/advanced-lab-framework.md`.
+
+## P9.5 Linux ↔ FreeBSD interoperability
+
+`tools/interoperability_lab.py` validate artifact trong `labs/p9-linux-freebsd-interoperability/`:
+
+```bash
+python3 tools/interoperability_lab.py
+python3 tools/interoperability_lab.py --json
+```
+
+Gate bắt buộc có một Linux peer thật và một FreeBSD peer thật, workflow HTTP hai chiều, functional/negative/recovery/observability evidence, private-network/dedicated-host safety và bốn difference classes: package, service, firewall, path.
+
+Validator cũng static-scan script theo role để chặn Linux-only command semantics như `systemctl`, APT/DNF, UFW/firewalld/nftables trong FreeBSD helper, và chặn FreeBSD-only `pkg`, `sysrc`, PF/ipfw semantics trong Linux helper. Nó không thực thi package manager, service hoặc network trong CI.
+
+Runbook: `docs/linux-freebsd-interoperability-lab.md`.
 
 ## Human control
 
