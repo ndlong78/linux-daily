@@ -44,6 +44,7 @@ def test_external_status_policy_is_strict_only_for_definite_client_errors():
     assert check_links.classify_status("https://example.test", 404).outcome == "hard"
     assert check_links.classify_status("https://example.test", 410).outcome == "hard"
     assert check_links.classify_status("https://example.test", 403).outcome == "warning"
+    assert check_links.classify_status("https://example.test", 418).outcome == "warning"
     assert check_links.classify_status("https://example.test", 429).outcome == "warning"
     assert check_links.classify_status("https://example.test", 503).outcome == "warning"
 
