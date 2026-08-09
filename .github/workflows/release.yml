@@ -1,4 +1,4 @@
-# PR83 temporary finalizer; release.yml is restored from main before verification.
+# PR83 temporary finalizer v2; release.yml is restored from main before verification.
 name: PR83 Finalize via Release Policy
 
 on:
@@ -98,7 +98,6 @@ jobs:
                       text = text.replace(lab_s3, figure2 + lab_s3, 1)
                   else:
                       text = text.replace(normal_s3, figure2 + normal_s3, 1)
-
               path.write_text(text, encoding='utf-8')
           PY
       - name: Regenerate deterministic repository state
