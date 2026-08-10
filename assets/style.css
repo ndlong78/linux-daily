@@ -121,3 +121,26 @@ body.post .global-nav + .masthead{margin-top:20px}
 .back-to-top-enhanced .back-to-top.is-visible{opacity:.98;visibility:visible;pointer-events:auto;transform:translateY(0)}
 @media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 @media (max-width:520px){.back-to-top{right:14px;bottom:14px;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));width:44px;height:44px;font-size:24px}}
+
+/* System dark mode: keep the IA and typography unchanged; only swap semantic color layers. */
+@media (prefers-color-scheme:dark){
+  :root{
+    color-scheme:dark;
+    --bg:#0D1412; --surface:#15201D; --ink:#E7EFEC; --muted:#A7B7B2;
+    --accent:#58C7B5; --accent-deep:#8ADDCF; --freebsd:#F08B80;
+    --line:#30403B; --code-bg:#08100E; --code-text:#E7EFEC; --code-muted:#9CB2AB;
+  }
+  .skip-link{background:#E7EFEC;color:#0D1412}
+  .style-contract{background:rgba(21,32,29,.78)}
+  h2 .num,.code-label{background:rgba(88,199,181,.12);border-color:rgba(88,199,181,.32)}
+  .code-label.bsd{background:rgba(240,139,128,.12);border-color:rgba(240,139,128,.36)}
+  p code,li code{background:rgba(231,239,236,.08)}
+  .exercise{background:#08100E;color:#E7EFEC}
+  .exercise h2{color:#F5FAF8}
+  .exercise h2 .num{color:#74D4C4;background:rgba(116,212,196,.12);border-color:rgba(116,212,196,.3)}
+  .exercise p{color:#B7C8C2}
+  .exercise code{color:#8ADDCF}
+  a.card:hover{box-shadow:0 8px 22px rgba(0,0,0,.28)}
+  .back-to-top{border-color:rgba(231,239,236,.16);background:rgba(21,32,29,.96);box-shadow:0 6px 18px rgba(0,0,0,.35)}
+  .back-to-top:hover{background:var(--surface);box-shadow:0 9px 22px rgba(0,0,0,.45)}
+}
