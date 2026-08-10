@@ -75,7 +75,16 @@
   "last_verified": "2026-08-09",
   "changes_system": true
 }
-</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#028 · 28·07·2026</span></div></div><header class="post"><p class="eyebrow">Ôn tập · DNS incident lab</p><h1>Lab DNS outage: khoanh vùng trước, phục hồi sau</h1><p class="lede">Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#028 · 28·07·2026</span></div></div><header class="post"><p class="eyebrow">Ôn tập · DNS incident lab</p><h1>Lab DNS outage: khoanh vùng trước, phục hồi sau</h1><p class="lede">Một incident DNS dễ bị chữa sai bằng cách sửa /etc/resolv.conf ngay lập tức. Lab này buộc bạn thu bằng chứng theo lớp: NSS, resolver runtime, DNS server và authoritative chain.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span></div></header>
 <section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
 <section><h2>Mục tiêu</h2><p>Xử lý DNS outage theo incident workflow: thu bằng chứng, khoanh lỗi rồi phục hồi có kiểm chứng.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><p>VM/lab DNS riêng, control query biết trước kết quả đúng và baseline resolver.</p></section>

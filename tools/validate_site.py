@@ -36,10 +36,20 @@ class PageParser(HTMLParser):
         self.meta: list[dict[str, str]] = []
         self.title_parts: list[str] = []
         self._in_title = False
+        self.global_nav_count = 0
+        self.global_nav_labels: list[str] = []
+        self.global_nav_links: list[dict[str, str]] = []
+        self._in_global_nav = False
 
     def handle_starttag(self, tag, attrs):
         data = dict(attrs)
-        if tag == "link":
+        if tag == "nav" and "global-nav" in data.get("class", "").split():
+            self.global_nav_count += 1
+            self.global_nav_labels.append(data.get("aria-label", ""))
+            self._in_global_nav = True
+        elif tag == "a" and self._in_global_nav:
+            self.global_nav_links.append(data)
+        elif tag == "link":
             self.links.append(data)
         elif tag == "meta":
             self.meta.append(data)
@@ -47,7 +57,9 @@ class PageParser(HTMLParser):
             self._in_title = True
 
     def handle_endtag(self, tag):
-        if tag == "title":
+        if tag == "nav" and self._in_global_nav:
+            self._in_global_nav = False
+        elif tag == "title":
             self._in_title = False
 
     def handle_data(self, data):
@@ -152,6 +164,52 @@ def _secondary_page_canonical(path: str, site: dict, report: Report) -> str | No
     return canonical
 
 
+def _check_global_navigation(
+    path: str, prefix: str, current: str | None, report: Report
+) -> None:
+    parser = _parse_page(path)
+    page = os.path.relpath(path, ROOT)
+    if parser.global_nav_count != 1:
+        report.errors.append(
+            f"{page}: cần đúng 1 global navigation, hiện có {parser.global_nav_count}"
+        )
+        return
+    if parser.global_nav_labels != ["Điều hướng chính"]:
+        report.errors.append(f"{page}: global navigation thiếu aria-label chuẩn")
+
+    expected = [
+        prefix + "index.html",
+        prefix + "learning-paths.html",
+        prefix + "learning-dashboard.html",
+        prefix + "archive.html",
+    ]
+    actual = [link.get("href", "") for link in parser.global_nav_links]
+    if actual != expected:
+        report.errors.append(
+            f"{page}: global navigation phải có đúng 4 destination theo thứ tự; "
+            f"đang là {actual}"
+        )
+
+    invalid_current = [
+        link.get("href", "")
+        for link in parser.global_nav_links
+        if link.get("aria-current") not in (None, "", "page")
+    ]
+    if invalid_current:
+        report.errors.append(f"{page}: aria-current không hợp lệ: {invalid_current}")
+
+    current_links = [
+        link.get("href", "")
+        for link in parser.global_nav_links
+        if link.get("aria-current") == "page"
+    ]
+    expected_current = [] if current is None else [prefix + current]
+    if current_links != expected_current:
+        report.errors.append(
+            f"{page}: aria-current phải là {expected_current}, đang là {current_links}"
+        )
+
+
 def _sitemap_urls(report: Report) -> set[str]:
     try:
         root = ET.parse(SITEMAP_PATH).getroot()
@@ -215,6 +273,13 @@ def run() -> Report:
         else:
             canonicals[canonical] = rel
 
+    _check_global_navigation(INDEX_PATH, "", "index.html", report)
+    _check_global_navigation(ARCHIVE_PATH, "", "archive.html", report)
+    _check_global_navigation(LEARNING_PATHS_PATH, "", "learning-paths.html", report)
+    _check_global_navigation(LEARNING_DASHBOARD_PATH, "", "learning-dashboard.html", report)
+    for path in posts:
+        _check_global_navigation(path, "../", None, report)
+
     expected_pages = set(canonicals)
     sitemap_urls = _sitemap_urls(report)
     if sitemap_urls != expected_pages:
@@ -238,12 +303,6 @@ def run() -> Report:
             report.errors.append(f"orphan post: {href} không được homepage liên kết")
     if "archive.html" not in index_text:
         report.errors.append("archive.html không được homepage liên kết")
-
-    with open(LEARNING_DASHBOARD_PATH, encoding="utf-8") as f:
-        dashboard_text = f.read()
-    for href in ("index.html", "learning-paths.html", "archive.html"):
-        if href not in dashboard_text:
-            report.errors.append(f"learning-dashboard.html thiếu navigation tới {href}")
 
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()

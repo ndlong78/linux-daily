@@ -11,6 +11,8 @@ from collections import Counter
 from pathlib import Path
 from urllib.parse import urljoin
 
+from jinja2 import Environment, FileSystemLoader, select_autoescape
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import learning_metadata  # noqa: E402
 import learning_paths  # noqa: E402
@@ -19,12 +21,27 @@ import topic_progression  # noqa: E402
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT_PATH = ROOT / "learning-dashboard.html"
 SITE_CONFIG = ROOT / "site.json"
+TEMPLATES_DIR = ROOT / "templates"
+NAV_TEMPLATE = "_global-nav.template.html"
 
 
 def _site() -> dict:
     site = json.loads(SITE_CONFIG.read_text(encoding="utf-8"))
     site["url"] = str(site["url"]).rstrip("/") + "/"
     return site
+
+
+def _navigation() -> str:
+    env = Environment(
+        loader=FileSystemLoader(TEMPLATES_DIR),
+        autoescape=select_autoescape(("html", "xml")),
+        trim_blocks=True,
+        lstrip_blocks=True,
+        keep_trailing_newline=True,
+    )
+    return env.get_template(NAV_TEMPLATE).render(
+        nav_prefix="", nav_current="dashboard"
+    ).strip()
 
 
 def collect(
@@ -114,6 +131,7 @@ def structured(result: dict) -> dict:
 def render_page(result: dict) -> str:
     esc = html.escape
     counts = result["difficulty_counts"]
+    nav_lines = ["    " + line for line in _navigation().splitlines()]
     missing_labels = [
         learning_metadata.DIFFICULTY_LABELS.get(tier, tier)
         for tier in result["missing_difficulty_tiers"]
@@ -136,11 +154,11 @@ def render_page(result: dict) -> str:
         '<body class="learning-dashboard">',
         '  <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>',
         '  <div class="wrap">',
+        *nav_lines,
         '    <header class="site">',
         '      <div class="site-brand">Linux Daily</div>',
         '      <h1 class="site">Learning Dashboard</h1>',
         '      <p class="site-lede">Một view tổng hợp từ Learning Paths, Difficulty &amp; Prerequisites và Topic Progression — không tạo thêm curriculum source of truth.</p>',
-        '      <nav class="dashboard-nav" aria-label="Learning navigation"><a href="index.html">TẤT CẢ BÀI</a> · <a href="learning-paths.html">LEARNING PATHS</a> · <a href="archive.html">SEARCH &amp; ARCHIVE</a></nav>',
         "    </header>",
         '    <main id="main-content">',
         '      <section aria-labelledby="curriculum-overview">',

@@ -1,0 +1,8 @@
+<nav class="global-nav" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="{{ nav_prefix }}index.html"{% if nav_current == "home" %} aria-current="page"{% endif %}>Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="{{ nav_prefix }}learning-paths.html"{% if nav_current == "paths" %} aria-current="page"{% endif %}>Lộ trình học</a>
+    <a href="{{ nav_prefix }}learning-dashboard.html"{% if nav_current == "dashboard" %} aria-current="page"{% endif %}>Tổng quan</a>
+    <a href="{{ nav_prefix }}archive.html"{% if nav_current == "archive" %} aria-current="page"{% endif %}>Tìm kiếm</a>
+  </div>
+</nav>
