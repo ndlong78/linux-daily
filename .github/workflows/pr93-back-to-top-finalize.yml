@@ -1,0 +1,62 @@
+name: PR93 back-to-top finalizer
+
+on:
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+permissions:
+  contents: write
+
+jobs:
+  finalize-back-to-top:
+    if: github.head_ref == 'chatgpt/pr93-back-to-top-control' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/pr93-back-to-top-control
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Apply, build and validate back-to-top control
+        run: python tools/pr93_back_to_top.py
+
+      - name: Commit durable changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm tools/pr93_back_to_top.py .github/workflows/pr93-back-to-top-finalize.yml
+
+          git add -- \
+            assets/back-to-top.js \
+            assets/style.css \
+            templates/_global-nav.template.html \
+            tools/backfill_navigation.py \
+            tools/validate_site.py \
+            tests/test_navigation.py \
+            index.html \
+            archive.html \
+            learning-paths.html \
+            learning-dashboard.html \
+            posts/post-*.html
+          git add -u -- tools/pr93_back_to_top.py .github/workflows/pr93-back-to-top-finalize.yml
+
+          test -z "$(git diff --name-only)"
+          test -z "$(git ls-files --others --exclude-standard)"
+          git diff --cached --check
+          git commit -m "Add accessible back-to-top control"
+          git push origin HEAD:${GITHUB_HEAD_REF}
