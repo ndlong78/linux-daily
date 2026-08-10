@@ -169,6 +169,17 @@ def _check_global_navigation(
 ) -> None:
     parser = _parse_page(path)
     page = os.path.relpath(path, ROOT)
+    with open(path, encoding="utf-8") as f:
+        markup = f.read()
+    if markup.count('id="page-top"') != 1:
+        report.errors.append(f"{page}: cần đúng 1 target id=page-top")
+    if markup.count('class="back-to-top"') != 1:
+        report.errors.append(f"{page}: cần đúng 1 nút back-to-top")
+    expected_script = f'<script src="{prefix}assets/back-to-top.js" defer></script>'
+    if expected_script not in markup:
+        report.errors.append(f"{page}: thiếu back-to-top script đúng relative path")
+    if 'class="back-to-top" href="#page-top" aria-label="Lên đầu trang"' not in markup:
+        report.errors.append(f"{page}: back-to-top thiếu href/aria-label chuẩn")
     if parser.global_nav_count != 1:
         report.errors.append(
             f"{page}: cần đúng 1 global navigation, hiện có {parser.global_nav_count}"
