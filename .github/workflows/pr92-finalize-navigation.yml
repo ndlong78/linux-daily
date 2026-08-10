@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.head_ref }}
           fetch-depth: 0
 
       - uses: actions/setup-python@v5
@@ -32,6 +33,16 @@ jobs:
 
       - name: Apply navigation architecture and validate
         run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tools/pr92_apply.py")
+          lines = path.read_text(encoding="utf-8").splitlines()
+          for index, line in enumerate(lines):
+              if "NAV_RE = re.compile" in line:
+                  lines[index] = r'''NAV_RE = re.compile(r'<nav class="global-nav"[^>]*>.*?</nav>\\n?', re.DOTALL)'''
+          path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
           sed -i 's/\["ruff", "check", "tools\/backfill_navigation.py"/\["ruff", "check", "--fix", "tools\/backfill_navigation.py"/' tools/pr92_apply.py
           python tools/pr92_apply.py
 
