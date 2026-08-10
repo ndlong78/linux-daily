@@ -1,0 +1,63 @@
+name: PR92 navigation finalizer
+
+on:
+  push:
+    branches:
+      - chatgpt/pr92-global-navigation-learning-discovery
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Apply navigation architecture and validate
+        run: python tools/pr92_apply.py
+
+      - name: Commit durable PR92 changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          rm tools/pr92_apply.py .github/workflows/pr92-finalize-navigation.yml
+
+          git add -- \
+            assets/style.css \
+            templates/_global-nav.template.html \
+            templates/index.template.html \
+            templates/archive.template.html \
+            templates/learning-paths.template.html \
+            templates/post.template.html \
+            tools/backfill_navigation.py \
+            tools/build.py \
+            tools/learning_dashboard.py \
+            tools/validate_site.py \
+            tools/validate_accessibility.py \
+            tests/test_navigation.py \
+            index.html \
+            archive.html \
+            learning-paths.html \
+            learning-dashboard.html \
+            posts/post-*.html
+          git add -u -- tools/pr92_apply.py .github/workflows/pr92-finalize-navigation.yml
+
+          test -z "$(git diff --name-only)"
+          test -z "$(git ls-files --others --exclude-standard)"
+          git diff --cached --check
+          git commit -m "Add global navigation and learning discovery"
+          git push origin HEAD:${GITHUB_REF_NAME}
