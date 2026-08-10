@@ -41,6 +41,15 @@ jobs:
           for index, line in enumerate(lines):
               if "NAV_RE = re.compile" in line:
                   lines[index] = r'''NAV_RE = re.compile(r'<nav class="global-nav"[^>]*>.*?</nav>\\n?', re.DOTALL)'''
+              if line.strip() == 'clean = NAV_RE.sub("", text)':
+                  lines[index:index + 3] = [
+                      r'''    clean = NAV_RE.sub("", text)''',
+                      r'''    before, after = clean.split(marker, 1)''',
+                      r'''    after = after.lstrip("\\r\\n")''',
+                      r'''    nav = render_navigation()''',
+                      r'''    return before + marker + "\\n" + nav + "\\n" + after''',
+                  ]
+                  break
           path.write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
           sed -i 's/\["ruff", "check", "tools\/backfill_navigation.py"/\["ruff", "check", "--fix", "tools\/backfill_navigation.py"/' tools/pr92_apply.py
