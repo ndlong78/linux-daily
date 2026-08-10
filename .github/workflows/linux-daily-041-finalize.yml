@@ -1,21 +1,22 @@
 name: Temporary Linux Daily 041 Finalize
 
 on:
-  push:
+  pull_request:
     branches:
-      - chatgpt/linux-daily-041-20260810
-    paths:
-      - .linux-daily-041-finalize
+      - main
+    types: [opened, synchronize, reopened]
 
 permissions:
   contents: write
 
 jobs:
   finalize:
-    if: github.actor != 'github-actions[bot]'
+    if: github.head_ref == 'chatgpt/linux-daily-041-20260810' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/linux-daily-041-20260810
 
       - uses: actions/setup-python@v5
         with:
