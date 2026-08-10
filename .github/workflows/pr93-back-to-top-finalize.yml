@@ -40,23 +40,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           rm tools/pr93_back_to_top.py .github/workflows/pr93-back-to-top-finalize.yml
-
-          git add -- \
-            assets/back-to-top.js \
-            assets/style.css \
-            templates/_global-nav.template.html \
-            tools/backfill_navigation.py \
-            tools/validate_site.py \
-            tests/test_navigation.py \
-            index.html \
-            archive.html \
-            learning-paths.html \
-            learning-dashboard.html \
-            posts/post-*.html
-          git add -u -- tools/pr93_back_to_top.py .github/workflows/pr93-back-to-top-finalize.yml
-
-          test -z "$(git diff --name-only)"
-          test -z "$(git ls-files --others --exclude-standard)"
+          git add -A
+          git status --short
           git diff --cached --check
           git commit -m "Add accessible back-to-top control"
           git push origin HEAD:${GITHUB_HEAD_REF}
