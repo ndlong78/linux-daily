@@ -62,6 +62,18 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 - [x] Dashboard import trực tiếp validator hiện hành, có `--json`/`--output`/`--as-of` và tham gia `tools/publish.py check` như read-only consistency gate.
 - [x] Dashboard không tự publish, không sửa curriculum/state/lifecycle và không duplicate GitHub/production evidence của Operations Dashboard hiện hữu.
 
+## Operating mode sau P10 — Infrastructure feature freeze
+
+P0–P10 đã cung cấp đủ nền tảng cho daily publishing. Mặc định **không mở P11+** chỉ để bổ sung thêm tooling/dashboard/validator.
+
+Tooling mới chỉ được chấp nhận khi đáp ứng ít nhất một điều kiện:
+
+1. sửa một regression/sự cố đã quan sát được;
+2. loại bỏ thao tác lặp lại có chi phí đáng kể;
+3. trực tiếp nâng chất lượng hoặc độ an toàn của nội dung Linux/Unix.
+
+Nếu không thuộc ba nhóm trên, ưu tiên viết bài, technical review, cập nhật freshness và cải thiện trải nghiệm nhỏ trên kiến trúc hiện có. Maintenance nên sửa/đơn giản hóa tool hiện hành trước khi tạo abstraction mới.
+
 ## Nguyên tắc roadmap
 
 1. Repository/state/validators là source of truth; scheduler không thay business logic.
@@ -80,3 +92,4 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 14. Branch `chatgpt/**` phải qua remote CI preflight trước khi Draft PR được mở.
 15. Nội dung superseded/historically-valid được giữ để bảo toàn lịch sử; canonical replacement mới là guidance vận hành hiện hành.
 16. Daily Operations Dashboard chỉ tổng hợp decision signals; không trở thành ledger mới và không thay các validator nguồn.
+17. Sau P10, infrastructure mặc định feature-frozen; chỉ mở rộng khi có defect/toil/content-quality evidence rõ ràng.

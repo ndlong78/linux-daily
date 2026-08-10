@@ -12,6 +12,7 @@ PYTHON = sys.executable
 
 def command_plan() -> list[list[str]]:
     return [
+        [PYTHON, "tools/pr_hygiene.py"],
         ["ruff", "check", "tools/", "tests/"],
         [PYTHON, "-m", "pytest"],
         [PYTHON, "tools/workflow_safety.py"],
@@ -32,7 +33,7 @@ def run(*, runner=subprocess.run) -> int:
                 file=sys.stderr,
             )
             return result.returncode or 1
-    print("OK: PR preflight pass. Có thể mở/cập nhật PR và theo dõi GitHub Actions.")
+    print("OK: PR preflight pass. Có thể commit/push và mở hoặc cập nhật PR.")
     return 0
 
 

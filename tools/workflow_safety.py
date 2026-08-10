@@ -10,10 +10,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = ROOT / ".github" / "workflows"
 RELEASE_WORKFLOW = "release.yml"
+CI_WORKFLOW = "ci.yml"
 WRITE_PERMISSION_RE = re.compile(
     r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$",
     re.MULTILINE,
 )
+SELF_MUTATION_RE = re.compile(r"\bgit\s+(?:add|commit|push)\b", re.IGNORECASE)
 
 
 @dataclass
@@ -45,6 +47,7 @@ def validate_file(path: Path) -> list[str]:
     errors: list[str] = []
     events = _event_block(text)
     permissions = _permissions_block(text)
+    is_release = path.name == RELEASE_WORKFLOW
 
     if "pull_request_target:" in text:
         errors.append(f"{rel}: pull_request_target is forbidden")
@@ -52,16 +55,22 @@ def validate_file(path: Path) -> list[str]:
         errors.append(f"{rel}: top-level permissions block is required")
 
     writes = WRITE_PERMISSION_RE.findall(permissions)
-    if path.name != RELEASE_WORKFLOW and writes:
+    if not is_release and writes:
         errors.append(
             f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}: {', '.join(writes)}"
         )
+    if not is_release and not re.search(
+        r"^\s{2}contents:\s*read\s*$", permissions, re.MULTILINE
+    ):
+        errors.append(f"{rel}: non-release workflow must declare contents: read")
+    if not is_release and SELF_MUTATION_RE.search(text):
+        errors.append(f"{rel}: workflow must not stage, commit, or push repository changes")
 
     for banned in ("actions", "pull-requests", "issues", "packages", "deployments"):
         if re.search(rf"^\s{{2}}{re.escape(banned)}:\s*write\s*$", permissions, re.MULTILINE):
             errors.append(f"{rel}: {banned}: write is not allowed")
 
-    if path.name == RELEASE_WORKFLOW:
+    if is_release:
         if "workflow_dispatch:" not in events:
             errors.append(f"{rel}: release must use workflow_dispatch")
         for forbidden_event in ("push:", "pull_request:", "schedule:", "workflow_run:"):
@@ -75,6 +84,12 @@ def validate_file(path: Path) -> list[str]:
             errors.append(f"{rel}: exact-main-SHA release gate is missing")
         if "ref: main" not in text:
             errors.append(f"{rel}: release checkout must pin main")
+
+    if path.name == CI_WORKFLOW:
+        if "fetch-depth: 0" not in text:
+            errors.append(f"{rel}: CI must fetch full PR history for hygiene validation")
+        if "tools/pr_hygiene.py" not in text:
+            errors.append(f"{rel}: CI must run PR commit/path hygiene")
 
     if re.search(r"\bgh\s+pr\s+merge\b", text) or "enable-auto-merge" in text:
         errors.append(f"{rel}: automatic PR merge commands are forbidden")

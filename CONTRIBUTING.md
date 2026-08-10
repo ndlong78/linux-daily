@@ -30,17 +30,32 @@ Issue không bắt buộc trước mọi PR. Với thay đổi nhỏ, rõ scope,
 - Giữ diff nhỏ, có mục tiêu rõ ràng và tránh trộn nhiều nhóm thay đổi không liên quan.
 - Không commit secret, token, password, private key hoặc dữ liệu nhạy cảm.
 - Generated file phải được tạo bằng tool hiện có, không sửa tay nếu có generator tương ứng.
+- Không tạo workflow/helper one-shot để GitHub Actions tự sửa, commit hoặc push ngược branch.
+- Không track file tạm (`*.tmp`, `*.bak`, `*.orig`, `*.rej`) hoặc helper gắn trực tiếp số PR.
 - Không merge khi `quality-gate` chưa xanh và không bypass branch protection.
+- Normal PR dùng **Squash and merge** để `main` nhận một commit mô tả rõ thay đổi.
 
-## Quy trình chuẩn
+## Quy trình chuẩn — one pass
 
 1. Đồng bộ `main`, tạo feature branch.
 2. Thực hiện thay đổi + test/tài liệu liên quan.
-3. Nếu thay bài/metadata, chạy `python3 tools/publish.py prepare`.
-4. Chạy `python3 tools/publish.py check`.
-5. Nếu thay URL/source, chạy `python3 tools/check_links.py --external --workers 8`.
-6. Nếu thay workflow, chạy `python3 tools/workflow_safety.py`.
-7. Review `git diff`, mở PR vào `main`, chờ CI xanh.
+3. Nếu thay bài/metadata, chạy `python3 tools/publish.py prepare` để materialize generated artifacts **trước commit**.
+4. Chạy `python3 tools/pr_preflight.py`; preflight bao gồm PR hygiene, lint, test, workflow safety và publish check.
+5. Review `git diff`, commit với subject mô tả rõ, push branch và mở/cập nhật PR.
+6. CI chỉ đọc/validate branch. Nếu CI fail, sửa source/generator bình thường, chạy preflight lại rồi commit/push thêm; không dùng finalizer tự ghi repository.
+7. Khi exact head SHA xanh và review xong, merge bằng **Squash and merge**.
+
+Nếu PR thay URL/source, chạy thêm:
+
+```bash
+python3 tools/check_links.py --external --workers 8
+```
+
+Nếu PR thay workflow, `tools/pr_preflight.py` đã gọi `tools/workflow_safety.py`; có thể chạy riêng để debug:
+
+```bash
+python3 tools/workflow_safety.py
+```
 
 ## Khi sửa hoặc thêm bài Linux Daily
 
@@ -61,11 +76,14 @@ Xem `AGENTS.md` để hiểu operating contract chi tiết của AI agent. Contr
 - Public canonical origin lấy từ `site.json`; production nằm trên Cloudflare Worker.
 - Validator mới nên deterministic local; network check phải có timeout/retry/non-flaky policy.
 - Workflow phải qua `tools/workflow_safety.py`; release là workflow ghi duy nhất và vẫn yêu cầu human confirmation.
+- Không thêm finalizer/self-mutating workflow để bù cho generator hoặc staging chưa deterministic; sửa generator/preflight thay vì tăng automation ghi.
 - Cập nhật tài liệu/roadmap/changelog nếu thay đổi kiến trúc hoặc milestone đáng chú ý.
 
 ## Pull request
 
 PR nên nêu rõ mục tiêu, scope, guardrails, cách kiểm thử và rủi ro/giới hạn còn lại. Repository có `.github/pull_request_template.md` làm checklist mặc định.
+
+Commit subject không được dùng các message rác như `x`, `tmp`, `test`, `wip`, `placeholder`, `fix`, `update` hoặc `changes`; CI kiểm rule này trên commit range của PR.
 
 ## Release / production change
 

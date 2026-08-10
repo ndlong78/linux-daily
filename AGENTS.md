@@ -9,6 +9,7 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 - Trước khi tạo hoặc sửa bài, agent phải đọc cả `AGENTS.md` và `STYLE.md` trên `main` hiện tại.
 - Không push trực tiếp vào `main`.
 - Bài mới đi qua branch → Pull Request → GitHub Actions → người dùng review/merge.
+- GitHub Actions trên PR là **read-only validator**; không tạo finalizer/workflow/helper để tự sửa, commit hoặc push ngược branch.
 - `state.json` là nguồn sự thật của cadence; `topics.md` là lịch sử nội dung, không dùng làm clock vận hành.
 - Không tự ý commit/push/mở PR/merge nếu phiên làm việc chưa có quyền ghi GitHub rõ ràng của người dùng cho hành động tương ứng.
 - Scheduled Task chỉ chuẩn bị và kiểm tra; khi cần remote write mà chưa có quyền, báo người dùng để phê duyệt trong chat.
@@ -176,13 +177,37 @@ python3 tools/publish.py check
 
 ## 9. Git workflow
 
-Branch chuẩn:
+Branch bài hằng ngày:
 
 ```text
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-Chỉ stage đúng file thuộc bài đang làm, thông thường gồm:
+Maintenance/feature dùng branch `chatgpt/<scope-ngắn-gọn>` và luôn tách khỏi `main` trước khi ghi file.
+
+### One-pass branch contract
+
+Thứ tự bắt buộc:
+
+1. tạo feature branch từ `main` hiện tại;
+2. sửa **source of truth** và chạy generator/backfill deterministic trong branch;
+3. materialize toàn bộ generated artifacts trước commit;
+4. chạy `python3 tools/pr_preflight.py`;
+5. review diff, commit subject mô tả rõ, push và mở/cập nhật PR;
+6. GitHub Actions chỉ đọc/validate exact head SHA;
+7. nếu CI đỏ, sửa source/generator bằng commit bình thường rồi lặp preflight → push; **không tạo finalizer/self-mutating workflow**;
+8. sau review, dùng **Squash and merge** để `main` nhận một commit sạch.
+
+Không tạo hoặc track:
+
+- workflow `finalize`/`finalizer` dùng `contents: write` để tự sửa branch;
+- helper migration gắn trực tiếp số PR kiểu `tools/pr93_*.py`/`.sh`;
+- file tạm `*.tmp`, `*.bak`, `*.orig`, `*.rej`;
+- placeholder/diagnostic artifact chỉ để kích hoạt workflow.
+
+Nếu một migration/backfill cần tool, tool đó phải có tên theo capability, deterministic, có test và đủ giá trị để giữ lâu dài trong repository. Nếu chỉ cần một lần, chạy transformation trước commit ở môi trường làm việc; không biến GitHub Actions thành build agent có quyền ghi.
+
+Chỉ stage đúng file thuộc thay đổi đang làm, thông thường với bài hằng ngày gồm:
 
 - `posts/post-<NNN>-<slug>.html`
 - `index.html` và các generated site artifact do build thay đổi
@@ -190,15 +215,23 @@ Chỉ stage đúng file thuộc bài đang làm, thông thường gồm:
 - `state.json`
 - learning metadata/path nếu bài mới yêu cầu
 
-Không stage cả thư mục bằng `git add .`, `git add -A` hoặc `git add --all`.
+Không stage cả thư mục bằng `git add .`, `git add -A` hoặc `git add --all` trong workflow tác nghiệp của agent. CI/workflow không được stage/commit/push repository.
 
-Commit message:
+Commit message bài hằng ngày:
 
 ```text
 Linux Daily #<NNN>: <tên chủ đề>
 ```
 
-Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge.
+Maintenance/feature dùng subject mô tả thay đổi, ví dụ:
+
+```text
+Simplify Git and CI workflow hygiene
+```
+
+Không dùng commit subject rác như `x`, `tmp`, `test`, `wip`, `placeholder`, `fix`, `update` hoặc `changes`; `tools/pr_hygiene.py` kiểm rule này trên commit range của PR.
+
+Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge. Normal PR dùng **Squash and merge**; không dùng merge commit/rebase merge cho workflow thường ngày.
 
 ### Self-fix CI completion contract
 
@@ -207,11 +240,11 @@ Một PR **chưa được coi là hoàn tất** chỉ vì local test pass hoặc
 1. đọc lại PR và lấy đúng `head_sha` hiện tại;
 2. kiểm tra toàn bộ workflow/check gắn với **chính SHA đó**, gồm cả trigger `push` và `pull_request`;
 3. coi `queued`, `pending`, `in_progress`, `failure`, `cancelled` hoặc `timed_out` là **chưa hoàn tất**;
-4. nếu có check đỏ, đọc log job lỗi, sửa nguyên nhân gốc, chạy lại generator deterministic + local gates, push và lặp lại từ bước 1;
-5. trước khi báo sẵn sàng review, kiểm tra diff PR không còn workflow/helper/artifact chẩn đoán tạm;
+4. nếu có check đỏ, đọc log job lỗi, sửa nguyên nhân gốc, chạy lại generator deterministic + local gates, commit/push bình thường và lặp lại từ bước 1;
+5. trước khi báo sẵn sàng review, kiểm tra diff PR không còn workflow/helper/artifact tạm;
 6. chỉ được báo **ready for review** khi tất cả required checks của exact `head_sha` đã `completed/success`.
 
-Không được skip, suppress, nới lỏng hoặc bypass gate để làm CI xanh. Nếu connector không hiển thị đủ check, trạng thái phải được coi là **chưa xác minh**, không được suy đoán là PASS.
+Không được skip, suppress, nới lỏng hoặc bypass gate để làm CI xanh. Không được sửa CI thành workflow tự ghi để “tự hoàn tất” PR. Nếu connector không hiển thị đủ check, trạng thái phải được coi là **chưa xác minh**, không được suy đoán là PASS.
 
 ## 10. Scheduled Task của ChatGPT
 
