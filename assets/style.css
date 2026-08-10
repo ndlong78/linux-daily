@@ -24,6 +24,9 @@ a{color:var(--accent-deep)}
 .skip-link:focus,.skip-link:focus-visible{transform:translateY(0)}
 .brand-home{font-family:"JetBrains Mono",monospace; font-weight:700; letter-spacing:.22em; text-transform:uppercase; font-size:13px; color:var(--accent-deep); text-decoration:none}
 .brand-home:hover{color:var(--accent); text-decoration:underline}
+/* Compatibility for historical post HTML: keep the home affordance, remove duplicate visible brand text. */
+body.post .brand-home{font-size:0;letter-spacing:0}
+body.post .brand-home::before{content:"←";font-size:13px;letter-spacing:0}
 .foot-home{display:inline-block; font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.06em; color:var(--accent-deep); text-decoration:none; margin-bottom:12px}
 .foot-home:hover{color:var(--accent); text-decoration:underline}
 
