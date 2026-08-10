@@ -156,7 +156,6 @@ def render_page(result: dict) -> str:
         '  <div class="wrap">',
         *nav_lines,
         '    <header class="site">',
-        '      <div class="site-brand">Linux Daily</div>',
         '      <h1 class="site">Learning Dashboard</h1>',
         '      <p class="site-lede">Một view tổng hợp từ Learning Paths, Difficulty &amp; Prerequisites và Topic Progression — không tạo thêm curriculum source of truth.</p>',
         "    </header>",
