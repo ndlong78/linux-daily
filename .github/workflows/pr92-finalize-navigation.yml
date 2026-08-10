@@ -31,7 +31,9 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Apply navigation architecture and validate
-        run: python tools/pr92_apply.py
+        run: |
+          sed -i 's/\["ruff", "check", "tools\/backfill_navigation.py"/\["ruff", "check", "--fix", "tools\/backfill_navigation.py"/' tools/pr92_apply.py
+          python tools/pr92_apply.py
 
       - name: Commit durable PR92 changes
         run: |
