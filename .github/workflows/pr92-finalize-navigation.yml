@@ -1,16 +1,20 @@
 name: PR92 navigation finalizer
 
 on:
-  push:
+  pull_request:
     branches:
-      - chatgpt/pr92-global-navigation-learning-discovery
+      - main
+    types:
+      - opened
+      - synchronize
+      - reopened
 
 permissions:
   contents: write
 
 jobs:
   finalize:
-    if: github.actor != 'github-actions[bot]'
+    if: github.head_ref == 'chatgpt/pr92-global-navigation-learning-discovery' && github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,4 +64,4 @@ jobs:
           test -z "$(git ls-files --others --exclude-standard)"
           git diff --cached --check
           git commit -m "Add global navigation and learning discovery"
-          git push origin HEAD:${GITHUB_REF_NAME}
+          git push origin HEAD:${GITHUB_HEAD_REF}
