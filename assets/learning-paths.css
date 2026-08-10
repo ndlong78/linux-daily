@@ -1,5 +1,6 @@
 body.learning .wrap{max-width:900px}
 body.learning header.site{border-bottom:2px solid var(--ink); margin-top:42px; padding-bottom:22px}
+body.learning .site-brand{display:none}
 .learning-nav{font-family:"JetBrains Mono",monospace; font-size:12px; letter-spacing:.06em; margin-top:16px}
 .learning-grid{display:grid; gap:22px; margin:30px 0 60px}
 .path-card{background:var(--surface); border:1px solid var(--line); border-radius:8px; padding:24px}
