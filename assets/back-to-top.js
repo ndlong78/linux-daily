@@ -1,4 +1,5 @@
 (() => {
+  // Progressive enhancement: without JavaScript, the native anchor remains usable.
   const button = document.querySelector(".back-to-top");
   if (!button) return;
 
