@@ -40,6 +40,12 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           rm tools/pr93_back_to_top.py .github/workflows/pr93-back-to-top-finalize.yml
+          python - <<'PY'
+          from pathlib import Path
+          for name in ("assets/style.css", "tests/test_navigation.py"):
+              path = Path(name)
+              path.write_text(path.read_text(encoding="utf-8").rstrip() + "\n", encoding="utf-8")
+          PY
           git add -A
           git status --short
           git diff --cached --check
