@@ -14,11 +14,13 @@
 <body class="learning">
   <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
   <div class="wrap">
+{% set nav_prefix = "" %}
+{% set nav_current = "paths" %}
+{% include "_global-nav.template.html" %}
     <header class="site">
       <div class="site-brand">{{ site_title }}</div>
       <h1 class="site">Learning Paths</h1>
       <p class="site-lede">Không cần học theo ngày xuất bản. Chọn mục tiêu vận hành của bạn, xem độ khó và prerequisite của từng bài, rồi đi theo thứ tự đã được sắp.</p>
-      <div class="learning-nav"><a href="index.html">← TẤT CẢ BÀI</a> · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
     </header>
     <main id="main-content" class="learning-grid">
       <p class="path-summary">{{ path_count }} LỘ TRÌNH · {{ post_count }} BÀI ĐƯỢC PHỦ</p>

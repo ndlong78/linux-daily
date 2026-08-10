@@ -100,3 +100,14 @@ a.card h2{display:block; font-family:"Be Vietnam Pro",sans-serif; font-weight:70
 a.card p{color:var(--muted); font-size:16px; line-height:1.6; margin:0}
 .empty{color:var(--muted)}
 body.home footer{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted); letter-spacing:.04em}
+
+/* Global navigation: one compact information-architecture contract site-wide. */
+.global-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:28px;padding:0 0 11px;border-bottom:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:11px;line-height:1.45;letter-spacing:.04em}
+.global-nav a{color:var(--muted);text-decoration:none}
+.global-nav a:hover{color:var(--accent-deep);text-decoration:underline}
+.global-nav .global-nav-brand{color:var(--accent-deep);font-weight:700;letter-spacing:.14em;text-transform:uppercase}
+.global-nav-links{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.global-nav a[aria-current="page"]{color:var(--ink);font-weight:700;text-decoration-thickness:2px;text-underline-offset:4px}
+body.home .global-nav + header.site,body.learning .global-nav + header.site,body.learning-dashboard .global-nav + header.site{margin-top:20px}
+body.post .global-nav + .masthead{margin-top:20px}
+@media (max-width:520px){.global-nav{align-items:flex-start;gap:8px;margin-top:20px}.global-nav-links{width:100%;gap:8px 14px}.global-nav-links a{white-space:nowrap}}

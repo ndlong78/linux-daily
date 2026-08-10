@@ -32,11 +32,14 @@
 <body class="home">
   <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
   <div class="wrap">
+{% set nav_prefix = "" %}
+{% set nav_current = "home" %}
+{% include "_global-nav.template.html" %}
     <header class="site">
       <div class="site-brand">Linux Daily</div>
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">{{ count }} BÀI · <a href="archive.html">SEARCH &amp; ARCHIVE</a></div>
+      <div class="count">{{ count }} BÀI</div>
     </header>
     <main id="main-content" class="list">
 {% if posts %}

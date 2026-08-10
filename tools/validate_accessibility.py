@@ -10,6 +10,7 @@ from html.parser import HTMLParser
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 INDEX_PATH = os.path.join(ROOT, "index.html")
+ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
 LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
@@ -101,6 +102,7 @@ def run() -> Report:
     report = Report()
     for path in [
         INDEX_PATH,
+        ARCHIVE_PATH,
         LEARNING_DASHBOARD_PATH,
         LEARNING_PATHS_PATH,
         *sorted(glob.glob(POSTS_GLOB)),

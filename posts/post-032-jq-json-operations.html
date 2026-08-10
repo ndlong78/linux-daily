@@ -51,7 +51,16 @@
   "last_verified": "2026-08-09",
   "changes_system": true
 }
-</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap"><div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#032 · 01·08·2026</span></div></div><header class="post"><p class="eyebrow">Công cụ mới · jq</p><h1>jq: biến JSON thành dữ liệu vận hành dùng được</h1><p class="lede">API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span></div></header>
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#032 · 01·08·2026</span></div></div><header class="post"><p class="eyebrow">Công cụ mới · jq</p><h1>jq: biến JSON thành dữ liệu vận hành dùng được</h1><p class="lede">API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span></div></header>
 <section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
 <section><h2>Mục tiêu</h2><p>Dùng jq để lọc, biến đổi và kiểm tra JSON vận hành thay vì grep text dễ sai cấu trúc.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><p>Có JSON mẫu/API output không chứa secret; quyền cài package nếu jq chưa có.</p></section>

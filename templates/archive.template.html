@@ -16,8 +16,11 @@
 <body class="home archive-page">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
 <div class="wrap">
+{% set nav_prefix = "" %}
+{% set nav_current = "archive" %}
+{% include "_global-nav.template.html" %}
 <header class="site">
-  <div class="site-brand"><a class="brand-home" href="index.html">← Linux Daily</a></div>
+  <div class="site-brand">Linux Daily</div>
   <h1 class="site">Search &amp; Archive</h1>
   <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ {{ count }} bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">

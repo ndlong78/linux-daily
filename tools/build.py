@@ -18,12 +18,14 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import backfill_accessibility  # noqa: E402
 import backfill_fonts  # noqa: E402
+import backfill_navigation  # noqa: E402
 import backfill_site_metadata  # noqa: E402
 import build_archive  # noqa: E402
 import build_feed  # noqa: E402
 import build_index  # noqa: E402
 import build_sitemap  # noqa: E402
 import check_links  # noqa: E402
+import learning_dashboard  # noqa: E402
 import learning_paths  # noqa: E402
 import related_content  # noqa: E402
 import validate_accessibility  # noqa: E402
@@ -78,11 +80,15 @@ def main(argv=None) -> int:
             return 1
         if learning_paths.run(check=True) != 0:
             return 1
+        if learning_dashboard.run(check=True) != 0:
+            return 1
         if backfill_site_metadata.run(check=True) != 0:
             return 1
         if backfill_accessibility.run(check=True) != 0:
             return 1
         if backfill_fonts.run(check=True) != 0:
+            return 1
+        if backfill_navigation.run(check=True) != 0:
             return 1
         if related_content.run(check=True) != 0:
             return 1
@@ -103,11 +109,15 @@ def main(argv=None) -> int:
             return 1
         if learning_paths.run(check=False) != 0:
             return 1
+        if learning_dashboard.run(check=False) != 0:
+            return 1
         if backfill_site_metadata.run(check=False) != 0:
             return 1
         if backfill_accessibility.run(check=False) != 0:
             return 1
         if backfill_fonts.run(check=False) != 0:
+            return 1
+        if backfill_navigation.run(check=False) != 0:
             return 1
         if related_content.run(check=False) != 0:
             return 1
