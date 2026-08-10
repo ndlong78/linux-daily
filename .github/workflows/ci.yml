@@ -18,10 +18,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: PR commit/path hygiene
+        if: github.event_name == 'pull_request'
+        run: >-
+          python tools/pr_hygiene.py
+          --base "${{ github.event.pull_request.base.sha }}"
+          --head "${{ github.event.pull_request.head.sha }}"
 
       - name: Cài font monospace cho render_code
         run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
