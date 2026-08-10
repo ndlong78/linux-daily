@@ -62,6 +62,9 @@ pre.bsd{border-left-color:var(--freebsd)}
 pre + .code-label{margin-top:6px}
 code{font-family:"JetBrains Mono",monospace; font-size:.9em}
 p code, li code{background:rgba(20,32,29,.06); padding:1px 6px; border-radius:4px; font-size:.86em; color:var(--accent-deep)}
+/* Inline-code rules above also match <code> nested inside an <li>. Reset direct
+   code-block children so dark pre backgrounds always keep high-contrast text. */
+pre > code{background:transparent; padding:0; border-radius:0; font-size:inherit; color:var(--code-text)}
 .cmt{color:var(--code-muted)}
 ul.clean{margin:0 0 16px; padding-left:0; list-style:none}
 ul.clean li{position:relative; padding-left:22px; margin-bottom:10px}
