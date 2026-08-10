@@ -18,3 +18,4 @@ body.learning-dashboard section{background:var(--surface);border:1px solid var(-
 .path-cta:hover{text-decoration:underline}
 @media (max-width:720px){.metric-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.dashboard-paths{grid-template-columns:1fr}}
 @media (max-width:480px){.metric-grid,.difficulty-grid{grid-template-columns:1fr}body.learning-dashboard section{padding:18px}}
+@media (prefers-color-scheme:dark){.status-attention{border-color:#E6B35A}.attention-note{border-left-color:#E6B35A;background:rgba(230,179,90,.10)}}
