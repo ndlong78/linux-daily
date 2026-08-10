@@ -59,3 +59,25 @@ def test_back_to_top_control_is_shared_accessible_and_progressive():
     script = (ROOT / "assets" / "back-to-top.js").read_text(encoding="utf-8")
     assert "window.scrollY > 480" in script
     assert 'classList.toggle("is-visible"' in script
+
+
+def test_global_nav_is_the_single_visible_top_brand():
+    for path in (ROOT / "index.html", ROOT / "archive.html", ROOT / "learning-dashboard.html"):
+        html = path.read_text(encoding="utf-8")
+        assert html.count('class="global-nav-brand"') == 1
+        assert 'class="site-brand"' not in html
+
+    learning_html = (ROOT / "learning-paths.html").read_text(encoding="utf-8")
+    learning_css = (ROOT / "assets" / "learning-paths.css").read_text(encoding="utf-8")
+    assert learning_html.count('class="global-nav-brand"') == 1
+    assert 'body.learning .site-brand{display:none}' in learning_css
+
+    post_template = (ROOT / "templates" / "post.template.html").read_text(
+        encoding="utf-8"
+    )
+    assert '>← Linux Daily</a>' not in post_template
+    assert 'aria-label="Về trang chủ Linux Daily">←</a>' in post_template
+
+    css = (ROOT / "assets" / "style.css").read_text(encoding="utf-8")
+    assert 'body.post .brand-home{font-size:0;letter-spacing:0}' in css
+    assert 'body.post .brand-home::before{content:"←";font-size:13px;letter-spacing:0}' in css
