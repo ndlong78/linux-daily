@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 09 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 10 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</title>
+      <link>https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html</guid>
+      <pubDate>Mon, 10 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.</description>
+    </item>
     <item>
       <title>pidstat và procstat: theo dõi process theo thời gian</title>
       <link>https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-032-jq-json-operations.html</guid>
       <pubDate>Sat, 01 Aug 2026 00:00:00 +0700</pubDate>
       <description>API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</description>
-    </item>
-    <item>
-      <title>Mount options: giảm bề mặt tấn công của filesystem</title>
-      <link>https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-031-mount-options-filesystem-protection.html</guid>
-      <pubDate>Fri, 31 Jul 2026 00:00:00 +0700</pubDate>
-      <description>noexec, nosuid và nodev có thể giảm một số khả năng trên mountpoint, nhưng không phải sandbox. Bài này ưu tiên inventory và kiểm chứng semantics trước khi thay cấu hình boot.</description>
     </item>
   </channel>
 </rss>

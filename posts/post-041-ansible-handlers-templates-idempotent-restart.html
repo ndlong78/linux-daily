@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc">
-<meta property="og:description" content="Dùng ansible.builtin.template kết hợp notify/handler để chỉ restart service khi cấu hình thật sự đổi, đồng thời giữ playbook idempotent trên Linux và FreeBSD.">
+<meta property="og:description" content="Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc">
-<meta name="twitter:description" content="Dùng ansible.builtin.template kết hợp notify/handler để chỉ restart service khi cấu hình thật sự đổi, đồng thời giữ playbook idempotent trên Linux và FreeBSD.">
+<meta name="twitter:description" content="Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -413,6 +413,26 @@ rm -f /usr/local/etc/nginx/nginx.conf.linux-daily.bak</code></pre></div>
       <li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html">Ansible — Check mode and diff mode</a></li>
     </ul>
   </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-034-systemd-timer-freebsd-periodic-cron.html"><span class="series-kicker">#034</span><span>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+      <li><a href="post-020-firewall-rollback-negative-test.html">#020 · Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</a></li>
+      <li><a href="post-013-bash-script-vung.html">#013 · Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
 
   <footer>
     <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>

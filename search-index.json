@@ -1,6 +1,19 @@
 {
-  "count": 40,
+  "count": 41,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-10",
+      "href": "posts/post-041-ansible-handlers-templates-idempotent-restart.html",
+      "issue": 41,
+      "lede": "Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.",
+      "tags": [
+        "Ansible handlers & templates"
+      ],
+      "title": "Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",
