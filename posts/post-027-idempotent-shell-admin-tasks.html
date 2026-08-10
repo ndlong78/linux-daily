@@ -57,7 +57,7 @@
   "changes_system": true
 }
 </script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" aria-label="Điều hướng chính">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
   <div class="global-nav-links">
     <a href="../learning-paths.html">Lộ trình học</a>
@@ -65,6 +65,12 @@
     <a href="../archive.html">Tìm kiếm</a>
   </div>
 </nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#027 · 27·07·2026</span></div></div><header class="post"><p class="eyebrow">Automation · Idempotency</p><h1>Shell idempotent: chạy lại không phá trạng thái</h1><p class="lede">Automation vận hành phải chịu được việc chạy lại sau timeout, retry hoặc nửa chừng. Mục tiêu là cùng input tạo cùng trạng thái cuối, không nhân bản dòng cấu hình hay restart vô hạn.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span></div></header>
 <section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p><p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p></section>
 <section><h2>Mục tiêu</h2><p>Viết shell automation idempotent: chạy lại cùng input không nhân bản cấu hình hay tạo thay đổi vô nghĩa.</p></section>

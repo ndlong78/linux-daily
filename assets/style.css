@@ -111,3 +111,13 @@ body.home footer{font-family:"JetBrains Mono",monospace; font-size:12px; color:v
 body.home .global-nav + header.site,body.learning .global-nav + header.site,body.learning-dashboard .global-nav + header.site{margin-top:20px}
 body.post .global-nav + .masthead{margin-top:20px}
 @media (max-width:520px){.global-nav{align-items:flex-start;gap:8px;margin-top:20px}.global-nav-links{width:100%;gap:8px 14px}.global-nav-links a{white-space:nowrap}}
+
+/* Floating back-to-top control: visible after meaningful scroll when JS is available. */
+.back-to-top{position:fixed;right:18px;bottom:18px;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:900;display:grid;place-items:center;width:46px;height:46px;border:1px solid rgba(20,32,29,.16);border-radius:50%;background:rgba(255,255,255,.96);color:var(--ink);text-decoration:none;box-shadow:0 6px 18px rgba(20,32,29,.16);font-family:"Be Vietnam Pro",system-ui,sans-serif;font-size:25px;font-weight:700;line-height:1;transition:opacity .16s ease,visibility .16s ease,transform .16s ease,box-shadow .16s ease,background .16s ease}
+.back-to-top:hover{background:var(--surface);color:var(--accent-deep);text-decoration:none;transform:translateY(-2px);box-shadow:0 9px 22px rgba(20,32,29,.2)}
+.back-to-top:active{transform:translateY(0)}
+.back-to-top span{transform:translateY(-1px)}
+.back-to-top-enhanced .back-to-top{opacity:0;visibility:hidden;pointer-events:none;transform:translateY(8px)}
+.back-to-top-enhanced .back-to-top.is-visible{opacity:.98;visibility:visible;pointer-events:auto;transform:translateY(0)}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+@media (max-width:520px){.back-to-top{right:14px;bottom:14px;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));width:44px;height:44px;font-size:24px}}

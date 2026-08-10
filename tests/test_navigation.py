@@ -35,3 +35,27 @@ def test_post_navigation_uses_parent_prefix_and_is_idempotent():
     assert 'href="../learning-dashboard.html"' in first
     assert 'href="../archive.html"' in first
     assert 'aria-current="page"' not in first
+
+
+def test_back_to_top_control_is_shared_accessible_and_progressive():
+    home = backfill_navigation._env().get_template("_global-nav.template.html").render(
+        nav_prefix="", nav_current="home"
+    )
+    assert 'id="page-top"' in home
+    assert home.count('class="back-to-top"') == 1
+    assert 'href="#page-top"' in home
+    assert 'aria-label="Lên đầu trang"' in home
+    assert 'aria-hidden="true">↑</span>' in home
+    assert 'src="assets/back-to-top.js"' in home
+
+    post = backfill_navigation.render_navigation(prefix="../")
+    assert 'src="../assets/back-to-top.js"' in post
+
+    css = (ROOT / "assets" / "style.css").read_text(encoding="utf-8")
+    assert ".back-to-top{" in css
+    assert ".back-to-top-enhanced .back-to-top.is-visible" in css
+    assert "scroll-behavior:smooth" in css
+
+    script = (ROOT / "assets" / "back-to-top.js").read_text(encoding="utf-8")
+    assert "window.scrollY > 480" in script
+    assert 'classList.toggle("is-visible"' in script

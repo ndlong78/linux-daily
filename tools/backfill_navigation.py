@@ -19,6 +19,9 @@ NAV_TEMPLATE = "_global-nav.template.html"
 POST_TEMPLATE = ROOT / "templates" / "post.template.html"
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 NAV_RE = re.compile(r'<nav class="global-nav"[^>]*>.*?</nav>\n?', re.DOTALL)
+BACK_TO_TOP_RE = re.compile(
+    r"<!-- back-to-top:start -->.*?<!-- back-to-top:end -->\n?", re.DOTALL
+)
 
 
 def _env() -> Environment:
@@ -42,7 +45,7 @@ def transform(text: str) -> str:
     marker = '<div class="wrap">'
     if marker not in text:
         raise ValueError('thiếu <div class="wrap">')
-    clean = NAV_RE.sub("", text)
+    clean = BACK_TO_TOP_RE.sub("", NAV_RE.sub("", text))
     before, after = clean.split(marker, 1)
     after = after.lstrip("\r\n")
     nav = render_navigation()

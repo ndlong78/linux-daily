@@ -1,4 +1,4 @@
-<nav class="global-nav" aria-label="Điều hướng chính">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="{{ nav_prefix }}index.html"{% if nav_current == "home" %} aria-current="page"{% endif %}>Linux Daily</a>
   <div class="global-nav-links">
     <a href="{{ nav_prefix }}learning-paths.html"{% if nav_current == "paths" %} aria-current="page"{% endif %}>Lộ trình học</a>
@@ -6,3 +6,9 @@
     <a href="{{ nav_prefix }}archive.html"{% if nav_current == "archive" %} aria-current="page"{% endif %}>Tìm kiếm</a>
   </div>
 </nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="{{ nav_prefix }}assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
