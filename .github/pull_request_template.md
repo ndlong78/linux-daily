@@ -12,10 +12,19 @@
 
 ## Kiểm thử
 
-- [ ] `python3 tools/publish.py check`
+- [ ] `python3 tools/pr_preflight.py`
 - [ ] External link check nếu PR thay URL/source
 - [ ] `python3 tools/workflow_safety.py` nếu PR thay GitHub Actions
 - [ ] Production smoke nếu PR ảnh hưởng serving/deploy
+
+## Git / CI hygiene
+
+- [ ] Branch được tạo từ `main`; không push trực tiếp `main`
+- [ ] Không có workflow/helper one-shot tự commit/push ngược branch
+- [ ] Không track file tạm hoặc helper gắn số PR
+- [ ] Commit subject mô tả rõ thay đổi; không dùng `x/tmp/test/wip/placeholder/...`
+- [ ] CI chỉ validate; generated artifacts đã được tạo trước commit/push
+- [ ] Khi merge, dùng **Squash and merge**
 
 ## Content / technical review
 
