@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc — Linux Daily #041</title>
+<meta name="description" content="Dùng ansible.builtin.template kết hợp notify/handler để chỉ restart service khi cấu hình thật sự đổi, đồng thời giữ playbook idempotent trên Linux và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc">
+<meta property="og:description" content="Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc">
+<meta name="twitter:description" content="Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 41,
+  "date": "2026-08-10",
+  "axis": "Automation",
+  "eyebrow": "Automation · Ansible handlers & templates",
+  "slug": "ansible-handlers-templates-idempotent-restart",
+  "title": "Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc",
+  "lede": "Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.3-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-10",
+  "changes_system": true,
+  "sources": [
+    {
+      "title": "Ansible Core — Handlers: running operations on change",
+      "url": "https://docs.ansible.com/projects/ansible-core/2.19/playbook_guide/playbooks_handlers.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible — ansible.builtin.template module",
+      "url": "https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/template_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible Core — ansible.builtin.service module",
+      "url": "https://docs.ansible.com/projects/ansible-core/2.20/collections/ansible/builtin/service_module.html",
+      "kind": "upstream"
+    },
+    {
+      "title": "Ansible — Check mode and diff mode",
+      "url": "https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html",
+      "kind": "upstream"
+    }
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="brand">
+      <a class="brand-home" href="../index.html">← Linux Daily</a>
+      <span class="issue">#041 · 10·08·2026</span>
+    </div>
+  </div>
+
+  <header class="post">
+    <p class="eyebrow">Automation · Ansible handlers & templates</p>
+    <h1>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</h1>
+    <p class="lede">Dùng template để quản lý cấu hình, notify handler khi file thật sự đổi và chứng minh lần chạy thứ hai không restart service.</p>
+    <div class="meta">
+      <span class="tag axis">TRỤC · AUTOMATION</span>
+      <span class="tag">ĐỘ KHÓ · TRUNG CẤP</span>
+      <span class="tag">~12 PHÚT</span>
+    </div>
+  </header>
+
+  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
+    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
+    <p><strong>Last verified:</strong> 2026-08-10 · đối chiếu tài liệu official/upstream; chưa thay thế kiểm thử lab của chính môi trường production.</p>
+  </section>
+
+  <section class="objective">
+    <h2>Mục tiêu</h2>
+    <p>Dùng <code>ansible.builtin.template</code> và handler để chỉ restart Nginx khi cấu hình thật sự thay đổi, rồi chứng minh playbook idempotent ở lần chạy thứ hai.</p>
+  </section>
+
+  <section class="prerequisites">
+    <h2>Yêu cầu tiên quyết</h2>
+    <ul class="clean">
+      <li>Đã hoàn thành hoặc nắm nội dung #006, #027 và #034.</li>
+      <li>Có Ansible control node, SSH key và quyền become/root trên host lab.</li>
+      <li>Managed node đã có Python runtime phù hợp với Ansible.</li>
+      <li>Dùng host lab hoặc host Nginx có cửa sổ bảo trì; bài sẽ thay cấu hình Nginx và restart service.</li>
+      <li>TCP/8008 chỉ bind trên <code>127.0.0.1</code>; bài không mở firewall.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 760 235" role="img" aria-label="Luồng template thay đổi notify handler rồi restart service">
+      <rect width="760" height="235" fill="#F7FAF9"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="30" y="70" width="185" height="90" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+        <text x="122" y="105" font-size="14" font-weight="700">TEMPLATE</text>
+        <text x="122" y="130" font-size="11">render desired config</text>
+        <rect x="287" y="70" width="185" height="90" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+        <text x="379" y="105" font-size="14" font-weight="700">CHANGED?</text>
+        <text x="379" y="130" font-size="11">notify chỉ khi đổi</text>
+        <rect x="545" y="70" width="185" height="90" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+        <text x="637" y="105" font-size="14" font-weight="700">HANDLER</text>
+        <text x="637" y="130" font-size="11">restart đúng lúc</text>
+        <path d="M215 115H279M472 115H537" stroke="#0C6E61" stroke-width="3"/>
+      </g>
+    </svg>
+    <figcaption>Hình 1 — Handler chỉ được notify khi task báo <code>changed</code>; nhiều notify cùng handler trong một section vẫn được gộp thành một lần chạy.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+    <p>Restart service sau mọi lần chạy automation tạo gián đoạn không cần thiết. Mẫu đúng là quản lý file theo desired state, chỉ notify handler khi file đổi và để Ansible gom restart về cuối section.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+    <ul class="clean">
+      <li><code>ansible.builtin.template</code> render file bằng Jinja2 và chỉ báo <code>changed</code> khi nội dung hoặc thuộc tính đích khác desired state.</li>
+      <li><code>notify</code> chỉ đánh dấu handler khi task thay đổi; handler mặc định chạy sau phần task tương ứng.</li>
+      <li>Một handler được notify nhiều lần vẫn chỉ chạy một lần trong cùng section, giúp tránh restart lặp.</li>
+      <li><code>ansible.builtin.service</code> là lớp abstraction cho nhiều service manager, gồm systemd và BSD init. Không cần nhét <code>systemctl</code> vào nhánh FreeBSD.</li>
+      <li><code>--check --diff</code> giúp preview thay đổi. Không dùng <code>--diff</code> cho template chứa secret vì diff có thể lộ dữ liệu nhạy cảm.</li>
+    </ul>
+  </section>
+
+  <figure>
+    <svg viewBox="0 0 760 245" role="img" aria-label="So sánh đường dẫn và service manager của Ubuntu Debian Fedora và FreeBSD cho bài Ansible Nginx">
+      <rect width="760" height="245" fill="#FFFFFF"/>
+      <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+        <rect x="20" y="45" width="165" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="102" y="76" font-size="13" font-weight="700">Ubuntu / Xubuntu</text>
+        <text x="102" y="108" font-size="11">APT · systemd</text>
+        <text x="102" y="135" font-size="10">/etc/nginx/nginx.conf</text>
+        <rect x="205" y="45" width="165" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="287" y="76" font-size="13" font-weight="700">Debian</text>
+        <text x="287" y="108" font-size="11">APT · systemd</text>
+        <text x="287" y="135" font-size="10">/etc/nginx/nginx.conf</text>
+        <rect x="390" y="45" width="165" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/>
+        <text x="472" y="76" font-size="13" font-weight="700">Fedora</text>
+        <text x="472" y="108" font-size="11">DNF · systemd · SELinux</text>
+        <text x="472" y="135" font-size="10">/etc/nginx/nginx.conf</text>
+        <rect x="575" y="45" width="165" height="150" rx="8" fill="#FBF1F0" stroke="#B23A2E"/>
+        <text x="657" y="76" font-size="13" font-weight="700">FreeBSD</text>
+        <text x="657" y="108" font-size="11">pkg · rc.d</text>
+        <text x="657" y="135" font-size="9.5">/usr/local/etc/nginx/nginx.conf</text>
+      </g>
+    </svg>
+    <figcaption>Hình 2 — Playbook dùng cùng handler nhưng biến đường dẫn phải tách FreeBSD; service module tự chọn backend phù hợp thay vì ép systemd.</figcaption>
+  </figure>
+
+  <section>
+    <h2><span class="num">03</span> Các bước thực hiện</h2>
+    <ol class="steps">
+      <li>
+        <h3>Cài Nginx trên host lab và bật service.</h3>
+        <p>Ubuntu/Xubuntu — chạy từ user có quyền <code>sudo</code>.</p>
+        <div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y nginx curl
+sudo systemctl enable --now nginx</code></pre></div>
+
+        <p>Debian — chạy từ user có quyền <code>sudo</code> hoặc root tương đương.</p>
+        <div class="code-wrap"><div class="code-label debian">Debian</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo apt update
+sudo apt install -y nginx curl
+sudo systemctl enable --now nginx</code></pre></div>
+
+        <p>Fedora — chạy từ user có quyền <code>sudo</code>.</p>
+        <div class="code-wrap"><div class="code-label fedora">Fedora</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo dnf install -y nginx curl
+sudo systemctl enable --now nginx</code></pre></div>
+
+        <p>FreeBSD — chạy bằng root. FreeBSD dùng <code>pkg</code>, <code>sysrc</code> và rc.d; không dùng systemd.</p>
+        <div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">pkg install -y nginx
+sysrc nginx_enable=YES
+service nginx start</code></pre></div>
+      </li>
+
+      <li>
+        <h3>Tạo inventory trên control node.</h3>
+        <p>Chạy bằng user thường. Thay các giá trị dạng <code>&lt;...&gt;</code> bằng IP/hostname và tài khoản SSH thật.</p>
+        <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">mkdir -p linux-daily-041/templates
+cd linux-daily-041
+cat &gt; inventory.ini &lt;&lt;'EOF'
+[ubuntu]
+ubuntu-lab ansible_host=&lt;ubuntu-ip&gt; ansible_user=&lt;ssh-user&gt;
+
+[debian]
+debian-lab ansible_host=&lt;debian-ip&gt; ansible_user=&lt;ssh-user&gt;
+
+[fedora]
+fedora-lab ansible_host=&lt;fedora-ip&gt; ansible_user=&lt;ssh-user&gt;
+
+[freebsd]
+freebsd-lab ansible_host=&lt;freebsd-ip&gt; ansible_user=&lt;ssh-user&gt;
+
+[linux_daily:children]
+ubuntu
+debian
+fedora
+freebsd
+EOF</code></pre></div>
+      </li>
+
+      <li>
+        <h3>Tạo template Nginx.</h3>
+        <p>Đây là Jinja2 thật; dấu ngoặc kép trong biểu thức là cú pháp Ansible, không phải placeholder người đọc.</p>
+        <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cat &gt; templates/nginx.conf.j2 &lt;&lt;'EOF'
+worker_processes 1;
+
+events {
+    worker_connections 128;
+}
+
+http {
+    server {
+        listen 127.0.0.1:&#123;&#123; nginx_listen_port &#125;&#125;;
+
+        location / {
+            default_type text/plain;
+            return 200 "linux-daily handler demo\n";
+        }
+    }
+}
+EOF</code></pre></div>
+      </li>
+
+      <li>
+        <h3>Tạo playbook có template, validate và handler.</h3>
+        <p>Playbook lưu baseline một lần, chọn đường dẫn theo <code>ansible_system</code>, validate file tạm trước khi thay config thật và chỉ notify handler khi template đổi.</p>
+        <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cat &gt; site.yml &lt;&lt;'EOF'
+---
+- name: Linux Daily 041 handler demo
+  hosts: linux_daily
+  become: true
+  gather_facts: true
+
+  vars:
+    nginx_listen_port: 8008
+    nginx_conf_path: "&#123;&#123; '/usr/local/etc/nginx/nginx.conf' if ansible_system == 'FreeBSD' else '/etc/nginx/nginx.conf' &#125;&#125;"
+    nginx_binary: "&#123;&#123; '/usr/local/sbin/nginx' if ansible_system == 'FreeBSD' else '/usr/sbin/nginx' &#125;&#125;"
+
+  tasks:
+    - name: Save baseline nginx configuration once
+      ansible.builtin.copy:
+        src: "&#123;&#123; nginx_conf_path &#125;&#125;"
+        dest: "&#123;&#123; nginx_conf_path &#125;&#125;.linux-daily.bak"
+        remote_src: true
+        force: false
+
+    - name: Render nginx configuration
+      ansible.builtin.template:
+        src: templates/nginx.conf.j2
+        dest: "&#123;&#123; nginx_conf_path &#125;&#125;"
+        mode: "0644"
+        backup: true
+        validate: "&#123;&#123; nginx_binary &#125;&#125; -t -c %s"
+      notify: Restart nginx
+
+  handlers:
+    - name: Restart nginx
+      ansible.builtin.service:
+        name: nginx
+        state: restarted
+EOF</code></pre></div>
+      </li>
+
+      <li>
+        <h3>Preview rồi áp dụng playbook.</h3>
+        <p>Chạy bằng user thường trên control node. <code>--check --diff</code> là preview; sau khi đọc diff mới chạy thật.</p>
+        <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini site.yml --check --diff
+ansible-playbook -i inventory.ini site.yml</code></pre></div>
+      </li>
+
+      <li>
+        <h3>Chạy lại playbook để kiểm tra idempotency.</h3>
+        <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini site.yml</code></pre></div>
+        <p>Lần chạy thứ hai không được render lại config và không được gọi handler nếu desired state không đổi.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span> Kiểm chứng</h2>
+    <p>Kiểm tra cả hai lớp: recap của Ansible và listener/HTTP trên từng hệ điều hành.</p>
+
+    <h3>Ansible recap</h3>
+    <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini site.yml</code></pre></div>
+    <p><strong>Kết quả mong đợi:</strong> lần chạy thứ hai có <code>changed=0</code> cho từng host và không xuất hiện dòng <code>RUNNING HANDLER [Restart nginx]</code>.</p>
+
+    <h3>Ubuntu / Xubuntu</h3>
+    <div class="code-wrap"><div class="code-label ubuntu">Ubuntu / Xubuntu</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo nginx -t
+sudo ss -ltnp | grep ':8008'
+curl -fsS http://127.0.0.1:8008/</code></pre></div>
+
+    <h3>Debian</h3>
+    <div class="code-wrap"><div class="code-label debian">Debian</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo nginx -t
+sudo ss -ltnp | grep ':8008'
+curl -fsS http://127.0.0.1:8008/</code></pre></div>
+
+    <h3>Fedora</h3>
+    <div class="code-wrap"><div class="code-label fedora">Fedora</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo nginx -t
+sudo ss -ltnp | grep ':8008'
+curl -fsS http://127.0.0.1:8008/</code></pre></div>
+
+    <h3>FreeBSD</h3>
+    <div class="code-wrap"><div class="code-label bsd">FreeBSD — KHÁC Linux</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">/usr/local/sbin/nginx -t -c /usr/local/etc/nginx/nginx.conf
+sockstat -4 -l | grep ':8008'
+fetch -qo- http://127.0.0.1:8008/</code></pre></div>
+
+    <div class="expected-output">
+      <h3>Expected Output / Kết quả mong đợi</h3>
+      <ul class="clean">
+        <li><code>nginx -t</code> báo syntax/config test thành công.</li>
+        <li>Listener chỉ nằm trên <code>127.0.0.1:8008</code>.</li>
+        <li>HTTP response là <code>linux-daily handler demo</code>.</li>
+        <li>Lần chạy Ansible thứ hai có <code>changed=0</code> và không restart Nginx.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Gỡ / Hoàn tác</h2>
+    <p>Khôi phục baseline trước khi xóa file backup. Nếu Nginx đã tồn tại trước bài, không gỡ package.</p>
+
+    <h3>Ubuntu / Xubuntu · Debian · Fedora</h3>
+    <div class="code-wrap"><div class="code-label linux">Linux systemd</div><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo cp /etc/nginx/nginx.conf.linux-daily.bak /etc/nginx/nginx.conf
+sudo nginx -t
+sudo systemctl restart nginx
+sudo rm -f /etc/nginx/nginx.conf.linux-daily.bak</code></pre></div>
+
+    <h3>FreeBSD</h3>
+    <div class="code-wrap"><div class="code-label bsd">FreeBSD — rc.d</div><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">cp /usr/local/etc/nginx/nginx.conf.linux-daily.bak /usr/local/etc/nginx/nginx.conf
+/usr/local/sbin/nginx -t -c /usr/local/etc/nginx/nginx.conf
+service nginx restart
+rm -f /usr/local/etc/nginx/nginx.conf.linux-daily.bak</code></pre></div>
+
+    <p>Chỉ trên host lab nơi Nginx được cài riêng cho bài này: dừng service rồi gỡ package bằng <code>apt</code>, <code>dnf</code> hoặc <code>pkg</code> tương ứng.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+    <ul class="clean">
+      <li><strong>Handler không chạy:</strong> kiểm tra task template có thật sự báo <code>changed</code> và tên trong <code>notify</code> khớp handler.</li>
+      <li><strong>Handler chạy mỗi lần:</strong> template có dữ liệu thay đổi theo thời gian hoặc giá trị không ổn định. Không nhúng timestamp động vào config nếu không cần.</li>
+      <li><strong><code>validate</code> thất bại:</strong> sửa template trước; Ansible không nên thay file đích khi lệnh validate trả exit code khác 0.</li>
+      <li><strong>Fedora không bind được port:</strong> kiểm tra SELinux policy bằng <code>semanage port -l | grep -w http_port_t</code>. Không tắt SELinux để né lỗi; dùng port được policy cho phép hoặc cập nhật policy có chủ đích.</li>
+      <li><strong>FreeBSD:</strong> binary và config nằm dưới <code>/usr/local</code>; không thay bằng đường dẫn Linux và không dùng <code>systemctl</code>.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+    <ul class="clean">
+      <li>Giữ <code>validate</code> cho file cấu hình trước restart để giảm rủi ro service outage.</li>
+      <li>Không dùng <code>--diff</code> với template chứa password, token, private key hoặc secret khác; diff có thể ghi chúng vào terminal/CI log.</li>
+      <li>Không dùng <code>changed_when: true</code> để ép handler chạy nếu module đã có change detection đúng.</li>
+      <li>Giới hạn rollout bằng inventory/limit và chạy trên lab hoặc một host trước khi mở rộng.</li>
+      <li>Handler là cơ chế điều phối thay đổi, không phải lý do để bỏ health check sau restart.</li>
+    </ul>
+  </section>
+
+  <section class="exercise">
+    <h2><span class="num">07</span> Bài tập tự luyện</h2>
+    <p>Đổi <code>nginx_listen_port</code> từ <code>8008</code> sang <code>8009</code>, chạy <code>--check --diff</code>, dự đoán host nào sẽ báo <code>changed</code>, rồi apply. Chạy lại lần hai và chứng minh handler không chạy. Trên Fedora, kiểm tra port mới có phù hợp SELinux policy trước khi apply.</p>
+  </section>
+
+  <section class="sources" aria-labelledby="technical-sources">
+    <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+    <ul class="clean">
+      <li><a href="https://docs.ansible.com/projects/ansible-core/2.19/playbook_guide/playbooks_handlers.html">Ansible Core — Handlers: running operations on change</a></li>
+      <li><a href="https://docs.ansible.com/projects/ansible/latest/collections/ansible/builtin/template_module.html">Ansible — ansible.builtin.template module</a></li>
+      <li><a href="https://docs.ansible.com/projects/ansible-core/2.20/collections/ansible/builtin/service_module.html">Ansible Core — ansible.builtin.service module</a></li>
+      <li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html">Ansible — Check mode and diff mode</a></li>
+    </ul>
+  </section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-034-systemd-timer-freebsd-periodic-cron.html"><span class="series-kicker">#034</span><span>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+      <li><a href="post-020-firewall-rollback-negative-test.html">#020 · Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</a></li>
+      <li><a href="post-013-bash-script-vung.html">#013 · Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+    <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+    <div class="foot-row">
+      <span>Linux Daily #041 · Automation</span>
+      <span class="hashtags">#Linux #Ansible #Automation #FreeBSD</span>
+    </div>
+  </footer>
+
+</div>
+</main>
+</body>
+</html>

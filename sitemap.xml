@@ -2,19 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-08-09</lastmod>
+    <lastmod>2026-08-10</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html</loc>
+    <lastmod>2026-08-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html</loc>
