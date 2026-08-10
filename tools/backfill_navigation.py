@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Deterministically backfill the shared global navigation into post HTML."""
+"""Deterministically backfill the shared global navigation into post HTML.
+
+The shared Jinja partial is the navigation source of truth; this tool materializes
+that same markup into static post artifacts without changing article content.
+"""
 from __future__ import annotations
 
 import argparse
