@@ -48,6 +48,7 @@ jobs:
       - name: Prepare and validate deterministic artifacts
         run: |
           python tools/publish.py prepare
+          python tools/publish.py prepare
           python tools/publish.py check
 
       - name: Guard and commit exact generated scope
