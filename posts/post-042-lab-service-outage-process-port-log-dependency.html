@@ -5,6 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lab service outage: process, port, log và dependency — Linux Daily #042</title>
 <meta name="description" content="Lab khoanh vùng Nginx outage theo service state, process, listener, log và dependency trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD, rồi phục hồi có bằng chứng.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
 <link rel="canonical" href="https://linux.no.id.vn/posts/post-042-lab-service-outage-process-port-log-dependency.html">
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
@@ -23,10 +27,6 @@
 <meta name="twitter:description" content="Khoanh vùng một Nginx outage từ service state tới process, listener, log và dependency rồi phục hồi có bằng chứng.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
-<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/fonts.css">
-<link rel="stylesheet" href="../assets/style.css">
-<link rel="stylesheet" href="../assets/related.css">
 <script type="application/json" id="ld-meta">
 {
   "issue": 42,
@@ -93,7 +93,9 @@
   </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#042 · 11·08·2026</span></div></div>
@@ -151,29 +153,29 @@
 <li><h3>Cài Nginx và công cụ kiểm tra trên host lab.</h3><p>Ubuntu/Xubuntu và Debian — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
 sudo apt install -y nginx curl iproute2
 sudo systemctl enable --now nginx</code></pre></div><p>Fedora — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y nginx curl iproute
-sudo systemctl enable --now nginx</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">pkg install -y nginx curl
+sudo systemctl enable --now nginx</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">pkg install -y nginx curl
 sysrc nginx_enable="YES"
 service nginx start</code></pre></div></li>
 <li><h3>Ghi baseline trước khi gây lỗi.</h3><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl is-active nginx
 ps -eo pid,ppid,user,comm | grep '[n]ginx'
 sudo ss -ltnp | grep ':80 '
-curl -fsS http://127.0.0.1/ | head</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx status
+curl -fsS http://127.0.0.1/ | head</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx status
 ps ax -o pid,ppid,user,command | grep '[n]ginx'
 sockstat -4 -6 -l | grep ':80'
 curl -fsS http://127.0.0.1/ | head</code></pre></div><p><strong>Expected Output:</strong> service đang chạy, có master/worker process, có listener TCP/80 và HTTP trả nội dung.</p></li>
 <li><h3>Kiểm tra dependency cấu hình trước failure injection.</h3><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo nginx -t
-sudo systemctl list-dependencies nginx.service --no-pager</code></pre></div><p>FreeBSD — chạy bằng root; rc.d không có dependency graph tương đương systemd.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">nginx -t
+sudo systemctl list-dependencies nginx.service --no-pager</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root; rc.d không có dependency graph tương đương systemd.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">nginx -t
 service nginx rcvar
 sed -n '1,35p' /usr/local/etc/rc.d/nginx</code></pre></div><p><strong>Expected Output:</strong> <code>nginx -t</code> báo syntax hợp lệ. Trên Linux, dependency tree hiển thị unit liên quan; trên FreeBSD, đọc metadata <code>PROVIDE/REQUIRE</code> của rc script thay vì giả lập systemd.</p></li>
 </ol></section>
 <section data-lab-section="failure-injection"><h2>Failure injection</h2><p>Chỉ thực hiện trên host lab. Thao tác này làm HTTP ngừng phục vụ cho tới bước recovery.</p><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl stop nginx
-curl --max-time 2 -fsS http://127.0.0.1/</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx stop
+curl --max-time 2 -fsS http://127.0.0.1/</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx stop
 curl --max-time 2 -fsS http://127.0.0.1/</code></pre></div><p><strong>Expected Output:</strong> request thất bại vì không còn listener; đây là negative test có chủ đích.</p></section>
 <section data-lab-section="execution"><h2>Triage outage</h2><p>Không restart ngay. Thu thập bằng chứng theo thứ tự service → process → port → log → dependency.</p><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl status nginx --no-pager
 ps -eo pid,ppid,user,comm | grep '[n]ginx' || true
 sudo ss -ltnp | grep ':80 ' || true
 sudo journalctl -u nginx -n 30 --no-pager
-sudo nginx -t</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx status || true
+sudo nginx -t</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx status || true
 ps ax -o pid,ppid,user,command | grep '[n]ginx' || true
 sockstat -4 -6 -l | grep ':80' || true
 tail -n 30 /var/log/nginx/error.log
@@ -181,16 +183,16 @@ nginx -t</code></pre></div><p><strong>Expected Output:</strong> service không a
 <section data-lab-section="verification"><h2><span class="num">04</span> Kiểm chứng</h2><p>Khởi động lại Nginx rồi lặp đúng baseline.</p><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl start nginx
 sudo systemctl is-active nginx
 sudo ss -ltnp | grep ':80 '
-curl -fsS http://127.0.0.1/ | head</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx start
+curl -fsS http://127.0.0.1/ | head</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx start
 service nginx status
 sockstat -4 -6 -l | grep ':80'
 curl -fsS http://127.0.0.1/ | head</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>Service trở lại trạng thái running/active.</li><li>Nginx process và TCP/80 listener xuất hiện lại.</li><li>HTTP request thành công.</li><li>Chuỗi evidence đủ để kết luận outage do service bị dừng, không phải syntax configuration.</li></ul></div></section>
 <section data-lab-section="rollback"><h2>Rollback</h2><p>Nếu Nginx không start lại, không sửa nhiều thứ cùng lúc. Chạy <code>nginx -t</code>, đọc log và khôi phục cấu hình backup của chính host trước khi thử start lần nữa.</p><p>Linux — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo nginx -t
-sudo journalctl -u nginx -n 50 --no-pager</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">nginx -t
+sudo journalctl -u nginx -n 50 --no-pager</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">nginx -t
 tail -n 50 /var/log/nginx/error.log</code></pre></div></section>
 <section data-lab-section="cleanup"><h2>Gỡ / Hoàn tác</h2><p>Nếu host được tạo riêng cho lab và không cần Nginx nữa, tắt service trước rồi gỡ package.</p><p>Ubuntu/Xubuntu và Debian — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl disable --now nginx
 sudo apt remove -y nginx</code></pre></div><p>Fedora — chạy từ user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl disable --now nginx
-sudo dnf remove -y nginx</code></pre></div><p>FreeBSD — chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx stop
+sudo dnf remove -y nginx</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service nginx stop
 sysrc -x nginx_enable
 pkg delete -y nginx</code></pre></div></section>
 <section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
@@ -207,7 +209,28 @@ pkg delete -y nginx</code></pre></div></section>
 <li><a href="https://nginx.org/en/docs/control.html">nginx — Controlling nginx</a></li>
 <li><a href="https://docs.freebsd.org/en/books/handbook/config/">FreeBSD Handbook — Configuration, Services, Logging and Power Management</a></li>
 </ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #042 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Nginx #Troubleshooting</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-035-lab-filesystem-full-recovery.html"><span class="series-kicker">#035</span><span>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
+      <li><a href="post-021-storage-backup-restore-recovery-lab.html">#021 · Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</a></li>
+      <li><a href="post-014-lab-backup-tu-dong.html">#014 · Backup tự động mà bạn dám tin — vì đã thử khôi phục</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #042 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Nginx #Troubleshooting</span></div></footer>
 </div>
 </main>
 </body>

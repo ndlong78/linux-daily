@@ -1,6 +1,19 @@
 {
-  "count": 41,
+  "count": 42,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-08-11",
+      "href": "posts/post-042-lab-service-outage-process-port-log-dependency.html",
+      "issue": 42,
+      "lede": "Khoanh vùng một Nginx outage từ service state tới process, listener, log và dependency rồi phục hồi có bằng chứng.",
+      "tags": [
+        "Service outage lab"
+      ],
+      "title": "Lab service outage: process, port, log và dependency"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",
