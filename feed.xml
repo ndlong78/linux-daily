@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 10 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 11 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab service outage: process, port, log và dependency</title>
+      <link>https://linux.no.id.vn/posts/post-042-lab-service-outage-process-port-log-dependency.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-042-lab-service-outage-process-port-log-dependency.html</guid>
+      <pubDate>Tue, 11 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Khoanh vùng một Nginx outage từ service state tới process, listener, log và dependency rồi phục hồi có bằng chứng.</description>
+    </item>
     <item>
       <title>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</title>
       <link>https://linux.no.id.vn/posts/post-041-ansible-handlers-templates-idempotent-restart.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</guid>
       <pubDate>Sun, 02 Aug 2026 00:00:00 +0700</pubDate>
       <description>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</description>
-    </item>
-    <item>
-      <title>jq: biến JSON thành dữ liệu vận hành dùng được</title>
-      <link>https://linux.no.id.vn/posts/post-032-jq-json-operations.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-032-jq-json-operations.html</guid>
-      <pubDate>Sat, 01 Aug 2026 00:00:00 +0700</pubDate>
-      <description>API và CLI hiện đại trả JSON ngày càng nhiều. jq giúp lọc field, map array và tạo output ổn định mà không grep JSON như text thường.</description>
     </item>
   </channel>
 </rss>
