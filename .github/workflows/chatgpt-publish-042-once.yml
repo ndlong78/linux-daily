@@ -1,0 +1,72 @@
+name: ChatGPT publish #042 once
+
+on:
+  push:
+    branches:
+      - chatgpt/linux-daily-042-20260811
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: ${{ !contains(github.event.head_commit.message, '[publish-prepared-042]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: chatgpt/linux-daily-042-20260811
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev]"
+
+      - name: Normalize FreeBSD code label in #042
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('posts/post-042-lab-service-outage-process-port-log-dependency.html')
+          text = path.read_text(encoding='utf-8')
+          old = '<p>FreeBSD — chạy bằng root.</p>'
+          new = '<p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p>'
+          text = text.replace(old, new)
+          old_special = '<p>FreeBSD — chạy bằng root; rc.d không có dependency graph tương đương systemd.</p>'
+          new_special = '<p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root; rc.d không có dependency graph tương đương systemd.</p>'
+          text = text.replace(old_special, new_special)
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Prepare and validate deterministic artifacts
+        run: |
+          python tools/publish.py prepare
+          python tools/publish.py check
+
+      - name: Guard and commit exact generated scope
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(git diff --name-only)
+          if [ "${#files[@]}" -eq 0 ]; then
+            echo "No generated changes"
+            exit 0
+          fi
+          for f in "${files[@]}"; do
+            case "$f" in
+              posts/post-*.html|index.html|archive.html|feed.xml|sitemap.xml|robots.txt|search-index.json|learning-dashboard.html|learning-paths.html|learning-paths.json|learning-metadata.json|curriculum-plan.json|taxonomy.json|docs/content-mix-report.md|docs/distro-coverage-report.md|docs/quality-dashboard.md|docs/daily-operations-dashboard.md)
+                ;;
+              *)
+                echo "Unexpected generated path: $f" >&2
+                exit 1
+                ;;
+            esac
+          done
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for f in "${files[@]}"; do git add -- "$f"; done
+          git commit -m "build: publish Linux Daily #042 [publish-prepared-042]"
+          git push origin HEAD:chatgpt/linux-daily-042-20260811
