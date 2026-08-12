@@ -1,0 +1,39 @@
+name: Materialize Related Nav PR 98
+
+on:
+  push:
+    branches:
+      - chatgpt/linux-daily-043-mtu-pmtud
+
+permissions:
+  contents: write
+
+jobs:
+  materialize-related:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Materialize and verify related navigation
+        run: |
+          python tools/related_content.py
+          python tools/related_content.py --check
+
+      - name: Commit generated navigation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add posts/
+          if git diff --cached --quiet; then
+            echo "No related-navigation changes to commit."
+            exit 0
+          fi
+          git commit -m "chore: sync related navigation for #043"
+          git push
