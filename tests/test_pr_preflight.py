@@ -3,9 +3,10 @@ from types import SimpleNamespace
 import pr_preflight
 
 
-def test_command_plan_matches_ci_core_gates():
+def test_command_plan_materializes_then_matches_ci_core_gates():
     plan = pr_preflight.command_plan()
     flattened = [" ".join(command) for command in plan]
+    assert "tools/publish.py prepare" in flattened[0]
     assert any("tools/pr_hygiene.py" in command for command in flattened)
     assert any("ruff check tools/ tests/" in command for command in flattened)
     assert any("-m pytest" in command for command in flattened)
