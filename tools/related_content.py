@@ -143,7 +143,8 @@ def _replace(text: str, block: str) -> str:
     marker = "<footer>"
     if marker not in text:
         raise ValueError("không tìm thấy <footer> để chèn related navigation")
-    return text.replace(marker, block + "\n\n  " + marker, 1)
+    before, after = text.split(marker, 1)
+    return before.rstrip() + "\n\n" + block + "\n\n  " + marker + after
 
 
 def expected_outputs() -> dict[Path, str]:
