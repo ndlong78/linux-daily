@@ -1,7 +1,7 @@
 # Nhật ký chủ đề Linux Daily
 # Định dạng: #số | YYYY-MM-DD | trục | tên chủ đề
 # state.json giữ clock cadence; danh sách này dùng để giữ thứ tự series và tránh trùng chủ đề.
-# Publication timeline #001–#042 đã được đồng bộ liên tục đến 2026-08-11.
+# Publication timeline #001–#043 đã được đồng bộ liên tục đến 2026-08-12.
 
 #001 | 2026-07-01 | Networking | Đặt IP tĩnh + cặp DNS trên Ubuntu/Debian/Fedora/FreeBSD
 #002 | 2026-07-02 | Bảo mật | Gia cố SSH (key-only, cấm root, AllowUsers) trên Ubuntu/Debian/Fedora/FreeBSD
@@ -45,3 +45,4 @@
 #040 | 2026-08-09 | Monitoring | pidstat và procstat: theo dõi process theo thời gian
 #041 | 2026-08-10 | Automation | Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc
 #042 | 2026-08-11 | Ôn tập | Lab service outage: process, port, log và dependency
+#043 | 2026-08-12 | Networking | MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần
