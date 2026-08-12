@@ -2,19 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-08-11</lastmod>
+    <lastmod>2026-08-12</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-08-11</lastmod>
+    <lastmod>2026-08-12</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-08-11</lastmod>
+    <lastmod>2026-08-12</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-08-11</lastmod>
+    <lastmod>2026-08-12</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</loc>
+    <lastmod>2026-08-12</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-042-lab-service-outage-process-port-log-dependency.html</loc>

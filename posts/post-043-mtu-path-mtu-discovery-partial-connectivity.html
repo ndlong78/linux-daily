@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần — Linux Daily #043</title>
+<meta name="description" content="Chẩn đoán lỗi MTU/PMTUD khi ping nhỏ vẫn chạy nhưng HTTPS, SSH hoặc truyền payload lớn bị treo trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần">
+<meta property="og:description" content="Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần">
+<meta name="twitter:description" content="Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 43,
+  "date": "2026-08-12",
+  "axis": "Networking",
+  "eyebrow": "Networking · MTU / PMTUD",
+  "slug": "mtu-path-mtu-discovery-partial-connectivity",
+  "title": "MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần",
+  "lede": "Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-12",
+  "changes_system": false,
+  "sources": [
+    {
+      "title": "RFC 1191 — Path MTU Discovery",
+      "url": "https://www.rfc-editor.org/rfc/rfc1191.html",
+      "kind": "official"
+    },
+    {
+      "title": "RFC 8201 — Path MTU Discovery for IP version 6",
+      "url": "https://www.rfc-editor.org/rfc/rfc8201.html",
+      "kind": "official"
+    },
+    {
+      "title": "Ubuntu Manpage — ping(8) / iputils",
+      "url": "https://manpages.ubuntu.com/manpages/resolute/man8/ping.8.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Manual — ping(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=ping&sektion=8",
+      "kind": "official"
+    }
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#043 · 12·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Networking · MTU / PMTUD</p>
+  <h1>MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</h1>
+  <p class="lede">Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.</p>
+  <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG BÌNH</span><span class="tag">~12 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-12 · đối chiếu RFC, manpage iputils và FreeBSD; các lệnh trong bài chỉ đọc/probe, không đổi cấu hình host.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Xác định một lỗi kết nối treo với payload lớn có liên quan MTU/PMTUD hay không trước khi thay đổi interface, route hoặc firewall.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+  <li>Đã nắm các bài #008, #022, #029 và #036.</li>
+  <li>Có một đích IPv4 thật sự đi qua đường mạng cần kiểm tra.</li>
+  <li>Có lệnh <code>ping</code>; Linux dùng iputils, FreeBSD dùng <code>ping(8)</code> trong base system.</li>
+  <li>Biết MTU của interface đầu ra hoặc có quyền đọc bằng <code>ip link</code>/<code>ifconfig</code>.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 230" role="img" aria-label="Đường truyền có MTU 1500 rồi co xuống 1420 làm packet lớn bị loại">
+  <rect width="760" height="230" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="70" width="150" height="88" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="105" y="101" font-size="14" font-weight="700">CLIENT</text><text x="105" y="128" font-size="11">MTU 1500</text>
+    <rect x="305" y="70" width="150" height="88" rx="8" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/><text x="380" y="101" font-size="14" font-weight="700">TUNNEL / LINK</text><text x="380" y="128" font-size="11">PMTU 1420</text>
+    <rect x="580" y="70" width="150" height="88" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="655" y="101" font-size="14" font-weight="700">SERVER</text><text x="655" y="128" font-size="11">reachable</text>
+    <path d="M180 96H299" stroke="#0C6E61" stroke-width="3"/><path d="M455 96H574" stroke="#0C6E61" stroke-width="3"/>
+    <path d="M180 138H299" stroke="#B23A2E" stroke-width="3" stroke-dasharray="8 6"/><text x="240" y="160" font-size="10" fill="#B23A2E">packet lớn</text>
+  </g>
+</svg>
+<figcaption>Hình 1 — Link MTU ở client không phải Path MTU. PMTU là MTU nhỏ nhất trên toàn đường đi.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>DNS có thể resolve đúng, route có thể tồn tại và ping mặc định vẫn trả lời nhưng HTTPS, SSH sau handshake hoặc truyền file lại đứng. Một nguyên nhân điển hình là packet lớn không đi qua được đường hẹp hơn. Nếu ICMP báo cần giảm kích thước bị chặn, PMTUD không học được giới hạn mới và kết nối có thể treo một phần.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+  <li><strong>Link MTU</strong> là giới hạn của một link cục bộ. <strong>Path MTU</strong> là MTU nhỏ nhất trên toàn bộ path.</li>
+  <li>IPv4 PMTUD theo RFC 1191 dựa vào packet không được fragment và ICMP báo packet quá lớn/fragmentation needed.</li>
+  <li>IPv6 không cho router fragment packet. RFC 8201 dùng ICMPv6 Packet Too Big để source giảm kích thước gửi.</li>
+  <li>Với IPv4 không có IP options, payload ICMP <code>1472</code> tạo packet IP 1500 byte: 20 byte IPv4 header + 8 byte ICMP header + 1472 byte payload.</li>
+  <li>Một probe lớn thất bại chưa đủ kết luận firewall hay MTU. So sánh nhiều kích thước trên cùng đích và cùng path.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="So sánh cú pháp probe MTU trên Linux iputils và FreeBSD ping">
+  <rect width="760" height="240" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="45" y="48" width="300" height="145" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="195" y="79" font-size="14" font-weight="700">Linux · iputils</text><text x="195" y="112" font-size="11">ping -4 -M do -s SIZE</text><text x="195" y="143" font-size="10">-M do = PMTU strategy, không fragment</text>
+    <rect x="415" y="48" width="300" height="145" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="565" y="79" font-size="14" font-weight="700">FreeBSD · base ping</text><text x="565" y="112" font-size="11">ping -4 -D -s SIZE</text><text x="565" y="143" font-size="10">-D = disable fragmentation</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Mục tiêu giống nhau nhưng option khác nhau. Không dùng <code>-M do</code> của iputils cho FreeBSD.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Xác định interface và MTU đầu ra.</h3><p>Ubuntu/Xubuntu, Debian và Fedora — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ip route get &lt;target-ipv4&gt;
+ip link show</code></pre></div><p><code>&lt;target-ipv4&gt;</code> là địa chỉ IPv4 của server đang gặp hiện tượng treo. Ghi lại interface được route chọn và giá trị <code>mtu</code> của interface đó.</p><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">route -n get &lt;target-ipv4&gt;
+ifconfig</code></pre></div><p>Ghi lại interface đi ra và MTU hiển thị bởi <code>ifconfig</code>.</p></li>
+<li><h3>Kiểm tra reachability bằng packet nhỏ.</h3><p>Tất cả hệ — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ping -4 -c 3 &lt;target-ipv4&gt;</code></pre></div><p>Nếu packet nhỏ cũng không tới đích, chưa nên tập trung vào MTU. Quay lại DNS, route, ARP/NDP và firewall theo các bài prerequisite.</p></li>
+<li><h3>Probe packet tương đương MTU 1500 trên Linux.</h3><p>Ubuntu/Xubuntu, Debian và Fedora — chạy bằng user thường. <code>-M do</code> yêu cầu kernel không fragment packet IPv4.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ping -4 -M do -s 1472 -c 3 &lt;target-ipv4&gt;</code></pre></div><p>Nếu path nhỏ hơn 1500, có thể thấy lỗi kiểu <code>message too long</code>, ICMP fragmentation-needed, hoặc probe timeout nếu ICMP cần thiết bị chặn.</p></li>
+<li><h3>Probe cùng kích thước trên FreeBSD.</h3><p>FreeBSD — chạy bằng user thường. <code>-D</code> disable fragmentation cho IPv4.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ping -4 -D -s 1472 -c 3 &lt;target-ipv4&gt;</code></pre></div><p>Không thay <code>-D</code> bằng option Linux <code>-M do</code>.</p></li>
+<li><h3>Giảm payload để tìm ngưỡng hoạt động.</h3><p>Linux — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ping -4 -M do -s 1400 -c 3 &lt;target-ipv4&gt;
+ping -4 -M do -s 1372 -c 3 &lt;target-ipv4&gt;</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ping -4 -D -s 1400 -c 3 &lt;target-ipv4&gt;
+ping -4 -D -s 1372 -c 3 &lt;target-ipv4&gt;</code></pre></div><p>Nếu 1472 thất bại nhưng kích thước nhỏ hơn ổn định, đã có bằng chứng mạnh về giới hạn kích thước trên path. Không tự động đổi MTU chỉ từ một phép thử.</p></li>
+<li><h3>Đối chiếu packet capture nếu kết quả còn mơ hồ.</h3><p>Chạy capture theo bài #036 trên đúng interface và chỉ trong thời gian ngắn. Tìm ICMP IPv4 fragmentation-needed hoặc ICMPv6 Packet Too Big. Nếu không thấy phản hồi ICMP nhưng packet lớn liên tục biến mất, kiểm tra firewall/tunnel ở các hop trung gian trước khi sửa endpoint.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Chạy lại cùng đích với một payload nhỏ và một payload lớn. Giữ nguyên source, route và thời điểm kiểm tra để so sánh có ý nghĩa.</p><p>Linux — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ping -4 -M do -s 1200 -c 3 &lt;target-ipv4&gt;
+ping -4 -M do -s 1472 -c 3 &lt;target-ipv4&gt;</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ping -4 -D -s 1200 -c 3 &lt;target-ipv4&gt;
+ping -4 -D -s 1472 -c 3 &lt;target-ipv4&gt;</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>Nếu cả hai kích thước thành công ổn định, chưa có bằng chứng path đang chặn packet 1500-byte theo probe này.</li><li>Nếu 1200 thành công nhưng 1472 thất bại lặp lại trên cùng path, ghi nhận ngưỡng kích thước và tiếp tục xác định hop/tunnel gây co MTU.</li><li>Nếu nhận được ICMP fragmentation-needed hoặc Packet Too Big, lưu lại MTU được báo và đối chiếu với tunnel/VPN/VLAN đang đi qua.</li></ul></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+  <li><strong>Ping nhỏ chạy không chứng minh TCP payload lớn sẽ chạy.</strong> Ping mặc định chỉ dùng payload nhỏ.</li>
+  <li><strong>1472 chỉ tương ứng packet IPv4 1500 byte khi không có IP options.</strong> Encapsulation như GRE, VXLAN, IPsec hoặc WireGuard có thể làm PMTU nhỏ hơn MTU vật lý.</li>
+  <li><strong>Timeout không tự động đồng nghĩa PMTUD black hole.</strong> ICMP Echo có thể bị lọc riêng. Cần kết hợp packet capture và triệu chứng ứng dụng.</li>
+  <li><strong>Không hạ MTU trên toàn host theo phỏng đoán.</strong> Xác định đúng path, tunnel và overhead trước khi thay đổi cấu hình.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean">
+  <li>Giới hạn số probe bằng <code>-c</code>; không flood ping trên mạng production.</li>
+  <li>ICMP Packet Too Big/fragmentation-needed là tín hiệu vận hành cần thiết cho PMTUD. Không chặn toàn bộ ICMP theo phản xạ.</li>
+  <li>Với đường nhiều tunnel, ghi lại source/destination, interface và thời điểm capture để tránh kết luận từ path khác.</li>
+  <li>Bài này chỉ quan sát. Nếu phải đổi MTU, firewall hoặc tunnel config, tạo change riêng có rollback và verification.</li>
+</ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn một host lab đi qua VPN hoặc tunnel. Ghi MTU interface, thử ba payload IPv4 khác nhau với fragmentation bị vô hiệu hóa, rồi lập bảng kích thước → thành công/thất bại. Giải thích vì sao kết quả đó chưa đủ để xác định chính xác hop gây giới hạn nếu chưa có packet capture.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên chuẩn IETF và tài liệu chính thức của từng implementation.</p><ul class="clean">
+  <li><a href="https://www.rfc-editor.org/rfc/rfc1191.html">RFC 1191 — Path MTU Discovery</a></li>
+  <li><a href="https://www.rfc-editor.org/rfc/rfc8201.html">RFC 8201 — Path MTU Discovery for IP version 6</a></li>
+  <li><a href="https://manpages.ubuntu.com/manpages/resolute/man8/ping.8.html">Ubuntu Manpage — ping(8) / iputils</a></li>
+  <li><a href="https://man.freebsd.org/cgi/man.cgi?query=ping&amp;sektion=8">FreeBSD Manual — ping(8)</a></li>
+</ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-036-tcpdump-targeted-packet-capture.html"><span class="series-kicker">#036</span><span>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-029-policy-routing-multiple-default-gateways.html">#029 · Nhiều default gateway: policy routing không cắt SSH</a></li>
+      <li><a href="post-022-dns-troubleshooting-dig-resolvectl-drill.html">#022 · DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</a></li>
+      <li><a href="post-015-wireguard-vpn.html">#015 · WireGuard: một cặp khoá, một đường hầm mã hoá</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #043 · Networking</span><span class="hashtags">#Linux #Networking #MTU #PMTUD #FreeBSD</span></div></footer>
+</div>
+</main>
+</body>
+</html>
