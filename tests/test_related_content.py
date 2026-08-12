@@ -36,5 +36,16 @@ def test_render_block_is_accessible_and_stable():
     assert related_content.END in first
 
 
+def test_first_related_nav_insertion_is_idempotent():
+    source = "<html><head></head><body><section>body</section>\n<footer>foot</footer></body></html>"
+    block = f"{related_content.START}\n<nav>related</nav>\n{related_content.END}"
+
+    first = related_content._replace(source, block)
+    second = related_content._replace(first, block)
+
+    assert first == second
+    assert "</section>\n\n<!-- related-nav:start -->" in first
+
+
 def test_current_repository_navigation_is_synced():
     assert related_content.run(check=True) == 0
