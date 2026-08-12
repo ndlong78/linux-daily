@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần">
-<meta property="og:description" content="Phân biệt lỗi MTU/PMTUD với DNS, route và firewall khi kết nối chỉ hỏng với payload lớn.">
+<meta property="og:description" content="Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần">
-<meta name="twitter:description" content="Phân biệt lỗi MTU/PMTUD với DNS, route và firewall khi kết nối chỉ hỏng với payload lớn.">
+<meta name="twitter:description" content="Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -83,7 +83,9 @@
   </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#043 · 12·08·2026</span></div></div>
@@ -169,7 +171,27 @@ ping -4 -D -s 1472 -c 3 &lt;target-ipv4&gt;</code></pre></div><div class="expect
   <li><a href="https://manpages.ubuntu.com/manpages/resolute/man8/ping.8.html">Ubuntu Manpage — ping(8) / iputils</a></li>
   <li><a href="https://man.freebsd.org/cgi/man.cgi?query=ping&amp;sektion=8">FreeBSD Manual — ping(8)</a></li>
 </ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #043 · Networking</span><span class="hashtags">#Linux #Networking #MTU #PMTUD #FreeBSD</span></div></footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-036-tcpdump-targeted-packet-capture.html"><span class="series-kicker">#036</span><span>tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-029-policy-routing-multiple-default-gateways.html">#029 · Nhiều default gateway: policy routing không cắt SSH</a></li>
+      <li><a href="post-022-dns-troubleshooting-dig-resolvectl-drill.html">#022 · DNS lỗi ở đâu? Tách client, resolver và authoritative bằng dig, resolvectl, drill</a></li>
+      <li><a href="post-015-wireguard-vpn.html">#015 · WireGuard: một cặp khoá, một đường hầm mã hoá</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #043 · Networking</span><span class="hashtags">#Linux #Networking #MTU #PMTUD #FreeBSD</span></div></footer>
 </div>
 </main>
 </body>

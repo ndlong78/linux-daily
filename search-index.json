@@ -1,6 +1,19 @@
 {
-  "count": 42,
+  "count": 43,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-08-12",
+      "href": "posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html",
+      "issue": 43,
+      "lede": "Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.",
+      "tags": [
+        "MTU / PMTUD"
+      ],
+      "title": "MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",

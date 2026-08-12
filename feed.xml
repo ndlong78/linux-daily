@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Tue, 11 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Wed, 12 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</title>
+      <link>https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</guid>
+      <pubDate>Wed, 12 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.</description>
+    </item>
     <item>
       <title>Lab service outage: process, port, log và dependency</title>
       <link>https://linux.no.id.vn/posts/post-042-lab-service-outage-process-port-log-dependency.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html</guid>
       <pubDate>Mon, 03 Aug 2026 00:00:00 +0700</pubDate>
       <description>Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</description>
-    </item>
-    <item>
-      <title>Process tree và service ownership: PID này thuộc service nào?</title>
-      <link>https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-033-process-tree-service-ownership.html</guid>
-      <pubDate>Sun, 02 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</description>
     </item>
   </channel>
 </rss>
