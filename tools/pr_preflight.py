@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Run the local checks that must pass before opening or updating a PR."""
+"""Materialize publish artifacts and run all local checks before opening/updating a PR.
+
+The preflight intentionally starts with ``publish.py prepare`` so a new article
+cannot reach commit/push with stale generated pages, reports, navigation or site
+metadata. Semantic source metadata (learning metadata/path and curriculum queue)
+must already be valid; ``prepare`` fails early when that contract is incomplete.
+"""
 from __future__ import annotations
 
 import subprocess
@@ -12,6 +18,7 @@ PYTHON = sys.executable
 
 def command_plan() -> list[list[str]]:
     return [
+        [PYTHON, "tools/publish.py", "prepare"],
         [PYTHON, "tools/pr_hygiene.py"],
         ["ruff", "check", "tools/", "tests/"],
         [PYTHON, "-m", "pytest"],
@@ -33,7 +40,7 @@ def run(*, runner=subprocess.run) -> int:
                 file=sys.stderr,
             )
             return result.returncode or 1
-    print("OK: PR preflight pass. Có thể commit/push và mở hoặc cập nhật PR.")
+    print("OK: PR preflight pass. Commit toàn bộ source + generated artifacts rồi mới push/mở PR.")
     return 0
 
 
