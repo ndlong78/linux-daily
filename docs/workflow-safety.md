@@ -1,6 +1,8 @@
 # Linux Daily — Safe Workflow Automation
 
-P5.3 bổ sung guardrail cho GitHub Actions để tăng automation mà không tăng quyền ngoài ý muốn. Sau PR #94, policy được siết theo nguyên tắc **CI read-only, generation trước push**: GitHub Actions kiểm tra repository, không tự sửa rồi commit ngược trở lại branch.
+P5.3 bổ sung guardrail cho GitHub Actions để tăng automation mà không tăng quyền ngoài ý muốn. CI vẫn theo nguyên tắc **read-only, generation trước push**: GitHub Actions kiểm tra repository, không tự sửa rồi commit ngược feature branch.
+
+Từ cơ chế Linux Daily auto-merge, có đúng một ngoại lệ ghi bổ sung: `.github/workflows/linux-daily-auto-merge.yml` được phép gọi API merge sau khi **CI của exact head SHA đã success**. Workflow này không checkout code của PR, không stage/commit/push repository và không bypass branch protection.
 
 ## Policy
 
@@ -16,15 +18,21 @@ CI chạy cùng validator trên mọi PR. `tools/pr_hygiene.py` kiểm lịch s�
 Validator workflow hiện kiểm:
 
 - mọi workflow phải khai báo `permissions` ở top-level;
-- workflow không phải release phải khai báo rõ `contents: read`;
+- workflow thông thường phải khai báo rõ `contents: read`;
 - `pull_request_target` bị cấm;
-- `contents: write` chỉ được phép ở `release.yml`;
-- `actions/pull-requests/issues/packages/deployments: write` bị cấm;
-- workflow không phải release không được chạy `git add`, `git commit` hoặc `git push`;
+- `release.yml` được phép `contents: write` cho release thủ công;
+- `linux-daily-auto-merge.yml` được phép `contents: write` + `pull-requests: read` chỉ để merge PR bài hằng ngày sau CI;
+- auto-merge phải trigger bằng `workflow_run` của `CI`, không trigger trực tiếp từ PR/push/schedule;
+- auto-merge chỉ nhận branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>` từ chính repository và do repository owner mở;
+- exact PR head SHA phải bằng `workflow_run.head_sha` trước khi merge;
+- PR phải không Draft, target `main`, không có `CHANGES_REQUESTED` hoặc review thread chưa resolve;
+- auto-merge bắt buộc dùng REST merge endpoint với `merge_method=squash` và exact `sha` precondition;
+- auto-merge không được checkout PR code khi đang giữ write token;
+- mọi workflow ngoài release không được `git add`, `git commit` hoặc `git push`;
 - `ci.yml` phải checkout full history và chạy PR commit/path hygiene;
 - workflow release chỉ được chạy qua `workflow_dispatch`;
 - release phải giữ explicit confirmation, checkout `main` và exact-main-SHA gate;
-- command auto-merge hoặc branch-protection bypass bị cấm.
+- `--admin`, branch-protection bypass và generic `gh pr merge`/native auto-merge command bị cấm.
 
 ## PR hygiene
 
@@ -52,11 +60,15 @@ commit mô tả rõ → push → PR
   ↓
 CI read-only
   ├─ fail → sửa source bình thường → preflight → commit/push mới
-  └─ pass → review → Squash and merge
+  └─ pass
+       ├─ PR Linux Daily đúng contract → post-CI workflow squash-merge exact SHA
+       └─ maintenance/feature PR → review → Squash and merge
 ```
 
-CI không phải build agent có quyền ghi. Nó chỉ chứng minh branch hiện tại đã chứa đầy đủ source + generated artifacts cần thiết.
+CI không phải build agent có quyền ghi. Nó chỉ chứng minh branch hiện tại đã chứa đầy đủ source + generated artifacts cần thiết. Workflow auto-merge không thay đổi branch; nó chỉ thực hiện merge API sau khi exact-head CI đã xanh.
 
 ## Safety boundary
 
-Automation được phép build, validate, audit, quan sát production và tạo report. Automation không được tự merge PR, bypass branch protection hoặc tự phát hành release. `release.yml` là workflow ghi duy nhất và vẫn là thao tác thủ công có confirmation + exact-SHA evidence gate.
+Automation được phép build, validate, audit, quan sát production và tạo report. Với **duy nhất PR bài Linux Daily** có branch chuẩn, post-CI workflow được phép squash-merge khi mọi guard đã đạt. Nếu branch protection, required review hoặc merge requirement khác chưa thỏa, API merge phải fail và PR được giữ nguyên.
+
+Không workflow nào được dùng `--admin`, sửa branch protection, self-approve, checkout code PR với write token, hoặc tự commit/push để ép CI/merge. `release.yml` vẫn là luồng release thủ công có confirmation + exact-SHA evidence gate.
