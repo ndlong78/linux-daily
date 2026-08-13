@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_DIR = ROOT / ".github" / "workflows"
 RELEASE_WORKFLOW = "release.yml"
 CI_WORKFLOW = "ci.yml"
+AUTO_MERGE_WORKFLOW = "linux-daily-auto-merge.yml"
 WRITE_PERMISSION_RE = re.compile(
     r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$",
     re.MULTILINE,
@@ -41,6 +42,58 @@ def _display_path(path: Path) -> str:
         return path.name
 
 
+def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> list[str]:
+    errors: list[str] = []
+
+    if "workflow_run:" not in events:
+        errors.append(f"{rel}: auto-merge must trigger from workflow_run")
+    for forbidden_event in ("pull_request:", "pull_request_target:", "push:", "schedule:"):
+        if forbidden_event in events:
+            errors.append(f"{rel}: auto-merge must not trigger on {forbidden_event[:-1]}")
+    if "- CI" not in events:
+        errors.append(f"{rel}: auto-merge must listen only to the CI workflow")
+
+    if not re.search(r"^\s{2}contents:\s*write\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: auto-merge requires contents: write")
+    if not re.search(r"^\s{2}pull-requests:\s*read\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: auto-merge requires pull-requests: read")
+    if re.search(
+        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+        permissions,
+        re.MULTILINE,
+    ):
+        errors.append(f"{rel}: auto-merge may not request extra write permissions")
+
+    required_markers = (
+        "github.event.workflow_run.conclusion == 'success'",
+        "github.event.workflow_run.event == 'pull_request'",
+        "CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}",
+        "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
+        'test "${head_sha}" = "${CI_HEAD_SHA}"',
+        "reviewDecision",
+        "reviewThreads(first:100)",
+        'test "${unresolved_threads}" = "0"',
+        'test "${review_decision}" != "CHANGES_REQUESTED"',
+        '"repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge"',
+        "-f merge_method=squash",
+        '-f sha="${CI_HEAD_SHA}"',
+    )
+    for marker in required_markers:
+        if marker not in text:
+            errors.append(f"{rel}: auto-merge safety marker missing: {marker}")
+
+    if "actions/checkout" in text:
+        errors.append(f"{rel}: workflow_run auto-merge must not checkout PR code with a write token")
+    if SELF_MUTATION_RE.search(text):
+        errors.append(f"{rel}: auto-merge must not stage, commit, or push repository changes")
+    if "--admin" in text:
+        errors.append(f"{rel}: auto-merge must not bypass branch protection")
+    if re.search(r"\bgh\s+pr\s+merge\b", text) or "enable-auto-merge" in text:
+        errors.append(f"{rel}: use the exact-SHA REST merge gate, not gh pr merge/auto-merge")
+
+    return errors
+
+
 def validate_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
     rel = _display_path(path)
@@ -48,6 +101,7 @@ def validate_file(path: Path) -> list[str]:
     events = _event_block(text)
     permissions = _permissions_block(text)
     is_release = path.name == RELEASE_WORKFLOW
+    is_auto_merge = path.name == AUTO_MERGE_WORKFLOW
 
     if "pull_request_target:" in text:
         errors.append(f"{rel}: pull_request_target is forbidden")
@@ -55,14 +109,15 @@ def validate_file(path: Path) -> list[str]:
         errors.append(f"{rel}: top-level permissions block is required")
 
     writes = WRITE_PERMISSION_RE.findall(permissions)
-    if not is_release and writes:
+    if not is_release and not is_auto_merge and writes:
         errors.append(
-            f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}: {', '.join(writes)}"
+            f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW} "
+            f"and {AUTO_MERGE_WORKFLOW}: {', '.join(writes)}"
         )
-    if not is_release and not re.search(
+    if not is_release and not is_auto_merge and not re.search(
         r"^\s{2}contents:\s*read\s*$", permissions, re.MULTILINE
     ):
-        errors.append(f"{rel}: non-release workflow must declare contents: read")
+        errors.append(f"{rel}: non-write workflow must declare contents: read")
     if not is_release and SELF_MUTATION_RE.search(text):
         errors.append(f"{rel}: workflow must not stage, commit, or push repository changes")
 
@@ -81,9 +136,12 @@ def validate_file(path: Path) -> list[str]:
         if "Require explicit human confirmation" not in text:
             errors.append(f"{rel}: release explicit confirmation gate is missing")
         if "Block release unless CI and Production Smoke are green on this main SHA" not in text:
-            errors.append(f"{rel}: exact-main-SHA release gate is missing")
+            errors.append(f"{rel}: release exact-main-SHA release gate is missing")
         if "ref: main" not in text:
             errors.append(f"{rel}: release checkout must pin main")
+
+    if is_auto_merge:
+        errors.extend(_validate_auto_merge(rel, text, events, permissions))
 
     if path.name == CI_WORKFLOW:
         if "fetch-depth: 0" not in text:
@@ -91,7 +149,9 @@ def validate_file(path: Path) -> list[str]:
         if "tools/pr_hygiene.py" not in text:
             errors.append(f"{rel}: CI must run PR commit/path hygiene")
 
-    if re.search(r"\bgh\s+pr\s+merge\b", text) or "enable-auto-merge" in text:
+    if not is_auto_merge and (
+        re.search(r"\bgh\s+pr\s+merge\b", text) or "enable-auto-merge" in text
+    ):
         errors.append(f"{rel}: automatic PR merge commands are forbidden")
     if "--admin" in text and ("gh pr" in text or "branch protection" in text.lower()):
         errors.append(f"{rel}: branch-protection bypass/admin merge is forbidden")

@@ -1,6 +1,6 @@
 # Vận hành Linux Daily bằng ChatGPT Plus
 
-Linux Daily được vận hành theo mô hình **ChatGPT Plus + Scheduled Task + GitHub + GitHub Actions**. Không cần OpenAI API cho workflow hiện tại.
+Linux Daily vận hành theo mô hình **ChatGPT Plus + Scheduled Task + GitHub + GitHub Actions**. Không cần OpenAI API cho workflow hiện tại.
 
 ## Kiến trúc
 
@@ -25,19 +25,27 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                   │              │
                  có             không
                   │              │
-                dừng             ▼
+              resume PR          ▼
                         chatgpt/linux-daily-...
                                  │
                        generate + preflight
                                  │
                                  ▼
-                                PR
+                            PR → Ready
                                  │
                                  ▼
                     GitHub Actions CI read-only
-                                 │
-                                 ▼
-                    người dùng Squash and merge
+                         │               │
+                        fail           success
+                         │               │
+                    giữ PR mở            ▼
+                                  Linux Daily Auto Merge
+                                           │
+                                  exact-SHA safety gates
+                                           │
+                                      squash merge
+                                           │
+                                          main
 ```
 
 ## Scheduled Task
@@ -46,23 +54,25 @@ Task chuẩn chạy **07:00 mỗi ngày** theo `Asia/Ho_Chi_Minh`.
 
 Mỗi lần chạy, ChatGPT phải:
 
-1. Đọc `AGENTS.md` **và `STYLE.md`** từ `main` mới nhất.
-2. Đọc `state.json` và kiểm tra cadence mặc định 1 ngày.
+1. Đọc `AGENTS.md` và `STYLE.md` từ `main` mới nhất.
+2. Đọc `state.json`, kiểm cadence mặc định 1 ngày.
 3. Nếu chưa sang ngày phát hành kế tiếp: kết thúc, không tạo thay đổi.
-4. Nếu tới nhịp: xác định issue kế tiếp, kiểm tra trục, tránh chủ đề trùng và ưu tiên progression hợp lý với các bài trước.
-5. Kiểm tra branch/PR đang mở cho issue đó, bao gồm cả prefix `chatgpt/` và legacy `claude/`.
+4. Nếu tới nhịp: xác định issue kế tiếp, kiểm tra trục, tránh chủ đề trùng và ưu tiên progression hợp lý.
+5. Kiểm tra branch/PR đang mở cho issue đó, gồm prefix `chatgpt/` và legacy `claude/`. Nếu đã có PR đúng issue thì resume, không tạo bản trùng.
 6. Chuẩn bị bài theo `templates/post.template.html`, `AGENTS.md`, `STYLE.md` và validators hiện hành.
-7. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources` và tạo section **Nguồn kỹ thuật** khớp metadata.
+7. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, tạo section **Nguồn kỹ thuật** khớp metadata.
 8. Từ #041: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
-9. Materialize generated artifacts trong feature branch và chạy `python3 tools/pr_preflight.py` **trước commit/push**.
-10. Không tạo finalizer/self-mutating workflow để GitHub Actions tự sửa hoặc commit ngược branch.
+9. Materialize generated artifacts trong feature branch và chạy `python3 tools/pr_preflight.py` trước commit/push.
+10. Không tạo finalizer/self-mutating workflow để Actions sửa, commit hoặc push ngược branch.
 11. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
-12. Nếu chưa có quyền GitHub write rõ ràng trong phiên tự động, chỉ báo gói thay đổi cho người dùng; không tự push/merge.
+12. Khi đã có quyền GitHub write của Scheduled Task, được tạo branch/commit/push/PR theo contract. Không push trực tiếp `main`.
+13. Với PR bài hằng ngày hợp lệ, chuyển PR sang **Ready for review** sau khi diff/state/duplicate/review gate sạch. Task không cần polling CI đến lúc merge.
+14. Sau đó GitHub tự xử lý: `CI` validate exact head SHA; nếu success, `.github/workflows/linux-daily-auto-merge.yml` thực hiện guarded squash merge.
 
 ## Source of truth
 
 - `AGENTS.md`: hợp đồng vận hành của AI agent.
-- `STYLE.md`: chuẩn ngôn ngữ, cấu trúc trình bày, code block và safety affordance.
+- `STYLE.md`: chuẩn ngôn ngữ, cấu trúc, code block và safety affordance.
 - `state.json`: trạng thái cadence.
 - `topics.md`: lịch sử chủ đề và thứ tự series.
 - `templates/post.template.html`: khung bài.
@@ -71,42 +81,33 @@ Mỗi lần chạy, ChatGPT phải:
 - `tools/pr_hygiene.py`: guard commit/path của PR.
 - `tools/validate_sources.py`: source-backed technical gate.
 - `tools/validate_style.py`: STYLE.md audit/enforcement.
-- `.github/workflows/ci.yml`: read-only quality gate trên GitHub.
+- `tools/workflow_safety.py`: policy gate cho GitHub Actions.
+- `.github/workflows/ci.yml`: read-only quality gate trên PR.
+- `.github/workflows/linux-daily-auto-merge.yml`: post-CI exact-SHA squash merge cho PR bài hằng ngày.
 
 Không dùng prompt Scheduled Task làm nơi duy nhất giữ business rules. Prompt task chỉ là entrypoint; quy tắc bền vững nằm trong repository.
 
 ## STYLE.md review
 
-Linux Daily #041+ phải đạt style contract trước khi được coi là ready for review:
+Linux Daily #041+ phải đạt style contract:
 
 - metadata hiển thị `Tested on` + `Last verified`;
 - `ld-meta` có `tested_on`, `last_verified`, `changes_system`;
 - Mục tiêu + Yêu cầu tiên quyết;
-- Các bước thực hiện dùng `<ol class="steps">`;
+- các bước thực hiện dùng `<ol class="steps">`;
 - mọi code block có `language-*`;
 - command block shell có `data-run-as="user|sudo|root"`;
 - verification có Expected Output/Kết quả mong đợi;
 - `changes_system=true` thì có **Gỡ / Hoàn tác**;
 - không shell prompt trong command block, không `curl | sh` chạy trực tiếp, không placeholder legacy kiểu `YOUR_*`.
 
-#001–#040 được audit nhưng chưa fail CI. Không được tận dụng legacy exemption cho bài mới. Backfill theo batch riêng.
-
-```bash
-python3 tools/validate_style.py
-python3 tools/validate_style.py --audit
-```
+#001–#040 được audit nhưng chưa fail CI. Không được tận dụng legacy exemption cho bài mới.
 
 ## Source-backed technical review
 
 Với bài #019+, operator phải kiểm tra các claim chính trước khi đặt `review_status="reviewed"`. Tối thiểu 2 nguồn phải có `kind` là `official` hoặc `upstream`, dùng HTTPS và không trùng URL.
 
-Các vùng cần review sâu hơn:
-
-- networking/firewall: remote lockout, IPv4/IPv6, policy/port và rollback;
-- storage/filesystem: device/path, destructive flags, resize direction;
-- backup/restore: có kiểm chứng restore;
-- auth/permissions: quyền root/sudo, đường lui khi hardening;
-- shell automation: shell thực thi, PATH, quoting, exit-code semantics và portability.
+Review sâu hơn với networking/firewall, storage/filesystem, backup/restore, auth/permissions và shell automation.
 
 ## Social output
 
@@ -114,18 +115,20 @@ Facebook/X và ảnh code social đang **tạm dừng** để giảm khối lư�
 
 ## Quyền ghi GitHub
 
-ChatGPT có thể đọc repository, PR và CI khi connector cho phép. Các hành động ghi như commit, push, mở PR và merge phải tuân theo quyền/ủy quyền của người dùng trong phiên làm việc.
-
 Nguyên tắc an toàn:
 
 - không push trực tiếp `main`;
-- không tự merge;
 - không ghi state khi cadence chưa tới;
-- không tạo issue trùng nếu branch/PR đã tồn tại;
-- không bypass CI;
-- không tạo GitHub Actions workflow có quyền ghi để tự hoàn tất PR;
+- không tạo issue/branch/PR trùng;
+- không bypass CI hoặc branch protection;
+- không tạo workflow tự sửa/commit/push ngược feature branch;
 - không đặt `review_status="reviewed"` khi nguồn chưa được kiểm tra;
-- không giảm STYLE.md enforcement chỉ để CI xanh.
+- không giảm STYLE.md enforcement để CI xanh;
+- auto-merge chỉ áp dụng cho branch chuẩn `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`;
+- auto-merge chỉ chạy sau `CI` success của **exact head SHA**;
+- auto-merge không checkout PR code với write token;
+- merge method bắt buộc `squash`; không dùng `--admin` hoặc bypass protection;
+- `CHANGES_REQUESTED` hoặc unresolved review thread phải chặn merge.
 
 ## Branch convention
 
@@ -133,7 +136,7 @@ Nguyên tắc an toàn:
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-Prefix cũ `claude/linux-daily-...` chỉ được giữ để phát hiện duplicate trong thời gian chuyển đổi.
+Prefix cũ `claude/linux-daily-...` chỉ dùng để phát hiện duplicate.
 
 ## Quy trình một bài mới — one pass
 
@@ -146,48 +149,38 @@ python3 tools/cadence.py record
 python3 tools/pr_preflight.py
 ```
 
-Nếu tất cả kiểm tra sạch và người dùng đã cấp quyền remote write:
+Nếu tất cả local/preflight gate sạch và Scheduled Task đã có quyền remote write:
 
-1. tạo branch `chatgpt/...` từ `main`;
+1. tạo/resume branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>` từ `main`;
 2. commit chính xác source + generated artifacts đã materialize;
-3. push và mở PR vào `main`;
-4. chờ CI read-only trên exact head SHA;
-5. nếu fail, sửa source bình thường, chạy preflight lại rồi commit/push;
-6. sau review, dùng **Squash and merge**.
+3. push và mở/resume PR vào `main`;
+4. kiểm duplicate/state/diff/review thread rồi chuyển PR sang Ready;
+5. `CI` chạy read-only trên exact head SHA;
+6. nếu CI fail, PR giữ nguyên để operator sửa ở lần chạy/phiên tiếp theo;
+7. nếu CI success, `Linux Daily Auto Merge` xác thực lại PR/head/review và gọi REST merge endpoint với exact SHA + `merge_method=squash`;
+8. nếu branch protection/review requirement khác chưa đạt, merge API fail và PR vẫn mở.
 
-Không tạo helper/workflow one-shot kiểu `prNN_finalizer` hoặc `tools/prNN_*.py` rồi để Actions tự sửa repository. Nếu transformation cần lặp lại, viết generator bền vững theo capability; nếu chỉ cần một lần, chạy transformation trước commit.
+Không tạo helper/workflow one-shot kiểu `prNN_finalizer` hoặc `tools/prNN_*.py` rồi để Actions tự sửa repository.
 
-## CI
+## CI và auto-merge
 
-PR phải đi qua `quality-gate`, gồm PR hygiene, lint/test/validator/build/smoke tests theo workflow hiện hành. `tools/publish.py check` bao gồm STYLE.md gate; CI xanh là điều kiện kỹ thuật để merge.
+`CI` giữ `contents: read` và phải đi qua `quality-gate`: PR hygiene, lint/test/validator/build/link/smoke theo workflow hiện hành.
 
-PR CI giữ `contents: read`. `release.yml` là ngoại lệ ghi duy nhất và chỉ chạy thủ công với confirmation + exact-main-SHA gate.
+`linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp cho bài hằng ngày:
 
-## Self-fix CI loop
+- trigger `workflow_run` của `CI`;
+- chỉ chạy khi CI conclusion `success` và source event là `pull_request`;
+- không checkout PR code;
+- chỉ branch chuẩn từ cùng repo và do repo owner mở;
+- exact current PR head SHA phải bằng `workflow_run.head_sha`;
+- không `CHANGES_REQUESTED`, không unresolved thread;
+- gọi merge API với exact SHA precondition và squash;
+- không stage/commit/push, không `--admin`, không sửa branch protection.
 
-Sau khi push branch hoặc cập nhật một PR, ChatGPT phải coi CI là một vòng lặp có trạng thái:
-
-```text
-push
-  ↓
-đọc lại PR → lấy exact head SHA
-  ↓
-kiểm checks của SHA đó
-  ├─ pending/running → chưa được kết luận
-  ├─ failed → đọc log → sửa source → regenerate → preflight → commit/push
-  └─ all success → kiểm diff → ready for review
-```
-
-- local PASS không thay thế GitHub Actions PASS;
-- run xanh của SHA cũ không có giá trị cho SHA mới;
-- check đang chờ/chạy được coi là chưa hoàn tất;
-- không báo PR sẵn sàng merge khi chưa chứng minh exact head SHA sạch;
-- không dùng finalizer/self-mutation để biến CI từ validator thành writer.
-
-## Migration khỏi Claude Routine
-
-Migration PR #23 đã merge ngày 2026-08-07. `AGENTS.md` + `STYLE.md` là contract AI chính; entrypoint Claude cũ đã được loại bỏ.
+`release.yml` vẫn là workflow release thủ công với confirmation + exact-main-SHA gate.
 
 ## Khi cần rollback
+
+Nếu auto-merge gây vấn đề, disable hoặc xóa `.github/workflows/linux-daily-auto-merge.yml` bằng maintenance PR. Khi workflow này không tồn tại, PR vẫn đi qua CI bình thường và có thể squash-merge thủ công.
 
 Nếu Scheduled Task gặp vấn đề, disable task trong ChatGPT. Repository vẫn tự đủ để vận hành thủ công bằng `AGENTS.md`, `STYLE.md`, `tools/cadence.py`, `tools/pr_preflight.py` và `tools/publish.py`.
