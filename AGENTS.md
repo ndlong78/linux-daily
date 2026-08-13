@@ -1,55 +1,47 @@
 # Linux Daily — Agent Operating Contract
 
-Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent làm việc với repository `ndlong78/linux-daily`, bao gồm ChatGPT Scheduled Task và các phiên ChatGPT tương tác.
+Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent làm việc với repository `ndlong78/linux-daily`, gồm ChatGPT Scheduled Task và các phiên ChatGPT tương tác. `STYLE.md` là source of truth bắt buộc về biên tập và safety affordance.
 
 ## 1. Nguyên tắc vận hành
 
 - `main` là nguồn sự thật của nội dung đã chấp nhận.
-- `AGENTS.md` quy định workflow; **`STYLE.md` là source of truth bắt buộc về ngôn ngữ, cấu trúc trình bày, code block và safety affordance của bài viết**.
-- Trước khi tạo hoặc sửa bài, agent phải đọc cả `AGENTS.md` và `STYLE.md` trên `main` hiện tại.
+- Trước khi tạo/sửa bài, đọc `AGENTS.md` và `STYLE.md` trên `main` hiện tại.
 - Không push trực tiếp vào `main`.
-- Bài mới đi qua branch → Pull Request → GitHub Actions → người dùng review/merge.
-- GitHub Actions trên PR là **read-only validator**; không tạo finalizer/workflow/helper để tự sửa, commit hoặc push ngược branch.
+- Bài mới đi qua branch → PR → CI read-only → guarded post-CI squash merge.
+- CI trên PR **không được sửa, commit hoặc push ngược branch**.
+- `.github/workflows/linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp: chỉ được gọi merge API sau khi CI của **exact head SHA** đã success; không checkout PR code, không self-mutation, không bypass protection.
 - `state.json` là nguồn sự thật của cadence; `topics.md` là lịch sử nội dung, không dùng làm clock vận hành.
-- Không tự ý commit/push/mở PR/merge nếu phiên làm việc chưa có quyền ghi GitHub rõ ràng của người dùng cho hành động tương ứng.
-- Scheduled Task chỉ chuẩn bị và kiểm tra; khi cần remote write mà chưa có quyền, báo người dùng để phê duyệt trong chat.
-- Từ bài **#019**, mọi claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
-- Từ bài **#041**, mọi bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và được backfill theo PR riêng.
+- Từ #019, claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
+- Từ #041, bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và backfill theo PR riêng.
+- Social output Facebook/X đang tạm dừng.
 
-## 2. Cổng cadence hằng ngày
+## 2. Cadence hằng ngày
 
-Linux Daily phát hành mặc định **1 bài/ngày**. Trước khi tạo bài:
+Linux Daily phát hành mặc định **1 bài/ngày**.
 
 ```bash
 python3 tools/cadence.py gate
-```
-
-- exit `10`: bài hôm nay chưa tới nhịp → dừng, không tạo file, không sửa state.
-- exit `0`: đã sang ngày phát hành kế tiếp → tiếp tục.
-
-Số bài kế tiếp:
-
-```bash
 python3 tools/cadence.py next
 ```
 
-Trước khi sinh bài, kiểm tra GitHub xem đã có branch/PR cho đúng số bài kế tiếp chưa. Prefix chuẩn:
+- `cadence.py gate` exit `10`: chưa tới nhịp → dừng, không sửa state.
+- exit `0`: tiếp tục issue kế tiếp.
+
+Branch bài hằng ngày:
 
 ```text
 chatgpt/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-Trong giai đoạn chuyển đổi, coi cả prefix legacy sau là trùng:
+Prefix legacy để phát hiện duplicate:
 
 ```text
 claude/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
-Nếu đã có branch hoặc PR mở cho số bài đó, dừng và báo trạng thái thay vì tạo bản thứ hai.
+Trước khi tạo bài, kiểm tra branch/PR của đúng issue/date. Nếu đã tồn tại PR hợp lệ, **resume PR đó**, không tạo bản thứ hai.
 
 ## 3. Chu kỳ chủ đề
-
-Trục xoay theo số bài, chu kỳ 7:
 
 | `(issue - 1) mod 7` | Trục |
 |---:|---|
@@ -61,28 +53,28 @@ Trục xoay theo số bài, chu kỳ 7:
 | 5 | Automation & scripting |
 | 6 | Ôn tập — lab end-to-end |
 
-Luôn kiểm tra `topics.md` để tránh trùng chủ đề đã có. Khi phù hợp, bài mới nên nối progression/prerequisite từ các bài trước thay vì trở thành một tip rời rạc.
+Luôn kiểm tra `curriculum-plan.json` và `topics.md`; tránh trùng và ưu tiên progression/prerequisite hợp lý.
 
 ## 4. Phạm vi hệ điều hành
 
 Mỗi bài phải nêu rõ khác biệt giữa:
 
 - Ubuntu / Xubuntu: APT, systemd, netplan, UFW/nftables.
-- Debian: APT, systemd, cấu hình phù hợp Debian stable hiện hành.
+- Debian: APT, systemd, Debian stable hiện hành.
 - Fedora: DNF, systemd, SELinux, NetworkManager/`nmcli`, firewalld.
-- FreeBSD: pkg/ports, rc.d, `rc.conf`, pf/ipfw, công cụ BSD tương ứng.
+- FreeBSD: pkg/ports, rc.d, `rc.conf`, pf/ipfw và công cụ BSD tương ứng.
 
-**FreeBSD luôn tách riêng.** Không gán `systemctl`, `apt`, `dnf`, `nmcli`, `netplan` cho FreeBSD. Nếu không có tương đương, nói rõ.
+**FreeBSD luôn tách riêng.** Không gán `systemctl`, `apt`, `dnf`, `nmcli`, `netplan` cho FreeBSD.
 
 ## 5. Source-backed technical review — bắt buộc từ #019
 
-Trước khi chốt bài, kiểm tra các claim phụ thuộc phiên bản hoặc có rủi ro vận hành bằng tài liệu **official/upstream hiện hành**. Ưu tiên theo thứ tự:
+Ưu tiên nguồn:
 
 1. upstream project/vendor documentation;
-2. Ubuntu/Debian/Fedora/FreeBSD documentation và manpages chính thức;
-3. tài liệu chính thức của package/tool đang được giới thiệu.
+2. Ubuntu/Debian/Fedora/FreeBSD documentation/manpages chính thức;
+3. tài liệu chính thức của package/tool.
 
-Mỗi bài #019+ phải có ít nhất **2 nguồn primary** và metadata:
+Mỗi bài #019+ có ít nhất 2 nguồn primary:
 
 ```json
 {
@@ -94,38 +86,30 @@ Mỗi bài #019+ phải có ít nhất **2 nguồn primary** và metadata:
 }
 ```
 
-Quy tắc nguồn:
+Quy tắc:
 
-- `url` phải là HTTPS đầy đủ và không trùng nhau.
-- `kind` chỉ dùng `official` hoặc `upstream` trong gate hiện tại.
-- Title + URL + thứ tự trong `meta.sources` phải khớp phần **Nguồn kỹ thuật** hiển thị.
-- `review_status="draft"` không được qua merge gate; sau khi đã kiểm chứng nguồn/lệnh, đặt `reviewed`. `published` dành cho nội dung đã đi qua lifecycle xuất bản.
-- Không dùng blog SEO, forum hay AI-generated page làm bằng chứng chính cho lệnh hệ thống.
+- URL HTTPS đầy đủ và không trùng.
+- `kind` chỉ `official` hoặc `upstream` trong gate hiện tại.
+- title/URL/thứ tự metadata phải khớp phần **Nguồn kỹ thuật**.
+- `review_status="draft"` không được qua merge gate.
+- Không dùng blog SEO/forum/AI-generated page làm bằng chứng chính.
 
-Checklist bắt buộc với nội dung rủi ro cao:
+Review sâu hơn với networking/firewall, storage/filesystem, backup/restore, auth/permissions và shell automation.
 
-- **Networking/firewall:** interface, port, default policy, IPv4/IPv6, rollback/remote-lockout.
-- **Storage/filesystem:** device/path, destructive flags, resize direction, backup/restore path.
-- **Backup/restore:** phải nêu cách kiểm chứng restore, không chỉ backup command.
-- **Auth/permissions:** account scope, sudo/root impact, cách giữ đường lui khi hardening.
-- **Automation/shell:** shell thực thi, exit-code semantics, quoting, PATH và portability.
+## 6. STYLE.md và cấu trúc bài
 
-Bài #001–#018 được grandfather về mặt source validator; việc backfill nguồn lịch sử làm theo PR riêng, không được dùng grandfather để sao chép claim cũ sang bài mới mà không kiểm chứng.
+Dùng `templates/post.template.html`, `STYLE.md`, `assets/style.css`.
 
-## 6. Cấu trúc và STYLE.md
-
-Dùng `templates/post.template.html`, `STYLE.md` và giữ `assets/style.css` làm CSS chung.
-
-Cấu trúc editorial của Linux Daily giữ 7 mục chuyên môn, nhưng từ #041 phải bao bọc bởi contract của `STYLE.md`:
+Từ #041, bài phải có:
 
 1. metadata hiển thị `Tested on` + `Last verified`;
 2. Mục tiêu;
 3. Yêu cầu tiên quyết;
 4. `01 Bối cảnh thực tế`;
 5. `02 Kiến thức cốt lõi`;
-6. `03 Các bước thực hiện` — dùng `<ol class="steps">`, mỗi bước một hành động chính;
-7. `04 Kiểm chứng` — có Expected Output/Kết quả mong đợi;
-8. `Gỡ / Hoàn tác` không đánh số nếu `changes_system=true`;
+6. `03 Các bước thực hiện` với `<ol class="steps">`;
+7. `04 Kiểm chứng` với Expected Output/Kết quả mong đợi;
+8. `Gỡ / Hoàn tác` nếu `changes_system=true`;
 9. `05 Lưu ý & Khắc phục lỗi`;
 10. `06 Bảo mật & vận hành`;
 11. `07 Bài tập tự luyện`;
@@ -133,125 +117,122 @@ Cấu trúc editorial của Linux Daily giữ 7 mục chuyên môn, nhưng từ 
 
 Mỗi bài phải có:
 
-- đúng 2 SVG nguyên bản;
-- `role="img"`, `aria-label`, `figcaption` đầy đủ;
+- đúng 2 SVG nguyên bản, có `role="img"`, `aria-label`, `figcaption`;
 - khối FreeBSD riêng;
 - 2 link về trang chủ;
-- metadata JSON `<script id="ld-meta">` trong `<head>`;
-- từ #019: `review_status`, `sources`, và `<section class="sources">` không đánh số;
-- từ #041: `tested_on`, `last_verified`, `changes_system`;
-- từ #041: mọi `<pre><code>` có `language-*`; command block shell phải có ngữ cảnh `data-run-as="user|sudo|root"`;
-- từ #041: không có shell prompt `$`/`#`, `curl | sh` chạy mù, hay placeholder legacy kiểu `YOUR_*` trong command block.
+- metadata JSON `<script id="ld-meta">`;
+- #019+: `review_status`, `sources`, `<section class="sources">`;
+- #041+: `tested_on`, `last_verified`, `changes_system`;
+- #041+: mọi `<pre><code>` có `language-*`;
+- command shell có `data-run-as="user|sudo|root"`;
+- không shell prompt `$`/`#`, không `curl | sh` mù, không placeholder legacy `YOUR_*`.
 
-Metadata cơ bản phải khớp filename, `topics.md` và nội dung hiển thị: `issue`, `date`, `axis`, `slug`, `eyebrow`, `title`, `lede`.
+Code block nền tối phải giữ màu chữ sáng/high-contrast từ `assets/style.css`; không dùng inline CSS ghi đè `pre > code`.
 
-Ngày bài mặc định là ngày chạy thực tế. Không backdate để vượt cadence.
+## 7. Social output
 
-### Legacy style migration
+Không tạo mới Facebook/X hoặc ảnh code social theo mặc định. File lịch sử trong `posts/social/` giữ nguyên.
 
-- #001–#040 vẫn được audit bởi `python3 tools/validate_style.py --audit` nhưng không làm CI fail.
-- Không dùng legacy exemption cho bài mới hoặc nội dung copy từ bài cũ.
-- Backfill lịch sử theo batch nhỏ để diff reviewable; sau khi một batch đạt chuẩn có thể nâng enforcement boundary bằng PR riêng.
-
-## 7. Social output — tạm dừng
-
-Từ khi áp dụng cadence hằng ngày, **không tạo mới nội dung Facebook/X hoặc ảnh code social theo mặc định**. Mục tiêu là giảm khối lượng generation/review và tập trung vào chất lượng bài học + source-backed technical review.
-
-Các file lịch sử trong `posts/social/` được giữ nguyên để bảo toàn lịch sử repository. Không xóa hoặc rewrite chỉ vì social output đang tạm dừng.
-
-Nếu sau này bật lại social publishing, phải làm bằng một PR riêng để khôi phục contract, validator và workflow tương ứng.
-
-## 8. Ghi state và build
+## 8. State, build và preflight
 
 Sau khi nội dung hoàn chỉnh:
 
 ```bash
-python3 tools/build_index.py
+python3 tools/publish.py prepare
 python3 tools/cadence.py record
-python3 tools/publish.py check
+python3 tools/pr_preflight.py
 ```
 
-`tools/publish.py check` chạy structural/source-backed gates và **STYLE.md gate**. Social artifact không còn là điều kiện merge cho bài mới.
+`tools/pr_preflight.py` phải chạy sau khi deterministic artifacts đã materialize và trước commit/push.
 
-`state.json` phải khớp bài mới nhất trong `topics.md` và `last_generated_at` phải phản ánh thời điểm sinh thực tế.
+`state.json` phải khớp bài mới nhất trong `topics.md`; `last_generated_at` phản ánh thời điểm sinh thực tế.
 
-## 9. Git workflow
-
-Branch bài hằng ngày:
-
-```text
-chatgpt/linux-daily-<NNN>-<YYYYMMDD>
-```
-
-Maintenance/feature dùng branch `chatgpt/<scope-ngắn-gọn>` và luôn tách khỏi `main` trước khi ghi file.
-
-### One-pass branch contract
+## 9. Git workflow — one pass
 
 Thứ tự bắt buộc:
 
-1. tạo feature branch từ `main` hiện tại;
-2. sửa **source of truth** và chạy generator/backfill deterministic trong branch;
+1. tạo/resume feature branch từ `main` hiện tại;
+2. sửa source of truth và chạy generator deterministic;
 3. materialize toàn bộ generated artifacts trước commit;
 4. chạy `python3 tools/pr_preflight.py`;
-5. review diff, commit subject mô tả rõ, push và mở/cập nhật PR;
-6. GitHub Actions chỉ đọc/validate exact head SHA;
-7. nếu CI đỏ, sửa source/generator bằng commit bình thường rồi lặp preflight → push; **không tạo finalizer/self-mutating workflow**;
-8. sau review, dùng **Squash and merge** để `main` nhận một commit sạch.
+5. review diff; commit subject mô tả rõ; push và mở/cập nhật PR;
+6. kiểm duplicate/state/diff/review thread; khi sạch, chuyển PR bài hằng ngày sang Ready;
+7. `CI` chỉ đọc/validate exact head SHA;
+8. nếu CI đỏ, sửa source/generator bằng commit bình thường rồi lặp preflight → push;
+9. nếu CI xanh, `Linux Daily Auto Merge` kiểm lại exact SHA + PR contract và squash-merge;
+10. nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.
 
-Không tạo hoặc track:
+Không tạo/track:
 
-- workflow `finalize`/`finalizer` dùng `contents: write` để tự sửa branch;
-- helper migration gắn trực tiếp số PR kiểu `tools/pr93_*.py`/`.sh`;
-- file tạm `*.tmp`, `*.bak`, `*.orig`, `*.rej`;
-- placeholder/diagnostic artifact chỉ để kích hoạt workflow.
+- finalizer workflow tự sửa/commit/push branch;
+- helper gắn trực tiếp số PR kiểu `tools/pr93_*.py`/`.sh`;
+- file `*.tmp`, `*.bak`, `*.orig`, `*.rej`;
+- diagnostic artifact chỉ để kích hoạt workflow.
 
-Nếu một migration/backfill cần tool, tool đó phải có tên theo capability, deterministic, có test và đủ giá trị để giữ lâu dài trong repository. Nếu chỉ cần một lần, chạy transformation trước commit ở môi trường làm việc; không biến GitHub Actions thành build agent có quyền ghi.
+Không stage cả thư mục bằng `git add .`, `git add -A`, `git add --all`.
 
-Chỉ stage đúng file thuộc thay đổi đang làm, thông thường với bài hằng ngày gồm:
-
-- `posts/post-<NNN>-<slug>.html`
-- `index.html` và các generated site artifact do build thay đổi
-- `topics.md`
-- `state.json`
-- learning metadata/path nếu bài mới yêu cầu
-
-Không stage cả thư mục bằng `git add .`, `git add -A` hoặc `git add --all` trong workflow tác nghiệp của agent. CI/workflow không được stage/commit/push repository.
-
-Commit message bài hằng ngày:
+Commit bài hằng ngày:
 
 ```text
 Linux Daily #<NNN>: <tên chủ đề>
 ```
 
-Maintenance/feature dùng subject mô tả thay đổi, ví dụ:
+Maintenance/feature dùng subject mô tả rõ. `tools/pr_hygiene.py` chặn subject rác như `x`, `tmp`, `test`, `wip`, `placeholder`, `fix`, `update`, `changes`.
 
-```text
-Simplify Git and CI workflow hygiene
-```
+Repo dùng **Squash and merge** cho workflow thường ngày.
 
-Không dùng commit subject rác như `x`, `tmp`, `test`, `wip`, `placeholder`, `fix`, `update` hoặc `changes`; `tools/pr_hygiene.py` kiểm rule này trên commit range của PR.
+## 10. CI read-only và post-CI auto-merge
 
-Mở PR vào `main`; CI `quality-gate` phải xanh trước khi merge. Normal PR dùng **Squash and merge**; không dùng merge commit/rebase merge cho workflow thường ngày.
+`.github/workflows/ci.yml`:
 
-### Self-fix CI completion contract
+- trigger PR và push `main`;
+- `contents: read`;
+- chạy PR hygiene, lint, pytest, workflow safety, STYLE.md, deterministic publish pipeline, link check, cadence/render smoke tests;
+- không commit/push repository.
 
-Một PR **chưa được coi là hoàn tất** chỉ vì local test pass hoặc một workflow run cũ đã xanh. Sau **mỗi lần push** vào branch PR, agent bắt buộc:
+`.github/workflows/linux-daily-auto-merge.yml`:
 
-1. đọc lại PR và lấy đúng `head_sha` hiện tại;
-2. kiểm tra toàn bộ workflow/check gắn với **chính SHA đó**, gồm cả trigger `push` và `pull_request`;
-3. coi `queued`, `pending`, `in_progress`, `failure`, `cancelled` hoặc `timed_out` là **chưa hoàn tất**;
-4. nếu có check đỏ, đọc log job lỗi, sửa nguyên nhân gốc, chạy lại generator deterministic + local gates, commit/push bình thường và lặp lại từ bước 1;
-5. trước khi báo sẵn sàng review, kiểm tra diff PR không còn workflow/helper/artifact tạm;
-6. chỉ được báo **ready for review** khi tất cả required checks của exact `head_sha` đã `completed/success`.
+- trigger **chỉ** bằng `workflow_run` của `CI` khi completed;
+- job chỉ chạy nếu CI conclusion `success` và source event là `pull_request`;
+- không checkout PR code;
+- chỉ merge PR open, non-Draft, base `main`, head cùng repo;
+- PR author phải là repository owner;
+- branch phải đúng `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`;
+- current PR head SHA phải bằng `workflow_run.head_sha`;
+- `CHANGES_REQUESTED` hoặc unresolved review thread chặn merge;
+- dùng REST merge endpoint với `merge_method=squash` + exact `sha` precondition;
+- không `gh pr merge`, không native auto-merge, không `--admin`, không sửa branch protection;
+- chỉ cần `contents: write` + `pull-requests: read`;
+- không stage/commit/push branch.
 
-Không được skip, suppress, nới lỏng hoặc bypass gate để làm CI xanh. Không được sửa CI thành workflow tự ghi để “tự hoàn tất” PR. Nếu connector không hiển thị đủ check, trạng thái phải được coi là **chưa xác minh**, không được suy đoán là PASS.
+`tools/workflow_safety.py` phải enforce toàn bộ boundary trên.
 
-## 10. Scheduled Task của ChatGPT
+## 11. Exact-head completion contract
 
-Task chạy hằng ngày lúc 07:00. Cadence do `state.json` quyết định với mặc định **1 ngày**. Mỗi lần chạy phải đọc `AGENTS.md` **và `STYLE.md`** từ `main` trước khi chuẩn bị bài.
+Một PR không được coi là đã merge chỉ vì local PASS hoặc run xanh của SHA cũ.
 
-Khi chưa sang ngày phát hành kế tiếp, không tạo bài. Khi tới nhịp, task kiểm tra state, issue kế tiếp, duplicate branch/PR, chuẩn bị bài, source-backed review, STYLE.md review và quality gates.
+- CI success phải thuộc exact head SHA được merge.
+- Auto-merge workflow phải so `workflow_run.head_sha` với current PR head SHA ngay trước merge.
+- Nếu có push mới sau CI, SHA mismatch làm merge dừng; CI mới phải chạy lại.
+- `queued`, `pending`, `in_progress`, `failure`, `cancelled`, `timed_out` không được coi là success.
+- Không skip/suppress/nới gate để ép xanh.
 
-Task không tạo Facebook/X theo mặc định trong giai đoạn social output tạm dừng.
+Scheduled Task **không cần polling tới lúc merge** sau khi PR đã Ready: post-CI workflow chịu trách nhiệm exact-head merge. Nếu CI fail, PR giữ mở để task/phiên sau resume và sửa.
 
-Task không thay thế GitHub Actions. GitHub Actions là cổng kỹ thuật cuối cùng; người dùng là người quyết định merge.
+## 12. Scheduled Task của ChatGPT
+
+Task chạy 07:00 mỗi ngày, cadence 1 bài/ngày.
+
+Mỗi lần chạy:
+
+1. đọc `AGENTS.md`, `STYLE.md`, state/curriculum hiện hành;
+2. kiểm cadence và duplicate;
+3. tạo hoặc resume đúng branch/PR;
+4. chuẩn bị bài + source-backed review + STYLE review;
+5. materialize artifacts + preflight;
+6. commit/push/open PR theo quyền đã được người dùng ủy quyền;
+7. chuyển PR sang Ready khi structural/diff/review gate sạch;
+8. không cần chờ CI kết thúc để tự merge thủ công; GitHub post-CI workflow xử lý merge;
+9. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau.
+
+Task không tạo social output mặc định và không thay đổi branch protection/repository settings để ép merge.
