@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Wed, 12 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Thu, 13 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SSH agent forwarding và rủi ro lộ credential</title>
+      <link>https://linux.no.id.vn/posts/post-044-ssh-agent-forwarding-credential-risk.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-044-ssh-agent-forwarding-credential-risk.html</guid>
+      <pubDate>Thu, 13 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Kiểm tra socket agent được forward và giảm blast radius của credential trên jump host.</description>
+    </item>
     <item>
       <title>MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</title>
       <link>https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html</guid>
       <pubDate>Tue, 04 Aug 2026 00:00:00 +0700</pubDate>
       <description>Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</description>
-    </item>
-    <item>
-      <title>systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</title>
-      <link>https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-034-systemd-timer-freebsd-periodic-cron.html</guid>
-      <pubDate>Mon, 03 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Lập lịch tác vụ không chỉ là chọn giờ chạy: cần biết ai kích hoạt job, log nằm đâu, missed run xử lý thế nào và cách kiểm tra trước khi đưa vào production.</description>
     </item>
   </channel>
 </rss>
