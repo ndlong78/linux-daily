@@ -1,6 +1,19 @@
 {
-  "count": 43,
+  "count": 44,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-08-13",
+      "href": "posts/post-044-ssh-agent-forwarding-credential-risk.html",
+      "issue": 44,
+      "lede": "Kiểm tra socket agent được forward và giảm blast radius của credential trên jump host.",
+      "tags": [
+        "SSH agent"
+      ],
+      "title": "SSH agent forwarding và rủi ro lộ credential"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",
