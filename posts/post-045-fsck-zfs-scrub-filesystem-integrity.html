@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem — Linux Daily #045</title>
+<meta name="description" content="Chọn đúng checker cho ext4, XFS, Btrfs, UFS và ZFS; tách kiểm tra offline khỏi scrub online, xác định target và recovery boundary trước khi sửa.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-045-fsck-zfs-scrub-filesystem-integrity.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem">
+<meta property="og:description" content="Chọn đúng checker cho ext4, XFS, Btrfs, UFS và ZFS; tách kiểm tra offline khỏi scrub online.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-045-fsck-zfs-scrub-filesystem-integrity.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem">
+<meta name="twitter:description" content="Chọn đúng checker cho ext4, XFS, Btrfs, UFS và ZFS; tách kiểm tra offline khỏi scrub online.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 45,
+  "date": "2026-08-14",
+  "axis": "Storage",
+  "eyebrow": "Storage · filesystem integrity",
+  "slug": "fsck-zfs-scrub-filesystem-integrity",
+  "title": "fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem",
+  "lede": "Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-14",
+  "changes_system": true,
+  "sources": [
+    {"title":"e2fsck(8) — e2fsprogs manual","url":"https://man7.org/linux/man-pages/man8/e2fsck.8.html","kind":"upstream"},
+    {"title":"xfs_repair(8) — xfsprogs manual","url":"https://man7.org/linux/man-pages/man8/xfs_repair.8.html","kind":"upstream"},
+    {"title":"BTRFS documentation — btrfs-check(8)","url":"https://btrfs.readthedocs.io/en/latest/btrfs-check.html","kind":"upstream"},
+    {"title":"OpenZFS documentation — zpool-scrub(8)","url":"https://openzfs.github.io/openzfs-docs/man/master/8/zpool-scrub.8.html","kind":"upstream"},
+    {"title":"FreeBSD Manual — fsck_ffs(8) / fsck_ufs(8)","url":"https://man.freebsd.org/fsck_ffs","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#045 · 14·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Storage · filesystem integrity</p>
+  <h1>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</h1>
+  <p class="lede">Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.</p>
+  <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-14 · đối chiếu e2fsprogs, xfsprogs, Btrfs, OpenZFS và FreeBSD manual; các lệnh sửa metadata nguy hiểm không được đưa vào bài.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt kiểm tra offline bằng checker filesystem với scrub online, xác định đúng target và dừng ở bước chẩn đoán trước khi bước sang repair.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+  <li>Đã nắm bài #010 về device/mount, #024 về block/inode/ZFS dataset và #038 về health của thiết bị.</li>
+  <li>Có backup đã kiểm chứng restore hoặc snapshot/recovery point độc lập trước khi kiểm tra filesystem đang nghi lỗi.</li>
+  <li>Có quyền <code>sudo</code>/root để đọc block device hoặc điều khiển scrub.</li>
+  <li>Nếu target là root filesystem, chuẩn bị rescue/live environment hoặc maintenance window; không cố unmount root đang chạy.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Cây quyết định chọn fsck, xfs_repair, btrfs check hoặc ZFS scrub">
+  <rect width="760" height="250" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="275" y="20" width="210" height="52" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="380" y="43" font-size="13" font-weight="700">XÁC ĐỊNH FSTYPE</text><text x="380" y="61" font-size="10">không đoán từ tên device</text>
+    <path d="M380 72V98M380 98H118V118M380 98H295V118M380 98H465V118M380 98H642V118" stroke="#0C6E61" stroke-width="2" fill="none"/>
+    <rect x="35" y="118" width="165" height="88" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="118" y="145" font-size="12" font-weight="700">ext2/3/4</text><text x="118" y="171" font-size="10">e2fsck offline</text>
+    <rect x="213" y="118" width="165" height="88" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="295" y="145" font-size="12" font-weight="700">XFS</text><text x="295" y="171" font-size="10">xfs_repair -n offline</text>
+    <rect x="383" y="118" width="165" height="88" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="465" y="145" font-size="12" font-weight="700">Btrfs</text><text x="465" y="171" font-size="10">scrub/check theo mục tiêu</text>
+    <rect x="560" y="118" width="165" height="88" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="642" y="145" font-size="12" font-weight="700">ZFS</text><text x="642" y="171" font-size="10">zpool scrub online</text>
+  </g>
+</svg>
+<figcaption>Hình 1 — <code>fsck</code> không phải một thao tác chung cho mọi filesystem. Xác định FSTYPE trước rồi chọn checker có semantics phù hợp.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Một filesystem báo I/O error, mount read-only hoặc máy vừa mất điện không có nghĩa là phải chạy <code>fsck -y</code>. Với ext4, checker cần chạy khi filesystem không mounted để kết quả có giá trị. XFS dùng <code>xfs_repair</code>, không dùng <code>fsck.xfs</code> như một checker thực. Btrfs tách scrub checksum khỏi structural check. ZFS dùng scrub online để đọc toàn bộ block và kiểm checksum; pool có redundancy có thể tự sửa block hỏng từ bản sao tốt.</p>
+<p>Trước mọi kiểm tra, xác nhận thiết bị, loại filesystem và backup/recovery boundary. Nếu lỗi đến từ disk đang suy giảm, repair metadata có thể làm tình hình xấu hơn; quay lại health evidence của bài #038 trước khi ghi thêm lên thiết bị.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+<ul class="clean">
+  <li><strong>ext2/3/4:</strong> dùng <code>e2fsck</code>; kết quả trên filesystem mounted không được xem là hợp lệ.</li>
+  <li><strong>XFS:</strong> <code>fsck.xfs</code> không phải checker; dùng <code>xfs_repair -n</code> để kiểm không sửa và giữ filesystem unmounted.</li>
+  <li><strong>Btrfs:</strong> scrub kiểm checksum trên filesystem mounted; <code>btrfs check --readonly</code> kiểm cấu trúc và nên chạy khi unmounted. Không dùng <code>--repair</code> theo phản xạ.</li>
+  <li><strong>ZFS:</strong> <code>zpool scrub</code> là online scan; <code>zpool status</code> là điểm kiểm chứng tiến độ/kết quả.</li>
+  <li><strong>FreeBSD UFS:</strong> dùng <code>fsck_ufs</code>/<code>fsck_ffs</code>; tách riêng khỏi Linux và không dùng <code>systemctl</code>.</li>
+</ul>
+<h3>Bảng lệnh song song theo distro</h3>
+<p><strong>Ubuntu/Xubuntu và Debian:</strong> không cài thêm package trong lab. Nếu target là ext4 dùng <code>e2fsck</code>; nếu là XFS/Btrfs/ZFS dùng tool của chính filesystem đó.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">findmnt -no SOURCE,FSTYPE,TARGET &lt;mountpoint&gt;
+lsblk -f</code></pre></div>
+<p><code>&lt;mountpoint&gt;</code> là mount point cần kiểm tra, ví dụ một filesystem dữ liệu đã chọn trong maintenance plan.</p>
+<p><strong>Fedora:</strong> bước inventory giống Linux ở trên. Nếu FSTYPE là Btrfs, không thay thế bằng <code>fsck.ext4</code>; dùng scrub/check của Btrfs theo mục tiêu.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">findmnt -no SOURCE,FSTYPE,TARGET &lt;mountpoint&gt;
+lsblk -f</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p>FreeBSD dùng UFS hoặc ZFS theo deployment. UFS dùng <code>fsck_ufs</code>; ZFS dùng <code>zpool scrub</code>. Không áp lệnh Linux hoặc systemd.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">mount | grep " on &lt;mountpoint&gt; "
+zpool status</code></pre></div>
+</section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="So sánh offline filesystem check với online scrub">
+  <rect width="760" height="240" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="45" y="42" width="310" height="155" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="200" y="72" font-size="14" font-weight="700">OFFLINE CHECK</text><text x="200" y="104" font-size="11">ext4 · XFS · UFS · Btrfs structural</text><text x="200" y="132" font-size="10">quiescent / unmounted target</text><text x="200" y="158" font-size="10">ưu tiên no-modify trước</text>
+    <rect x="405" y="42" width="310" height="155" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="560" y="72" font-size="14" font-weight="700">ONLINE SCRUB</text><text x="560" y="104" font-size="11">ZFS · Btrfs checksum scan</text><text x="560" y="132" font-size="10">filesystem/pool đang online</text><text x="560" y="158" font-size="10">theo dõi status và I/O impact</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Offline checker kiểm cấu trúc trong trạng thái quiescent; scrub đọc toàn bộ block/checksum khi filesystem hoặc pool vẫn online.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Xác định target và filesystem trước khi chạm vào checker.</h3><p>Linux — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">findmnt -no SOURCE,FSTYPE,TARGET &lt;mountpoint&gt;
+lsblk -f</code></pre></div><p>Ghi lại SOURCE, FSTYPE và TARGET. Nếu output không khớp maintenance plan, dừng.</p><p>FreeBSD — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">mount | grep " on &lt;mountpoint&gt; "
+zpool status</code></pre></div><p>Nếu mount point thuộc ZFS dataset, chuyển sang bước scrub ZFS. Nếu là UFS, xác định device từ output <code>mount</code>.</p></li>
+<li><h3>Kiểm tra recovery boundary trước thao tác có thể sửa block.</h3><p>Tất cả hệ — xác nhận backup hoặc snapshot/recovery point độc lập. Không dùng chính filesystem đang nghi lỗi làm bản backup duy nhất.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">date
+printf '%s\n' "backup-restore-evidence: verified"</code></pre></div><p>Đây là checkpoint vận hành, không phải lệnh chứng minh backup. Chỉ tiếp tục khi có evidence restore thật từ hệ backup của môi trường.</p></li>
+<li><h3>Chạy no-modify check cho ext2/3/4 sau khi unmount.</h3><p>Ubuntu/Xubuntu, Debian hoặc Fedora với FSTYPE <code>ext2</code>/<code>ext3</code>/<code>ext4</code>. ⚠️ Không chạy trên filesystem đang mounted; root filesystem cần rescue/live environment.</p><p>Chạy bằng <code>sudo</code> sau khi xác nhận <code>&lt;device&gt;</code> chính là SOURCE ở bước 1.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo umount &lt;mountpoint&gt;
+sudo e2fsck -f -n &lt;device&gt;</code></pre></div><p><code>&lt;device&gt;</code> là block device đã xác nhận từ <code>findmnt</code>. Tùy chọn <code>-n</code> giữ checker ở chế độ không ghi.</p></li>
+<li><h3>Chạy no-modify check cho XFS thay vì gọi fsck.xfs.</h3><p>Linux với FSTYPE <code>xfs</code>. ⚠️ Giữ target unmounted; không dùng <code>xfs_repair -L</code> như bước thử lỗi.</p><p>Chạy bằng <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo umount &lt;mountpoint&gt;
+sudo xfs_repair -n &lt;device&gt;</code></pre></div><p>Nếu lệnh báo dirty log hoặc corruption cần sửa, dừng ở đây và lập recovery plan riêng. Bài này không chuyển sang repair mode.</p></li>
+<li><h3>Chọn scrub hoặc structural check cho Btrfs.</h3><p>Linux với FSTYPE <code>btrfs</code>. Để kiểm checksum online mà không chủ động sửa bản sao, chạy bằng <code>sudo</code> với <code>-r</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo btrfs scrub start -B -r &lt;mountpoint&gt;
+sudo btrfs scrub status &lt;mountpoint&gt;</code></pre></div><p>Nếu cần structural check, unmount trước rồi dùng read-only mode.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo umount &lt;mountpoint&gt;
+sudo btrfs check --readonly &lt;device&gt;</code></pre></div><p>Không thêm <code>--repair</code> khi chưa có hướng dẫn recovery cụ thể.</p></li>
+<li><h3>Chạy ZFS scrub online và theo dõi kết quả.</h3><p>Ubuntu/Xubuntu, Debian, Fedora có OpenZFS và FreeBSD — chỉ áp dụng khi target thực sự thuộc pool ZFS. Scrub có thể tự sửa block hỏng nếu pool có bản sao tốt, vì vậy recovery boundary ở bước 2 là bắt buộc.</p><p>Chạy bằng <code>sudo</code> trên Linux hoặc FreeBSD.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo zpool status &lt;pool&gt;
+sudo zpool scrub &lt;pool&gt;
+sudo zpool status -v &lt;pool&gt;</code></pre></div><p><code>&lt;pool&gt;</code> là tên pool đã xuất hiện trong <code>zpool status</code>. Không thay bằng tên dataset hoặc mount point.</p></li>
+<li><h3>Chạy read-only UFS check trên FreeBSD trong maintenance window.</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>⚠️ Xác nhận device từ output <code>mount</code> và unmount target trước khi check. Chạy bằng <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre class="bsd"><code class="language-sh">sudo umount &lt;mountpoint&gt;
+sudo fsck_ufs -f -n &lt;device&gt;</code></pre></div><p><code>-n</code> trả lời “no” cho sửa đổi; nếu phát hiện inconsistency cần repair, dừng và chuyển sang recovery plan riêng.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Đọc exit status cùng output của checker; không chỉ tìm chuỗi “clean”. Với ZFS, kiểm tra trạng thái scrub và số lỗi chưa sửa được.</p><p>Linux/FreeBSD ZFS — chạy bằng user có quyền đọc pool; nếu môi trường yêu cầu, dùng <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo zpool status -v &lt;pool&gt;</code></pre></div><p>Linux ext/XFS/Btrfs hoặc FreeBSD UFS — lưu output của no-modify checker trong change record và chỉ remount khi checker đã kết thúc.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>Inventory xác nhận đúng SOURCE/FSTYPE/TARGET trước mọi lệnh.</li><li>No-modify checker hoàn tất mà không ghi metadata; nếu có corruption, change dừng ở bước chẩn đoán.</li><li>ZFS <code>zpool status</code> báo scrub hoàn tất và không còn lỗi không thể sửa; nếu có <code>errors</code>, mở incident thay vì tiếp tục “repair thử”.</li><li>Không có checker nào được chạy trên filesystem sai loại chỉ vì tên lệnh có chữ <code>fsck</code>.</li></ul></div></section>
+<section class="cleanup"><h2>Gỡ / Hoàn tác</h2><p>No-modify checks trong bài không thay metadata. Với ZFS, scrub có thể sửa block từ replica tốt; phần đã sửa không có thao tác “undo”. Recovery boundary là backup/snapshot độc lập đã xác nhận trước scrub.</p><p>Nếu cần dừng một ZFS scrub đang chạy, chạy bằng <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo zpool scrub -s &lt;pool&gt;
+sudo zpool status &lt;pool&gt;</code></pre></div><p>Với Btrfs scrub đang chạy, hủy bằng <code>sudo btrfs scrub cancel &lt;mountpoint&gt;</code>. Sau offline check, remount theo cấu hình <code>/etc/fstab</code> hoặc cơ chế mount chuẩn của hệ; không tự thay mount options trong bài này.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>“device is mounted”:</strong> dừng checker offline. Xác định process giữ mount, lên maintenance window hoặc dùng rescue environment.</li><li><strong>XFS báo dirty log:</strong> không nhảy sang <code>-L</code>. Xác minh hardware, recovery plan và quy trình replay log trước.</li><li><strong>Btrfs scrub sạch nhưng vẫn nghi structural damage:</strong> scrub không thay thế <code>btrfs check</code>; dùng read-only structural check khi unmounted.</li><li><strong>ZFS scrub có checksum errors:</strong> xem topology và redundancy trong <code>zpool status -v</code>; scrub không tạo dữ liệu tốt nếu pool không còn bản sao hợp lệ.</li><li><strong>FreeBSD UFS:</strong> không thay <code>fsck_ufs</code> bằng lệnh Linux. Nếu target là ZFS, dùng <code>zpool</code>, không chạy UFS checker lên vdev.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Chụp inventory và backup evidence trước khi cấp maintenance approval.</li><li>Không dùng <code>-y</code>, <code>--repair</code>, <code>xfs_repair -L</code> hoặc thao tác sửa tự động như bước đầu tiên.</li><li>Scrub có thể tăng I/O đáng kể; theo dõi latency và chạy trong maintenance/low-load window khi pool phục vụ workload nhạy cảm.</li><li>Nếu storage health đã xấu, ưu tiên bảo toàn dữ liệu và clone/image/backup phù hợp thay vì liên tục chạy repair.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn một lab VM hoặc pool thử nghiệm có hai filesystem khác nhau. Ghi SOURCE/FSTYPE/TARGET, lập bảng “online hay offline”, chọn đúng checker ở chế độ không sửa và viết Expected Output. Với ZFS hoặc Btrfs, giải thích rõ scrub kiểm checksum khác structural check ở điểm nào.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream/chính thức; lệnh repair nguy hiểm được chủ động loại khỏi bài.</p><ul class="clean"><li><a href="https://man7.org/linux/man-pages/man8/e2fsck.8.html">e2fsck(8) — e2fsprogs manual</a></li><li><a href="https://man7.org/linux/man-pages/man8/xfs_repair.8.html">xfs_repair(8) — xfsprogs manual</a></li><li><a href="https://btrfs.readthedocs.io/en/latest/btrfs-check.html">BTRFS documentation — btrfs-check(8)</a></li><li><a href="https://openzfs.github.io/openzfs-docs/man/master/8/zpool-scrub.8.html">OpenZFS documentation — zpool-scrub(8)</a></li><li><a href="https://man.freebsd.org/fsck_ffs">FreeBSD Manual — fsck_ffs(8) / fsck_ufs(8)</a></li></ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #045 · Storage</span><span class="hashtags">#Linux #FreeBSD #Storage #ZFS #fsck</span></div></footer>
+</div></main>
+</body>
+</html>
