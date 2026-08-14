@@ -1,6 +1,19 @@
 {
-  "count": 44,
+  "count": 45,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-08-14",
+      "href": "posts/post-045-fsck-zfs-scrub-filesystem-integrity.html",
+      "issue": 45,
+      "lede": "Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.",
+      "tags": [
+        "filesystem integrity"
+      ],
+      "title": "fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",
