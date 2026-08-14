@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Thu, 13 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Fri, 14 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</title>
+      <link>https://linux.no.id.vn/posts/post-045-fsck-zfs-scrub-filesystem-integrity.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-045-fsck-zfs-scrub-filesystem-integrity.html</guid>
+      <pubDate>Fri, 14 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.</description>
+    </item>
     <item>
       <title>SSH agent forwarding và rủi ro lộ credential</title>
       <link>https://linux.no.id.vn/posts/post-044-ssh-agent-forwarding-credential-risk.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-036-tcpdump-targeted-packet-capture.html</guid>
       <pubDate>Wed, 05 Aug 2026 00:00:00 +0700</pubDate>
       <description>Packet capture hữu ích nhất khi câu hỏi đủ hẹp. Bài này dùng tcpdump với interface, host/port filter và packet count để lấy bằng chứng mà không capture tràn lan.</description>
-    </item>
-    <item>
-      <title>Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</title>
-      <link>https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-035-lab-filesystem-full-recovery.html</guid>
-      <pubDate>Tue, 04 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Lab mô phỏng một incident filesystem 96% bằng dữ liệu mẫu, kết hợp df, inode, mountpoint và du để luyện triage, recovery plan và cleanup mà không làm đầy filesystem thật.</description>
     </item>
   </channel>
 </rss>
