@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem">
-<meta property="og:description" content="Chọn đúng checker cho ext4, XFS, Btrfs, UFS và ZFS; tách kiểm tra offline khỏi scrub online.">
+<meta property="og:description" content="Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-045-fsck-zfs-scrub-filesystem-integrity.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem">
-<meta name="twitter:description" content="Chọn đúng checker cho ext4, XFS, Btrfs, UFS và ZFS; tách kiểm tra offline khỏi scrub online.">
+<meta name="twitter:description" content="Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -165,6 +165,27 @@ sudo zpool status &lt;pool&gt;</code></pre></div><p>Với Btrfs scrub đang ch�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Chụp inventory và backup evidence trước khi cấp maintenance approval.</li><li>Không dùng <code>-y</code>, <code>--repair</code>, <code>xfs_repair -L</code> hoặc thao tác sửa tự động như bước đầu tiên.</li><li>Scrub có thể tăng I/O đáng kể; theo dõi latency và chạy trong maintenance/low-load window khi pool phục vụ workload nhạy cảm.</li><li>Nếu storage health đã xấu, ưu tiên bảo toàn dữ liệu và clone/image/backup phù hợp thay vì liên tục chạy repair.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn một lab VM hoặc pool thử nghiệm có hai filesystem khác nhau. Ghi SOURCE/FSTYPE/TARGET, lập bảng “online hay offline”, chọn đúng checker ở chế độ không sửa và viết Expected Output. Với ZFS hoặc Btrfs, giải thích rõ scrub kiểm checksum khác structural check ở điểm nào.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream/chính thức; lệnh repair nguy hiểm được chủ động loại khỏi bài.</p><ul class="clean"><li><a href="https://man7.org/linux/man-pages/man8/e2fsck.8.html">e2fsck(8) — e2fsprogs manual</a></li><li><a href="https://man7.org/linux/man-pages/man8/xfs_repair.8.html">xfs_repair(8) — xfsprogs manual</a></li><li><a href="https://btrfs.readthedocs.io/en/latest/btrfs-check.html">BTRFS documentation — btrfs-check(8)</a></li><li><a href="https://openzfs.github.io/openzfs-docs/man/master/8/zpool-scrub.8.html">OpenZFS documentation — zpool-scrub(8)</a></li><li><a href="https://man.freebsd.org/fsck_ffs">FreeBSD Manual — fsck_ffs(8) / fsck_ufs(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-038-smart-nvme-health-disk-degradation.html"><span class="series-kicker">#038</span><span>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-031-mount-options-filesystem-protection.html">#031 · Mount options: giảm bề mặt tấn công của filesystem</a></li>
+      <li><a href="post-024-filesystem-inode-zfs-capacity.html">#024 · Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</a></li>
+      <li><a href="post-017-mo-rong-dung-luong.html">#017 · Đĩa lớn thêm rồi mà vẫn báo đầy? Nới đúng hai lớp</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
 <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #045 · Storage</span><span class="hashtags">#Linux #FreeBSD #Storage #ZFS #fsck</span></div></footer>
 </div></main>
 </body>
