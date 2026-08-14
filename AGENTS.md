@@ -14,6 +14,7 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 - Từ #019, claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
 - Từ #041, bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và backfill theo PR riêng.
 - Social output Facebook/X đang tạm dừng.
+- Scheduled Task không được coi việc thiếu local writable checkout là blocker nếu GitHub connector vẫn có quyền ghi feature branch/PR an toàn. Khi đó dùng API-only fallback và để CI read-only làm remote validation authoritative.
 
 ## 2. Cadence hằng ngày
 
@@ -40,6 +41,8 @@ claude/linux-daily-<NNN>-<YYYYMMDD>
 ```
 
 Trước khi tạo bài, kiểm tra branch/PR của đúng issue/date. Nếu đã tồn tại PR hợp lệ, **resume PR đó**, không tạo bản thứ hai.
+
+Nếu branch chuẩn đã tồn tại nhưng chưa có PR và branch head vẫn bằng `main`, coi đó là **interrupted empty branch** do lần chạy trước bị gián đoạn. Resume chính branch đó và tiếp tục ghi bài; không tạo branch cùng issue khác.
 
 ## 3. Chu kỳ chủ đề
 
@@ -133,7 +136,15 @@ Code block nền tối phải giữ màu chữ sáng/high-contrast từ `assets/
 
 Không tạo mới Facebook/X hoặc ảnh code social theo mặc định. File lịch sử trong `posts/social/` giữ nguyên.
 
-## 8. State, build và preflight
+## 8. Capability preflight, state, build và validation
+
+Trước khi tạo branch mới, Scheduled Task phải xác định khả năng thực thi:
+
+1. Có local writable checkout → dùng local one-pass flow.
+2. Không có local writable checkout nhưng GitHub connector có write access → dùng API-only fallback.
+3. Chỉ khi cả local write và GitHub remote write đều không khả dụng mới dừng vì capability blocker.
+
+### Local one-pass flow
 
 Sau khi nội dung hoàn chỉnh:
 
@@ -143,31 +154,58 @@ python3 tools/cadence.py record
 python3 tools/pr_preflight.py
 ```
 
-`tools/pr_preflight.py` phải chạy sau khi deterministic artifacts đã materialize và trước commit/push.
+Trong local flow, `tools/pr_preflight.py` phải chạy sau khi deterministic artifacts đã materialize và trước commit/push.
+
+### API-only fallback
+
+API-only fallback là đường vận hành hợp lệ của Scheduled Task khi không có local writable checkout. Nó **không bypass validation**:
+
+- chỉ ghi feature branch, tuyệt đối không ghi `main`;
+- chuẩn bị article source + source-of-truth metadata trước khi tạo branch mới nếu có thể;
+- ưu tiên Git Data API `create_blob` → `create_tree` → `create_commit` → `update_ref` để ghi một tree nhất quán; nếu không khả dụng có thể dùng Contents API tuần tự trên feature branch;
+- không force-update ref;
+- mở/resume PR để `CI` read-only chạy validators/generator checks từ xa;
+- CI là authoritative validation thay cho local `pr_preflight.py` khi local execution không khả dụng;
+- nếu CI báo deterministic artifact stale hoặc regression do branch, sửa đúng source/artifact trên cùng branch rồi để CI chạy lại;
+- không vô hiệu hóa/nới test, validator, workflow safety hoặc STYLE gate để ép xanh.
 
 `state.json` phải khớp bài mới nhất trong `topics.md`; `last_generated_at` phản ánh thời điểm sinh thực tế.
 
-## 9. Git workflow — one pass
+## 9. Git workflow — local và API-only
 
-Thứ tự bắt buộc:
+### Local path
 
-1. tạo/resume feature branch từ `main` hiện tại;
-2. sửa source of truth và chạy generator deterministic;
-3. materialize toàn bộ generated artifacts trước commit;
+1. kiểm cadence + duplicate + capability trước khi tạo branch;
+2. chuẩn bị source of truth và chạy generator deterministic;
+3. materialize toàn bộ generated artifacts;
 4. chạy `python3 tools/pr_preflight.py`;
-5. review diff; commit subject mô tả rõ; push và mở/cập nhật PR;
-6. kiểm duplicate/state/diff/review thread; khi sạch, chuyển PR bài hằng ngày sang Ready;
-7. `CI` chỉ đọc/validate exact head SHA;
-8. nếu CI đỏ, sửa source/generator bằng commit bình thường rồi lặp preflight → push;
-9. nếu CI xanh, `Linux Daily Auto Merge` kiểm lại exact SHA + PR contract và squash-merge;
-10. nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.
+5. tạo/resume feature branch từ `main` hiện tại;
+6. review diff; commit subject mô tả rõ; push và mở/cập nhật PR;
+7. kiểm duplicate/state/diff/review thread; khi sạch, chuyển PR bài hằng ngày sang Ready **ngay, không chờ CI success**;
+8. `CI` chỉ đọc/validate exact head SHA;
+9. nếu CI đỏ, sửa source/generator bằng commit bình thường rồi lặp preflight → push;
+10. nếu CI xanh, `Linux Daily Auto Merge` kiểm lại exact SHA + PR contract và squash-merge.
+
+### API-only path
+
+1. kiểm cadence + duplicate + capability trước khi tạo branch;
+2. chuẩn bị article/source-of-truth metadata trong agent trước;
+3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
+4. ghi source core và các deterministic artifacts có thể xác định chắc chắn bằng GitHub API;
+5. mở Draft PR sau khi source core đã có trên branch;
+6. kiểm state/diff/duplicate/review; khi sạch, chuyển PR sang Ready **trước khi CI success**;
+7. dùng CI read-only làm remote preflight authoritative;
+8. nếu CI đỏ, đọc log và self-fix branch-caused failures trên cùng branch;
+9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.
+
+Nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.
 
 Không tạo/track:
 
 - finalizer workflow tự sửa/commit/push branch;
 - helper gắn trực tiếp số PR kiểu `tools/pr93_*.py`/`.sh`;
 - file `*.tmp`, `*.bak`, `*.orig`, `*.rej`;
-- diagnostic artifact chỉ để kích hoạt workflow.
+- diagnostic artifact/no-op commit chỉ để kích hoạt workflow.
 
 Không stage cả thư mục bằng `git add .`, `git add -A`, `git add --all`.
 
@@ -205,6 +243,8 @@ Repo dùng **Squash and merge** cho workflow thường ngày.
 - chỉ cần `contents: write` + `pull-requests: read`;
 - không stage/commit/push branch.
 
+**Ordering bắt buộc:** PR bài hằng ngày phải chuyển non-Draft/Ready ngay khi structural/diff/review gate sạch, không đợi CI xanh. Nếu exact-head CI đã success khi PR còn Draft rồi mới chuyển Ready, phải rerun CI/quality-gate trên **cùng exact head SHA** để tạo một `workflow_run success` mới; không tạo no-op commit chỉ để kích hoạt auto-merge.
+
 `tools/workflow_safety.py` phải enforce toàn bộ boundary trên.
 
 ## 11. Exact-head completion contract
@@ -226,13 +266,15 @@ Task chạy 07:00 mỗi ngày, cadence 1 bài/ngày.
 Mỗi lần chạy:
 
 1. đọc `AGENTS.md`, `STYLE.md`, state/curriculum hiện hành;
-2. kiểm cadence và duplicate;
-3. tạo hoặc resume đúng branch/PR;
-4. chuẩn bị bài + source-backed review + STYLE review;
-5. materialize artifacts + preflight;
-6. commit/push/open PR theo quyền đã được người dùng ủy quyền;
-7. chuyển PR sang Ready khi structural/diff/review gate sạch;
-8. không cần chờ CI kết thúc để tự merge thủ công; GitHub post-CI workflow xử lý merge;
-9. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau.
+2. kiểm cadence, duplicate branch/PR và capability **trước khi tạo branch mới**;
+3. nếu có local writable checkout, dùng local one-pass flow; nếu không có nhưng GitHub connector ghi được, dùng API-only fallback;
+4. nếu branch đúng issue đã tồn tại nhưng head == `main` và chưa có PR, resume như interrupted empty branch;
+5. chuẩn bị bài + source-backed review + STYLE review;
+6. local path: materialize artifacts + preflight; API-only path: ghi source/artifacts vào feature branch và dùng CI làm remote preflight;
+7. commit/push/open PR theo quyền đã được người dùng ủy quyền;
+8. chuyển PR sang Ready khi structural/diff/review gate sạch, **không chờ CI success**;
+9. không cần chờ CI kết thúc để tự merge thủ công; GitHub post-CI workflow xử lý merge;
+10. nếu CI đã success lúc PR còn Draft, rerun CI trên cùng SHA sau khi Ready;
+11. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau.
 
-Task không tạo social output mặc định và không thay đổi branch protection/repository settings để ép merge.
+Thiếu local checkout **không phải blocker** nếu GitHub connector vẫn có khả năng ghi feature branch/PR. Task không tạo social output mặc định và không thay đổi branch protection/repository settings để ép merge.
