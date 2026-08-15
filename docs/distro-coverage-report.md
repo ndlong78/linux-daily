@@ -4,18 +4,18 @@
 
 ## Snapshot
 
-- Published posts: **45**
-- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **40/45**
-- Posts with explicit FreeBSD code blocks: **45/45**
+- Published posts: **46**
+- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **41/46**
+- Posts with explicit FreeBSD code blocks: **46/46**
 - Linux-only command/path violations inside FreeBSD blocks: **0**
 - Full coverage enforcement starts at issue: **#020**
 
 | Platform | Posts with explicit coverage |
 |---|---:|
-| Ubuntu / Xubuntu | 40/45 |
-| Debian | 44/45 |
-| Fedora | 43/45 |
-| FreeBSD | 45/45 |
+| Ubuntu / Xubuntu | 41/46 |
+| Debian | 45/46 |
+| Fedora | 44/46 |
+| FreeBSD | 46/46 |
 
 ## Historical review queue
 
