@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>fzf cho chọn file, process và history tương tác — Linux Daily #046</title>
+<meta name="description" content="Dùng fzf như lớp chọn tương tác cho file, process và shell history trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD mà không biến selection chưa kiểm chứng thành command nguy hiểm.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-046-fzf-interactive-file-process-history.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="fzf cho chọn file, process và history tương tác">
+<meta property="og:description" content="Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-046-fzf-interactive-file-process-history.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="fzf cho chọn file, process và history tương tác">
+<meta name="twitter:description" content="Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 46,
+  "date": "2026-08-15",
+  "axis": "Công cụ mới",
+  "eyebrow": "Công cụ mới · fzf",
+  "slug": "fzf-interactive-file-process-history",
+  "title": "fzf cho chọn file, process và history tương tác",
+  "lede": "Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-15",
+  "changes_system": true,
+  "sources": [
+    {"title":"fzf — Upstream README","url":"https://github.com/junegunn/fzf","kind":"upstream"},
+    {"title":"Debian Manpages — fzf(1)","url":"https://manpages.debian.org/trixie/fzf/fzf.1.en.html","kind":"official"},
+    {"title":"Fedora Packages — fzf","url":"https://packages.fedoraproject.org/pkgs/fzf/fzf/","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#046 · 15·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Công cụ mới · fzf</p>
+  <h1>fzf cho chọn file, process và history tương tác</h1>
+  <p class="lede">Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.</p>
+  <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-15 · đối chiếu upstream fzf, Debian manpage và Fedora package catalog; walkthrough chỉ cài package và chọn dữ liệu, không tự thực thi selection.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>fzf</code> để thu hẹp danh sách file, process và command history, rồi tách bước chọn khỏi bước hành động để giảm thao tác nhầm.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+  <li>Đã nắm bài #039 về <code>fd</code> hoặc biết cách tạo một danh sách dòng bằng <code>find</code>, <code>ps</code> hay shell history.</li>
+  <li>Có terminal tương tác; <code>fzf</code> cần TTY để chọn trực tiếp.</li>
+  <li>Có quyền <code>sudo</code>/root chỉ cho bước cài hoặc gỡ package.</li>
+  <li>Lab không chứa file/process production cần tác động; bài không thực hiện xóa file hay gửi signal cho process.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="Luồng dữ liệu từ danh sách đầu vào qua fzf tới selection rồi kiểm tra trước hành động">
+  <rect width="760" height="240" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="72" width="155" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="108" y="102" font-size="13" font-weight="700">INPUT LIST</text><text x="108" y="130" font-size="10">file · process · history</text>
+    <rect x="220" y="72" width="130" height="92" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="285" y="104" font-size="16" font-weight="700">fzf</text><text x="285" y="132" font-size="10">fuzzy filter</text>
+    <rect x="385" y="72" width="145" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="458" y="102" font-size="13" font-weight="700">SELECTION</text><text x="458" y="130" font-size="10">stdout = data</text>
+    <rect x="565" y="72" width="165" height="92" rx="8" fill="#FFF6E8" stroke="#9A6500" stroke-width="2"/><text x="648" y="102" font-size="13" font-weight="700">VERIFY</text><text x="648" y="130" font-size="10">rồi mới action</text>
+    <path d="M185 118H214M350 118H379M530 118H559" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — <code>fzf</code> là lớp chọn. Output được xem là dữ liệu cần kiểm tra, không phải command tự động đáng tin cậy.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Khi danh sách dài, gõ chính xác tên file, PID hoặc một command cũ dễ chậm và dễ nhầm. <code>fzf</code> nhận danh sách từ standard input, cho phép fuzzy-match tương tác và ghi item được chọn ra standard output. Vì output có thể đến từ dữ liệu thay đổi theo thời gian, cách vận hành an toàn là chọn trước, quan sát lại selection, rồi mới quyết định hành động tiếp theo.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+  <li><code>fzf</code> là interactive filter cho danh sách, không chỉ là file finder.</li>
+  <li>Nguồn dữ liệu có thể là <code>find</code>, <code>ps</code>, <code>history</code>, <code>fc</code> hoặc bất kỳ command nào xuất một item mỗi dòng.</li>
+  <li>Selection được ghi ra standard output. Capture selection vào biến hoặc in lại trước khi dùng cho bước tiếp theo.</li>
+  <li><code>--filter</code> chạy chế độ lọc không tương tác; hữu ích cho verification và test deterministic.</li>
+  <li>Shell integration như <code>CTRL-R</code>/<code>CTRL-T</code> phụ thuộc version/package. Upstream lưu ý các option integration mới chỉ có ở fzf gần đây, nên bài này dùng pipeline cơ bản chạy ổn định hơn giữa distro.</li>
+</ul>
+<h3>Cài package theo distro</h3>
+<p>Ubuntu/Xubuntu và Debian — chạy bằng user có quyền <code>sudo</code>.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y fzf</code></pre></div>
+<p>Fedora — chạy bằng user có quyền <code>sudo</code>.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y fzf</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p>FreeBSD dùng <code>pkg</code>, không dùng APT/DNF hoặc systemd. Chạy bằng root.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg install -y fzf</code></pre></div>
+</section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="So sánh workflow an toàn chọn rồi kiểm tra với workflow nguy hiểm chọn rồi thực thi ngay">
+  <rect width="760" height="240" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="45" y="45" width="300" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="195" y="78" font-size="14" font-weight="700">SAFE</text><text x="195" y="112" font-size="11">select → print → verify</text><text x="195" y="143" font-size="10">action là bước riêng</text>
+    <rect x="415" y="45" width="300" height="150" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="565" y="78" font-size="14" font-weight="700">RISKY</text><text x="565" y="112" font-size="11">select → execute ngay</text><text x="565" y="143" font-size="10">không có checkpoint</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Fuzzy selection giảm công gõ, nhưng không thay thế target verification trước thao tác thay đổi hệ thống.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Xác nhận version và hành vi filter cơ bản.</h3><p>Tất cả hệ — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">fzf --version
+printf 'alpha\nbeta\ngamma\n' | fzf --filter='bet'</code></pre></div><p>Lệnh thứ hai không mở UI; nó kiểm tra deterministic rằng input được lọc và ghi ra stdout.</p></li>
+<li><h3>Chọn một file rồi chỉ in selection.</h3><p>Ubuntu/Xubuntu, Debian, Fedora và FreeBSD — chạy bằng user thường trong thư mục lab có tên file thông thường, không chứa newline.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">selected_file="$(find . -maxdepth 2 -type f -print | fzf --prompt='file&gt; ')"
+printf 'selected: %s\n' "$selected_file"</code></pre></div><p>Không nối output này trực tiếp vào lệnh xóa hoặc ghi đè. Nếu cần xử lý filename tùy ý có newline, phải thiết kế pipeline NUL-delimited riêng; lab này không giả định line-based input là an toàn cho mọi filename.</p></li>
+<li><h3>Chọn một process để quan sát, không gửi signal.</h3><p>Linux — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">selected_process="$(ps -eo pid=,user=,comm=,args= | fzf --prompt='process&gt; ')"
+printf '%s\n' "$selected_process"</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>FreeBSD dùng cú pháp <code>ps</code> riêng. Chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">selected_process="$(ps ax -o pid=,user=,comm=,args= | fzf --prompt='process&gt; ')"
+printf '%s\n' "$selected_process"</code></pre></div><p>Selection có thể stale ngay sau khi chọn vì PID/process thay đổi. Nếu sau này cần thao tác với PID, phải parse và xác minh lại process identity ở một bước riêng.</p></li>
+<li><h3>Tìm command cũ trong Bash history.</h3><p>Ubuntu/Xubuntu, Debian hoặc Fedora khi shell hiện tại là Bash — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">selected_history="$(history | fzf --scheme=history --tac --prompt='history&gt; ')"
+printf '%s\n' "$selected_history"</code></pre></div><p>Bài chỉ in dòng được chọn. Không dùng <code>eval</code> để chạy lại history chưa review.</p></li>
+<li><h3>Tìm history trên FreeBSD theo shell đang dùng.</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Với <code>sh</code>, dùng builtin <code>fc</code>. Chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">selected_history="$(fc -l 1 | fzf --scheme=history --tac --prompt='history&gt; ')"
+printf '%s\n' "$selected_history"</code></pre></div><p>Nếu login shell là <code>csh</code>/<code>tcsh</code>, dùng builtin <code>history</code> của shell đó làm nguồn input. Không áp cấu hình Bash vào FreeBSD theo mặc định.</p></li>
+<li><h3>Kiểm tra selection trước khi dùng ở bước tiếp theo.</h3><p>Tất cả hệ — chạy bằng user thường. Ví dụ với file đã chọn:</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">test -n "$selected_file" &amp;&amp; printf 'candidate: %s\n' "$selected_file"
+test -f "$selected_file" &amp;&amp; file "$selected_file"</code></pre></div><p>Nếu selection rỗng hoặc target không còn tồn tại, dừng. Fuzzy match không phải authorization để thay đổi target.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Kiểm tra package, deterministic filter và một selection tương tác mà không có side effect.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v fzf
+printf 'alpha\nbeta\ngamma\n' | fzf --filter='bet'</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">/usr/bin/fzf
+beta</code></pre><p>Đường dẫn binary có thể khác tùy package. Điều cần xác nhận là <code>command -v</code> trả về một executable và filter trả đúng dòng <code>beta</code>. Trong bài tập tương tác, selection được in lại nhưng không tự thực thi.</p></div></section>
+<section class="cleanup"><h2>Gỡ / Hoàn tác</h2><p>Bài không sửa shell startup file. Nếu không cần <code>fzf</code> nữa, gỡ package theo đúng hệ.</p><p>Ubuntu/Xubuntu và Debian — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y fzf</code></pre></div><p>Fedora — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf remove -y fzf</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Chạy bằng root.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg delete -y fzf</code></pre></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+  <li><strong>UI không mở:</strong> xác nhận command chạy trong terminal tương tác; pipeline qua môi trường không có TTY không phù hợp với selection trực tiếp.</li>
+  <li><strong><code>--scheme=history</code> không có:</strong> package có thể cũ hơn upstream. Bỏ option này và vẫn dùng <code>history | fzf --tac</code>; không cài binary lạ chỉ để có feature mới.</li>
+  <li><strong>History thiếu command mới:</strong> shell history có semantics riêng và có thể chưa flush từ session khác. Không coi danh sách là audit log đầy đủ.</li>
+  <li><strong>Process đã biến mất:</strong> đây là race bình thường. Refresh danh sách và xác minh lại PID/command trước mọi hành động.</li>
+  <li><strong>Filename có newline:</strong> line-based pipeline trong lab không đủ mạnh cho trường hợp này; dùng workflow NUL-delimited được thiết kế riêng thay vì cố escape sau khi chọn.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean">
+  <li>Không dùng pattern kiểu <code>... | fzf | sh</code>, <code>eval "$(...)"</code> hoặc nối selection trực tiếp vào lệnh destructive.</li>
+  <li>Với process, PID là identifier ngắn hạn. Luôn xác minh lại owner, command và target trước thao tác có side effect.</li>
+  <li>Với file, giữ quoting quanh biến selection và kiểm tra type/path trước khi đọc, ghi hoặc chuyển file.</li>
+  <li>Không đặt preview command dành riêng cho file vào <code>FZF_DEFAULT_OPTS</code> toàn cục; upstream lưu ý <code>fzf</code> còn nhận process, history và nhiều loại input khác.</li>
+  <li>Shell integration là convenience layer. Trên fleet đa distro, pin version/policy trước khi rollout cấu hình key binding hàng loạt.</li>
+</ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo một thư mục lab có 10 file, chọn một file bằng <code>fzf</code> và chỉ in path. Sau đó chọn một process và chỉ in dòng process. Cuối cùng tìm một command cũ trong history nhưng không chạy lại. Với mỗi phần, ghi rõ “input”, “selection”, “verification” và điểm nào mới được phép bắt đầu action.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Đối chiếu tài liệu upstream và package documentation ngày 2026-08-15.</p><ul class="clean">
+  <li><a href="https://github.com/junegunn/fzf">fzf — Upstream README</a></li>
+  <li><a href="https://manpages.debian.org/trixie/fzf/fzf.1.en.html">Debian Manpages — fzf(1)</a></li>
+  <li><a href="https://packages.fedoraproject.org/pkgs/fzf/fzf/">Fedora Packages — fzf</a></li>
+</ul></section>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head"><span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span></div>
+  <div class="series-links"><a class="series-link previous" href="post-039-fd-find-files-fast.html"><span class="series-kicker">#039</span><span>fd: tìm file nhanh nhưng phải hiểu ignore và hidden</span></a><span class="series-link is-empty" aria-hidden="true"></span></div>
+  <div class="related-more"><strong>Cùng chủ đề</strong><ul><li><a href="post-032-jq-json-operations.html">#032 · jq: biến JSON thành dữ liệu vận hành dùng được</a></li><li><a href="post-025-ripgrep-log-config-search.html">#025 · ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</a></li><li><a href="post-018-rclone-cloud-sync.html">#018 · rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</a></li></ul></div>
+</nav>
+<!-- related-nav:end -->
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #046 · Công cụ mới</span><span class="hashtags">#Linux #FreeBSD #fzf #CLI</span></div></footer>
+</div></main>
+</body>
+</html>
