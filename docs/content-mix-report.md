@@ -23,7 +23,7 @@
 ## Findings
 
 - Mix hiện cân bằng theo cadence 7 trục: chênh lệch giữa axis nhiều nhất và ít nhất không quá 1 bài.
-- Phần lệch 4-vs-3 là trạng thái tự nhiên của một chu kỳ chưa hoàn tất, không phải thiếu hụt cần backfill nhân tạo.
+- Phần lệch 3-vs-2 là trạng thái tự nhiên của một chu kỳ chưa hoàn tất, không phải thiếu hụt cần backfill nhân tạo.
 - Issue order vẫn đi đúng canonical axis rotation; đây là guardrail phù hợp hơn việc ép mọi axis luôn có số lượng bằng nhau.
 
 ## Recommendation
