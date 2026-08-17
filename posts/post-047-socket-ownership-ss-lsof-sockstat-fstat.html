@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD — Linux Daily #047</title>
+<meta name="description" content="Đi từ listening port tới PID, user và service owner bằng ss/lsof trên Linux; dùng sockstat/fstat trên FreeBSD để kiểm chứng ownership.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-047-socket-ownership-ss-lsof-sockstat-fstat.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD">
+<meta property="og:description" content="Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-047-socket-ownership-ss-lsof-sockstat-fstat.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD">
+<meta name="twitter:description" content="Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 47,
+  "date": "2026-08-16",
+  "axis": "Monitoring",
+  "eyebrow": "Monitoring · Socket ownership",
+  "slug": "socket-ownership-ss-lsof-sockstat-fstat",
+  "title": "Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD",
+  "lede": "Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-16",
+  "changes_system": true,
+  "sources": [
+    {"title":"Debian Manpages — ss(8)","url":"https://manpages.debian.org/trixie/iproute2/ss.8.en.html","kind":"official"},
+    {"title":"lsof — upstream Lsof.8","url":"https://github.com/lsof-org/lsof/blob/master/Lsof.8","kind":"upstream"},
+    {"title":"FreeBSD Manual Pages — sockstat(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=sockstat&sektion=1","kind":"official"},
+    {"title":"FreeBSD Manual Pages — fstat(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=fstat&sektion=1","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#047 · 16·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Monitoring · Socket ownership</p>
+  <h1>Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</h1>
+  <p class="lede">Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.</p>
+  <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-16 · đối chiếu Debian iproute2 manpage, upstream lsof và FreeBSD manual pages; walkthrough chỉ đọc socket/process state ngoài bước cài <code>lsof</code> trên Linux.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Đi từ một listening port tới socket, PID, user và service owner bằng đúng công cụ của Linux và FreeBSD, rồi xác minh ownership bằng nguồn thứ hai trước khi thay đổi dịch vụ.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+  <li>Đã nắm #008 về socket/network inventory, #033 về process/service ownership và #040 về quan sát process theo thời gian.</li>
+  <li>Linux có <code>ss</code> từ iproute2; bài cài thêm <code>lsof</code> để cross-check process/socket.</li>
+  <li>FreeBSD dùng <code>sockstat</code> và <code>fstat</code> trong base system; không áp <code>ss</code> hay systemd cho FreeBSD.</li>
+  <li>Có quyền <code>sudo</code>/root khi cần xem ownership của socket thuộc process khác.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="Luồng từ port tới socket PID user và service owner">
+  <rect width="760" height="240" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="25" y="72" width="130" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="90" y="104" font-size="13" font-weight="700">PORT</text><text x="90" y="132" font-size="10">22 · 443 · ...</text>
+    <rect x="180" y="72" width="130" height="92" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="245" y="104" font-size="13" font-weight="700">SOCKET</text><text x="245" y="132" font-size="10">local endpoint</text>
+    <rect x="335" y="72" width="130" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="400" y="104" font-size="13" font-weight="700">PID · FD</text><text x="400" y="132" font-size="10">process handle</text>
+    <rect x="490" y="72" width="115" height="92" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="548" y="104" font-size="13" font-weight="700">USER</text><text x="548" y="132" font-size="10">effective owner</text>
+    <rect x="630" y="72" width="105" height="92" rx="8" fill="#FFF6E8" stroke="#9A6500" stroke-width="2"/><text x="683" y="104" font-size="13" font-weight="700">SERVICE</text><text x="683" y="132" font-size="10">verify owner</text>
+    <path d="M155 118H174M310 118H329M465 118H484M605 118H624" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Port chỉ là điểm bắt đầu. Quyết định vận hành cần đi tiếp tới PID/FD, user và service/process thực sự sở hữu socket.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Khi một port đã mở nhưng ứng dụng trả lỗi, câu hỏi quan trọng không chỉ là “port có LISTEN không?” mà là “process nào đang giữ socket đó?”. Port có thể bị một daemon khác chiếm, service có thể restart sang PID mới, hoặc quyền quan sát không đủ khiến output thiếu process information.</p>
+<p>Workflow an toàn là lấy socket inventory trước, lọc theo port/protocol, lấy PID và file descriptor, rồi cross-check bằng một công cụ khác trước khi restart, kill hoặc đổi cấu hình service.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+  <li>Linux <code>ss -p</code> có thể hiển thị process đang dùng socket; <code>-l</code> lọc listening, <code>-n</code> giữ địa chỉ/port dạng số, <code>-t</code>/<code>-u</code> chọn TCP/UDP.</li>
+  <li><code>lsof</code> nhìn socket như một loại open file và cho phép lọc theo PID, protocol, port hoặc trạng thái LISTEN.</li>
+  <li>FreeBSD <code>sockstat</code> xuất USER, COMMAND, PID, FD và endpoint; <code>-p</code> lọc port, <code>-P</code> lọc protocol, <code>-l</code> lọc listening socket.</li>
+  <li>FreeBSD <code>fstat -s -p &lt;PID&gt;</code> là cross-check theo process: liệt kê open files và thêm socket endpoint information.</li>
+  <li>PID có thể đổi sau restart. Luôn xác minh command/user/service owner ở thời điểm hành động.</li>
+</ul>
+<h3>Cài <code>lsof</code> trên Linux</h3>
+<p>Ubuntu/Xubuntu và Debian — chạy bằng user có quyền <code>sudo</code>.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y lsof</code></pre></div>
+<p>Fedora — chạy bằng user có quyền <code>sudo</code>.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y lsof</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p><code>sockstat</code> và <code>fstat</code> nằm trong base system; không cần cài package để thực hiện walkthrough này.</p>
+</section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="So sánh chuỗi xác minh socket ownership trên Linux và FreeBSD">
+  <rect width="760" height="240" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="45" y="45" width="300" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="195" y="78" font-size="14" font-weight="700">LINUX</text><text x="195" y="112" font-size="11">ss → PID/FD</text><text x="195" y="139" font-size="11">lsof + ps → cross-check</text><text x="195" y="164" font-size="10">systemd chỉ khi process thuộc unit</text>
+    <rect x="415" y="45" width="300" height="150" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="565" y="78" font-size="14" font-weight="700">FREEBSD</text><text x="565" y="112" font-size="11">sockstat → PID/FD</text><text x="565" y="139" font-size="11">fstat + ps → cross-check</text><text x="565" y="164" font-size="10">rc.d chỉ khi daemon được service quản lý</text>
+  </g>
+</svg>
+<figcaption>Hình 2 — Hai hệ dùng tool khác nhau nhưng cùng nguyên tắc: inventory socket trước, xác minh process owner bằng nguồn thứ hai sau.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Kiểm tra công cụ trước khi điều tra.</h3><p>Linux — chạy bằng user thường.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v ss
+command -v lsof</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">command -v sockstat
+command -v fstat</code></pre></div></li>
+<li><h3>Lấy inventory listening TCP/UDP có process owner.</h3><p>Linux — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo ss -lntup</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">sockstat -l -P tcp,udp</code></pre></div></li>
+<li><h3>Lọc một listening TCP port cần điều tra.</h3><p>Thay <code>&lt;port&gt;</code> bằng port số đã thấy ở inventory.</p><p>Linux — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo ss -lntp 'sport = :&lt;port&gt;'
+sudo lsof -nP -iTCP:&lt;port&gt; -sTCP:LISTEN</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">sockstat -l -P tcp -p &lt;port&gt;</code></pre></div></li>
+<li><h3>Cross-check PID bằng open-file view.</h3><p>Thay <code>&lt;PID&gt;</code> bằng PID vừa lấy từ socket inventory.</p><p>Linux — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo lsof -nP -a -p &lt;PID&gt; -i
+ps -o pid,ppid,user,comm,args -p &lt;PID&gt;</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">fstat -s -p &lt;PID&gt;
+ps -o pid,ppid,user,command -p &lt;PID&gt;</code></pre></div></li>
+<li><h3>Xác minh service manager chỉ sau khi đã biết process.</h3><p>Linux systemd — thay <code>&lt;unit&gt;</code> bằng unit đã xác minh.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">systemctl status &lt;unit&gt; --no-pager</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">service &lt;service&gt; status</code></pre></div><p>Không suy ra unit/service name chỉ từ port nếu chưa xác minh process command.</p></li>
+<li><h3>Ghi ownership evidence trước mọi thay đổi.</h3><p>Lưu tối thiểu port/protocol, local address, PID, FD, user, command và timestamp. Nếu PID/FD đổi giữa hai lần kiểm tra, refresh inventory thay vì thao tác trên target cũ.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<p>Chọn một listening TCP port thực sự tồn tại trên máy lab. Xác nhận hai công cụ độc lập chỉ về cùng process owner.</p>
+<p>Linux — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo ss -lntp 'sport = :&lt;port&gt;'
+sudo lsof -nP -iTCP:&lt;port&gt; -sTCP:LISTEN</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">sockstat -l -P tcp -p &lt;port&gt;
+fstat -s -p &lt;PID&gt;</code></pre></div>
+<div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">Linux:
+LISTEN ... :&lt;port&gt; ... users:((&quot;&lt;command&gt;&quot;,pid=&lt;PID&gt;,fd=&lt;FD&gt;))
+&lt;command&gt; &lt;PID&gt; &lt;user&gt; ... TCP *:&lt;port&gt; (LISTEN)
+
+FreeBSD:
+USER COMMAND PID FD PROTO LOCAL ADDRESS FOREIGN ADDRESS
+&lt;user&gt; &lt;command&gt; &lt;PID&gt; &lt;FD&gt; tcp4 *:&lt;port&gt; *:*</code></pre><p>PASS khi port/protocol và PID/command từ hai nguồn khớp nhau; nếu không khớp, refresh inventory vì process có thể vừa restart.</p></div>
+</section>
+<section class="cleanup"><h2>Gỡ / Hoàn tác</h2><p>Walkthrough chỉ cài thêm <code>lsof</code> trên Linux. Nếu máy trước đó chưa có package này và không cần giữ lại, gỡ theo distro.</p>
+<p>Ubuntu/Xubuntu và Debian — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y lsof</code></pre></div>
+<p>Fedora — chạy bằng user có quyền <code>sudo</code>.</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf remove -y lsof</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p><p>Không có package nào được cài trong walkthrough nên không cần hoàn tác.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+  <li><strong><code>ss -p</code> không hiện process:</strong> chạy lại bằng <code>sudo</code>; quyền hiện tại có thể không đủ để thấy process details của socket thuộc user khác.</li>
+  <li><strong><code>lsof</code> không có:</strong> cài package theo distro ở mục 02; không tải binary lạ chỉ để hoàn tất lab.</li>
+  <li><strong>Port không có kết quả:</strong> xác nhận đúng protocol và trạng thái. UDP không có LISTEN semantics giống TCP; dùng inventory <code>ss -lnup</code> hoặc <code>sockstat -l -P udp</code>.</li>
+  <li><strong>PID biến mất giữa hai lệnh:</strong> process vừa exit/restart. Quay lại inventory và lấy PID/FD mới.</li>
+  <li><strong>Process không thuộc service manager:</strong> daemon có thể chạy thủ công, trong container/jail hoặc bởi supervisor khác. Không ép ánh xạ sang systemd/rc.d.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean">
+  <li>Socket inventory có thể lộ process name, user và endpoint nhạy cảm. Chỉ thu thập phần cần cho incident/lab.</li>
+  <li>Không dùng PID từ ảnh chụp cũ để gửi signal hoặc restart. Refresh ownership ngay trước hành động có side effect.</li>
+  <li>Port number không chứng minh application identity. Cross-check PID, command, user và service manager trước khi kết luận.</li>
+  <li>Ưu tiên numeric output khi điều tra để tránh DNS/service-name resolution làm chậm hoặc gây hiểu nhầm.</li>
+  <li>Trong container, network namespace hoặc FreeBSD jail, ghi rõ scope đang quan sát.</li>
+</ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn hai listening port trong máy lab. Với mỗi port, ghi chuỗi <code>port → protocol → PID → FD → user → command → service/process owner</code>, dùng hai công cụ để cross-check và ghi lại trường hợp PID thay đổi sau restart có kiểm soát do operator thực hiện ngoài bài.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Đối chiếu tài liệu official/upstream ngày 2026-08-16.</p><ul class="clean">
+  <li><a href="https://manpages.debian.org/trixie/iproute2/ss.8.en.html">Debian Manpages — ss(8)</a></li>
+  <li><a href="https://github.com/lsof-org/lsof/blob/master/Lsof.8">lsof — upstream Lsof.8</a></li>
+  <li><a href="https://man.freebsd.org/cgi/man.cgi?query=sockstat&amp;sektion=1">FreeBSD Manual Pages — sockstat(1)</a></li>
+  <li><a href="https://man.freebsd.org/cgi/man.cgi?query=fstat&amp;sektion=1">FreeBSD Manual Pages — fstat(1)</a></li>
+</ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head"><span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span></div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-040-pidstat-procstat-process-timeseries.html"><span class="series-kicker">#040</span><span>pidstat và procstat: theo dõi process theo thời gian</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more"><strong>Cùng chủ đề</strong><ul>
+    <li><a href="post-033-process-tree-service-ownership.html">#033 · Process tree và service ownership: PID này thuộc service nào?</a></li>
+    <li><a href="post-026-vmstat-systat-resource-pressure.html">#026 · vmstat và systat: đọc pressure trước khi đoán bottleneck</a></li>
+    <li><a href="post-019-triage-hieu-nang-vmstat-iostat.html">#019 · Triage hiệu năng trong 5 phút: CPU, RAM và disk I/O bằng vmstat + iostat trên Ubuntu/Debian/Fedora/FreeBSD</a></li>
+  </ul></div>
+</nav>
+<!-- related-nav:end -->
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #047 · Monitoring</span><span class="hashtags">#Linux #FreeBSD #Monitoring #Sockets</span></div></footer>
+</div></main>
+</body>
+</html>
