@@ -1,6 +1,19 @@
 {
-  "count": 45,
+  "count": 46,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-15",
+      "href": "posts/post-046-fzf-interactive-file-process-history.html",
+      "issue": 46,
+      "lede": "Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.",
+      "tags": [
+        "fzf"
+      ],
+      "title": "fzf cho chọn file, process và history tương tác"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",
