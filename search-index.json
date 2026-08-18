@@ -1,6 +1,19 @@
 {
-  "count": 46,
+  "count": 47,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-16",
+      "href": "posts/post-047-socket-ownership-ss-lsof-sockstat-fstat.html",
+      "issue": 47,
+      "lede": "Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.",
+      "tags": [
+        "Socket ownership"
+      ],
+      "title": "Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",
