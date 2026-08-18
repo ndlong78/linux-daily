@@ -52,6 +52,12 @@ AXIS_CYCLE = [
     "Ôn tập",
 ]
 
+# Lịch xuất bản là 07:00 Asia/Ho_Chi_Minh (= 00:00 UTC), tức ngay ranh giới ngày.
+# Dùng offset cố định UTC+7 như tools/build_feed.py: Việt Nam không có DST, và cách này
+# không phụ thuộc tzdata của máy chạy. dt.date.today() (giờ local runner) sẽ báo nhầm
+# "ngày nằm ở tương lai" cho bài xuất bản trước 07:00 giờ VN trên runner chạy UTC.
+VN_TZ = dt.timezone(dt.timedelta(hours=7))
+
 TWEET_LIMIT = 280
 TWEET_URL_LEN = 23
 LINK_PLACEHOLDER = "{{LINK}}"
@@ -59,6 +65,11 @@ TWEET_MIN = 5
 TWEET_MAX = 7
 TWEET_MARKER_RE = re.compile(r"\[Tweet (\d+)\]")
 TOPIC_LINE_RE = re.compile(r"^#(\d+)\s*\|\s*([^|]+?)\s*\|\s*([^|]+?)\s*\|\s*(.+?)\s*$")
+
+
+def today_vn() -> dt.date:
+    """Ngày hiện tại theo giờ Việt Nam (UTC+7)."""
+    return dt.datetime.now(VN_TZ).date()
 
 
 def tweet_length(text: str) -> int:
@@ -124,7 +135,7 @@ def validate_topics(entries: list[dict], report: Report) -> None:
 
     prev_date: dt.date | None = None
     seen_titles: dict[str, int] = {}
-    today = dt.date.today()
+    today = today_vn()
 
     for idx, e in enumerate(entries):
         expected_n = idx + 1
@@ -303,7 +314,16 @@ def validate_posts(entries: list[dict], report: Report) -> None:
     for p in files:
         mm = re.match(r"post-(\d+)-", os.path.basename(p))
         if mm:
-            by_num[int(mm.group(1))] = p
+            n = int(mm.group(1))
+            if n in by_num:
+                # Không ghi đè: dict sẽ nuốt mất bản trùng và cả set-diff bên dưới lẫn
+                # index.html (dựng từ mọi file) đều không phát hiện được.
+                report.fail(
+                    f"posts/: bài #{n:03d} có nhiều file trùng số "
+                    f"('{os.path.basename(by_num[n])}' và '{os.path.basename(p)}')."
+                )
+                continue
+            by_num[n] = p
 
     topic_nums = {e["n"] for e in entries}
     file_nums = set(by_num)

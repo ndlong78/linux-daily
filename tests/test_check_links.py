@@ -63,3 +63,59 @@ def test_legacy_broken_urls_have_been_removed_from_repository():
 
 def test_repository_internal_links_are_valid():
     assert check_links.check_internal() == []
+
+
+# --- Regression: phạm vi quét và link thoát khỏi repo ---
+
+
+def test_archive_page_is_inside_internal_link_scope():
+    """archive.html nằm trong sitemap và chứa ~50 internal link.
+
+    Trước đây _html_files() bỏ sót trang này nên link hỏng trong archive.html
+    vẫn cho gate xanh.
+    """
+    scanned = {Path(p).name for p in check_links._html_files()}
+    assert "archive.html" in scanned
+    assert {"index.html", "learning-dashboard.html", "learning-paths.html"} <= scanned
+
+
+def test_escapes_root_flags_paths_outside_repo():
+    assert check_links.escapes_root("../../etc/hostname") is True
+    assert check_links.escapes_root("..") is True
+    assert check_links.escapes_root("/etc/hostname") is True
+    assert check_links.escapes_root("posts/post-001-static-ip.html") is False
+    assert check_links.escapes_root("index.html") is False
+    assert check_links.escapes_root("assets/style.css") is False
+
+
+def test_local_target_still_resolves_escaping_link_for_reporting():
+    resolved = check_links._local_target(
+        "posts/post-001-static-ip.html", "../../../../etc/hostname", "linux.no.id.vn"
+    )
+    assert resolved is not None
+    target, _ = resolved
+    assert check_links.escapes_root(target)
+
+
+def test_internal_check_reports_link_escaping_repo(monkeypatch):
+    """Link trỏ ra ngoài cây website phải là lỗi cứng.
+
+    Nếu không chặn, os.path.isfile() có thể trúng một file tình cờ tồn tại trên máy
+    build và làm gate xanh giả, trong khi production trả 404.
+    """
+    ref = check_links.LinkRef("posts/post-001-static-ip.html", "../../../../etc/hostname")
+    monkeypatch.setattr(check_links, "collect_links", lambda: ([ref], set()))
+    monkeypatch.setattr(check_links, "_site_host", lambda: "linux.no.id.vn")
+
+    errors = check_links.check_internal()
+
+    assert len(errors) == 1
+    assert "thoát khỏi thư mục repo" in errors[0]
+
+
+def test_internal_check_accepts_normal_relative_link(monkeypatch):
+    ref = check_links.LinkRef("posts/post-001-static-ip.html", "../assets/style.css")
+    monkeypatch.setattr(check_links, "collect_links", lambda: ([ref], set()))
+    monkeypatch.setattr(check_links, "_site_host", lambda: "linux.no.id.vn")
+
+    assert check_links.check_internal() == []

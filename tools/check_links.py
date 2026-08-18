@@ -23,6 +23,7 @@ from urllib.request import Request, urlopen
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
+ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
 LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
@@ -79,6 +80,7 @@ def _load_site() -> dict:
 def _html_files() -> list[str]:
     return [
         os.path.join(ROOT, "index.html"),
+        ARCHIVE_PATH,
         LEARNING_DASHBOARD_PATH,
         LEARNING_PATHS_PATH,
         *sorted(glob.glob(POSTS_GLOB)),
@@ -112,6 +114,16 @@ def _site_host() -> str:
     return urlsplit(_load_site()["url"]).netloc.lower()
 
 
+def escapes_root(target: str) -> bool:
+    """True nếu target sau khi resolve nằm ngoài thư mục repo.
+
+    Link như `../../etc/hostname` vẫn là link nội bộ (cùng site) nhưng trỏ ra ngoài
+    cây website; nó phải là lỗi cứng chứ không được đem đi kiểm tra os.path.isfile,
+    vì file có thể tình cờ tồn tại trên máy build và làm gate xanh giả.
+    """
+    return os.path.isabs(target) or target == ".." or target.startswith(".." + os.sep)
+
+
 def _local_target(source: str, url: str, site_host: str) -> tuple[str, str] | None:
     if not url or _is_ignored_scheme(url):
         return None
@@ -132,8 +144,6 @@ def _local_target(source: str, url: str, site_host: str) -> tuple[str, str] | No
     target = os.path.normpath(raw_path)
     if target == ".":
         target = "index.html"
-    if target.startswith(".." + os.sep) or os.path.isabs(target):
-        return target, unquote(parts.fragment)
     return target, unquote(parts.fragment)
 
 
@@ -146,6 +156,9 @@ def check_internal() -> list[str]:
         if resolved is None:
             continue
         target, fragment = resolved
+        if escapes_root(target):
+            errors.append(f"{ref.source}: link nội bộ thoát khỏi thư mục repo: {ref.url} -> {target}")
+            continue
         full = os.path.join(ROOT, target)
         if os.path.isdir(full):
             target = os.path.join(target, "index.html")
