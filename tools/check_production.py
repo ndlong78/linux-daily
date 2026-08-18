@@ -15,6 +15,7 @@ from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse
 
 import site_fingerprint
+import socialmeta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
@@ -129,7 +130,11 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
     latest_name = os.path.basename(latest_local)
     latest_url = urljoin(base, f"posts/{latest_name}")
     latest_issue = int(latest_name.split("-")[1])
-    image_url = urljoin(base, f"posts/social/post-{latest_issue:03d}-code.png")
+    # Social output đang tạm dừng nên bài mới không có preview riêng; socialmeta trả về
+    # asset lịch sử mới nhất làm fallback. Dùng đúng helper mà site_fingerprint và
+    # build_index dùng, thay vì tự suy ra post-<issue>-code.png — bài #047 sẽ 404.
+    social_relpath = socialmeta.image_relpath(latest_issue)
+    image_url = urljoin(base, social_relpath)
 
     expected_fingerprint, expected = _expected_by_public_path()
     endpoints = {
@@ -138,7 +143,7 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
         "sitemap": (urljoin(base, site["sitemap_path"]), f"/{site['sitemap_path'].lstrip('/')}", {"application/xml", "text/xml"}),
         "robots": (urljoin(base, "robots.txt"), "/robots.txt", {"text/plain"}),
         "latest post": (latest_url, f"/posts/{latest_name}", {"text/html"}),
-        "latest social image": (image_url, f"/posts/social/post-{latest_issue:03d}-code.png", {"image/png"}),
+        "latest social image": (image_url, f"/{social_relpath}", {"image/png"}),
     }
 
     responses: dict[str, tuple[dict[str, str], bytes, str]] = {}
