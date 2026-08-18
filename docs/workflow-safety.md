@@ -2,7 +2,7 @@
 
 P5.3 bổ sung guardrail cho GitHub Actions để tăng automation mà không tăng quyền ngoài ý muốn. CI vẫn theo nguyên tắc **read-only, generation trước push**: GitHub Actions kiểm tra repository, không tự sửa rồi commit ngược feature branch.
 
-Từ cơ chế Linux Daily auto-merge, có đúng một ngoại lệ ghi bổ sung: `.github/workflows/linux-daily-auto-merge.yml` được phép gọi API merge sau khi **CI của exact head SHA đã success**. Workflow này không checkout code của PR, không stage/commit/push repository và không bypass branch protection.
+Từ cơ chế Linux Daily auto-merge, có một ngoại lệ ghi bổ sung: `.github/workflows/linux-daily-auto-merge.yml` được phép gọi API merge sau khi **CI của exact head SHA đã success**. Workflow này không checkout code của PR, không stage/commit/push repository và không bypass branch protection.
 
 ## Policy
 
@@ -28,7 +28,11 @@ Validator workflow hiện kiểm:
 - PR phải không Draft, target `main`, không có `CHANGES_REQUESTED` hoặc review thread chưa resolve;
 - auto-merge bắt buộc dùng REST merge endpoint với `merge_method=squash` và exact `sha` precondition;
 - auto-merge không được checkout PR code khi đang giữ write token;
-- mọi workflow ngoài release không được `git add`, `git commit` hoặc `git push`;
+- mọi workflow ngoài `release.yml` và `materialize-artifacts.yml` không được `git add`, `git commit` hoặc `git push`;
+- `materialize-artifacts.yml` được phép `contents: write` để dựng artifact hộ agent API-only, và phải giữ đủ:
+  chỉ `workflow_dispatch`, cổng xác nhận `confirm == materialize-artifacts`, branch input khớp
+  `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`, hai lượt `tools/materialize_guard.py`, một lượt `tools/publish.py check`,
+  stage từng path thay vì cả thư mục, và không bao giờ checkout hay push `main`;
 - `ci.yml` phải checkout full history và chạy PR commit/path hygiene;
 - workflow release chỉ được chạy qua `workflow_dispatch`;
 - release phải giữ explicit confirmation, checkout `main` và exact-main-SHA gate;

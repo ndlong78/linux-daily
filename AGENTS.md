@@ -165,31 +165,40 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 - ưu tiên Git Data API `create_blob` → `create_tree` → `create_commit` → `update_ref` để ghi một tree nhất quán; nếu không khả dụng có thể dùng Contents API tuần tự trên feature branch;
 - không force-update ref;
 - mở/resume PR để `CI` read-only chạy validators/generator checks từ xa;
-- CI **phát hiện** artifact stale nhưng không sửa được: mọi workflow trừ `release.yml` bị `tools/workflow_safety.py` cấm `git add/commit/push`, nên không có đường nào để CI materialize artifact hộ;
+- CI read-only **phát hiện** artifact stale nhưng không tự sửa; để materialize thì dispatch workflow `Materialize Artifacts` — xem bên dưới;
 - nếu CI báo regression do source (STYLE, source-backed, cadence, state), sửa đúng source trên cùng branch rồi để CI chạy lại;
-- nếu CI báo **deterministic artifact stale**, đây là capability blocker chứ không phải lỗi sửa được qua API — xem giới hạn bên dưới;
 - không vô hiệu hóa/nới test, validator, workflow safety hoặc STYLE gate để ép xanh.
 
-#### Giới hạn năng lực của API-only
+#### Materialize artifact khi không có Python runtime
 
 Quality gate so khớp artifact **byte-exact** (`tools/build.py` so `current != expected`), nên nội dung artifact không thể suy đoán mà phải do generator sinh ra. Một bài mới luôn kéo theo cả cụm artifact render lại — `index.html`, `archive.html`, `feed.xml`, `sitemap.xml`, `search-index.json`, `learning-paths.html`, `learning-dashboard.html`, các report trong `docs/`, và related-navigation của những bài lân cận.
 
-Agent API-only ghi được các file source of truth và metadata JSON nhỏ (`topics.md`, `state.json`, `curriculum-plan.json`, `learning-metadata.json`, `learning-paths.json`), nhưng **không chạy được `tools/publish.py prepare`**. Hệ quả: PR bài hằng ngày mở bằng đường API-only không thể tự đi tới CI xanh.
+Agent API-only ghi được source core và metadata JSON nhưng **không chạy được `tools/publish.py prepare`**. Đường gỡ là dispatch workflow `Materialize Artifacts` bằng chính GitHub API mà agent đang dùng:
+
+```text
+POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatches
+{"ref": "main",
+ "inputs": {"branch": "chatgpt/linux-daily-<NNN>-<YYYYMMDD>",
+            "confirm": "materialize-artifacts"}}
+```
+
+Workflow checkout đúng branch đó, chạy `publish.py prepare`, verify `publish.py check`, rồi commit artifact và push. Head SHA đổi nên `CI` chạy lại, và `Linux Daily Auto Merge` vẫn kiểm exact-SHA như cũ — chuỗi bảo đảm không đổi.
+
+Ràng buộc của đường này, do `tools/materialize_guard.py` và `tools/workflow_safety.py` cưỡng chế:
+
+- `ref` của dispatch luôn là `main` (lấy định nghĩa workflow từ default branch); branch cần dựng nằm ở input `branch`;
+- input `branch` phải khớp `^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$`; `main`/`master` bị từ chối;
+- workflow abort nếu generator chạm vào source of truth (`topics.md`, `state.json`, `site.json`, `AGENTS.md`, …) hoặc `tools/`, `tests/`, `.github/`, `templates/`, `assets/`, `labs/`;
+- workflow chỉ chạy qua `workflow_dispatch`, không bao giờ tự chạy theo `pull_request`/`push`.
 
 Vì vậy khi không có local writable checkout:
 
-- vẫn ghi source core và mở PR để giữ tiến độ và để CI xác nhận phần source hợp lệ;
-- **giữ PR ở Draft**; không chuyển Ready khi artifact render còn stale, vì PR đó không thể xanh và Ready chỉ tạo tín hiệu sai;
-- ghi rõ trong mô tả PR rằng cần một lượt `python3 tools/publish.py prepare` từ môi trường có Python;
-- không lặp lại commit đoán nội dung artifact để dò cho CI xanh.
+- ghi source core và mở PR;
+- dispatch `Materialize Artifacts` cho branch đó;
+- **giữ PR ở Draft** cho tới khi artifact đã materialize; chỉ chuyển Ready khi CI xanh trên head SHA mới;
+- không đoán nội dung artifact rồi commit để dò cho CI xanh — nếu dispatch fail thì đọc log và báo blocker.
 
-Bước gỡ (chạy từ máy có checkout, trên chính branch của PR):
-
-```bash
-python3 tools/publish.py prepare
-python3 tools/publish.py check
-git commit -am "Dựng lại artifact site cho bài #<NNN>"
-```
+Đường local vẫn nguyên: chạy `python3 tools/publish.py prepare` rồi commit như bình thường, không cần dispatch.
 
 `state.json` phải khớp bài mới nhất trong `topics.md`; `last_generated_at` phản ánh thời điểm sinh thực tế.
 
@@ -217,14 +226,15 @@ git commit -am "Dựng lại artifact site cho bài #<NNN>"
 5. mở Draft PR sau khi source core đã có trên branch;
 6. kiểm state/diff/duplicate/review; chỉ chuyển PR sang Ready khi artifact render đã đồng bộ — nếu còn stale thì giữ Draft và nêu rõ cần một lượt `publish.py prepare`;
 7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
-8. nếu CI đỏ vì source, self-fix trên cùng branch; nếu đỏ vì artifact stale, dừng và báo capability blocker thay vì commit đoán;
+8. nếu CI đỏ vì source, self-fix trên cùng branch; nếu đỏ vì artifact stale, dispatch `Materialize Artifacts` cho branch đó thay vì commit đoán;
 9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.
 
 Nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.
 
 Không tạo/track:
 
-- finalizer workflow tự sửa/commit/push branch;
+- finalizer workflow **tự động** sửa/commit/push branch theo `pull_request`/`push`/`schedule`
+  (`Materialize Artifacts` không thuộc nhóm này: chỉ chạy khi được dispatch tường minh kèm chuỗi xác nhận);
 - helper gắn trực tiếp số PR kiểu `tools/pr93_*.py`/`.sh`;
 - file `*.tmp`, `*.bak`, `*.orig`, `*.rej`;
 - diagnostic artifact/no-op commit chỉ để kích hoạt workflow.
