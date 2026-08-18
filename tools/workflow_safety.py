@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -18,12 +19,83 @@ WRITE_PERMISSION_RE = re.compile(
     re.MULTILINE,
 )
 SELF_MUTATION_RE = re.compile(r"\bgit\s+(?:add|commit|push)\b", re.IGNORECASE)
+TOOLS_DIR = ROOT / "tools"
+RUN_TOOL_RE = re.compile(r"python[0-9.]*\s+tools/([a-z0-9_]+)\.py")
+PIP_INSTALL_RE = re.compile(r"\bpip\s+install\b")
+TOOL_REFERENCE_RE = re.compile(r"[\"']tools/([a-z0-9_]+)\.py[\"']")
+# Import name của dependency khai báo trong pyproject (Pillow, Jinja2).
+# tests/test_workflow_safety.py canh pyproject để bộ này không trôi.
+THIRD_PARTY_MODULES = frozenset({"PIL", "jinja2"})
 
 
 @dataclass
 class Report:
     checked: int = 0
     errors: list[str] = field(default_factory=list)
+
+
+def _tool_imports(name: str) -> set[str]:
+    """Top-level module mà tools/<name>.py import trực tiếp."""
+    path = TOOLS_DIR / f"{name}.py"
+    if not path.exists():
+        return set()
+    try:
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+    except SyntaxError:  # pragma: no cover - defensive
+        return set()
+    modules: set[str] = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            modules |= {alias.name.split(".")[0] for alias in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module and node.level == 0:
+            modules.add(node.module.split(".")[0])
+    return modules
+
+
+def _tool_edges(name: str) -> set[str]:
+    """Tool khác mà tools/<name>.py phụ thuộc: qua import, hoặc qua subprocess.
+
+    publish.py và pr_preflight.py không import gì của bên thứ ba — chúng spawn
+    tool khác bằng subprocess. Chỉ nhìn import sẽ kết luận sai là chúng không cần
+    dependency, nên bắt cả tham chiếu dạng chuỗi "tools/<x>.py".
+    """
+    path = TOOLS_DIR / f"{name}.py"
+    edges = {m for m in _tool_imports(name) if (TOOLS_DIR / f"{m}.py").exists()}
+    if path.exists():
+        edges |= set(TOOL_REFERENCE_RE.findall(path.read_text(encoding="utf-8")))
+    return {edge for edge in edges if (TOOLS_DIR / f"{edge}.py").exists()}
+
+
+def needs_third_party(name: str, _seen: frozenset[str] = frozenset()) -> bool:
+    """True nếu tools/<name>.py chạm tới dependency bên thứ ba, kể cả gián tiếp.
+
+    Lỗi thật đã gặp là gián tiếp: check_production -> site_fingerprint -> socialmeta
+    -> PIL. Nhìn import trực tiếp của check_production thì không thấy gì, nên phải
+    đi hết đồ thị phụ thuộc nội bộ trong tools/.
+    """
+    if name in _seen:
+        return False
+    seen = _seen | {name}
+    if _tool_imports(name) & THIRD_PARTY_MODULES:
+        return True
+    return any(needs_third_party(edge, seen) for edge in _tool_edges(name))
+
+
+def _validate_dependency_install(rel: str, text: str) -> list[str]:
+    """Workflow chạy tool cần dependency thì phải cài dependency.
+
+    Thiếu bước này job chết ngay lúc import, và một job đỏ vì ImportError trông
+    hệt như một job đỏ vì phát hiện sự cố thật.
+    """
+    if PIP_INSTALL_RE.search(text):
+        return []
+    offenders = sorted({
+        name for name in RUN_TOOL_RE.findall(text) if needs_third_party(name)
+    })
+    return [
+        f"{rel}: chạy tools/{name}.py (cần dependency bên thứ ba) nhưng không có bước pip install"
+        for name in offenders
+    ]
 
 
 def _event_block(text: str) -> str:
@@ -193,6 +265,8 @@ def validate_file(path: Path) -> list[str]:
 
     if is_materialize:
         errors.extend(_validate_materialize(rel, text, events, permissions))
+
+    errors.extend(_validate_dependency_install(rel, text))
 
     if path.name == CI_WORKFLOW:
         if "fetch-depth: 0" not in text:

@@ -47,3 +47,82 @@ def test_pull_request_target_is_rejected(tmp_path: Path):
     )
     errors = workflow_safety.validate_file(path)
     assert any("pull_request_target is forbidden" in error for error in errors)
+
+
+# --- Regression: workflow chạy tool cần dependency phải cài dependency ---
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def _workflow(text: str, tmp_path: Path, name: str = "sample.yml") -> list[str]:
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    return workflow_safety.validate_file(path)
+
+
+def test_transitive_third_party_dependency_is_detected():
+    """check_production -> site_fingerprint -> socialmeta -> PIL.
+
+    Đây là lỗi thật đã làm production-smoke đỏ nhiều ngày: nhìn import trực tiếp
+    của check_production thì không thấy dependency nào.
+    """
+    assert workflow_safety.needs_third_party("check_production") is True
+    assert workflow_safety.needs_third_party("operations_dashboard") is True
+
+
+def test_subprocess_orchestrator_counts_as_needing_dependencies():
+    """publish.py không import gì bên thứ ba — nó spawn tool khác bằng subprocess."""
+    assert workflow_safety._tool_imports("publish") & workflow_safety.THIRD_PARTY_MODULES == set()
+    assert workflow_safety.needs_third_party("publish") is True
+    assert workflow_safety.needs_third_party("pr_preflight") is True
+
+
+def test_stdlib_only_tool_does_not_require_install():
+    assert workflow_safety.needs_third_party("release") is False
+    assert workflow_safety.needs_third_party("cadence") is False
+
+
+def test_missing_dependency_install_is_rejected(tmp_path: Path):
+    errors = _workflow(
+        "name: x\non:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n"
+        "  x:\n    runs-on: ubuntu-latest\n    steps:\n"
+        "      - run: python tools/check_production.py\n",
+        tmp_path,
+    )
+    assert any("không có bước pip install" in error for error in errors), errors
+
+
+def test_dependency_install_satisfies_the_check(tmp_path: Path):
+    errors = _workflow(
+        "name: x\non:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n"
+        "  x:\n    runs-on: ubuntu-latest\n    steps:\n"
+        '      - run: pip install -e "."\n'
+        "      - run: python tools/check_production.py\n",
+        tmp_path,
+    )
+    assert not any("pip install" in error for error in errors), errors
+
+
+def test_stdlib_only_workflow_needs_no_install(tmp_path: Path):
+    errors = _workflow(
+        "name: x\non:\n  workflow_dispatch:\npermissions:\n  contents: read\njobs:\n"
+        "  x:\n    runs-on: ubuntu-latest\n    steps:\n"
+        "      - run: python tools/cadence.py status\n",
+        tmp_path,
+    )
+    assert not any("pip install" in error for error in errors), errors
+
+
+def test_third_party_module_set_matches_pyproject():
+    """Thêm dependency vào pyproject mà quên cập nhật bộ này thì check sẽ mù."""
+    pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    block = pyproject.split("dependencies = [", 1)[1].split("]", 1)[0]
+    declared = {
+        line.strip().strip('",').split("==")[0].strip('"')
+        for line in block.splitlines()
+        if line.strip().startswith('"')
+    }
+    assert declared == {"Pillow", "Jinja2"}, (
+        f"dependency đã đổi ({declared}); cập nhật THIRD_PARTY_MODULES trong workflow_safety.py"
+    )
+    assert workflow_safety.THIRD_PARTY_MODULES == {"PIL", "jinja2"}

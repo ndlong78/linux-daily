@@ -27,5 +27,12 @@ jobs:
         with:
           python-version: "3.11"
 
+      # check_production -> site_fingerprint -> socialmeta -> PIL. Thiếu bước này thì
+      # job chết ngay lúc import và không hề chạm tới production.
+      - name: Cài dependency
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+
       - name: Verify production freshness, fingerprint and headers
         run: python tools/check_production.py --attempts 18 --delay 10 --timeout 12

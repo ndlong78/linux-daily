@@ -33,6 +33,9 @@ Validator workflow hiện kiểm:
   chỉ `workflow_dispatch`, cổng xác nhận `confirm == materialize-artifacts`, branch input khớp
   `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`, hai lượt `tools/materialize_guard.py`, một lượt `tools/publish.py check`,
   stage từng path thay vì cả thư mục, và không bao giờ checkout hay push `main`;
+- workflow chạy `python tools/<x>.py` mà tool đó cần dependency bên thứ ba phải có bước `pip install`;
+  quan hệ phụ thuộc được tính theo cả import gián tiếp lẫn tool được spawn bằng subprocess
+  (`check_production` → `site_fingerprint` → `socialmeta` → `PIL`; `publish.py` gọi generator qua subprocess);
 - `ci.yml` phải checkout full history và chạy PR commit/path hygiene;
 - workflow release chỉ được chạy qua `workflow_dispatch`;
 - release phải giữ explicit confirmation, checkout `main` và exact-main-SHA gate;
