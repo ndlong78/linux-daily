@@ -165,9 +165,31 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 - ưu tiên Git Data API `create_blob` → `create_tree` → `create_commit` → `update_ref` để ghi một tree nhất quán; nếu không khả dụng có thể dùng Contents API tuần tự trên feature branch;
 - không force-update ref;
 - mở/resume PR để `CI` read-only chạy validators/generator checks từ xa;
-- CI là authoritative validation thay cho local `pr_preflight.py` khi local execution không khả dụng;
-- nếu CI báo deterministic artifact stale hoặc regression do branch, sửa đúng source/artifact trên cùng branch rồi để CI chạy lại;
+- CI **phát hiện** artifact stale nhưng không sửa được: mọi workflow trừ `release.yml` bị `tools/workflow_safety.py` cấm `git add/commit/push`, nên không có đường nào để CI materialize artifact hộ;
+- nếu CI báo regression do source (STYLE, source-backed, cadence, state), sửa đúng source trên cùng branch rồi để CI chạy lại;
+- nếu CI báo **deterministic artifact stale**, đây là capability blocker chứ không phải lỗi sửa được qua API — xem giới hạn bên dưới;
 - không vô hiệu hóa/nới test, validator, workflow safety hoặc STYLE gate để ép xanh.
+
+#### Giới hạn năng lực của API-only
+
+Quality gate so khớp artifact **byte-exact** (`tools/build.py` so `current != expected`), nên nội dung artifact không thể suy đoán mà phải do generator sinh ra. Một bài mới luôn kéo theo cả cụm artifact render lại — `index.html`, `archive.html`, `feed.xml`, `sitemap.xml`, `search-index.json`, `learning-paths.html`, `learning-dashboard.html`, các report trong `docs/`, và related-navigation của những bài lân cận.
+
+Agent API-only ghi được các file source of truth và metadata JSON nhỏ (`topics.md`, `state.json`, `curriculum-plan.json`, `learning-metadata.json`, `learning-paths.json`), nhưng **không chạy được `tools/publish.py prepare`**. Hệ quả: PR bài hằng ngày mở bằng đường API-only không thể tự đi tới CI xanh.
+
+Vì vậy khi không có local writable checkout:
+
+- vẫn ghi source core và mở PR để giữ tiến độ và để CI xác nhận phần source hợp lệ;
+- **giữ PR ở Draft**; không chuyển Ready khi artifact render còn stale, vì PR đó không thể xanh và Ready chỉ tạo tín hiệu sai;
+- ghi rõ trong mô tả PR rằng cần một lượt `python3 tools/publish.py prepare` từ môi trường có Python;
+- không lặp lại commit đoán nội dung artifact để dò cho CI xanh.
+
+Bước gỡ (chạy từ máy có checkout, trên chính branch của PR):
+
+```bash
+python3 tools/publish.py prepare
+python3 tools/publish.py check
+git commit -am "Dựng lại artifact site cho bài #<NNN>"
+```
 
 `state.json` phải khớp bài mới nhất trong `topics.md`; `last_generated_at` phản ánh thời điểm sinh thực tế.
 
@@ -191,11 +213,11 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 1. kiểm cadence + duplicate + capability trước khi tạo branch;
 2. chuẩn bị article/source-of-truth metadata trong agent trước;
 3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
-4. ghi source core và các deterministic artifacts có thể xác định chắc chắn bằng GitHub API;
+4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API; không đoán nội dung artifact render;
 5. mở Draft PR sau khi source core đã có trên branch;
-6. kiểm state/diff/duplicate/review; khi sạch, chuyển PR sang Ready **trước khi CI success**;
-7. dùng CI read-only làm remote preflight authoritative;
-8. nếu CI đỏ, đọc log và self-fix branch-caused failures trên cùng branch;
+6. kiểm state/diff/duplicate/review; chỉ chuyển PR sang Ready khi artifact render đã đồng bộ — nếu còn stale thì giữ Draft và nêu rõ cần một lượt `publish.py prepare`;
+7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
+8. nếu CI đỏ vì source, self-fix trên cùng branch; nếu đỏ vì artifact stale, dừng và báo capability blocker thay vì commit đoán;
 9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.
 
 Nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.

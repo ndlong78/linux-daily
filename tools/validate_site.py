@@ -22,6 +22,9 @@ SITEMAP_PATH = os.path.join(ROOT, "sitemap.xml")
 ROBOTS_PATH = os.path.join(ROOT, "robots.txt")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 STALE_PUBLIC_HOSTS = {"ndlong78.github.io"}
+# Bốn lỗi bên dưới đều có cùng một nguyên nhân: artifact dẫn xuất chưa được dựng lại sau
+# khi thêm/bớt bài. Kèm luôn lệnh khắc phục để log CI tự giải thích được.
+REBUILD_HINT = " (artifact chưa dựng lại — chạy `python3 tools/publish.py prepare` rồi commit)"
 
 
 @dataclass
@@ -297,9 +300,9 @@ def run() -> Report:
         missing = sorted(expected_pages - sitemap_urls)
         extra = sorted(sitemap_urls - expected_pages)
         if missing:
-            report.errors.append(f"sitemap thiếu canonical: {', '.join(missing)}")
+            report.errors.append(f"sitemap thiếu canonical: {', '.join(missing)}{REBUILD_HINT}")
         if extra:
-            report.errors.append(f"sitemap có URL không phải page canonical: {', '.join(extra)}")
+            report.errors.append(f"sitemap có URL không phải page canonical: {', '.join(extra)}{REBUILD_HINT}")
 
     feed_urls = _feed_urls(report)
     post_urls = {url for url, path in canonicals.items() if path.startswith("posts/")}
@@ -311,9 +314,9 @@ def run() -> Report:
     for path in posts:
         href = "posts/" + os.path.basename(path)
         if href not in index_text:
-            report.errors.append(f"orphan post: {href} không được homepage liên kết")
+            report.errors.append(f"orphan post: {href} không được homepage liên kết{REBUILD_HINT}")
     if "archive.html" not in index_text:
-        report.errors.append("archive.html không được homepage liên kết")
+        report.errors.append(f"archive.html không được homepage liên kết{REBUILD_HINT}")
 
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()
