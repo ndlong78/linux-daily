@@ -192,7 +192,9 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         errors.append(f"{rel}: materialize may not request extra write permissions")
 
     required_markers = (
-        "inputs.confirm == 'materialize-artifacts'",
+        # Cổng xác nhận phải là một bước fail được, không phải `if:` mức job:
+        # job bị skip vẫn cho workflow run báo thành công.
+        'test "${CONFIRM}" = "materialize-artifacts"',
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
         "tools/materialize_guard.py --branch",
         "--changed-from-git",
@@ -204,6 +206,11 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         if marker not in text:
             errors.append(f"{rel}: materialize safety marker missing: {marker}")
 
+    if re.search(r"^\s{4}if:.*inputs\.confirm", text, re.MULTILINE):
+        errors.append(
+            f"{rel}: confirm gate must be a failing step, not a job-level `if:` "
+            "(a skipped job still reports the run as successful)"
+        )
     if re.search(r"\bgit\s+add\s+(?:-A\b|--all\b|\.(?:\s|$))", text):
         errors.append(f"{rel}: materialize must stage explicit paths, not whole directories")
     if "ref: main" in text or re.search(r'HEAD:\s*["\']?main', text):
