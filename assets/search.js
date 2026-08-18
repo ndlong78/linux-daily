@@ -6,6 +6,10 @@
   if (!input || !status || !results || !groups) return;
 
   let posts = [];
+  // Chỉ mục tìm kiếm dựng sẵn: [{post, hay}]. Chuẩn hóa (lowercase + NFD + bỏ dấu) là
+  // thao tác đắt, nên chỉ chạy một lần cho mỗi bài lúc tải chỉ mục — không lặp lại theo
+  // từng term × từng bài × từng lần gõ phím (số bài tăng 1/ngày).
+  let index = [];
   const normalize = (value) => value.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const haystack = (post) => normalize([post.title, post.lede, post.axis_label, ...(post.tags || [])].join(' '));
 
@@ -53,12 +57,21 @@
     })
     .then((payload) => {
       posts = Array.isArray(payload.posts) ? payload.posts : [];
+      index = posts.map((post) => ({post, hay: haystack(post)}));
       status.textContent = `Nhập từ khóa để lọc ${posts.length} bài.`;
-      input.addEventListener('input', () => {
+      const search = () => {
         const raw = input.value.trim();
         const terms = normalize(raw).split(/\s+/).filter(Boolean);
-        const matches = terms.length ? posts.filter((post) => terms.every((term) => haystack(post).includes(term))) : posts;
+        const matches = terms.length
+          ? index.filter((entry) => terms.every((term) => entry.hay.includes(term))).map((entry) => entry.post)
+          : posts;
         render(matches, raw);
+      };
+      // Gõ nhanh chỉ lọc một lần sau khi ngừng gõ, thay vì mỗi keystroke.
+      let pending = 0;
+      input.addEventListener('input', () => {
+        clearTimeout(pending);
+        pending = setTimeout(search, 120);
       });
     })
     .catch(() => {

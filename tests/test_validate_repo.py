@@ -1,6 +1,10 @@
 """Unit test cho validate_repo: từng quy tắc phải bắt đúng lỗi."""
+import datetime as dt
 import json
+import os
+import time
 
+import pytest
 import validate_repo
 from validate_repo import (
     Report,
@@ -380,3 +384,109 @@ def test_state_bad_generated_at(tmp_path, monkeypatch):
     r = Report()
     validate_state(_state_entries(), r)
     assert any("last_generated_at" in e for e in r.errors)
+
+
+# --- Regression: trùng số issue trong posts/ ---
+
+
+def _write_post(directory, name):
+    path = directory / name
+    path.write_text("<html lang=\"vi\"></html>", encoding="utf-8")
+    return path
+
+
+def _collect_post_errors(monkeypatch, tmp_path, filenames, entries):
+    """Chạy validate_posts trên một posts/ giả, bỏ qua kiểm tra nội dung từng bài."""
+    for name in filenames:
+        _write_post(tmp_path, name)
+    monkeypatch.setattr(validate_repo, "POSTS_DIR", str(tmp_path))
+    monkeypatch.setattr(validate_repo, "validate_post_file", lambda *a, **k: None)
+    report = Report()
+    validate_repo.validate_posts(entries, report)
+    return report.errors
+
+
+def test_duplicate_issue_number_is_reported(monkeypatch, tmp_path):
+    """Hai file cùng số bài phải là lỗi.
+
+    Trước đây by_num[n] = p ghi đè im lặng, set-diff không thấy, và index.html
+    (dựng từ mọi file) liệt kê bài hai lần mà quality gate vẫn xanh.
+    """
+    errors = _collect_post_errors(
+        monkeypatch,
+        tmp_path,
+        ["post-001-static-ip.html", "post-001-static-ip-copy.html"],
+        make_entries([(1, "2026-01-01", "Networking", "a")]),
+    )
+    assert any("trùng số" in e for e in errors)
+
+
+def test_duplicate_report_names_both_files(monkeypatch, tmp_path):
+    errors = _collect_post_errors(
+        monkeypatch,
+        tmp_path,
+        ["post-001-static-ip.html", "post-001-static-ip-copy.html"],
+        make_entries([(1, "2026-01-01", "Networking", "a")]),
+    )
+    duplicate = next(e for e in errors if "trùng số" in e)
+    assert "post-001-static-ip.html" in duplicate
+    assert "post-001-static-ip-copy.html" in duplicate
+
+
+def test_unique_issue_numbers_have_no_duplicate_error(monkeypatch, tmp_path):
+    errors = _collect_post_errors(
+        monkeypatch,
+        tmp_path,
+        ["post-001-static-ip.html", "post-002-ssh-hardening.html"],
+        make_entries([
+            (1, "2026-01-01", "Networking", "a"),
+            (2, "2026-01-02", "Bảo mật", "b"),
+        ]),
+    )
+    assert errors == []
+
+
+def test_missing_and_orphan_posts_still_detected(monkeypatch, tmp_path):
+    errors = _collect_post_errors(
+        monkeypatch,
+        tmp_path,
+        ["post-002-ssh-hardening.html"],
+        make_entries([(1, "2026-01-01", "Networking", "a")]),
+    )
+    assert any("không tìm thấy file" in e for e in errors)
+    assert any("không có dòng tương ứng" in e for e in errors)
+
+
+# --- Regression: ngày "tương lai" phải tính theo giờ VN, không theo giờ runner ---
+
+
+def test_today_vn_ignores_runner_local_timezone():
+    """Lịch xuất bản là 07:00 VN = 00:00 UTC, ngay ranh giới ngày.
+
+    dt.date.today() lấy giờ local của runner (CI chạy UTC) nên báo nhầm bài xuất
+    bản trước 07:00 giờ VN là "nằm ở tương lai".
+    """
+    if not hasattr(time, "tzset"):  # pragma: no cover - chỉ chạy trên Unix
+        pytest.skip("cần time.tzset()")
+    original = os.environ.get("TZ")
+    try:
+        os.environ["TZ"] = "Pacific/Pago_Pago"  # UTC-11, lệch 18 giờ so với VN
+        time.tzset()
+        expected = (dt.datetime.now(dt.timezone.utc) + dt.timedelta(hours=7)).date()
+        assert validate_repo.today_vn() == expected
+    finally:
+        if original is None:
+            os.environ.pop("TZ", None)
+        else:
+            os.environ["TZ"] = original
+        time.tzset()
+
+
+def test_future_date_check_is_anchored_to_vietnam_today(monkeypatch):
+    monkeypatch.setattr(validate_repo, "today_vn", lambda: dt.date(2026, 1, 10))
+
+    same_day = errs(make_entries([(1, "2026-01-10", "Networking", "a")]))
+    assert not any("tương lai" in e for e in same_day)
+
+    next_day = errs(make_entries([(1, "2026-01-11", "Networking", "a")]))
+    assert any("tương lai" in e for e in next_day)
