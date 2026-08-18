@@ -12,19 +12,31 @@
 
 ## Kiểm thử
 
+`tools/pr_preflight.py` đã bao gồm `publish.py prepare`, `pr_hygiene.py`, `ruff`,
+`pytest`, `workflow_safety.py` và `publish.py check` — chạy nó là đủ cho các gate local.
+
 - [ ] `python3 tools/pr_preflight.py`
-- [ ] External link check nếu PR thay URL/source
-- [ ] `python3 tools/workflow_safety.py` nếu PR thay GitHub Actions
+- [ ] `quality-gate` trên GitHub Actions xanh
+- [ ] External link check nếu PR thay URL/source (`python3 tools/check_links.py --external`)
 - [ ] Production smoke nếu PR ảnh hưởng serving/deploy
+
+<!-- Đánh dấu "không áp dụng" thay vì bỏ trống nếu một mục không liên quan tới PR. -->
 
 ## Git / CI hygiene
 
 - [ ] Branch được tạo từ `main`; không push trực tiếp `main`
-- [ ] Không có workflow/helper one-shot tự commit/push ngược branch
 - [ ] Không track file tạm hoặc helper gắn số PR
 - [ ] Commit subject mô tả rõ thay đổi; không dùng `x/tmp/test/wip/placeholder/...`
 - [ ] CI chỉ validate; generated artifacts đã được tạo trước commit/push
+- [ ] Không có secret/credential trong diff
 - [ ] Khi merge, dùng **Squash and merge**
+
+Workflow tự commit/push ngược branch bị cấm, trừ `release.yml` và
+`materialize-artifacts.yml` — cả hai chỉ chạy qua `workflow_dispatch` có chuỗi xác nhận
+và được `tools/workflow_safety.py` cưỡng chế. PR nào chạm vào ranh giới này phải nói rõ
+trong Review notes.
+
+- [ ] PR không thêm workflow tự commit/push ngược branch, hoặc đã giải thích ở Review notes
 
 ## Content / technical review
 
