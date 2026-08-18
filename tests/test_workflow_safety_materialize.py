@@ -5,6 +5,7 @@ lớp bảo vệ của nó phải có test riêng: bỏ lớp nào ra thì polic
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
@@ -37,10 +38,16 @@ def test_real_materialize_workflow_passes_policy():
             id="tu-chay-theo-pull-request",
         ),
         pytest.param(
-            "    if: inputs.confirm == 'materialize-artifacts'",
-            "    if: always()",
+            '          test "${CONFIRM}" = "materialize-artifacts"',
+            "          echo skip",
             "safety marker missing",
             id="bo-cong-xac-nhan",
+        ),
+        pytest.param(
+            "  materialize:\n    runs-on: ubuntu-latest",
+            "  materialize:\n    if: inputs.confirm == 'materialize-artifacts'\n    runs-on: ubuntu-latest",
+            "confirm gate must be a failing step",
+            id="cong-xac-nhan-quay-lai-dang-if-muc-job",
         ),
         pytest.param(
             'git push origin "HEAD:${BRANCH}"',
@@ -83,6 +90,18 @@ def test_real_materialize_workflow_passes_policy():
 def test_removing_a_safeguard_is_rejected(tmp_path: Path, old: str, new: str, expected: str):
     errors = _mutated(tmp_path, old, new)
     assert any(expected in error for error in errors), errors
+
+
+def test_confirm_gate_is_a_failing_step_not_a_skipped_job():
+    """Job bị skip vẫn cho workflow run báo thành công.
+
+    Nếu cổng xác nhận là `if:` mức job thì gõ sai chuỗi sẽ trông như dispatch
+    thành công trong khi không có artifact nào được dựng — và bước kiểm bên trong
+    không bao giờ chạy tới.
+    """
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert not re.search(r"^\s{4}if:.*inputs\.confirm", text, re.MULTILINE)
+    assert 'test "${CONFIRM}" = "materialize-artifacts"' in text
 
 
 def test_materialize_is_the_only_new_write_capable_workflow():

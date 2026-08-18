@@ -22,8 +22,11 @@ permissions:
   contents: write
 
 jobs:
+  # Cổng xác nhận nằm ở bước đầu tiên, KHÔNG phải `if:` mức job. Một job bị skip
+  # khiến workflow run vẫn báo thành công, nên gõ sai chuỗi xác nhận sẽ trông như
+  # dispatch thành công trong khi không có gì được dựng — kiểu hỏng khó chẩn đoán
+  # nhất. Kiểm trong step thì sai chuỗi là fail to và thấy ngay.
   materialize:
-    if: inputs.confirm == 'materialize-artifacts'
     runs-on: ubuntu-latest
     concurrency:
       group: materialize-artifacts-${{ inputs.branch }}
