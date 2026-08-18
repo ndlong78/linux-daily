@@ -30,3 +30,43 @@ def test_site_inventory_is_homepage_plus_all_posts():
     assert report.errors == []
     assert None not in canonicals
     assert len(canonicals) == len(set(canonicals))
+
+
+# --- Regression: lỗi artifact stale phải tự nói cách khắc phục ---
+
+
+def test_orphan_post_error_tells_operator_how_to_fix(monkeypatch, tmp_path):
+    """Tái hiện đúng lỗi đã làm PR #104 đỏ: bài mới có trong posts/ nhưng
+    index.html chưa được dựng lại.
+
+    Log CI trước đây chỉ hiện assertion pytest kèm một khối HTML dài, không nói
+    phải chạy lệnh gì; người vận hành phải tự suy ra.
+    """
+    newest = sorted((ROOT / "posts").glob("post-*.html"))[-1].name
+    stale_index = tmp_path / "index.html"
+    stale_index.write_text(
+        (ROOT / "index.html").read_text(encoding="utf-8").replace(
+            f"posts/{newest}", "posts/post-000-khong-ton-tai.html"
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(validate_site, "INDEX_PATH", str(stale_index))
+
+    errors = validate_site.run().errors
+
+    orphan = [e for e in errors if e.startswith(f"orphan post: posts/{newest}")]
+    assert orphan, f"không tái hiện được lỗi orphan post: {errors}"
+    assert "publish.py prepare" in orphan[0]
+
+
+def test_rebuild_hint_is_attached_to_every_stale_artifact_error():
+    """Cả bốn lỗi cùng nguyên nhân đều phải mang cùng một hướng dẫn."""
+    source = (ROOT / "tools" / "validate_site.py").read_text(encoding="utf-8")
+    for message in (
+        "sitemap thiếu canonical",
+        "sitemap có URL không phải page canonical",
+        "orphan post",
+        "archive.html không được homepage liên kết",
+    ):
+        line = next(ln for ln in source.splitlines() if message in ln and "append" in ln)
+        assert "REBUILD_HINT" in line, f"thiếu hướng dẫn khắc phục cho: {message}"

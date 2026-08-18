@@ -12,6 +12,7 @@ WORKFLOW_DIR = ROOT / ".github" / "workflows"
 RELEASE_WORKFLOW = "release.yml"
 CI_WORKFLOW = "ci.yml"
 AUTO_MERGE_WORKFLOW = "linux-daily-auto-merge.yml"
+MATERIALIZE_WORKFLOW = "materialize-artifacts.yml"
 WRITE_PERMISSION_RE = re.compile(
     r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$",
     re.MULTILINE,
@@ -94,6 +95,51 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
     return errors
 
 
+def _validate_materialize(rel: str, text: str, events: str, permissions: str) -> list[str]:
+    """Workflow duy nhất được ghi lên feature branch.
+
+    Nó tồn tại vì agent API-only không có Python runtime để chạy generator. Đổi lại,
+    nó phải giữ đúng khuôn của release.yml: chỉ dispatch tường minh, có chuỗi xác
+    nhận, và không bao giờ chạm tới main.
+    """
+    errors: list[str] = []
+
+    if "workflow_dispatch:" not in events:
+        errors.append(f"{rel}: materialize must use workflow_dispatch")
+    for forbidden_event in ("push:", "pull_request:", "pull_request_target:", "schedule:", "workflow_run:"):
+        if forbidden_event in events:
+            errors.append(f"{rel}: materialize must not trigger on {forbidden_event[:-1]}")
+
+    if not re.search(r"^\s{2}contents:\s*write\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: materialize requires contents: write")
+    if re.search(
+        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+        permissions,
+        re.MULTILINE,
+    ):
+        errors.append(f"{rel}: materialize may not request extra write permissions")
+
+    required_markers = (
+        "inputs.confirm == 'materialize-artifacts'",
+        "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
+        "tools/materialize_guard.py --branch",
+        "--changed-from-git",
+        "tools/publish.py prepare",
+        "tools/publish.py check",
+        'git push origin "HEAD:${BRANCH}"',
+    )
+    for marker in required_markers:
+        if marker not in text:
+            errors.append(f"{rel}: materialize safety marker missing: {marker}")
+
+    if re.search(r"\bgit\s+add\s+(?:-A\b|--all\b|\.(?:\s|$))", text):
+        errors.append(f"{rel}: materialize must stage explicit paths, not whole directories")
+    if "ref: main" in text or re.search(r'HEAD:\s*["\']?main', text):
+        errors.append(f"{rel}: materialize must never target main")
+
+    return errors
+
+
 def validate_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
     rel = _display_path(path)
@@ -102,6 +148,8 @@ def validate_file(path: Path) -> list[str]:
     permissions = _permissions_block(text)
     is_release = path.name == RELEASE_WORKFLOW
     is_auto_merge = path.name == AUTO_MERGE_WORKFLOW
+    is_materialize = path.name == MATERIALIZE_WORKFLOW
+    may_write = is_release or is_auto_merge or is_materialize
 
     if "pull_request_target:" in text:
         errors.append(f"{rel}: pull_request_target is forbidden")
@@ -109,16 +157,16 @@ def validate_file(path: Path) -> list[str]:
         errors.append(f"{rel}: top-level permissions block is required")
 
     writes = WRITE_PERMISSION_RE.findall(permissions)
-    if not is_release and not is_auto_merge and writes:
+    if not may_write and writes:
         errors.append(
-            f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW} "
-            f"and {AUTO_MERGE_WORKFLOW}: {', '.join(writes)}"
+            f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}, "
+            f"{AUTO_MERGE_WORKFLOW} and {MATERIALIZE_WORKFLOW}: {', '.join(writes)}"
         )
-    if not is_release and not is_auto_merge and not re.search(
+    if not may_write and not re.search(
         r"^\s{2}contents:\s*read\s*$", permissions, re.MULTILINE
     ):
         errors.append(f"{rel}: non-write workflow must declare contents: read")
-    if not is_release and SELF_MUTATION_RE.search(text):
+    if not is_release and not is_materialize and SELF_MUTATION_RE.search(text):
         errors.append(f"{rel}: workflow must not stage, commit, or push repository changes")
 
     for banned in ("actions", "pull-requests", "issues", "packages", "deployments"):
@@ -142,6 +190,9 @@ def validate_file(path: Path) -> list[str]:
 
     if is_auto_merge:
         errors.extend(_validate_auto_merge(rel, text, events, permissions))
+
+    if is_materialize:
+        errors.extend(_validate_materialize(rel, text, events, permissions))
 
     if path.name == CI_WORKFLOW:
         if "fetch-depth: 0" not in text:
