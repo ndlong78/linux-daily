@@ -16,6 +16,14 @@ ROOT = Path(__file__).resolve().parents[1]
 POSTS_GLOB = str(ROOT / "posts" / "post-*.html")
 VERSION_PATH = ROOT / "site-version.json"
 
+# Cloudflare AI Crawl Control chèn một khối "Cloudflare Managed content" lên
+# trước /robots.txt rồi nối nguyên bản của repo phía sau. Đó là biến đổi hợp lệ
+# ở edge, không phải deploy hỏng — nên file này không so được theo byte và cũng
+# không được nằm trong hash tổng, nếu không hash tổng sẽ luôn lệch và che mất
+# drift thật của 5 file còn lại. check_production đổi sang kiểm containment:
+# nguyên bản repo phải xuất hiện nguyên vẹn trong body mà production trả về.
+EDGE_MANAGED_PATHS = frozenset({"/robots.txt"})
+
 
 @dataclass(frozen=True)
 class FingerprintedFile:
@@ -46,6 +54,11 @@ def served_files() -> list[tuple[str, Path]]:
     ]
 
 
+def fingerprinted_files() -> list[tuple[str, Path]]:
+    """Tập file so được theo byte — served_files() trừ đi phần edge tự viết lại."""
+    return [item for item in served_files() if item[0] not in EDGE_MANAGED_PATHS]
+
+
 def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
@@ -57,7 +70,11 @@ def collect() -> tuple[str, list[FingerprintedFile]]:
         data = path.read_bytes()
         digest = sha256_bytes(data)
         rel = os.path.relpath(path, ROOT).replace(os.sep, "/")
+        # File edge-managed vẫn nằm trong manifest để checker có bytes mà đối
+        # chiếu containment, nhưng không góp vào hash tổng.
         files.append(FingerprintedFile(public_path, rel, digest, len(data)))
+        if public_path in EDGE_MANAGED_PATHS:
+            continue
         aggregate.update(public_path.encode("utf-8"))
         aggregate.update(b"\0")
         aggregate.update(data)
