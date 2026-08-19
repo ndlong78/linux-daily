@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible check mode, diff và serial: rolling change có kiểm soát — Linux Daily #048</title>
+<meta name="description" content="Preview thay đổi bằng Ansible check/diff, giới hạn rollout theo batch với serial và xác minh từng đợt trên Linux lẫn FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible check mode, diff và serial: rolling change có kiểm soát">
+<meta property="og:description" content="Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible check mode, diff và serial: rolling change có kiểm soát">
+<meta name="twitter:description" content="Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 48,
+  "date": "2026-08-17",
+  "axis": "Automation",
+  "eyebrow": "Automation · Ansible check/diff/serial",
+  "slug": "ansible-check-diff-serial-rolling-change",
+  "title": "Ansible check mode, diff và serial: rolling change có kiểm soát",
+  "lede": "Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-17",
+  "changes_system": true,
+  "sources": [
+    {"title":"Ansible Community Documentation — Validating tasks: check mode and diff mode","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html","kind":"upstream"},
+    {"title":"Ansible Community Documentation — Playbook Keywords","url":"https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html","kind":"upstream"},
+    {"title":"Ansible Community Documentation — Playbook Example: Continuous Delivery and Rolling Upgrades","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/guide_rolling_upgrade.html","kind":"upstream"},
+    {"title":"Ansible Core Documentation — Managing BSD hosts with Ansible","url":"https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html","kind":"upstream"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#048 · 17·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Automation · Ansible check/diff/serial</p>
+  <h1>Ansible check mode, diff và serial: rolling change có kiểm soát</h1>
+  <p class="lede">Preview thay đổi bằng <code>--check --diff</code>, thu nhỏ blast radius với <code>serial</code> và verify từng batch trước khi rollout tiếp.</p>
+  <div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~13 PHÚT</span></div>
+</header>
+
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-17 · đối chiếu Ansible Community/Core documentation; lab dùng file tạm để minh hoạ rollout, không giả định systemd trên FreeBSD.</p>
+</section>
+
+<section class="objective">
+  <h2>Mục tiêu</h2>
+  <p>Xây một rollout nhỏ có ba lớp kiểm soát: preview bằng <code>--check --diff</code>, giới hạn số host xử lý đồng thời bằng <code>serial</code>, rồi xác minh trạng thái sau khi áp dụng trước khi tăng phạm vi.</p>
+</section>
+
+<section class="prerequisites">
+  <h2>Yêu cầu tiên quyết</h2>
+  <ul class="clean">
+    <li>Đã nắm #006 về Ansible đa nền tảng, #027 về idempotency và #034 về automation có bằng chứng.</li>
+    <li>Control node đã cài Ansible; managed host truy cập được bằng SSH và tài khoản có quyền <code>become</code>.</li>
+    <li>Ubuntu/Xubuntu, Debian và Fedora cần Python phù hợp với phiên bản Ansible đang dùng.</li>
+    <li>FreeBSD phải xử lý riêng: xác minh Python thực tế trên host và đặt <code>ansible_python_interpreter</code> nếu auto-discovery không chọn đúng. Không dùng lệnh/path systemd cho FreeBSD.</li>
+    <li>Lab này ghi file <code>/tmp/linux-daily-048.conf</code> trên managed host; cuối bài có bước gỡ.</li>
+  </ul>
+</section>
+
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="Luồng preview batch apply verify của Ansible">
+  <rect width="760" height="245" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="25" y="72" width="150" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="100" y="104" font-size="13" font-weight="700">PREVIEW</text><text x="100" y="132" font-size="10">--check --diff</text>
+    <rect x="215" y="72" width="150" height="92" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="290" y="104" font-size="13" font-weight="700">BATCH</text><text x="290" y="132" font-size="10">serial: 1</text>
+    <rect x="405" y="72" width="150" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/>
+    <text x="480" y="104" font-size="13" font-weight="700">APPLY</text><text x="480" y="132" font-size="10">desired state</text>
+    <rect x="595" y="72" width="140" height="92" rx="8" fill="#FFF6E8" stroke="#9A6500" stroke-width="2"/>
+    <text x="665" y="104" font-size="13" font-weight="700">VERIFY</text><text x="665" y="132" font-size="10">evidence / stop</text>
+    <path d="M175 118H209M365 118H399M555 118H589" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 1 — Check mode giảm bất ngờ trước khi ghi; <code>serial</code> giảm blast radius khi chạy thật; verification quyết định có nên tiếp tục rollout hay dừng.</figcaption>
+</figure>
+
+<section>
+  <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+  <p>Một playbook idempotent vẫn có thể gây sự cố nếu thay đổi đúng “desired state” nhưng áp dụng đồng thời lên quá nhiều máy. Vì vậy cần tách hai câu hỏi: <em>task sẽ đổi gì?</em> và <em>bao nhiêu host được phép đổi cùng lúc?</em></p>
+  <p><code>--check</code> là mô phỏng, không phải transaction hay rollback. Module hỗ trợ check mode mới có thể dự đoán thay đổi hữu ích. <code>--diff</code> bổ sung before/after cho module hỗ trợ diff, nhưng có thể làm lộ secret nếu bật trên file nhạy cảm.</p>
+  <p><code>serial</code> là play keyword định nghĩa batch size. Nó giới hạn số host đi qua một play trong từng batch; nó không tự xác minh health và không hoàn tác batch đã áp dụng.</p>
+</section>
+
+<section>
+  <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+  <ul class="clean">
+    <li><strong>Preview nhỏ trước:</strong> dùng <code>--limit &lt;host&gt; --check --diff</code> để giảm noise và đọc diff dễ hơn.</li>
+    <li><strong>Batch rõ ràng:</strong> bắt đầu <code>serial: 1</code> khi tác động chưa được chứng minh; chỉ tăng batch khi có bằng chứng đủ tốt.</li>
+    <li><strong>Module semantics quan trọng:</strong> check mode chỉ đáng tin trong giới hạn module/task hỗ trợ; task dựa trên kết quả của một task trước đó có thể cho mô phỏng không đầy đủ.</li>
+    <li><strong>Không đưa secret vào diff:</strong> với template/config nhạy cảm, đặt <code>diff: false</code> ở task thay vì bật diff mù cho mọi nội dung.</li>
+    <li><strong>FreeBSD là target riêng:</strong> Ansible vẫn quản lý qua SSH/Python, nhưng đường dẫn Python/package/service có thể khác Linux. Bài này cố ý chỉ dùng file tạm để tập trung vào cơ chế rollout.</li>
+  </ul>
+</section>
+
+<figure>
+<svg viewBox="0 0 760 255" role="img" aria-label="So sánh managed host Linux và FreeBSD trong cùng Ansible rollout">
+  <rect width="760" height="255" fill="#FFFFFF"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="35" y="48" width="205" height="155" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/>
+    <text x="137" y="78" font-size="13" font-weight="700">LINUX TARGETS</text>
+    <text x="137" y="109" font-size="10.5">Ubuntu · Debian · Fedora</text>
+    <text x="137" y="137" font-size="10">SSH + Python</text>
+    <text x="137" y="164" font-size="10">không cần service task trong lab</text>
+    <rect x="280" y="48" width="200" height="155" rx="8" fill="#FFF6E8" stroke="#9A6500" stroke-width="2"/>
+    <text x="380" y="78" font-size="13" font-weight="700">PLAY CONTROL</text>
+    <text x="380" y="109" font-size="10.5">--check · --diff</text>
+    <text x="380" y="137" font-size="10.5">serial: 1</text>
+    <text x="380" y="164" font-size="10.5">apply → verify</text>
+    <rect x="520" y="48" width="205" height="155" rx="8" fill="#FBF1F0" stroke="#B23A2E" stroke-width="2"/>
+    <text x="622" y="78" font-size="13" font-weight="700">FREEBSD TARGET</text>
+    <text x="622" y="109" font-size="10.5">SSH + Python riêng</text>
+    <text x="622" y="137" font-size="10">verify interpreter path</text>
+    <text x="622" y="164" font-size="10">không giả định systemd</text>
+    <path d="M240 125H274M480 125H514" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 2 — Cùng một play-level rollout control có thể áp dụng cho nhiều Unix target, nhưng prerequisite/runtime của FreeBSD vẫn phải được xác minh riêng.</figcaption>
+</figure>
+
+<section>
+  <h2><span class="num">03</span> Các bước thực hiện</h2>
+  <ol class="steps">
+    <li>
+      <h3>Tạo inventory lab và xác minh connectivity.</h3>
+      <p>Trên control node, thay hostname/user bằng inventory thật. Với FreeBSD, trước tiên đăng nhập SSH và xác minh đường dẫn Python thay vì giả định cố định.</p>
+      <p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">ssh &lt;freebsd-host&gt; command -v python3</code></pre></div>
+<p class="code-label same"><span class="dot"></span>Mọi hệ — chạy trên control node</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible -i inventory.ini all -m ansible.builtin.ping</code></pre></div>
+      <p>Ví dụ inventory tối thiểu:</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-ini">[linux]
+ubuntu-lab
+debian-lab
+fedora-lab
+
+[freebsd]
+freebsd-lab ansible_python_interpreter=&lt;python-path&gt;
+
+[rollout:children]
+linux
+freebsd</code></pre></div>
+      <p>Nếu FreeBSD không có Python phù hợp, xử lý bootstrap theo tài liệu Ansible Core trước khi dùng các module thông thường.</p>
+    </li>
+
+    <li>
+      <h3>Tạo playbook với batch size nhỏ.</h3>
+      <p>Playbook lab chỉ tạo một file tạm. <code>serial: 1</code> khiến mỗi batch có một host, giúp quan sát rõ hành vi trước khi tăng phạm vi.</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-yaml">---
+- name: Controlled rolling change
+  hosts: rollout
+  gather_facts: false
+  serial: 1
+  become: true
+
+  tasks:
+    - name: Write Linux Daily rollout marker
+      ansible.builtin.copy:
+        dest: /tmp/linux-daily-048.conf
+        content: |
+          rollout_version=2
+          managed_by=ansible
+        mode: "0644"</code></pre></div>
+      <p>Task dùng <code>ansible.builtin.copy</code> để diff có ý nghĩa và không phụ thuộc service manager của từng hệ.</p>
+    </li>
+
+    <li>
+      <h3>Preview một host bằng check + diff.</h3>
+      <p>Chọn đúng một host canary trước. Check mode không ghi file; diff cho biết content dự kiến nếu module hỗ trợ.</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini rollout.yml --syntax-check
+ansible-playbook -i inventory.ini rollout.yml --check --diff --limit &lt;canary-host&gt;</code></pre></div>
+      <p>Đọc kỹ host target, task có <code>changed</code> dự kiến và diff. Nếu output lộ dữ liệu nhạy cảm, dừng và đặt <code>diff: false</code> cho task đó trước khi tiếp tục.</p>
+    </li>
+
+    <li>
+      <h3>Preview toàn bộ inventory nhưng vẫn giữ batch semantics.</h3>
+      <p>Sau canary preview sạch, chạy mô phỏng cho toàn bộ group. Đây vẫn là mô phỏng; đừng suy diễn rằng mọi task ngoài module hỗ trợ check mode đều đã được kiểm chứng.</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini rollout.yml --check --diff</code></pre></div>
+    </li>
+
+    <li>
+      <h3>Apply rollout với <code>serial: 1</code>.</h3>
+      <p>Chỉ chạy thật sau khi target/diff đúng. Với playbook production, cần health check hoặc maintenance boundary riêng giữa các batch; <code>serial</code> tự nó không chứng minh service khỏe.</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini rollout.yml</code></pre></div>
+    </li>
+
+    <li>
+      <h3>Chạy lại để kiểm idempotency.</h3>
+      <p>Lần chạy thứ hai với cùng desired content nên không còn thay đổi ở task copy.</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible-playbook -i inventory.ini rollout.yml --check --diff</code></pre></div>
+    </li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="num">04</span> Kiểm chứng</h2>
+  <p>Đọc file từ từng managed host qua Ansible, rồi đối chiếu với desired state. Lệnh dưới đây chỉ đọc file nhưng dùng <code>-b</code> để giữ cùng privilege path với rollout.</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible -i inventory.ini rollout -b -m ansible.builtin.command -a "cat /tmp/linux-daily-048.conf"</code></pre></div>
+
+  <div class="expected-output">
+    <h3>Expected Output / Kết quả mong đợi</h3>
+    <ul class="clean">
+      <li>Mỗi host trả về <code>rc=0</code> và có hai dòng <code>rollout_version=2</code>, <code>managed_by=ansible</code>.</li>
+      <li>Lần <code>--check --diff</code> đầu tiên dự đoán thay đổi nếu file chưa tồn tại hoặc khác desired content.</li>
+      <li>Sau khi apply thành công, lần check tiếp theo không dự đoán content change cho task copy.</li>
+      <li>FreeBSD được xử lý bằng interpreter/path đã xác minh; không xuất hiện lệnh <code>systemctl</code> hay Linux-only service path trong lab.</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>Gỡ / Hoàn tác</h2>
+  <p>Lab chỉ tạo file tạm. Gỡ chính xác target đó trên group rollout:</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible -i inventory.ini rollout -b -m ansible.builtin.file -a "path=/tmp/linux-daily-048.conf state=absent"</code></pre></div>
+  <p>Xác minh file đã biến mất; kết quả <code>rc</code> khác 0 từ <code>test -e</code> là mong đợi khi file không còn:</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible -i inventory.ini rollout -b -m ansible.builtin.command -a "test -e /tmp/linux-daily-048.conf"</code></pre></div>
+</section>
+
+<section>
+  <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+  <ul class="clean">
+    <li><strong>Check mode không có output hữu ích:</strong> kiểm module/task có hỗ trợ check mode hay không. Đừng coi “không changed” là bằng chứng nếu task bị skip hoặc không mô phỏng được.</li>
+    <li><strong>Diff quá lớn:</strong> thu hẹp bằng <code>--limit &lt;host&gt;</code>. Với secret/config nhạy cảm, tắt diff ở task bằng <code>diff: false</code>.</li>
+    <li><strong>FreeBSD báo thiếu interpreter:</strong> SSH vào host, chạy <code>command -v python3</code>, xác minh phiên bản được Ansible hỗ trợ rồi khai báo inventory path tương ứng.</li>
+    <li><strong>Một batch fail:</strong> dừng rollout, thu log/evidence và sửa nguyên nhân. <code>serial</code> không rollback những host của batch trước đã đổi.</li>
+    <li><strong>Muốn tăng batch:</strong> chỉ tăng sau khi canary và verification có bằng chứng ổn định; batch size là quyết định blast-radius chứ không phải mẹo tăng tốc mặc định.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+  <ul class="clean">
+    <li>Không dùng <code>--diff</code> với secret, private key, token hoặc config chứa credential nếu chưa chặn diff ở task tương ứng.</li>
+    <li>Inventory và <code>--limit</code> phải được kiểm tra trước lệnh apply để tránh nhắm sai environment.</li>
+    <li><code>serial</code> giảm số host bị tác động đồng thời nhưng không thay thế backup, rollback plan, health check hay change approval.</li>
+    <li>Không nhúng lệnh Linux/systemd vào FreeBSD branch. Khi playbook thật quản lý service/package, tách biến/module theo platform như #006/#041.</li>
+  </ul>
+</section>
+
+<section class="exercise">
+  <h2><span class="num">07</span> Bài tập tự luyện</h2>
+  <ol class="clean">
+    <li>Đổi <code>rollout_version=2</code> thành <code>rollout_version=3</code>, chạy <code>--check --diff --limit &lt;canary-host&gt;</code> và giải thích chính xác phần nào sẽ thay đổi.</li>
+    <li>Với inventory ít nhất ba host lab, thử <code>serial: 2</code> và quan sát cách Ansible chia batch. Không dùng production host cho bài tập.</li>
+    <li>Thêm một task chứa dữ liệu giả lập nhạy cảm với <code>diff: false</code>, rồi chứng minh output không in nội dung before/after của task đó.</li>
+  </ol>
+</section>
+
+<section class="sources" aria-labelledby="technical-sources">
+  <h2 id="technical-sources">Nguồn kỹ thuật</h2>
+  <p>Ưu tiên tài liệu chính thức/upstream của Ansible; title và URL dưới đây khớp <code>ld-meta.sources</code>.</p>
+  <ul class="clean">
+    <li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_checkmode.html">Ansible Community Documentation — Validating tasks: check mode and diff mode</a></li>
+    <li><a href="https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html">Ansible Community Documentation — Playbook Keywords</a></li>
+    <li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/guide_rolling_upgrade.html">Ansible Community Documentation — Playbook Example: Continuous Delivery and Rolling Upgrades</a></li>
+    <li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core Documentation — Managing BSD hosts with Ansible</a></li>
+  </ul>
+</section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-041-ansible-handlers-templates-idempotent-restart.html"><span class="series-kicker">#041</span><span>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+      <li><a href="post-020-firewall-rollback-negative-test.html">#020 · Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+  <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
+  <div class="foot-row"><span>Linux Daily #048 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation #RollingUpdate</span></div>
+</footer>
+</div></main>
+</body>
+</html>

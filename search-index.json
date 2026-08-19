@@ -1,6 +1,19 @@
 {
-  "count": 47,
+  "count": 48,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-17",
+      "href": "posts/post-048-ansible-check-diff-serial-rolling-change.html",
+      "issue": 48,
+      "lede": "Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.",
+      "tags": [
+        "Ansible check/diff/serial"
+      ],
+      "title": "Ansible check mode, diff và serial: rolling change có kiểm soát"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",

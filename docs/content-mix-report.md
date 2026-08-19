@@ -4,21 +4,21 @@
 
 ## Snapshot
 
-- Published posts: **47**
+- Published posts: **48**
 - Complete 7-axis cycles: **6**
-- Current-cycle progress: **5/7**
+- Current-cycle progress: **6/7**
 - Distribution spread: **1**
-- Next expected issue: **#048 — Automation & scripting**
+- Next expected issue: **#049 — Lab end-to-end**
 
 | Axis | Posts | Share |
 |---|---:|---:|
-| Networking | 7 | 14.9% |
-| Bảo mật & phân quyền | 7 | 14.9% |
-| Storage & hệ thống tệp | 7 | 14.9% |
-| Công cụ & phần mềm | 7 | 14.9% |
-| Monitoring & hiệu năng | 7 | 14.9% |
-| Automation & scripting | 6 | 12.8% |
-| Lab end-to-end | 6 | 12.8% |
+| Networking | 7 | 14.6% |
+| Bảo mật & phân quyền | 7 | 14.6% |
+| Storage & hệ thống tệp | 7 | 14.6% |
+| Công cụ & phần mềm | 7 | 14.6% |
+| Monitoring & hiệu năng | 7 | 14.6% |
+| Automation & scripting | 7 | 14.6% |
+| Lab end-to-end | 6 | 12.5% |
 
 ## Findings
 
@@ -28,4 +28,4 @@
 
 ## Recommendation
 
-Tiếp tục cadence hiện tại. Bài kế tiếp nên là **#048 — Automation & scripting**; không cần chèn bài chỉ để làm phẳng thống kê. Review lại mix khi hoàn tất thêm một chu kỳ 7 bài hoặc khi thay đổi taxonomy/cadence.
+Tiếp tục cadence hiện tại. Bài kế tiếp nên là **#049 — Lab end-to-end**; không cần chèn bài chỉ để làm phẳng thống kê. Review lại mix khi hoàn tất thêm một chu kỳ 7 bài hoặc khi thay đổi taxonomy/cadence.
