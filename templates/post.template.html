@@ -33,6 +33,9 @@
   - numbered steps dùng <ol class="steps">;
   - mọi <pre><code> có language-*;
   - command block shell đặt trong wrapper data-run-as="user|sudo|root";
+  - mỗi command block khác nhau theo OS phải có nhãn class="code-label <token>"
+    (token: bsd | ubuntu | debian | fedora | linux | same); bài BẮT BUỘC có ít nhất
+    một khối FreeBSD riêng gắn code-label bsd;
   - verification có Expected Output/Kết quả mong đợi;
   - changes_system=true thì render CLEANUP_SECTION.
 -->
@@ -125,7 +128,22 @@
 
   <section>
     <h2><span class="num">03</span> Các bước thực hiện</h2>
-    <!-- Một <li> = một checkpoint chính. Command block shell phải có data-run-as. -->
+    <!--
+      Một <li> = một checkpoint chính. Command block shell phải có data-run-as.
+      Lệnh khác nhau theo OS phải gắn nhãn; FreeBSD luôn tách riêng. Mẫu:
+
+        <p class="code-label ubuntu"><span class="dot"></span>Ubuntu/Debian</p>
+        <div class="code-wrap">
+          <p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+          <pre><code class="language-bash">sudo apt install -y ansible</code></pre>
+        </div>
+
+        <p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+        <div class="code-wrap">
+          <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+          <pre class="bsd"><code class="language-bash">pkg install -y py311-ansible</code></pre>
+        </div>
+    -->
     <ol class="steps">
       {{STEP_BY_STEP_ITEMS}}
     </ol>
