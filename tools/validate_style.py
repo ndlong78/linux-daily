@@ -38,6 +38,13 @@ LEGACY_PLACEHOLDER_RE = re.compile(r"\bYOUR_[A-Z0-9_]+\b|\[username\]|\[server-i
 RUN_AS_RE = re.compile(r'data-run-as=["\'](?:user|sudo|root)["\']', re.IGNORECASE)
 LANGUAGE_CLASS_RE = re.compile(r'class=["\'][^"\']*\blanguage-[a-z0-9_-]+\b', re.IGNORECASE)
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+# Thẻ mang nhãn không cố định: bài dùng cả <div class="code-label bsd"> lẫn
+# <p class="code-label bsd">, nên khớp theo class chứ không theo tên thẻ.
+CODE_LABEL_RE = re.compile(r'class=["\'][^"\']*\bcode-label\s+([a-z0-9_-]+)', re.IGNORECASE)
+# Từ vựng nhãn OS cho command block. `same` = lệnh giống nhau trên mọi hệ.
+# validate_repo yêu cầu riêng `code-label bsd`; ở đây kiểm chính quy ước markup,
+# để nhãn sai token không bị báo nhầm thành "thiếu khối FreeBSD".
+CODE_LABEL_TOKENS = frozenset({"bsd", "ubuntu", "debian", "fedora", "linux", "same"})
 
 REQUIRED_HEADINGS = (
     "mục tiêu",
@@ -141,6 +148,18 @@ def audit_post(path: Path) -> StyleResult:
         "expected output" in lowered or "kết quả mong đợi" in lowered
     ):
         errors.append("mục Kiểm chứng thiếu Expected Output/Kết quả mong đợi")
+
+    labels = CODE_LABEL_RE.findall(text)
+    if not labels:
+        errors.append(
+            'command block phải gắn nhãn OS: <div class="code-label bsd">…</div> '
+            f'(token hợp lệ: {", ".join(sorted(CODE_LABEL_TOKENS))})'
+        )
+    for token in sorted({item.lower() for item in labels} - CODE_LABEL_TOKENS):
+        errors.append(
+            f'code-label "{token}" không hợp lệ '
+            f'(token hợp lệ: {", ".join(sorted(CODE_LABEL_TOKENS))})'
+        )
 
     for index, match in enumerate(CODE_RE.finditer(text), start=1):
         attrs = match.group("code_attrs")

@@ -122,6 +122,38 @@ Phạm vi bắt buộc của Linux Daily:
 - Không giả định `systemctl`, `apt`, `dnf`, `nmcli`, `netplan` tồn tại trên FreeBSD.
 - Không mở rộng Arch/RHEL thành phạm vi bắt buộc nếu bài không chủ động đề cập.
 
+### 5.1. Nhãn OS cho command block
+
+Mỗi command block khác nhau theo OS phải có nhãn đặt **ngay trước** block, dùng class
+`code-label <token>`. Thẻ mang nhãn có thể là `<p>` hoặc `<div>`.
+
+| Token | Dùng cho |
+|---|---|
+| `bsd` | FreeBSD |
+| `ubuntu` | Ubuntu/Xubuntu |
+| `debian` | Debian |
+| `fedora` | Fedora |
+| `linux` | chung cho các distro Linux trong bài |
+| `same` | lệnh giống hệt nhau trên mọi hệ |
+
+```html
+<p class="code-label ubuntu"><span class="dot"></span>Ubuntu/Debian</p>
+<div class="code-wrap">
+  <p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+  <pre><code class="language-bash">sudo apt install -y ansible</code></pre>
+</div>
+
+<p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+<div class="code-wrap">
+  <p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+  <pre class="bsd"><code class="language-bash">pkg install -y py311-ansible</code></pre>
+</div>
+```
+
+**Mỗi bài bắt buộc có ít nhất một khối FreeBSD gắn `code-label bsd`.**
+`tools/validate_repo.py` chặn bài thiếu khối này; `tools/validate_style.py` chặn bài
+không gắn nhãn nào hoặc dùng token ngoài bảng trên.
+
 ## 6. Placeholder
 
 Dùng `<...>` cho giá trị bắt buộc thay:

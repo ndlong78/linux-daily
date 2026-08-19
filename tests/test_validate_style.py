@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import validate_style
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def _post(issue: int, *, valid: bool = True, changes_system: bool = False) -> str:
@@ -36,6 +39,7 @@ def _post(issue: int, *, valid: bool = True, changes_system: bool = False) -> st
 <section><h2>01 Bối cảnh thực tế</h2><p>Test.</p></section>
 <section><h2>02 Kiến thức cốt lõi</h2><p>Test.</p></section>
 <section><h2>03 Các bước thực hiện</h2><ol class="steps"><li>
+<p class="code-label bsd">FreeBSD</p>
 <div class="code-wrap" data-run-as="user"><pre><code class="language-bash">printf 'ok\\n'</code></pre></div>
 </li></ol></section>
 <section><h2>04 Kiểm chứng</h2><div class="code-wrap" data-run-as="user"><pre><code class="language-bash">printf 'ok\\n'</code></pre></div><p>Kết quả mong đợi: ok</p></section>
@@ -120,3 +124,60 @@ def test_shell_prompt_and_curl_pipe_shell_are_rejected(tmp_path: Path):
     result = validate_style.audit_post(post)
     assert any("shell prompt" in error for error in result.errors)
     assert any("curl | sh" in error for error in result.errors)
+
+
+# --- Regression: nhãn OS cho command block ---
+
+
+def _audit_html(tmp_path, body: str, issue: int = 48):
+    """Dựng một bài tối thiểu hợp lệ rồi chèn body cần kiểm."""
+    base = (ROOT / "posts" / "post-047-socket-ownership-ss-lsof-sockstat-fstat.html").read_text(
+        encoding="utf-8"
+    )
+    # bỏ toàn bộ nhãn sẵn có rồi chèn body thay thế
+    stripped = re.sub(r'class=(["\'])([^"\']*)\bcode-label\s+[a-z0-9_-]+([^"\']*)\1',
+                      r'class=\1\2code-label-removed\3\1', base)
+    path = tmp_path / f"post-{issue:03d}-demo.html"
+    path.write_text(stripped.replace("</main>", body + "</main>"), encoding="utf-8")
+    return validate_style.audit_post(path)
+
+
+def test_post_without_any_os_label_is_rejected(tmp_path):
+    """Đây là lỗi đã chặn bài #048: có command block nhưng không nhãn OS nào."""
+    errors = _audit_html(tmp_path, "").errors
+    assert any("phải gắn nhãn OS" in e for e in errors), errors
+
+
+def test_valid_label_satisfies_the_rule(tmp_path):
+    errors = _audit_html(tmp_path, '<p class="code-label bsd">FreeBSD</p>').errors
+    assert not any("phải gắn nhãn OS" in e for e in errors), errors
+    assert not any("không hợp lệ" in e for e in errors), errors
+
+
+def test_label_tag_may_be_p_or_div(tmp_path):
+    """Bài thật dùng cả <p> lẫn <div>; kiểm theo class chứ không theo tên thẻ."""
+    for tag in ("p", "div"):
+        errors = _audit_html(tmp_path, f'<{tag} class="code-label bsd">FreeBSD</{tag}>').errors
+        assert not any("phải gắn nhãn OS" in e for e in errors), (tag, errors)
+
+
+def test_unknown_label_token_is_named_precisely(tmp_path):
+    """`code-label freebsd` là token sai; validate_repo sẽ báo nhầm là 'thiếu khối
+    FreeBSD' trong khi khối có tồn tại. Ở đây phải chỉ đúng tên token."""
+    errors = _audit_html(tmp_path, '<p class="code-label freebsd">FreeBSD</p>').errors
+    assert any('code-label "freebsd" không hợp lệ' in e for e in errors), errors
+
+
+def test_label_vocabulary_matches_what_published_posts_use():
+    used = set()
+    for path in (ROOT / "posts").glob("post-*.html"):
+        used |= {m.lower() for m in validate_style.CODE_LABEL_RE.findall(
+            path.read_text(encoding="utf-8"))}
+    assert used <= validate_style.CODE_LABEL_TOKENS, used - validate_style.CODE_LABEL_TOKENS
+
+
+def test_style_doc_and_template_document_the_rule():
+    """Quy tắc từng chỉ tồn tại trong validator: agent bị từ chối vì thứ nó chưa
+    bao giờ được cho biết. Doc và khung bài phải nêu markup cụ thể."""
+    assert "code-label" in (ROOT / "STYLE.md").read_text(encoding="utf-8")
+    assert "code-label" in (ROOT / "templates" / "post.template.html").read_text(encoding="utf-8")

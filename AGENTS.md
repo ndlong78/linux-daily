@@ -191,12 +191,23 @@ Ràng buộc của đường này, do `tools/materialize_guard.py` và `tools/wo
 - workflow abort nếu generator chạm vào source of truth (`topics.md`, `state.json`, `site.json`, `AGENTS.md`, …) hoặc `tools/`, `tests/`, `.github/`, `templates/`, `assets/`, `labs/`;
 - workflow chỉ chạy qua `workflow_dispatch`, không bao giờ tự chạy theo `pull_request`/`push`.
 
-Vì vậy khi không có local writable checkout:
+Vì vậy khi không có local writable checkout, thứ tự bắt buộc là **ghi source → dispatch → chờ xong → mới mở PR**:
 
-- ghi source core và mở PR;
-- dispatch `Materialize Artifacts` cho branch đó;
-- **giữ PR ở Draft** cho tới khi artifact đã materialize; chỉ chuyển Ready khi CI xanh trên head SHA mới;
-- không đoán nội dung artifact rồi commit để dò cho CI xanh — nếu dispatch fail thì đọc log và báo blocker.
+1. ghi source core lên feature branch;
+2. dispatch `Materialize Artifacts` cho branch đó và **chờ run kết thúc**;
+3. run xanh → mở PR (Draft), rồi chuyển Ready khi CI xanh trên head SHA mới;
+4. run đỏ → **không mở PR**; đọc log của run và báo capability blocker kèm nguyên nhân.
+
+Thứ tự này quan trọng chứ không phải tiểu tiết. Nếu mở PR trước rồi mới dispatch, một lượt
+chạy kết thúc sớm — hoặc một dispatch bị từ chối vì thiếu quyền `actions: write` — sẽ để lại
+một Draft PR nằm im, CI đỏ, không ai được báo. Dispatch trước thì mọi thất bại đều lộ ra
+trước khi có PR, và trạng thái "có PR" luôn đồng nghĩa "artifact đã dựng".
+
+Ràng buộc kèm theo:
+
+- dispatch cần quyền `actions: write` trên repository; nếu API trả 403 thì đó là capability
+  blocker phải báo ngay, không im lặng bỏ qua;
+- không đoán nội dung artifact rồi commit để dò cho CI xanh.
 
 Đường local vẫn nguyên: chạy `python3 tools/publish.py prepare` rồi commit như bình thường, không cần dispatch.
 
@@ -223,10 +234,10 @@ Vì vậy khi không có local writable checkout:
 2. chuẩn bị article/source-of-truth metadata trong agent trước;
 3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
 4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API; không đoán nội dung artifact render;
-5. mở Draft PR sau khi source core đã có trên branch;
-6. kiểm state/diff/duplicate/review; chỉ chuyển PR sang Ready khi artifact render đã đồng bộ — nếu còn stale thì giữ Draft và nêu rõ cần một lượt `publish.py prepare`;
+5. dispatch `Materialize Artifacts` cho branch và chờ run kết thúc; run đỏ thì dừng và báo blocker, không mở PR;
+6. run xanh thì mở Draft PR; kiểm state/diff/duplicate/review rồi chuyển Ready khi CI xanh trên head SHA mới;
 7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
-8. nếu CI đỏ vì source, self-fix trên cùng branch; nếu đỏ vì artifact stale, dispatch `Materialize Artifacts` cho branch đó thay vì commit đoán;
+8. nếu CI đỏ vì source, self-fix trên cùng branch rồi dispatch lại; không commit đoán artifact;
 9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.
 
 Nếu branch protection/review requirement chưa thỏa, merge API fail và PR giữ nguyên.
