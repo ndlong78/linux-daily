@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State table: conntrack/nftables trên Linux và pf state trên FreeBSD — Linux Daily #050</title>
+<meta name="description" content="Đọc connection state trên Linux và FreeBSD để giải thích traffic được phép, timeout và asymmetric flow theo đúng firewall stack.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-050-conntrack-nftables-pf-state-table.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="State table: conntrack/nftables trên Linux và pf state trên FreeBSD">
+<meta property="og:description" content="Đọc state trước khi sửa rule: conntrack/nftables trên Linux và pf state trên FreeBSD.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-050-conntrack-nftables-pf-state-table.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="State table: conntrack/nftables trên Linux và pf state trên FreeBSD">
+<meta name="twitter:description" content="Đọc state trước khi sửa rule: conntrack/nftables trên Linux và pf state trên FreeBSD.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 50,
+  "date": "2026-08-19",
+  "axis": "Networking",
+  "eyebrow": "Networking · firewall state",
+  "slug": "conntrack-nftables-pf-state-table",
+  "title": "State table: conntrack/nftables trên Linux và pf state trên FreeBSD",
+  "lede": "Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-19",
+  "changes_system": false,
+  "sources": [
+    {"title":"rsync placeholder removed","url":"https://docs.kernel.org/networking/nf_conntrack-sysctl.html","kind":"upstream"},
+    {"title":"nftables wiki — Matching connection tracking stateful metainformation","url":"https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation","kind":"upstream"},
+    {"title":"FreeBSD Manual — pf.conf(5)","url":"https://man.freebsd.org/cgi/man.cgi?query=pf.conf&sektion=5","kind":"official"},
+    {"title":"FreeBSD Handbook — Firewalls / PF","url":"https://docs.freebsd.org/en/books/handbook/firewalls/","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#050 · 19·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Networking · firewall state</p>
+  <h1>State table: conntrack/nftables trên Linux và pf state trên FreeBSD</h1>
+  <p class="lede">Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.</p>
+  <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-19 · đối chiếu Linux kernel conntrack, nftables upstream và tài liệu PF của FreeBSD.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng state table như bằng chứng vận hành: xác định flow có được firewall theo dõi hay không, đọc trạng thái TCP/UDP và nhận diện khi đường đi hai chiều không cùng qua một firewall.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+<li>Đã nắm firewall cơ bản ở #007/#020, policy routing ở #029 và packet capture ở #036.</li>
+<li>Có quyền sudo/root trên máy lab. Không xoá state trên production trong bài này.</li>
+<li>Linux dùng netfilter/nftables; FreeBSD dùng PF. Hai state engine có khái niệm gần nhau nhưng không đồng nhất cú pháp.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Luồng packet đi qua rule và state table trên firewall stateful">
+<rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="35" y="92" width="150" height="64" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="110" y="120" font-size="13" font-weight="700">PACKET</text><text x="110" y="141" font-size="10">5-tuple + flags</text>
+<path d="M185 124H275" stroke="#0C6E61" stroke-width="3"/><polygon points="275,124 263,117 263,131" fill="#0C6E61"/>
+<rect x="275" y="70" width="210" height="108" rx="8" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/><text x="380" y="102" font-size="13" font-weight="700">STATE ENGINE</text><text x="380" y="126" font-size="10">Linux: conntrack</text><text x="380" y="146" font-size="10">FreeBSD: PF states</text>
+<path d="M485 124H575" stroke="#0C6E61" stroke-width="3"/><polygon points="575,124 563,117 563,131" fill="#0C6E61"/>
+<rect x="575" y="92" width="150" height="64" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="650" y="120" font-size="13" font-weight="700">DECISION</text><text x="650" y="141" font-size="10">pass / drop / update</text>
+</g></svg>
+<figcaption>Hình 1 — Firewall stateful không chỉ đọc rule tĩnh; nó còn đối chiếu packet với state đã biết để xử lý các packet tiếp theo của cùng flow.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Một rule cho TCP/443 có vẻ đúng nhưng client vẫn treo, hoặc bạn vừa sửa firewall mà một kết nối cũ vẫn chạy. Nếu chỉ nhìn ruleset, bạn đang thiếu nửa bức tranh: state table. Trên Linux, connection tracking của netfilter lưu thông tin flow và nftables có thể match các metadata như <code>ct state established,related</code>. Trên FreeBSD PF, state được tạo từ các rule stateful và xem bằng <code>pfctl -ss</code>.</p>
+<p>State table đặc biệt hữu ích khi debug asymmetric routing. Nếu SYN đi qua firewall A nhưng SYN-ACK quay qua firewall B, mỗi thiết bị chỉ thấy một nửa hội thoại. Kết quả thường là state không tiến triển như mong đợi, dù route riêng lẻ và rule riêng lẻ nhìn có vẻ hợp lý.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+<ul class="clean">
+<li><strong>Flow identity:</strong> thường dựa trên protocol, địa chỉ và port hai đầu; NAT có thể khiến state giữ thêm tuple trước/sau dịch.</li>
+<li><strong>Linux:</strong> conntrack là subsystem của netfilter; nftables đọc metadata conntrack nhưng không phải bản thân state table.</li>
+<li><strong>FreeBSD PF:</strong> <code>pfctl -ss</code> hiển thị states; timeout và state-policy nằm trong semantics của PF.</li>
+<li><strong>ESTABLISHED không đồng nghĩa ứng dụng khỏe:</strong> nó chỉ là bằng chứng ở lớp state/transport. Vẫn cần log ứng dụng và packet capture khi cần.</li>
+<li><strong>Không xoá state để “thử xem”:</strong> flush state có thể cắt kết nối hợp lệ và che mất bằng chứng.</li>
+</ul>
+<h3>Khác biệt theo hệ điều hành</h3>
+<p><strong>Ubuntu/Xubuntu và Debian:</strong> package <code>conntrack</code> cung cấp CLI xem state; <code>nft</code> dùng để xem ruleset. Cài package chỉ khi lab chưa có.</p>
+<p><strong>Fedora:</strong> package CLI thường là <code>conntrack-tools</code>; nftables vẫn dùng netfilter/conntrack của kernel.</p>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<p>FreeBSD tách riêng: PF dùng <code>pfctl</code>; không áp <code>nft</code>, <code>conntrack</code> hoặc <code>systemctl</code> cho PF.</p>
+</section>
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="Asymmetric routing làm hai firewall thấy hai nửa khác nhau của cùng kết nối">
+<rect width="760" height="245" fill="#FFFFFF"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="30" y="92" width="130" height="58" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="95" y="126" font-size="12" font-weight="700">CLIENT</text>
+<rect x="275" y="30" width="150" height="58" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="350" y="57" font-size="12" font-weight="700">FIREWALL A</text><text x="350" y="75" font-size="9">thấy SYN →</text>
+<rect x="275" y="158" width="150" height="58" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="350" y="185" font-size="12" font-weight="700">FIREWALL B</text><text x="350" y="203" font-size="9">thấy ← SYN-ACK</text>
+<rect x="600" y="92" width="130" height="58" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="665" y="126" font-size="12" font-weight="700">SERVER</text>
+<path d="M160 108L275 59M425 59L600 108" stroke="#0C6E61" stroke-width="3" fill="none"/><path d="M600 136L425 187M275 187L160 136" stroke="#B23A2E" stroke-width="3" fill="none"/>
+</g></svg>
+<figcaption>Hình 2 — Khi hai chiều đi qua hai firewall khác nhau, mỗi state engine có thể thiếu packet cần thiết để theo dõi flow đầy đủ.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2>
+<ol class="steps">
+<li><h3>Chụp baseline ruleset và state count trên Linux</h3>
+<p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu / Debian</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo nft list ruleset
+sudo sysctl net.netfilter.nf_conntrack_count net.netfilter.nf_conntrack_max</code></pre></div>
+<p>Không chỉnh rule ở bước này. Mục tiêu là biết ruleset nào đang chạy và state table đang dùng bao nhiêu entry.</p>
+<p class="code-label fedora"><span class="dot"></span>Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo nft list ruleset
+sudo sysctl net.netfilter.nf_conntrack_count net.netfilter.nf_conntrack_max</code></pre></div>
+</li>
+<li><h3>Liệt kê flow TCP và lọc dịch vụ 443 trên Linux</h3>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo conntrack -L -p tcp
+sudo conntrack -L -p tcp --dport 443</code></pre></div>
+<p>Nếu lệnh chưa có: Ubuntu/Xubuntu/Debian cài package <code>conntrack</code>; Fedora cài <code>conntrack-tools</code>. Trên production, ưu tiên cửa sổ quan sát ngắn vì bảng lớn có thể tạo output nhiều.</p>
+</li>
+<li><h3>Đối chiếu rule nào dùng connection state</h3>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo nft -a list ruleset | grep -E 'ct state|ct status|ct mark'</code></pre></div>
+<p>Không kết luận rằng mọi rule stateful phải chứa đúng chuỗi này: ruleset có thể được tạo bởi firewalld hoặc cấu trúc chain khác. Hãy dùng output này để tìm điểm bắt đầu rồi đọc toàn chain.</p>
+</li>
+<li><h3>Đọc PF states trên FreeBSD</h3>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pfctl -si
+pfctl -ss
+pfctl -vvs state</code></pre></div>
+<p><code>pfctl -si</code> cho thống kê tổng quát; <code>-ss</code> liệt kê state; <code>-vvs state</code> tăng chi tiết để đối chiếu interface, counters và timeout.</p>
+</li>
+<li><h3>Kiểm tra asymmetric path bằng packet capture</h3>
+<p>Trên Linux dùng <code>tcpdump</code> tại interface ingress/egress; trên FreeBSD cũng có <code>tcpdump</code>. Quan sát cùng một kết nối và xác nhận SYN, SYN-ACK, ACK có đi qua cùng stateful firewall hay không.</p>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo tcpdump -ni any 'tcp port 443 and (tcp[tcpflags] &amp; (tcp-syn|tcp-ack) != 0)'</code></pre></div>
+</li>
+</ol>
+</section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<p><strong>Expected Output / Kết quả mong đợi:</strong></p>
+<ul class="clean">
+<li>Linux: <code>nf_conntrack_count</code> nhỏ hơn <code>nf_conntrack_max</code>; <code>conntrack -L</code> có flow phù hợp với traffic đang tạo.</li>
+<li>Nftables: ruleset cho thấy nơi dùng <code>ct state</code> hoặc policy stateful tương ứng.</li>
+<li>FreeBSD: <code>pfctl -ss</code> có state cho traffic đang kiểm tra và counters thay đổi khi có packet mới.</li>
+<li>Packet capture: hai chiều của handshake xuất hiện trên firewall dự kiến. Nếu chỉ thấy một chiều, quay lại routing/policy routing trước khi sửa firewall rule.</li>
+</ul>
+<div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo conntrack -S
+sudo nft list ruleset | grep -E 'ct state|established|related'</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD verification</p>
+<div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pfctl -si
+pfctl -ss | head -n 20</code></pre></div>
+</section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+<ul class="clean">
+<li><strong><code>conntrack: command not found</code>:</strong> cài CLI đúng distro; kernel conntrack có thể vẫn đang hoạt động dù CLI chưa cài.</li>
+<li><strong><code>nf_conntrack_count</code> không tồn tại:</strong> kiểm tra module/subsystem conntrack có được sử dụng trên host hay không; đừng tự load module trên production chỉ để có metric.</li>
+<li><strong>State table gần đầy:</strong> không tăng <code>nf_conntrack_max</code> theo phản xạ. Xác định nguồn flow, timeout, scan/abuse và RAM budget trước.</li>
+<li><strong>Rule đã sửa nhưng kết nối cũ vẫn khác kỳ vọng:</strong> state cũ có thể còn hiệu lực. Thu bằng chứng trước; tránh flush toàn bảng.</li>
+<li><strong>PF không có state:</strong> kiểm tra PF có enable, rule có tạo state và traffic thực sự đi qua interface/rule dự kiến.</li>
+</ul>
+</section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+<p>State table chứa địa chỉ, port và topology vận hành nên output có thể nhạy cảm. Khi đưa vào ticket/chat, che địa chỉ nội bộ hoặc public IP nếu chính sách yêu cầu. Với máy biên có state table lớn, tránh dump liên tục vì vừa tốn CPU/I/O vừa tạo log khó kiểm soát.</p>
+<p>Không dùng <code>conntrack -F</code> hoặc <code>pfctl -F states</code> như bước debug mặc định. Hai lệnh đó thay đổi trạng thái hệ thống và có thể cắt kết nối đang hoạt động; bài này cố ý chỉ quan sát.</p>
+</section>
+<section><h2><span class="num">07</span> Bài tập tự luyện</h2>
+<ol>
+<li>Tạo một kết nối HTTPS hợp lệ, tìm đúng flow trong state table và ghi lại tuple hai chiều.</li>
+<li>So sánh output trước, trong và sau khi kết nối đóng; quan sát state còn tồn tại bao lâu.</li>
+<li>Vẽ đường đi của một flow qua hai router/firewall và chỉ ra vị trí asymmetric routing có thể phá stateful inspection.</li>
+<li>Trên FreeBSD, đối chiếu một state từ <code>pfctl -ss</code> với rule tương ứng trong <code>pfctl -sr</code>.</li>
+</ol>
+</section>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ol>
+<li><a href="https://docs.kernel.org/networking/nf_conntrack-sysctl.html">rsync placeholder removed</a> — upstream.</li>
+<li><a href="https://wiki.nftables.org/wiki-nftables/index.php/Matching_connection_tracking_stateful_metainformation">nftables wiki — Matching connection tracking stateful metainformation</a> — upstream.</li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=pf.conf&amp;sektion=5">FreeBSD Manual — pf.conf(5)</a> — official.</li>
+<li><a href="https://docs.freebsd.org/en/books/handbook/firewalls/">FreeBSD Handbook — Firewalls / PF</a> — official.</li>
+</ol></section>
+<footer class="post-footer"><a href="../index.html">← Về trang chủ Linux Daily</a></footer>
+</div></main>
+</body>
+</html>
