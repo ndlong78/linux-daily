@@ -1,6 +1,19 @@
 {
-  "count": 48,
+  "count": 49,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-08-18",
+      "href": "posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html",
+      "issue": 49,
+      "lede": "Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.",
+      "tags": [
+        "TLS outage lab"
+      ],
+      "title": "Lab TLS certificate outage: expiry, chain và hostname mismatch"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

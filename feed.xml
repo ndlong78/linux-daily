@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 17 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 18 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab TLS certificate outage: expiry, chain và hostname mismatch</title>
+      <link>https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html</guid>
+      <pubDate>Tue, 18 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.</description>
+    </item>
     <item>
       <title>Ansible check mode, diff và serial: rolling change có kiểm soát</title>
       <link>https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-040-pidstat-procstat-process-timeseries.html</guid>
       <pubDate>Sun, 09 Aug 2026 00:00:00 +0700</pubDate>
       <description>Snapshot top/ps chỉ cho một thời điểm. pidstat trên Linux và procstat kết hợp sampling trên FreeBSD giúp nhìn CPU, memory, I/O và resource usage của process theo chuỗi thời gian.</description>
-    </item>
-    <item>
-      <title>fd: tìm file nhanh nhưng phải hiểu ignore và hidden</title>
-      <link>https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html</guid>
-      <pubDate>Sat, 08 Aug 2026 00:00:00 +0700</pubDate>
-      <description>fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.</description>
     </item>
   </channel>
 </rss>

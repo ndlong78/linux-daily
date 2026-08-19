@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lab TLS certificate outage: expiry, chain và hostname mismatch — Linux Daily #049</title>
+<meta name="description" content="Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab TLS certificate outage: expiry, chain và hostname mismatch">
+<meta property="og:description" content="Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab TLS certificate outage: expiry, chain và hostname mismatch">
+<meta name="twitter:description" content="Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 49,
+  "date": "2026-08-18",
+  "axis": "Ôn tập",
+  "eyebrow": "Ôn tập · TLS outage lab",
+  "slug": "lab-tls-certificate-outage-expiry-chain-hostname",
+  "title": "Lab TLS certificate outage: expiry, chain và hostname mismatch",
+  "lede": "Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (OpenSSL 3.0.13, command-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-18",
+  "changes_system": true,
+  "sources": [
+    {
+      "title": "nginx — Module ngx_http_ssl_module",
+      "url": "https://nginx.org/en/docs/http/ngx_http_ssl_module.html",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD manual — openssl(1)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=openssl&sektion=1",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD manual — certctl(8)",
+      "url": "https://man.freebsd.org/cgi/man.cgi?query=certctl&sektion=8",
+      "kind": "official"
+    },
+    {
+      "title": "FreeBSD Handbook — Security",
+      "url": "https://docs.freebsd.org/en/books/handbook/security/",
+      "kind": "official"
+    }
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "advanced",
+    "topology": ["client-shell", "tls-service"],
+    "risks": ["downtime"],
+    "verification": ["functional", "negative", "recovery", "observability"],
+    "rollback_required": true,
+    "cleanup_required": true,
+    "failure_injection": true
+  }
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content">
+<div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#049 · 18·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Ôn tập · TLS outage lab</p>
+  <h1>Lab TLS certificate outage: expiry, chain và hostname mismatch</h1>
+  <p class="lede">Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.</p>
+  <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~20 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-18 · lệnh openssl chạy trên OpenSSL 3.0.13; lab tự ký hoàn toàn cục bộ, không đụng CA công cộng.</p>
+</section>
+
+<section class="objective">
+  <h2>Mục tiêu</h2>
+  <p>Sau bài này bạn phân biệt được ba nguyên nhân TLS outage chỉ bằng <strong>mã lỗi verify</strong>, thay vì đoán: chứng chỉ hết hạn, thiếu intermediate trong chain, và hostname không khớp SAN. Bạn cũng biết cách phục hồi từng ca mà không dùng <code>-k</code> hay tắt kiểm tra.</p>
+</section>
+
+<section class="prerequisites">
+  <h2>Yêu cầu tiên quyết</h2>
+  <ul>
+    <li>Bài <a href="post-002-ssh-hardening.html">#002 — gia cố SSH</a>: quen với khoá và cấu hình dịch vụ.</li>
+    <li>Bài <a href="post-005-doc-log-journald-syslog.html">#005 — đọc log</a>: lấy bằng chứng từ log thay vì phỏng đoán.</li>
+    <li>Bài <a href="post-020-firewall-rollback-negative-test.html">#020 — rollback và negative test</a>: thói quen kiểm chứng cả chiều âm.</li>
+    <li>Bài <a href="post-022-dns-troubleshooting-dig-resolvectl-drill.html">#022 — triage DNS</a>: tên miền phân giải đúng trước khi nghi ngờ TLS.</li>
+    <li>Một host lab dùng riêng. Lab tạo CA nội bộ và mở cổng loopback; không chạy trên máy phục vụ người dùng thật.</li>
+  </ul>
+</section>
+
+<figure>
+  <svg viewBox="0 0 640 200" role="img" aria-label="Sơ đồ chain of trust: Root CA ký Intermediate CA, Intermediate ký leaf certificate; client chỉ tin Root nên server phải gửi kèm Intermediate" xmlns="http://www.w3.org/2000/svg">
+    <rect x="12" y="70" width="150" height="58" rx="6" fill="#EEF2F0" stroke="#14201D" stroke-width="2"/>
+    <text x="87" y="94" text-anchor="middle" font-size="14" fill="#14201D">Root CA</text>
+    <text x="87" y="114" text-anchor="middle" font-size="11" fill="#566661">client tin sẵn</text>
+    <path d="M162 99 H 232" stroke="#14201D" stroke-width="2"/>
+    <path d="M226 93 l 10 6 l -10 6 z" fill="#14201D"/>
+    <rect x="236" y="70" width="160" height="58" rx="6" fill="#FFFFFF" stroke="#B23A2E" stroke-width="2"/>
+    <text x="316" y="94" text-anchor="middle" font-size="14" fill="#14201D">Intermediate CA</text>
+    <text x="316" y="114" text-anchor="middle" font-size="11" fill="#B23A2E">server PHẢI gửi kèm</text>
+    <path d="M396 99 H 466" stroke="#14201D" stroke-width="2"/>
+    <path d="M460 93 l 10 6 l -10 6 z" fill="#14201D"/>
+    <rect x="470" y="70" width="156" height="58" rx="6" fill="#EEF2F0" stroke="#14201D" stroke-width="2"/>
+    <text x="548" y="94" text-anchor="middle" font-size="14" fill="#14201D">Leaf (server)</text>
+    <text x="548" y="114" text-anchor="middle" font-size="11" fill="#566661">SAN = tên host</text>
+    <text x="320" y="168" text-anchor="middle" font-size="12" fill="#566661">Thiếu mắt xích giữa → client báo error 20, không phải &quot;cert sai&quot;</text>
+  </svg>
+  <figcaption>Client chỉ tin Root. Nếu server quên gửi Intermediate, chain đứt ở giữa và lỗi hiện ra như thể chứng chỉ không hợp lệ.</figcaption>
+</figure>
+
+<section data-lab-section="scenario">
+  <h2><span class="num">01</span> Bối cảnh thực tế</h2>
+  <p>7 giờ sáng, người dùng báo &quot;trang báo lỗi bảo mật&quot;. Trình duyệt hiện một cảnh báo chung chung. Ba nguyên nhân phổ biến nhất cho ra cảnh báo gần như giống hệt nhau:</p>
+  <ul>
+    <li>chứng chỉ đã hết hạn;</li>
+    <li>server không gửi intermediate nên client không dựng được chain;</li>
+    <li>chứng chỉ hợp lệ nhưng cấp cho tên khác với tên người dùng gõ.</li>
+  </ul>
+  <p>Phản xạ sai phổ biến là thêm <code>-k</code> vào curl, thấy &quot;hết lỗi&quot; rồi kết luận &quot;chỉ là cảnh báo&quot;. Việc đó chỉ tắt kiểm tra chứ không sửa gì, và che mất nguyên nhân thật. Lab này dựng cả ba ca trên một host để bạn thấy chúng khác nhau ở đúng một chỗ: <strong>mã lỗi</strong>.</p>
+</section>
+
+<section data-lab-section="topology">
+  <h2><span class="num">02</span> Kiến thức cốt lõi</h2>
+  <p>Xác thực TLS phía client là ba câu hỏi tách biệt, trả lời theo thứ tự:</p>
+  <ol>
+    <li><strong>Dựng được chain tới một anchor tin cậy không?</strong> Thất bại → <code>error 20: unable to get local issuer certificate</code>.</li>
+    <li><strong>Mọi chứng chỉ trong chain còn hiệu lực không?</strong> Thất bại → <code>error 10: certificate has expired</code>.</li>
+    <li><strong>Tên được yêu cầu có nằm trong SAN không?</strong> Thất bại → <code>error 62: hostname mismatch</code>.</li>
+  </ol>
+  <p>Ba mã này là công cụ phân loại. Đọc được mã là biết ngay phải sửa ở đâu: kho tin cậy, ngày hết hạn, hay danh sách tên.</p>
+  <p>Một khác biệt hay gây nhầm: <strong>cách khai báo chain không giống nhau giữa các phần mềm</strong>. nginx nhận một file nối leaf + intermediate trong <code>ssl_certificate</code>. Còn <code>openssl s_server</code> thì không — nó cần <code>-cert_chain</code> riêng. Nối file rồi truyền vào <code>-cert</code> sẽ vẫn thiếu chain, và bạn sẽ debug nhầm sang phía client.</p>
+  <p>Vị trí kho tin cậy hệ thống cũng khác nhau, nên khi cần thêm anchor nội bộ thì lệnh không dùng chung được.</p>
+  <p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu · Debian</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo cp lab-root.crt /usr/local/share/ca-certificates/
+sudo update-ca-certificates</code></pre></div>
+  <p class="code-label fedora"><span class="dot"></span>Fedora</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p>
+<pre><code class="language-bash">sudo cp lab-root.crt /etc/pki/ca-trust/source/anchors/
+sudo update-ca-trust</code></pre></div>
+  <p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p>
+<pre class="bsd"><code class="language-bash">cp lab-root.crt /usr/local/etc/ssl/certs/
+certctl rehash
+certctl list | head</code></pre></div>
+  <p>Trong lab bên dưới chúng ta <strong>không</strong> cài anchor vào kho hệ thống. Mọi kiểm chứng dùng <code>-CAfile</code> để chỉ định anchor tường minh — sạch hơn và không để lại dấu vết trên máy.</p>
+</section>
+
+<figure>
+  <svg viewBox="0 0 640 210" role="img" aria-label="Cây quyết định: đọc mã lỗi verify để chọn nguyên nhân, error 20 là thiếu chain, error 10 là hết hạn, error 62 là sai hostname" xmlns="http://www.w3.org/2000/svg">
+    <rect x="220" y="10" width="200" height="44" rx="6" fill="#13211E" stroke="#13211E"/>
+    <text x="320" y="38" text-anchor="middle" font-size="13" fill="#E7ECEA">Verify return code = ?</text>
+    <path d="M320 54 V 78 M 96 78 H 544 M 96 78 V 104 M 320 78 V 104 M 544 78 V 104" stroke="#14201D" stroke-width="2" fill="none"/>
+    <rect x="16" y="104" width="160" height="50" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
+    <text x="96" y="126" text-anchor="middle" font-size="13" fill="#14201D">20</text>
+    <text x="96" y="144" text-anchor="middle" font-size="11" fill="#566661">thiếu intermediate</text>
+    <rect x="240" y="104" width="160" height="50" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
+    <text x="320" y="126" text-anchor="middle" font-size="13" fill="#14201D">10</text>
+    <text x="320" y="144" text-anchor="middle" font-size="11" fill="#566661">hết hạn</text>
+    <rect x="464" y="104" width="160" height="50" rx="6" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/>
+    <text x="544" y="126" text-anchor="middle" font-size="13" fill="#14201D">62</text>
+    <text x="544" y="144" text-anchor="middle" font-size="11" fill="#566661">sai hostname</text>
+    <text x="320" y="188" text-anchor="middle" font-size="12" fill="#566661">Sửa ở: cấu hình server · vòng đời chứng chỉ · danh sách SAN</text>
+  </svg>
+  <figcaption>Mã lỗi verify chia ba nhánh xử lý khác hẳn nhau. Đọc mã trước, đừng đoán từ ảnh chụp màn hình trình duyệt.</figcaption>
+</figure>
+
+<section data-lab-section="safety">
+  <h2><span class="num">03</span> Các bước thực hiện</h2>
+  <p>Lab chạy hoàn toàn trên loopback bằng công cụ có sẵn trong OpenSSL. Không cần cài web server, không chạm CA công cộng, không sửa kho tin cậy hệ thống.</p>
+  <ol class="steps">
+    <li>
+      <h3>Dựng thư mục lab và CA gốc.</h3>
+      <p>Mọi thứ nằm gọn trong một thư mục để bước dọn dẹp chỉ là xoá thư mục đó.</p>
+      <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">mkdir -p ~/tls-lab &amp;&amp; cd ~/tls-lab
+openssl req -x509 -newkey rsa:2048 -nodes -keyout root.key -out root.crt \
+  -subj "/CN=Linux Daily Root CA" -days 3650</code></pre></div>
+    </li>
+    <li>
+      <h3>Ký một intermediate CA.</h3>
+      <p>Đây là mắt xích mà server hay quên gửi. Ràng buộc <code>pathlen:0</code> giữ intermediate không ký tiếp CA con.</p>
+      <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">printf 'basicConstraints=critical,CA:TRUE,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\n' &gt; int.ext
+openssl req -newkey rsa:2048 -nodes -keyout int.key -out int.csr \
+  -subj "/CN=Linux Daily Intermediate CA"
+openssl x509 -req -in int.csr -CA root.crt -CAkey root.key -CAcreateserial \
+  -out int.crt -days 1825 -extfile int.ext</code></pre></div>
+    </li>
+    <li>
+      <h3>Chuẩn bị hạ tầng tối thiểu cho <code>openssl ca</code>.</h3>
+      <p>Cần <code>openssl ca</code> chứ không phải <code>openssl x509</code>, vì chỉ <code>ca</code> mới đặt được <code>notAfter</code> vào quá khứ để tạo chứng chỉ hết hạn thật.</p>
+      <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">mkdir -p db &amp;&amp; : &gt; db/index.txt &amp;&amp; echo 1000 &gt; db/serial
+cat &gt; ca.cnf &lt;&lt;'EOF'
+[ ca ]
+default_ca = CA_int
+[ CA_int ]
+database        = db/index.txt
+serial          = db/serial
+new_certs_dir   = db
+certificate     = int.crt
+private_key     = int.key
+default_md      = sha256
+policy          = pol
+email_in_dn     = no
+rand_serial     = no
+unique_subject  = no
+copy_extensions = copy
+[ pol ]
+commonName = supplied
+[ leaf ]
+basicConstraints = critical,CA:FALSE
+keyUsage         = critical,digitalSignature,keyEncipherment
+extendedKeyUsage = serverAuth
+EOF</code></pre></div>
+    </li>
+    <li>
+      <h3>Phát hành ba chứng chỉ cho ba kịch bản.</h3>
+      <p><code>good</code> hợp lệ, <code>other</code> hợp lệ nhưng mang tên khác, <code>expired</code> có <code>notAfter</code> nằm ở năm 2025.</p>
+      <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">for cn in good other; do
+  openssl req -newkey rsa:2048 -nodes -keyout $cn.key -out $cn.csr \
+    -subj "/CN=$cn.lab.test" -addext "subjectAltName=DNS:$cn.lab.test"
+  openssl ca -config ca.cnf -batch -notext -extensions leaf -days 365 \
+    -in $cn.csr -out $cn.crt
+done
+
+openssl req -newkey rsa:2048 -nodes -keyout expired.key -out expired.csr \
+  -subj "/CN=expired.lab.test" -addext "subjectAltName=DNS:expired.lab.test"
+openssl ca -config ca.cnf -batch -notext -extensions leaf \
+  -startdate 20250101000000Z -enddate 20250201000000Z \
+  -in expired.csr -out expired.crt</code></pre></div>
+    </li>
+  </ol>
+</section>
+
+<section data-lab-section="failure-injection">
+<h2>Failure injection</h2>
+<p>Ba ca lỗi được dựng bằng cách khởi động dịch vụ TLS <em>thiếu đúng một thứ</em>. Mỗi lệnh mở một server nền trên loopback; ghi lại PID để dừng ở bước rollback.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">cd ~/tls-lab
+# Ca A — thiếu intermediate: chỉ đưa leaf, không khai -cert_chain
+openssl s_server -quiet -accept 14443 -cert good.crt -key good.key -www &amp;
+# Ca B — hết hạn: chain đủ nhưng notAfter đã qua
+openssl s_server -quiet -accept 14444 -cert expired.crt -key expired.key -cert_chain int.crt -www &amp;
+# Ca C — sai tên: chain đủ, cert hợp lệ, nhưng cấp cho other.lab.test
+openssl s_server -quiet -accept 14445 -cert other.crt -key other.key -cert_chain int.crt -www &amp;
+jobs -l</code></pre></div>
+</section>
+
+<section data-lab-section="execution">
+<h2>Triage bằng mã lỗi</h2>
+<p>Dùng cùng một lệnh cho cả ba cổng và chỉ đọc mã trả về. <code>-verify_return_error</code> khiến client dừng ngay khi verify hỏng thay vì bắt tay xong rồi mới than.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">for port in 14443 14444 14445; do
+  echo "--- port $port ---"
+  echo | openssl s_client -connect 127.0.0.1:$port -servername good.lab.test \
+    -verify_return_error -verify_hostname good.lab.test -CAfile root.crt 2&gt;&amp;1 \
+    | grep -E 'verify error|Verification'
+done</code></pre></div>
+<p>Khi đã biết mã lỗi, lấy bằng chứng cụ thể cho từng nhánh. Với ca hết hạn, bằng chứng là ngày trên chính chứng chỉ server gửi ra:</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">echo | openssl s_client -connect 127.0.0.1:14444 -servername expired.lab.test 2&gt;/dev/null \
+  | openssl x509 -noout -subject -dates</code></pre></div>
+<p>Với ca sai tên, bằng chứng là SAN thực tế so với tên bạn yêu cầu:</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">openssl x509 -in other.crt -noout -ext subjectAltName</code></pre></div>
+</section>
+
+<section data-lab-section="verification">
+  <h2><span class="num">04</span> Kiểm chứng</h2>
+  <p>Kiểm chứng có ba phần: chiều âm (ba ca phải hỏng đúng kiểu), chiều dương (cấu hình đúng phải đạt), và bằng chứng quan sát được (ngày hết hạn, SAN thực tế).</p>
+  <p>Ca A sửa bằng cách khai đúng chain — không phải bằng cách nối file vào <code>-cert</code>:</p>
+  <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">openssl s_server -quiet -accept 14446 -cert good.crt -key good.key -cert_chain int.crt -www &amp;
+echo | openssl s_client -connect 127.0.0.1:14446 -servername good.lab.test \
+  -verify_return_error -verify_hostname good.lab.test -CAfile root.crt 2&gt;&amp;1 \
+  | grep -E 'Verification|Verify return code'</code></pre></div>
+  <p>Kiểm tra ngoại tuyến, không cần dịch vụ chạy — hữu ích khi bạn chỉ có file trong tay:</p>
+  <p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+  <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">openssl verify -CAfile root.crt good.crt                       # thiếu chain
+openssl verify -CAfile root.crt -untrusted int.crt expired.crt # hết hạn
+openssl verify -CAfile root.crt -untrusted int.crt \
+  -verify_hostname wrong.lab.test other.crt                    # sai tên
+openssl verify -CAfile root.crt -untrusted int.crt good.crt    # đạt</code></pre></div>
+  <div class="expected-output">
+    <h3>Expected Output / Kết quả mong đợi</h3>
+    <p>Ba cổng lỗi cho ra ba mã khác nhau — đây là điểm mấu chốt của bài:</p>
+    <div class="code-wrap">
+<pre><code class="language-text">--- port 14443 ---
+verify error:num=20:unable to get local issuer certificate
+--- port 14444 ---
+verify error:num=10:certificate has expired
+--- port 14445 ---
+verify error:num=62:hostname mismatch</code></pre></div>
+    <p>Bằng chứng ngày hết hạn của ca B:</p>
+    <div class="code-wrap">
+<pre><code class="language-text">subject=CN = expired.lab.test
+notBefore=Jan  1 00:00:00 2025 GMT
+notAfter=Feb  1 00:00:00 2025 GMT</code></pre></div>
+    <p>Sau khi khai đúng <code>-cert_chain</code>, chiều dương phải sạch:</p>
+    <div class="code-wrap">
+<pre><code class="language-text">Verification: OK
+Verify return code: 0 (ok)</code></pre></div>
+    <p>Và kiểm tra ngoại tuyến cho ra đúng bốn kết quả tương ứng:</p>
+    <div class="code-wrap">
+<pre><code class="language-text">error 20 at 0 depth lookup: unable to get local issuer certificate
+error 10 at 0 depth lookup: certificate has expired
+error 62 at 0 depth lookup: hostname mismatch
+good.crt: OK</code></pre></div>
+  </div>
+</section>
+
+<section data-lab-section="rollback">
+<h2>Rollback</h2>
+<p>Lab mở bốn tiến trình nền và không sửa gì ngoài thư mục lab. Rollback là dừng đúng các tiến trình đó và xác nhận cổng đã đóng.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">kill %1 %2 %3 %4 2&gt;/dev/null
+jobs -l</code></pre></div>
+<p>Nếu shell đã mất danh sách job, tìm theo cổng. Lệnh liệt kê listener khác nhau giữa Linux và FreeBSD:</p>
+<p class="code-label linux"><span class="dot"></span>Linux</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ss -lntp | grep -E '1444[3-6]'</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">sockstat -4 -l | grep -E '1444[3-6]'</code></pre></div>
+</section>
+
+<section data-lab-section="cleanup">
+<h2>Gỡ / Hoàn tác</h2>
+<p>Vì lab không cài anchor vào kho tin cậy hệ thống, dọn dẹp chỉ là xoá thư mục làm việc sau khi đã chắc không còn tiến trình nào giữ file.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">pgrep -fl 's_server -quiet -accept 1444' || echo 'không còn s_server nào'
+rm -rf ~/tls-lab</code></pre></div>
+<p>Nếu bạn <em>có</em> thử cài <code>root.crt</code> vào kho hệ thống ở mục 02, phải gỡ ra: xoá file trong thư mục anchor tương ứng rồi chạy lại <code>update-ca-certificates</code>, <code>update-ca-trust</code> hoặc <code>certctl rehash</code>. Một CA lab còn nằm trong kho tin cậy là rủi ro thật, không phải rác vô hại.</p>
+</section>
+
+<section>
+  <h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2>
+  <ul>
+    <li><strong>Đừng nối file rồi truyền vào <code>-cert</code> của <code>s_server</code>.</strong> nginx chấp nhận fullchain trong <code>ssl_certificate</code>, nhưng <code>s_server</code> thì cần <code>-cert_chain</code>. Nhầm chỗ này sẽ khiến bạn thấy error 20 và đi debug nhầm phía client.</li>
+    <li><strong><code>curl -k</code> không phải cách sửa.</strong> Nó chỉ tắt kiểm tra. Nếu cần chạy nhanh để so sánh, hãy dùng <code>--cacert root.crt</code> — vẫn kiểm tra đầy đủ nhưng với anchor bạn chỉ định.</li>
+    <li><strong>Hết hạn có thể nằm ở intermediate, không chỉ ở leaf.</strong> Khi thấy error 10, kiểm tra ngày của cả chain chứ không chỉ chứng chỉ đầu.</li>
+    <li><strong>CN không thay được SAN.</strong> Client hiện đại chỉ đọc SAN. Một chứng chỉ có CN đúng nhưng SAN thiếu vẫn cho error 62.</li>
+    <li><strong>Sai giờ hệ thống cũng cho error 10.</strong> Nếu chứng chỉ rõ ràng còn hạn mà vẫn báo hết hạn, kiểm tra đồng hồ trước khi cấp lại chứng chỉ.</li>
+  </ul>
+</section>
+
+<section>
+  <h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+  <ul>
+    <li>Giữ khoá riêng ở quyền <code>600</code> và không bao giờ commit vào Git — kể cả khoá lab.</li>
+    <li>Theo dõi hạn chứng chỉ bằng cảnh báo chủ động thay vì chờ người dùng báo. Ngày hết hạn đọc được không cần đăng nhập vào server.</li>
+    <li>Khi cấp lại chứng chỉ, kiểm tra chain ngay tại thời điểm triển khai — lỗi thiếu intermediate thường lọt vì máy quản trị đã cache sẵn intermediate còn máy người dùng thì không.</li>
+    <li>Không thêm CA nội bộ vào kho tin cậy của máy trạm chỉ để &quot;cho hết lỗi&quot;. Mỗi anchor thêm vào là một bên có thể ký chứng chỉ cho bất kỳ tên miền nào.</li>
+  </ul>
+</section>
+
+<section class="exercise">
+  <h2><span class="num">07</span> Bài tập tự luyện</h2>
+  <ol>
+    <li>Phát hành một chứng chỉ có <code>CN=api.lab.test</code> nhưng SAN chỉ chứa <code>DNS:www.lab.test</code>. Dự đoán mã lỗi khi yêu cầu <code>api.lab.test</code>, rồi kiểm chứng.</li>
+    <li>Tạo một intermediate đã hết hạn nhưng leaf còn hạn. Xác định mã lỗi và chỉ ra chứng chỉ nào trong chain gây ra nó.</li>
+    <li>Dựng lại ca A rồi sửa bằng <code>-cert_chain</code>. Ghi lại đúng một dòng bằng chứng chứng minh chain đã đủ.</li>
+    <li>Giải thích vì sao <code>curl -k</code> làm mất khả năng phân biệt cả ba ca trong bài này.</li>
+  </ol>
+</section>
+
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Đối chiếu ngày 2026-08-18.</p><ul class="clean">
+<li><a href="https://nginx.org/en/docs/http/ngx_http_ssl_module.html">nginx — Module ngx_http_ssl_module</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=openssl&amp;sektion=1">FreeBSD manual — openssl(1)</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=certctl&amp;sektion=8">FreeBSD manual — certctl(8)</a></li>
+<li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li>
+</ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-042-lab-service-outage-process-port-log-dependency.html"><span class="series-kicker">#042</span><span>Lab service outage: process, port, log và dependency</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
+      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
+      <li><a href="post-021-storage-backup-restore-recovery-lab.html">#021 · Storage hỏng có chủ đích: backup trước, restore có bằng chứng đa hệ</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
+  <div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></div>
+</footer>
+</div>
+</main>
+</body>
+</html>

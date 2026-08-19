@@ -51,3 +51,4 @@
 #046 | 2026-08-15 | Công cụ mới | fzf cho chọn file, process và history tương tác
 #047 | 2026-08-16 | Monitoring | Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD
 #048 | 2026-08-17 | Automation | Ansible check mode, diff và serial: rolling change có kiểm soát
+#049 | 2026-08-18 | Ôn tập | Lab TLS certificate outage: expiry, chain và hostname mismatch
