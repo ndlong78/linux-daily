@@ -182,7 +182,7 @@ pfctl -ss | head -n 20</code></pre></div>
 <p>State table chứa địa chỉ, port và topology vận hành nên output có thể nhạy cảm. Khi đưa vào ticket/chat, che địa chỉ nội bộ hoặc public IP nếu chính sách yêu cầu. Với máy biên có state table lớn, tránh dump liên tục vì vừa tốn CPU/I/O vừa tạo log khó kiểm soát.</p>
 <p>Không dùng <code>conntrack -F</code> hoặc <code>pfctl -F states</code> như bước debug mặc định. Hai lệnh đó thay đổi trạng thái hệ thống và có thể cắt kết nối đang hoạt động; bài này cố ý chỉ quan sát.</p>
 </section>
-<section><h2><span class="num">07</span> Bài tập tự luyện</h2>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2>
 <ol>
 <li>Tạo một kết nối HTTPS hợp lệ, tìm đúng flow trong state table và ghi lại tuple hai chiều.</li>
 <li>So sánh output trước, trong và sau khi kết nối đóng; quan sát state còn tồn tại bao lâu.</li>
