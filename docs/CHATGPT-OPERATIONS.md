@@ -68,7 +68,7 @@ Mỗi lần chạy, ChatGPT phải:
 6. Chạy **capability preflight trước khi tạo branch mới**: xác định có local writable checkout hay chỉ có GitHub connector write access.
 7. Nếu có local writable checkout, dùng local one-pass flow: chuẩn bị source → materialize deterministic artifacts → `tools/pr_preflight.py` → branch/commit/push.
 8. Nếu không có local writable checkout nhưng GitHub connector ghi được, dùng **API-only fallback**; không được dừng chỉ vì thiếu checkout.
-8b. Trong API-only fallback, artifact dẫn xuất do workflow `Materialize Artifacts` dựng — dispatch nó **trước** khi mở PR, không commit source-only rồi chờ CI chỉ ra thiếu.
+8b. Trong API-only fallback, artifact dẫn xuất do workflow `Materialize Artifacts` dựng — kích hoạt nó bằng `rerun_workflow_job` **trước** khi mở PR, không commit source-only rồi chờ CI chỉ ra thiếu.
 9. Nếu branch chuẩn của đúng issue đã tồn tại, chưa có PR và head vẫn bằng `main`, coi đó là interrupted empty branch và resume chính branch đó.
 10. Chuẩn bị bài theo `templates/post.template.html`, `AGENTS.md`, `STYLE.md` và validators hiện hành.
 11. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, tạo section **Nguồn kỹ thuật** khớp metadata.
@@ -222,18 +222,12 @@ workflow `Materialize Artifacts` dựng.
 3. resume interrupted branch nếu có; nếu không, tạo branch chuẩn từ `main`;
 4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API;
    không đoán nội dung artifact render;
-5. dispatch `Materialize Artifacts` cho branch đó và **chờ run kết thúc**:
+5. kích hoạt `Materialize Artifacts` bằng `rerun_workflow_job` trên job `materialize` của
+   run gần nhất, rồi **chờ run kết thúc**. Connector không expose `workflow_dispatch`, nhưng
+   expose rerun — đây là giới hạn connector chứ không phải thiếu `actions: write`.
 
-   ```text
-   POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatches
-   {"ref": "main",
-    "inputs": {"branch": "chatgpt/linux-daily-<NNN>-<YYYYMMDD>",
-               "confirm": "materialize-artifacts"}}
-   ```
-
-   `ref` luôn là `main` (lấy định nghĩa workflow từ default branch); branch cần dựng nằm ở
-   input `branch`. Dispatch cần quyền `actions: write`; 403 là capability blocker phải báo
-   ngay, không im lặng bỏ qua;
+   Workflow tự tìm branch đích từ `state.json.last_issue` trên default branch, nên rerun luôn
+   dựng đúng branch của ngày hôm đó dù rerun phát lại inputs cũ;
 6. run đỏ → **không mở PR**; đọc log run và báo blocker. Không commit đoán artifact để dò CI;
 7. run xanh → mở PR, kiểm state/diff/duplicate/review thread, rồi chuyển Ready **ngay, không
    chờ CI success**. Sau khi materialize xanh thì artifact đã đúng nên không còn lý do giữ
