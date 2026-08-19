@@ -195,8 +195,16 @@ Vì vậy khi không có local writable checkout, thứ tự bắt buộc là **
 
 1. ghi source core lên feature branch;
 2. dispatch `Materialize Artifacts` cho branch đó và **chờ run kết thúc**;
-3. run xanh → mở PR (Draft), rồi chuyển Ready khi CI xanh trên head SHA mới;
+3. run xanh → mở PR rồi chuyển **Ready ngay** khi diff/state/duplicate/review sạch, không chờ CI;
 4. run đỏ → **không mở PR**; đọc log của run và báo capability blocker kèm nguyên nhân.
+
+Ở bước 3, Ready phải xảy ra **trước khi CI hoàn tất**. `linux-daily-auto-merge.yml` chạy theo
+`workflow_run` của `CI` và kiểm `draft=false` tại đúng thời điểm đó; nếu PR còn Draft lúc CI
+xanh thì auto-merge bỏ qua, và không có run CI mới nào tự phát sinh sau khi chuyển Ready.
+Khi ordering bị lỡ, rerun CI trên cùng exact head SHA — không tạo commit rỗng.
+
+Sau khi materialize xanh thì artifact đã đúng, nên không còn lý do giữ Draft. Draft chỉ dành
+cho trường hợp chưa dispatch hoặc dispatch đỏ.
 
 Thứ tự này quan trọng chứ không phải tiểu tiết. Nếu mở PR trước rồi mới dispatch, một lượt
 chạy kết thúc sớm — hoặc một dispatch bị từ chối vì thiếu quyền `actions: write` — sẽ để lại
@@ -235,7 +243,7 @@ Ràng buộc kèm theo:
 3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
 4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API; không đoán nội dung artifact render;
 5. dispatch `Materialize Artifacts` cho branch và chờ run kết thúc; run đỏ thì dừng và báo blocker, không mở PR;
-6. run xanh thì mở Draft PR; kiểm state/diff/duplicate/review rồi chuyển Ready khi CI xanh trên head SHA mới;
+6. run xanh thì mở PR; kiểm state/diff/duplicate/review rồi chuyển Ready **ngay, không chờ CI success** (auto-merge kiểm `draft=false` lúc CI hoàn tất);
 7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
 8. nếu CI đỏ vì source, self-fix trên cùng branch rồi dispatch lại; không commit đoán artifact;
 9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.

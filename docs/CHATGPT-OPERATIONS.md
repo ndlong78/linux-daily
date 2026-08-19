@@ -68,6 +68,7 @@ Mỗi lần chạy, ChatGPT phải:
 6. Chạy **capability preflight trước khi tạo branch mới**: xác định có local writable checkout hay chỉ có GitHub connector write access.
 7. Nếu có local writable checkout, dùng local one-pass flow: chuẩn bị source → materialize deterministic artifacts → `tools/pr_preflight.py` → branch/commit/push.
 8. Nếu không có local writable checkout nhưng GitHub connector ghi được, dùng **API-only fallback**; không được dừng chỉ vì thiếu checkout.
+8b. Trong API-only fallback, artifact dẫn xuất do workflow `Materialize Artifacts` dựng — dispatch nó **trước** khi mở PR, không commit source-only rồi chờ CI chỉ ra thiếu.
 9. Nếu branch chuẩn của đúng issue đã tồn tại, chưa có PR và head vẫn bằng `main`, coi đó là interrupted empty branch và resume chính branch đó.
 10. Chuẩn bị bài theo `templates/post.template.html`, `AGENTS.md`, `STYLE.md` và validators hiện hành.
 11. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, tạo section **Nguồn kỹ thuật** khớp metadata.
@@ -83,6 +84,9 @@ Mỗi lần chạy, ChatGPT phải:
 
 - `AGENTS.md`: hợp đồng vận hành của AI agent.
 - `STYLE.md`: chuẩn ngôn ngữ, cấu trúc, code block và safety affordance.
+- `curriculum-plan.json`: hàng đợi chủ đề. `tools/curriculum_planner.py` bắt
+  `planning_horizon_days == len(topics)`, nên khi lấy một chủ đề ra để viết bài thì phải
+  bổ sung một chủ đề mới ở cuối hàng đợi, đúng trục theo chu kỳ 7. Gỡ mà không bù là gate đỏ.
 - `state.json`: trạng thái cadence.
 - `topics.md`: lịch sử chủ đề và thứ tự series.
 - `templates/post.template.html`: khung bài.
@@ -142,6 +146,12 @@ Linux Daily #041+ phải đạt style contract:
 - các bước thực hiện dùng `<ol class="steps">`;
 - mọi code block có `language-*`;
 - command block shell có `data-run-as="user|sudo|root"`;
+- command block khác nhau theo OS có nhãn `class="code-label <token>"` với token thuộc
+  `bsd | ubuntu | debian | fedora | linux | same`; **mỗi bài bắt buộc có ít nhất một khối
+  FreeBSD gắn `code-label bsd`** (xem STYLE.md mục 5.1). Thiếu nhãn là lỗi đã từng chặn
+  bài #048;
+- thân bài phải nhắc rõ cả `Ubuntu` lẫn `Xubuntu`; `tools/distro_coverage.py` bỏ qua vùng
+  `Tested on` khi đếm, nên chỉ ghi ở banner là chưa đủ;
 - verification có Expected Output/Kết quả mong đợi;
 - `changes_system=true` thì có **Gỡ / Hoàn tác**;
 - không shell prompt trong command block, không `curl | sh` chạy trực tiếp, không placeholder legacy kiểu `YOUR_*`.
@@ -203,16 +213,35 @@ Capability phải được xác định trước khi tạo branch mới để tr
 
 ## Quy trình một bài mới — API-only fallback
 
+Thứ tự bắt buộc là **ghi source → dispatch → chờ xong → mới mở PR**. Agent API-only không
+chạy được generator, còn CI thì bị `workflow_safety` cấm commit, nên artifact chỉ có thể do
+workflow `Materialize Artifacts` dựng.
+
 1. kiểm cadence, duplicate và GitHub write capability trước khi tạo branch mới;
 2. chuẩn bị nội dung + source-of-truth metadata trong agent;
 3. resume interrupted branch nếu có; nếu không, tạo branch chuẩn từ `main`;
-4. ghi source core và deterministic artifacts có thể xác định chắc chắn bằng GitHub API;
-5. mở Draft PR khi source core đã tồn tại trên branch;
-6. kiểm state/diff/duplicate/review thread; khi sạch, chuyển PR sang Ready ngay;
-7. dùng CI read-only làm remote preflight authoritative;
-8. nếu CI fail, đọc log và sửa đúng lỗi branch-caused trên cùng branch;
-9. exact-head CI success sẽ kích `Linux Daily Auto Merge`;
-10. nếu CI success xảy ra lúc PR còn Draft, chuyển Ready rồi rerun CI/quality-gate trên cùng SHA để tạo workflow_run success mới.
+4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API;
+   không đoán nội dung artifact render;
+5. dispatch `Materialize Artifacts` cho branch đó và **chờ run kết thúc**:
+
+   ```text
+   POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatches
+   {"ref": "main",
+    "inputs": {"branch": "chatgpt/linux-daily-<NNN>-<YYYYMMDD>",
+               "confirm": "materialize-artifacts"}}
+   ```
+
+   `ref` luôn là `main` (lấy định nghĩa workflow từ default branch); branch cần dựng nằm ở
+   input `branch`. Dispatch cần quyền `actions: write`; 403 là capability blocker phải báo
+   ngay, không im lặng bỏ qua;
+6. run đỏ → **không mở PR**; đọc log run và báo blocker. Không commit đoán artifact để dò CI;
+7. run xanh → mở PR, kiểm state/diff/duplicate/review thread, rồi chuyển Ready **ngay, không
+   chờ CI success**. Sau khi materialize xanh thì artifact đã đúng nên không còn lý do giữ
+   Draft; Draft chỉ dành cho trường hợp chưa dispatch hoặc dispatch đỏ;
+8. dùng CI read-only làm remote re-validation cho phần source;
+9. nếu CI fail, đọc log, sửa source trên cùng branch rồi **dispatch lại** trước khi chờ CI;
+10. exact-head CI success sẽ kích `Linux Daily Auto Merge`;
+11. nếu CI success xảy ra lúc PR còn Draft, chuyển Ready rồi rerun CI/quality-gate trên cùng SHA để tạo workflow_run success mới.
 
 Không tạo helper/workflow one-shot kiểu `prNN_finalizer` hoặc `tools/prNN_*.py` rồi để Actions tự sửa repository. Không tạo no-op commit chỉ để kích hoạt auto-merge.
 
