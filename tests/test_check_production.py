@@ -119,3 +119,76 @@ def test_social_asset_is_covered_by_the_fingerprint_contract():
     _, files = site_fingerprint.collect()
     served = {item.public_path for item in files}
     assert f"/{socialmeta.image_relpath(latest)}" in served
+
+
+# --- Regression: /robots.txt bị Cloudflare AI Crawl Control viết lại ở edge ---
+
+CLOUDFLARE_MANAGED_BLOCK = b"""# Content-Signal
+# search:   building a search index and providing search results
+# ai-train: training or fine-tuning AI models.
+
+# BEGIN Cloudflare Managed content
+User-agent: *
+Content-Signal: search=yes,ai-train=no,use=reference
+Allow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: GPTBot
+Disallow: /
+# END Cloudflare Managed Content
+
+"""
+
+
+def _repo_robots() -> tuple[str, bytes]:
+    _, expected = check_production._expected_by_public_path()
+    return expected["/robots.txt"]
+
+
+def test_cloudflare_managed_prefix_on_robots_is_not_drift():
+    """Production nối khối managed lên trước nguyên bản repo — đó không phải deploy hỏng.
+
+    Đây đúng là hình dạng body mà https://linux.no.id.vn/robots.txt trả về sau khi
+    bật AI Crawl Control: hash luôn khác repo, nhưng nguyên bản repo còn nguyên ở cuối.
+    """
+    sha, body_repo = _repo_robots()
+    served = CLOUDFLARE_MANAGED_BLOCK + body_repo
+
+    assert site_fingerprint.sha256_bytes(served) != sha, "test phải mô phỏng body đã bị đổi"
+    assert check_production._body_drift("/robots.txt", served, sha, body_repo) is None
+
+
+def test_edge_managed_robots_still_catches_stale_deploy():
+    """Nới sang containment không được làm mất khả năng bắt production cũ."""
+    sha, body_repo = _repo_robots()
+    stale = CLOUDFLARE_MANAGED_BLOCK + b"User-agent: *\nAllow: /\n\nSitemap: https://old.example/sitemap.xml\n"
+
+    drift = check_production._body_drift("/robots.txt", stale, sha, body_repo)
+    assert drift and "drift for /robots.txt" in drift
+
+
+def test_edge_managed_robots_catches_repo_content_disappearing():
+    """Nếu edge nuốt mất phần của repo thì vẫn phải đỏ, không im lặng cho qua."""
+    sha, body_repo = _repo_robots()
+
+    drift = check_production._body_drift("/robots.txt", CLOUDFLARE_MANAGED_BLOCK, sha, body_repo)
+    assert drift and "drift for /robots.txt" in drift
+
+
+def test_trailing_newline_alone_is_not_drift():
+    """Edge có thể cắt newline cuối; đó không phải thay đổi nội dung."""
+    sha, body_repo = _repo_robots()
+
+    assert check_production._body_drift("/robots.txt", body_repo.rstrip(), sha, body_repo) is None
+
+
+def test_non_edge_managed_paths_are_still_compared_byte_exact():
+    """Chỉ /robots.txt được nới. Trang chủ lệch một byte vẫn phải đỏ."""
+    _, expected = check_production._expected_by_public_path()
+    sha, body = expected["/"]
+
+    assert check_production._body_drift("/", body, sha, body) is None
+    drift = check_production._body_drift("/", body + b" ", sha, body)
+    assert drift and "expected sha256" in drift

@@ -99,6 +99,35 @@ def _cache_observation(label: str, headers: dict[str, str], errors: list[str], w
         warnings.append(f"{label}: cache-control header missing")
 
 
+def _body_drift(public_path: str, body: bytes, expected_sha: str, expected_bytes: bytes) -> str | None:
+    """So body production với artifact repo; trả message lỗi hoặc None.
+
+    Mặc định là so byte tuyệt đối. Riêng path edge-managed (Cloudflare tự chèn
+    khối quản lý vào /robots.txt) thì so containment: nguyên bản repo phải xuất
+    hiện nguyên vẹn trong body. Containment vẫn bắt được deploy cũ hoặc file bị
+    mất, chỉ bỏ qua đúng phần edge thêm vào.
+    """
+    if public_path in site_fingerprint.EDGE_MANAGED_PATHS:
+        needle = expected_bytes.strip()
+        if not needle:
+            return f"{public_path}: artifact repo rỗng, không kiểm được containment"
+        if needle in body:
+            return None
+        return (
+            f"production stale/content drift for {public_path} "
+            f"(edge-managed: không tìm thấy nguyên bản repo trong body production, "
+            f"{len(needle)} bytes)"
+        )
+
+    actual_sha = site_fingerprint.sha256_bytes(body)
+    if actual_sha == expected_sha:
+        return None
+    return (
+        f"production stale/content drift for {public_path} "
+        f"(expected sha256 {expected_sha[:12]}, got {actual_sha[:12]})"
+    )
+
+
 def _expected_by_public_path() -> tuple[str, dict[str, tuple[str, bytes]]]:
     fingerprint, files = site_fingerprint.collect()
     expected: dict[str, tuple[str, bytes]] = {}
@@ -110,7 +139,7 @@ def _expected_by_public_path() -> tuple[str, dict[str, tuple[str, bytes]]]:
 
 def _production_fingerprint(responses_by_path: dict[str, bytes]) -> str:
     aggregate = site_fingerprint.hashlib.sha256()
-    for public_path, _ in site_fingerprint.served_files():
+    for public_path, _ in site_fingerprint.fingerprinted_files():
         if public_path not in responses_by_path:
             return ""
         aggregate.update(public_path.encode("utf-8"))
@@ -167,13 +196,10 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
         production_by_path[public_path] = body
 
         if public_path in expected:
-            expected_sha, _ = expected[public_path]
-            actual_sha = site_fingerprint.sha256_bytes(body)
-            if actual_sha != expected_sha:
-                errors.append(
-                    f"{label}: production stale/content drift for {public_path} "
-                    f"(expected sha256 {expected_sha[:12]}, got {actual_sha[:12]})"
-                )
+            expected_sha, expected_bytes = expected[public_path]
+            drift = _body_drift(public_path, body, expected_sha, expected_bytes)
+            if drift:
+                errors.append(f"{label}: {drift}")
 
     if "homepage" in responses:
         _, body, _ = responses["homepage"]
