@@ -194,7 +194,7 @@ Ràng buộc của đường này, do `tools/materialize_guard.py` và `tools/wo
 Vì vậy khi không có local writable checkout, thứ tự bắt buộc là **ghi source → dispatch → chờ xong → mới mở PR**:
 
 1. ghi source core lên feature branch;
-2. dispatch `Materialize Artifacts` cho branch đó và **chờ run kết thúc**;
+2. kích hoạt `Materialize Artifacts` và **chờ run kết thúc**;
 3. run xanh → mở PR rồi chuyển **Ready ngay** khi diff/state/duplicate/review sạch, không chờ CI;
 4. run đỏ → **không mở PR**; đọc log của run và báo capability blocker kèm nguyên nhân.
 
@@ -213,9 +213,37 @@ trước khi có PR, và trạng thái "có PR" luôn đồng nghĩa "artifact �
 
 Ràng buộc kèm theo:
 
-- dispatch cần quyền `actions: write` trên repository; nếu API trả 403 thì đó là capability
-  blocker phải báo ngay, không im lặng bỏ qua;
 - không đoán nội dung artifact rồi commit để dò cho CI xanh.
+
+#### Kích hoạt bằng rerun, không phải dispatch
+
+GitHub connector của Scheduled Task **không expose verb `workflow_dispatch`**, nhưng **có**
+`rerun_workflow_job` (đã kiểm chứng: rerun trả success, và run thực thi lại đủ 12 bước).
+Đây là giới hạn của connector, không phải thiếu quyền `actions: write`.
+
+Vì rerun phát lại đúng inputs của run gốc, input `branch` của workflow là **tuỳ chọn**. Để
+trống thì workflow tự suy branch đích từ `state.json.last_issue` trên default branch rồi khớp
+đúng một `chatgpt/linux-daily-<NNN+1>-<YYYYMMDD>`. Nhờ vậy một lần rerun luôn dựng đúng branch
+của ngày hôm đó.
+
+Cách agent kích hoạt:
+
+1. lấy run gần nhất của `Materialize Artifacts` và job `materialize` trong đó;
+2. gọi `rerun_workflow_job` cho job đó;
+3. chờ run kết thúc rồi đọc conclusion.
+
+Nếu connector về sau expose `workflow_dispatch`, dùng trực tiếp cũng được:
+
+```text
+POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatches
+{"ref": "main", "inputs": {"confirm": "materialize-artifacts"}}
+```
+
+`ref` là nơi đọc định nghĩa workflow (luôn `main`); bỏ trống `branch` để dùng discovery.
+
+**Lưu ý vận hành:** rerun dùng định nghĩa workflow của run gốc. Sau mỗi lần sửa
+`materialize-artifacts.yml`, phải dispatch tay **một lần** để tạo run gốc mới; từ đó agent
+rerun hằng ngày.
 
 Đường local vẫn nguyên: chạy `python3 tools/publish.py prepare` rồi commit như bình thường, không cần dispatch.
 
@@ -242,7 +270,7 @@ Ràng buộc kèm theo:
 2. chuẩn bị article/source-of-truth metadata trong agent trước;
 3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
 4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API; không đoán nội dung artifact render;
-5. dispatch `Materialize Artifacts` cho branch và chờ run kết thúc; run đỏ thì dừng và báo blocker, không mở PR;
+5. kích hoạt `Materialize Artifacts` bằng `rerun_workflow_job` và chờ run kết thúc; run đỏ thì dừng và báo blocker, không mở PR;
 6. run xanh thì mở PR; kiểm state/diff/duplicate/review rồi chuyển Ready **ngay, không chờ CI success** (auto-merge kiểm `draft=false` lúc CI hoàn tất);
 7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
 8. nếu CI đỏ vì source, self-fix trên cùng branch rồi dispatch lại; không commit đoán artifact;
