@@ -195,6 +195,10 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         # Cổng xác nhận phải là một bước fail được, không phải `if:` mức job:
         # job bị skip vẫn cho workflow run báo thành công.
         'test "${CONFIRM}" = "materialize-artifacts"',
+        # Discovery: branch đích suy từ state.json trên default branch. Bắt buộc phải có
+        # để `rerun_workflow_job` dùng được — xem kiểm định branch-input bên dưới.
+        '"repos/${GITHUB_REPOSITORY}/contents/state.json"',
+        "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
         "tools/materialize_guard.py --branch",
         "--changed-from-git",
@@ -205,6 +209,20 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
     for marker in required_markers:
         if marker not in text:
             errors.append(f"{rel}: materialize safety marker missing: {marker}")
+
+    # `branch` phải là input TUỲ CHỌN. Connector của agent không expose verb
+    # workflow_dispatch, chỉ expose rerun; mà rerun phát lại đúng inputs cũ. Nếu branch
+    # là input bắt buộc thì rerun luôn dựng lại branch của hôm trước — vô dụng.
+    branch_input = re.search(
+        r"^      branch:\n(?:.*\n)*?        required:\s*(\w+)", text, re.MULTILINE
+    )
+    if not branch_input:
+        errors.append(f"{rel}: materialize phải khai input `branch`")
+    elif branch_input.group(1) != "false":
+        errors.append(
+            f"{rel}: input `branch` phải là required: false để rerun_workflow_job dùng được "
+            "(rerun phát lại inputs cũ; branch bắt buộc sẽ khoá vào branch hôm trước)"
+        )
 
     if re.search(r"^\s{4}if:.*inputs\.confirm", text, re.MULTILINE):
         errors.append(

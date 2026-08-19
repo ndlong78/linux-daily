@@ -56,10 +56,16 @@ def test_real_materialize_workflow_passes_policy():
             id="push-thang-vao-main",
         ),
         pytest.param(
-            "          ref: ${{ inputs.branch }}",
+            "          ref: ${{ env.BRANCH }}",
             "          ref: main",
             "must never target main",
             id="checkout-main",
+        ),
+        pytest.param(
+            '[[ "${resolved}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]',
+            'true',
+            "safety marker missing",
+            id="bo-rang-buoc-pattern-branch-sau-discovery",
         ),
         pytest.param(
             '--branch "${BRANCH}" --changed-from-git',
@@ -90,6 +96,42 @@ def test_real_materialize_workflow_passes_policy():
 def test_removing_a_safeguard_is_rejected(tmp_path: Path, old: str, new: str, expected: str):
     errors = _mutated(tmp_path, old, new)
     assert any(expected in error for error in errors), errors
+
+
+def test_branch_input_must_be_optional_so_rerun_works():
+    """Connector của agent không expose `workflow_dispatch`, chỉ expose rerun.
+
+    Rerun phát lại đúng inputs của run gốc. Nếu `branch` là input bắt buộc thì mọi
+    lần rerun đều dựng lại branch của hôm trước — vô dụng cho nhịp 1 bài/ngày.
+    Để trống thì workflow tự tìm branch theo state.json, nên rerun dùng được mọi ngày.
+    """
+    text = WORKFLOW.read_text(encoding="utf-8")
+    match = re.search(r"^      branch:\n(?:.*\n)*?        required:\s*(\w+)", text, re.MULTILINE)
+    assert match, "workflow phải khai input branch"
+    assert match.group(1) == "false"
+
+
+def test_required_branch_input_is_rejected_by_policy(tmp_path: Path):
+    errors = _mutated(
+        tmp_path,
+        '        description: "Feature branch cụ thể; để trống để tự tìm theo state.json"\n        required: false',
+        '        description: "Feature branch"\n        required: true',
+    )
+    assert any("required: false" in error for error in errors), errors
+
+
+def test_discovery_reads_last_issue_from_default_branch():
+    """Branch đích suy từ state.json, không suy từ 'ahead of main'.
+
+    Squash-merge để lại branch cũ ahead of main vĩnh viễn, nên bộ lọc đó sẽ khớp
+    nhầm branch đã merge xong.
+    """
+    text = WORKFLOW.read_text(encoding="utf-8")
+    assert '"repos/${GITHUB_REPOSITORY}/contents/state.json"' in text
+    assert "last_issue + 1" in text
+    # từ chối khi không có hoặc có nhiều hơn một ứng viên
+    assert 'test "${#found[@]}" -eq 0' in text
+    assert 'test "${#found[@]}" -gt 1' in text
 
 
 def test_confirm_gate_is_a_failing_step_not_a_skipped_job():
