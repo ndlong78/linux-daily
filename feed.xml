@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 16 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 17 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible check mode, diff và serial: rolling change có kiểm soát</title>
+      <link>https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html</guid>
+      <pubDate>Mon, 17 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.</description>
+    </item>
     <item>
       <title>Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</title>
       <link>https://linux.no.id.vn/posts/post-047-socket-ownership-ss-lsof-sockstat-fstat.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-039-fd-find-files-fast.html</guid>
       <pubDate>Sat, 08 Aug 2026 00:00:00 +0700</pubDate>
       <description>fd có syntax ngắn, smart case và filter theo type/extension, nhưng mặc định bỏ qua hidden files và .gitignore. Trên Ubuntu/Debian binary còn có tên fdfind.</description>
-    </item>
-    <item>
-      <title>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</title>
-      <link>https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-038-smart-nvme-health-disk-degradation.html</guid>
-      <pubDate>Fri, 07 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</description>
     </item>
   </channel>
 </rss>

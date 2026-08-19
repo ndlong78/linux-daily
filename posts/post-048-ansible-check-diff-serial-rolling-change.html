@@ -66,10 +66,11 @@
   </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
-
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#048 · 17·08·2026</span></div></div>
 <header class="post">
   <p class="eyebrow">Automation · Ansible check/diff/serial</p>
@@ -166,9 +167,12 @@
     <li>
       <h3>Tạo inventory lab và xác minh connectivity.</h3>
       <p>Trên control node, thay hostname/user bằng inventory thật. Với FreeBSD, trước tiên đăng nhập SSH và xác minh đường dẫn Python thay vì giả định cố định.</p>
-      <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
-<pre><code class="language-bash">ssh &lt;freebsd-host&gt; command -v python3
-ansible -i inventory.ini all -m ansible.builtin.ping</code></pre></div>
+      <p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre class="bsd"><code class="language-bash">ssh &lt;freebsd-host&gt; command -v python3</code></pre></div>
+<p class="code-label same"><span class="dot"></span>Mọi hệ — chạy trên control node</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
+<pre><code class="language-bash">ansible -i inventory.ini all -m ansible.builtin.ping</code></pre></div>
       <p>Ví dụ inventory tối thiểu:</p>
       <div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p>
 <pre><code class="language-ini">[linux]
@@ -307,7 +311,27 @@ ansible-playbook -i inventory.ini rollout.yml --check --diff --limit &lt;canary-
   </ul>
 </section>
 
-<footer>
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-041-ansible-handlers-templates-idempotent-restart.html"><span class="series-kicker">#041</span><span>Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+      <li><a href="post-020-firewall-rollback-negative-test.html">#020 · Firewall từ xa không tự khóa mình: rollback tự động + negative test đa hệ</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
   <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
   <div class="foot-row"><span>Linux Daily #048 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation #RollingUpdate</span></div>
 </footer>
