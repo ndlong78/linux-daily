@@ -1,48 +1,48 @@
 # Linux Daily — P7 Audit & Quality Dashboard
 
-Derived quality snapshot · as of **2026-08-17**.
+Derived quality snapshot · as of **2026-08-18**.
 
 ## Executive status
 
 - P7 quality: **ATTENTION**
-- Published posts: **48**
+- Published posts: **49**
 - Hard errors: **0**
 - Remediation queue: **5**
 
 | Signal | Status | Detail |
 |---|---|---|
-| Distro coverage & portability | **ATTENTION** | 43/48 complete · FreeBSD blocks 48/48 · violations 0 |
-| Command & configuration | **PASS** | 348 blocks · 1301 lines · blockers 0 · review 0 |
-| Content freshness | **PASS** | current 48 · review-due 0 · historically-valid 0 |
-| Source quality | **PASS** | backed 48/48 · reviewed 48/48 · sources 169 |
+| Distro coverage & portability | **ATTENTION** | 44/49 complete · FreeBSD blocks 49/49 · violations 0 |
+| Command & configuration | **PASS** | 369 blocks · 1394 lines · blockers 0 · review 0 |
+| Content freshness | **PASS** | current 49 · review-due 0 · historically-valid 0 |
+| Source quality | **PASS** | backed 49/49 · reviewed 49/49 · sources 173 |
 
 ## Quality evidence
 
 ### Distro portability
 
-- Complete four-platform coverage: **43/48**
-- Explicit FreeBSD blocks: **48/48**
+- Complete four-platform coverage: **44/49**
+- Explicit FreeBSD blocks: **49/49**
 - Linux-only semantics inside FreeBSD blocks: **0**
 
 ### Command / configuration safety
 
-- Code blocks scanned: **348**
-- Command/config lines scanned: **1301**
-- Privileged lines: **306**
+- Code blocks scanned: **369**
+- Command/config lines scanned: **1394**
+- Privileged lines: **310**
 - Destructive storage examples: **8**
 - Blocking findings: **0**
 
 ### Freshness / technical drift
 
-- Current: **48**
+- Current: **49**
 - Review due: **0**
 - Historically valid: **0**
 
 ### Source evidence
 
-- Posts with structured source evidence: **48/48**
-- Source-backed posts with mergeable review status: **48/48**
-- Official/upstream technical sources: **169**
+- Posts with structured source evidence: **49/49**
+- Source-backed posts with mergeable review status: **49/49**
+- Official/upstream technical sources: **173**
 
 ## Remediation queue
 

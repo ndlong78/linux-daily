@@ -1,1 +1,393 @@
-{"version":1,"posts":[{"issue":1,"difficulty":"basic","prerequisites":[]},{"issue":2,"difficulty":"intermediate","prerequisites":[]},{"issue":3,"difficulty":"intermediate","prerequisites":[10]},{"issue":4,"difficulty":"basic","prerequisites":[]},{"issue":5,"difficulty":"basic","prerequisites":[]},{"issue":6,"difficulty":"intermediate","prerequisites":[2,9]},{"issue":7,"difficulty":"intermediate","prerequisites":[1,2,9]},{"issue":8,"difficulty":"basic","prerequisites":[1]},{"issue":9,"difficulty":"basic","prerequisites":[]},{"issue":10,"difficulty":"basic","prerequisites":[]},{"issue":11,"difficulty":"basic","prerequisites":[]},{"issue":12,"difficulty":"intermediate","prerequisites":[]},{"issue":13,"difficulty":"intermediate","prerequisites":[]},{"issue":14,"difficulty":"intermediate","prerequisites":[9,10,12,13]},{"issue":15,"difficulty":"intermediate","prerequisites":[1,8]},{"issue":16,"difficulty":"intermediate","prerequisites":[2,5]},{"issue":17,"difficulty":"intermediate","prerequisites":[10]},{"issue":18,"difficulty":"basic","prerequisites":[]},{"issue":19,"difficulty":"intermediate","prerequisites":[]},{"issue":20,"difficulty":"advanced","prerequisites":[2,7,8,9]},{"issue":21,"difficulty":"advanced","prerequisites":[3,10,12,14,17]},{"issue":22,"difficulty":"intermediate","prerequisites":[1,8]},{"issue":23,"difficulty":"intermediate","prerequisites":[2,9]},{"issue":24,"difficulty":"intermediate","prerequisites":[10,18]},{"issue":25,"difficulty":"basic","prerequisites":[]},{"issue":26,"difficulty":"intermediate","prerequisites":[5,19]},{"issue":27,"difficulty":"intermediate","prerequisites":[11,13]},{"issue":28,"difficulty":"advanced","prerequisites":[1,5,8,20,22]},{"issue":29,"difficulty":"advanced","prerequisites":[1,8,20]},{"issue":30,"difficulty":"intermediate","prerequisites":[2,5,9]},{"issue":31,"difficulty":"intermediate","prerequisites":[10,18]},{"issue":32,"difficulty":"basic","prerequisites":[]},{"issue":33,"difficulty":"intermediate","prerequisites":[5,11]},{"issue":34,"difficulty":"intermediate","prerequisites":[11,12,27]},{"issue":35,"difficulty":"advanced","prerequisites":[5,10,14,21,24,31]},{"issue":36,"difficulty":"intermediate","prerequisites":[8,20,22,29]},{"issue":37,"difficulty":"intermediate","prerequisites":[9,23,30]},{"issue":38,"difficulty":"intermediate","prerequisites":[10,19,24]},{"issue":39,"difficulty":"basic","prerequisites":[25,32]},{"issue":40,"difficulty":"intermediate","prerequisites":[19,26,33]},{"issue":41,"difficulty":"intermediate","prerequisites":[6,27,34]},{"issue":42,"difficulty":"advanced","prerequisites":[5,20,26,33,40]},{"issue":43,"difficulty":"intermediate","prerequisites":[8,22,29,36]},{"issue":44,"difficulty":"intermediate","prerequisites":[2,15,23,37]},{"issue":45,"difficulty":"advanced","prerequisites":[3,10,21,24,35,38]},{"issue":46,"difficulty":"basic","prerequisites":[39]},{"issue":47,"difficulty":"intermediate","prerequisites":[8,33,40]},{"issue":48,"difficulty":"advanced","prerequisites":[6,27,34]}]}
+{
+  "version": 1,
+  "posts": [
+    {
+      "issue": 1,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 2,
+      "difficulty": "intermediate",
+      "prerequisites": []
+    },
+    {
+      "issue": 3,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        10
+      ]
+    },
+    {
+      "issue": 4,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 5,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 6,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        2,
+        9
+      ]
+    },
+    {
+      "issue": 7,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        1,
+        2,
+        9
+      ]
+    },
+    {
+      "issue": 8,
+      "difficulty": "basic",
+      "prerequisites": [
+        1
+      ]
+    },
+    {
+      "issue": 9,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 10,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 11,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 12,
+      "difficulty": "intermediate",
+      "prerequisites": []
+    },
+    {
+      "issue": 13,
+      "difficulty": "intermediate",
+      "prerequisites": []
+    },
+    {
+      "issue": 14,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        9,
+        10,
+        12,
+        13
+      ]
+    },
+    {
+      "issue": 15,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        1,
+        8
+      ]
+    },
+    {
+      "issue": 16,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        2,
+        5
+      ]
+    },
+    {
+      "issue": 17,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        10
+      ]
+    },
+    {
+      "issue": 18,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 19,
+      "difficulty": "intermediate",
+      "prerequisites": []
+    },
+    {
+      "issue": 20,
+      "difficulty": "advanced",
+      "prerequisites": [
+        2,
+        7,
+        8,
+        9
+      ]
+    },
+    {
+      "issue": 21,
+      "difficulty": "advanced",
+      "prerequisites": [
+        3,
+        10,
+        12,
+        14,
+        17
+      ]
+    },
+    {
+      "issue": 22,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        1,
+        8
+      ]
+    },
+    {
+      "issue": 23,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        2,
+        9
+      ]
+    },
+    {
+      "issue": 24,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        10,
+        18
+      ]
+    },
+    {
+      "issue": 25,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 26,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        5,
+        19
+      ]
+    },
+    {
+      "issue": 27,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        11,
+        13
+      ]
+    },
+    {
+      "issue": 28,
+      "difficulty": "advanced",
+      "prerequisites": [
+        1,
+        5,
+        8,
+        20,
+        22
+      ]
+    },
+    {
+      "issue": 29,
+      "difficulty": "advanced",
+      "prerequisites": [
+        1,
+        8,
+        20
+      ]
+    },
+    {
+      "issue": 30,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        2,
+        5,
+        9
+      ]
+    },
+    {
+      "issue": 31,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        10,
+        18
+      ]
+    },
+    {
+      "issue": 32,
+      "difficulty": "basic",
+      "prerequisites": []
+    },
+    {
+      "issue": 33,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        5,
+        11
+      ]
+    },
+    {
+      "issue": 34,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        11,
+        12,
+        27
+      ]
+    },
+    {
+      "issue": 35,
+      "difficulty": "advanced",
+      "prerequisites": [
+        5,
+        10,
+        14,
+        21,
+        24,
+        31
+      ]
+    },
+    {
+      "issue": 36,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        8,
+        20,
+        22,
+        29
+      ]
+    },
+    {
+      "issue": 37,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        9,
+        23,
+        30
+      ]
+    },
+    {
+      "issue": 38,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        10,
+        19,
+        24
+      ]
+    },
+    {
+      "issue": 39,
+      "difficulty": "basic",
+      "prerequisites": [
+        25,
+        32
+      ]
+    },
+    {
+      "issue": 40,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        19,
+        26,
+        33
+      ]
+    },
+    {
+      "issue": 41,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        6,
+        27,
+        34
+      ]
+    },
+    {
+      "issue": 42,
+      "difficulty": "advanced",
+      "prerequisites": [
+        5,
+        20,
+        26,
+        33,
+        40
+      ]
+    },
+    {
+      "issue": 43,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        8,
+        22,
+        29,
+        36
+      ]
+    },
+    {
+      "issue": 44,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        2,
+        15,
+        23,
+        37
+      ]
+    },
+    {
+      "issue": 45,
+      "difficulty": "advanced",
+      "prerequisites": [
+        3,
+        10,
+        21,
+        24,
+        35,
+        38
+      ]
+    },
+    {
+      "issue": 46,
+      "difficulty": "basic",
+      "prerequisites": [
+        39
+      ]
+    },
+    {
+      "issue": 47,
+      "difficulty": "intermediate",
+      "prerequisites": [
+        8,
+        33,
+        40
+      ]
+    },
+    {
+      "issue": 48,
+      "difficulty": "advanced",
+      "prerequisites": [
+        6,
+        27,
+        34
+      ]
+    },
+    {
+      "issue": 49,
+      "difficulty": "advanced",
+      "prerequisites": [
+        2,
+        5,
+        20,
+        22
+      ]
+    }
+  ]
+}
