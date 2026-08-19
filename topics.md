@@ -1,7 +1,7 @@
 # Nhật ký chủ đề Linux Daily
 # Định dạng: #số | YYYY-MM-DD | trục | tên chủ đề
 # state.json giữ clock cadence; danh sách này dùng để giữ thứ tự series và tránh trùng chủ đề.
-# Publication timeline #001–#048 đã được đồng bộ liên tục đến 2026-08-17.
+# Publication timeline #001–#049 đã được đồng bộ liên tục đến 2026-08-18.
 
 #001 | 2026-07-01 | Networking | Đặt IP tĩnh + cặp DNS trên Ubuntu/Debian/Fedora/FreeBSD
 #002 | 2026-07-02 | Bảo mật | Gia cố SSH (key-only, cấm root, AllowUsers) trên Ubuntu/Debian/Fedora/FreeBSD
@@ -52,3 +52,4 @@
 #047 | 2026-08-16 | Monitoring | Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD
 #048 | 2026-08-17 | Automation | Ansible check mode, diff và serial: rolling change có kiểm soát
 #049 | 2026-08-18 | Ôn tập | Lab TLS certificate outage: expiry, chain và hostname mismatch
+#050 | 2026-08-19 | Networking | State table: conntrack/nftables trên Linux và pf state trên FreeBSD
