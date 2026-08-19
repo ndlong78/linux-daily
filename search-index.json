@@ -1,6 +1,19 @@
 {
-  "count": 49,
+  "count": 50,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-08-19",
+      "href": "posts/post-050-conntrack-nftables-pf-state-table.html",
+      "issue": 50,
+      "lede": "Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.",
+      "tags": [
+        "firewall state"
+      ],
+      "title": "State table: conntrack/nftables trên Linux và pf state trên FreeBSD"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",
