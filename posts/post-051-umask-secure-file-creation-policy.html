@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>umask và policy tạo file: secure defaults cho service và user — Linux Daily #051</title>
+<meta name="description" content="Hiểu umask theo process, kiểm quyền file/thư mục mới và đặt secure defaults cho shell, systemd service và FreeBSD mà không nhầm với chmod hay ACL.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="umask và policy tạo file: secure defaults cho service và user">
+<meta property="og:description" content="Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="umask và policy tạo file: secure defaults cho service và user">
+<meta name="twitter:description" content="Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 51,
+  "date": "2026-08-20",
+  "axis": "Bảo mật",
+  "eyebrow": "Bảo mật · file creation policy",
+  "slug": "umask-secure-file-creation-policy",
+  "title": "umask và policy tạo file: secure defaults cho service và user",
+  "lede": "Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-20",
+  "changes_system": false,
+  "sources": [
+    {"title":"Linux man-pages — umask(2)","url":"https://man7.org/linux/man-pages/man2/umask.2.html","kind":"upstream"},
+    {"title":"systemd.exec(5) — UMask=","url":"https://man7.org/linux/man-pages/man5/systemd.exec.5.html","kind":"upstream"},
+    {"title":"FreeBSD Manual — umask(2)","url":"https://man.freebsd.org/cgi/man.cgi?query=umask&sektion=2","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#051 · 20·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Bảo mật · file creation policy</p>
+  <h1>umask và policy tạo file: secure defaults cho service và user</h1>
+  <p class="lede">Dùng <code>umask</code> như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.</p>
+  <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-20 · đối chiếu Linux man-pages, systemd.exec và FreeBSD manual.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Đọc và kiểm <code>umask</code> theo đúng process để đặt quyền mặc định an toàn cho file/thư mục mới mà không nhầm với <code>chmod</code> hoặc default ACL.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+<li>Đã nắm permission cơ bản ở bài #009/#023 và ACL ở #037.</li>
+<li>Có shell user thường trên Ubuntu hoặc Xubuntu, Debian, Fedora hay FreeBSD; phần systemd chỉ áp dụng cho Linux dùng systemd.</li>
+<li>Bài chỉ thay <code>umask</code> trong subshell tạm thời để quan sát; không sửa profile, unit file hay policy đăng nhập.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Mode yêu cầu đi qua umask để tạo quyền cuối cùng">
+<rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="45" y="88" width="180" height="72" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="135" y="116" font-size="13" font-weight="700">MODE YÊU CẦU</text><text x="135" y="140" font-size="11">file 0666 · dir 0777</text>
+<path d="M225 124H305" stroke="#0C6E61" stroke-width="3"/><polygon points="305,124 293,117 293,131" fill="#0C6E61"/>
+<rect x="305" y="70" width="150" height="108" rx="8" fill="#FFFFFF" stroke="#0C6E61" stroke-width="2"/><text x="380" y="105" font-size="14" font-weight="700">UMASK</text><text x="380" y="130" font-size="11">tắt các bit</text><text x="380" y="151" font-size="11">ví dụ 0027</text>
+<path d="M455 124H535" stroke="#0C6E61" stroke-width="3"/><polygon points="535,124 523,117 523,131" fill="#0C6E61"/>
+<rect x="535" y="88" width="180" height="72" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="625" y="116" font-size="13" font-weight="700">MODE THỰC TẾ</text><text x="625" y="140" font-size="11">file 0640 · dir 0750</text>
+</g></svg>
+<figcaption>Hình 1 — <code>umask</code> không “cộng” quyền; các bit bật trong mask bị loại khỏi mode mà chương trình yêu cầu khi tạo object mới.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Một service ghi file cấu hình tạm với mode quá rộng, hoặc user tạo file mới rồi phải chạy <code>chmod</code> lặp lại, thường là dấu hiệu policy tạo file chưa rõ. <code>umask</code> là thuộc tính của process và được child process kế thừa; vì vậy cùng một user có thể thấy kết quả khác giữa login shell, cron job và systemd service.</p>
+<p>Trên Linux, nếu thư mục cha có default ACL thì cách tính permission không còn đơn giản là “mode trừ umask”: kernel dùng default ACL kế thừa rồi giới hạn theo mode yêu cầu. Vì vậy bài #037 vẫn là bước đối chiếu bắt buộc khi kết quả không khớp phép tính umask thông thường.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+<li><strong>File thường:</strong> chương trình thường yêu cầu tối đa <code>0666</code>; execute bit không tự xuất hiện chỉ vì umask cho phép.</li>
+<li><strong>Thư mục:</strong> chương trình thường yêu cầu <code>0777</code>; với <code>umask 0027</code>, kết quả điển hình là <code>0750</code>.</li>
+<li><strong>Scope:</strong> đổi <code>umask</code> chỉ ảnh hưởng process hiện tại và descendants, không retroactively đổi file đã tồn tại.</li>
+<li><strong>systemd:</strong> service có thể đặt <code>UMask=</code> riêng trong execution environment; không nên dựa vào umask của login shell để suy policy của daemon.</li>
+<li><strong>FreeBSD:</strong> cùng khái niệm process file creation mask, nhưng không dùng <code>systemctl</code> hay <code>UMask=</code> của systemd.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="So sánh phạm vi umask giữa shell, service và default ACL">
+<rect width="760" height="245" fill="#FFFFFF"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="35" y="55" width="205" height="135" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="138" y="87" font-size="13" font-weight="700">USER SHELL</text><text x="138" y="116" font-size="10">umask của shell</text><text x="138" y="139" font-size="10">child kế thừa</text><text x="138" y="162" font-size="10">scope theo process tree</text>
+<rect x="278" y="55" width="205" height="135" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="87" font-size="13" font-weight="700">SERVICE</text><text x="380" y="116" font-size="10">Linux systemd: UMask=</text><text x="380" y="139" font-size="10">FreeBSD: daemon/rc context</text><text x="380" y="162" font-size="10">không suy từ shell</text>
+<rect x="520" y="55" width="205" height="135" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="623" y="87" font-size="13" font-weight="700">DEFAULT ACL</text><text x="623" y="116" font-size="10">có thể thay phép tính</text><text x="623" y="139" font-size="10">kiểm thư mục cha</text><text x="623" y="162" font-size="10">trước khi kết luận</text>
+</g></svg>
+<figcaption>Hình 2 — Debug permission phải xác định đúng scope: shell, service execution environment và ACL của thư mục cha là ba nguồn policy khác nhau.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Đọc mask hiện tại mà không thay đổi</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">umask
+umask -S</code></pre></div>
+<p>Ghi lại cả dạng octal và symbolic. Ví dụ <code>0022</code> nghĩa là group/other không được nhận write bit từ mode yêu cầu.</p></li>
+<li><h3>Kiểm phép tính bằng subshell tạm thời trên Linux</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">tmpdir="$(mktemp -d)"
+(
+  umask 0027
+  touch "$tmpdir/file"
+  mkdir "$tmpdir/dir"
+  stat -c '%a %n' "$tmpdir/file" "$tmpdir/dir"
+)
+rm -rf -- "$tmpdir"</code></pre></div>
+<p><code>tmpdir</code> được tạo tự động rồi xoá đúng target vừa tạo. Mask chỉ tồn tại trong subshell nên shell hiện tại không bị thay đổi.</p></li>
+<li><h3>Kiểm phép tính tương đương trên FreeBSD</h3>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">tmpdir="$(mktemp -d -t umask-lab)"
+(
+  umask 0027
+  touch "$tmpdir/file"
+  mkdir "$tmpdir/dir"
+  stat -f '%Lp %N' "$tmpdir/file" "$tmpdir/dir"
+)
+rm -rf -- "$tmpdir"</code></pre></div>
+<p>FreeBSD dùng cú pháp <code>stat -f</code>, không dùng <code>stat -c</code> của GNU coreutils.</p></li>
+<li><h3>Đối chiếu umask của process trên Linux</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">grep '^Umask:' /proc/self/status</code></pre></div>
+<p>Linux expose trường <code>Umask</code> trong <code>/proc/&lt;pid&gt;/status</code>; cách này đọc mask của process mà không cần đổi rồi khôi phục.</p></li>
+<li><h3>Kiểm policy của systemd service trước khi chỉnh</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">systemctl show &lt;service&gt; -p UMask
+systemctl cat &lt;service&gt;</code></pre></div>
+<p><code>&lt;service&gt;</code> là unit cần audit, ví dụ một daemon nội bộ. Chỉ đọc cấu hình; nếu cần thay policy, review quyền mà service thật sự cần trước khi tạo drop-in.</p></li>
+<li><h3>Kiểm default ACL khi kết quả không khớp</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">getfacl -p &lt;parent-directory&gt;</code></pre></div>
+<p>Nếu có các dòng <code>default:</code>, quay lại semantics ACL của bài #037; không tiếp tục “sửa umask” khi nguyên nhân thật nằm ở ACL kế thừa.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<p><strong>Expected Output / Kết quả mong đợi:</strong></p><ul class="clean">
+<li>Với <code>umask 0027</code>, file lab hiển thị <code>640</code> và directory hiển thị <code>750</code> khi không có default ACL can thiệp.</li>
+<li>Sau khi subshell kết thúc, chạy lại <code>umask</code> trong shell cha cho ra giá trị ban đầu.</li>
+<li>Trên Linux, <code>/proc/self/status</code> cho biết mask của process đang đọc; systemd service có thể có <code>UMask</code> riêng.</li>
+<li>Trên FreeBSD, phép thử dùng cùng mask nhưng công cụ hiển thị metadata khác Linux.</li>
+</ul>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">umask</code></pre></div>
+</section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+<li><strong>File không ra 0640:</strong> kiểm mode mà ứng dụng yêu cầu và default ACL của thư mục cha; umask chỉ có thể loại bit, không thêm bit.</li>
+<li><strong>Shell là 0027 nhưng service tạo file 0644:</strong> audit execution environment của service. Với systemd, đọc <code>UMask=</code>; đừng suy từ login shell.</li>
+<li><strong><code>getfacl</code> không có:</strong> đây là tool bổ sung trên một số hệ; không cài package chỉ để kết luận về umask nếu bạn đã có cách kiểm metadata phù hợp.</li>
+<li><strong>Đổi umask rồi file cũ không đổi:</strong> đúng semantics. Dùng <code>chmod</code>/ACL cho object đã tồn tại; umask chỉ tác động lúc tạo mới.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+<p><code>0022</code> thuận tiện cho dữ liệu công khai nội bộ nhưng có thể quá rộng với secret, backup metadata hoặc file chứa token. <code>0027</code> thường phù hợp khi group cần read/execute; <code>0077</code> phù hợp cho dữ liệu chỉ owner được truy cập. Không áp một giá trị cứng cho mọi service: quyền tối thiểu phải xuất phát từ consumer thực tế của file.</p>
+<p>Policy bền vững nên được đặt ở đúng boundary. User session có thể dùng cơ chế login/PAM hoặc shell profile tùy hệ; systemd service nên dùng execution setting của unit; FreeBSD daemon phải theo cơ chế cấu hình của daemon/rc tương ứng. Tránh sửa global profile để chữa một service đơn lẻ.</p>
+</section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol>
+<li>Trong subshell, thử <code>umask 0077</code> rồi dự đoán permission của file và directory trước khi chạy <code>stat</code>.</li>
+<li>Tạo một directory lab có default ACL rồi so kết quả với cùng <code>umask</code>; giải thích vì sao phép tính đơn giản không còn đủ.</li>
+<li>Chọn một systemd service trên Linux, đọc <code>UMask</code> và xác định loại file nào service tạo; không chỉnh cấu hình.</li>
+<li>Trên FreeBSD, lặp lại phép thử 0022/0027/0077 và ghi bảng kết quả file/directory.</li>
+</ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean">
+<li><a href="https://man7.org/linux/man-pages/man2/umask.2.html">Linux man-pages — umask(2)</a> — upstream.</li>
+<li><a href="https://man7.org/linux/man-pages/man5/systemd.exec.5.html">systemd.exec(5) — UMask=</a> — upstream.</li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=umask&amp;sektion=2">FreeBSD Manual — umask(2)</a> — official.</li>
+</ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-044-ssh-agent-forwarding-credential-risk.html"><span class="series-kicker">#044</span><span>SSH agent forwarding và rủi ro lộ credential</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-037-acl-default-acl-shared-access.html">#037 · ACL và default ACL: quyền chia sẻ không cần chmod 777</a></li>
+      <li><a href="post-030-login-privilege-escalation-audit.html">#030 · Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</a></li>
+      <li><a href="post-023-sudo-doas-least-privilege.html">#023 · Least privilege: sudo trên Linux, doas trên FreeBSD</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><span>Linux Daily #051 · Bảo mật</span></div></footer>
+</div></main>
+</body>
+</html>

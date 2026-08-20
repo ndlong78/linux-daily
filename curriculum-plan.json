@@ -13,7 +13,6 @@
     }
   },
   "topics": [
-    {"axis":"Bảo mật","topic":"umask và policy tạo file: secure defaults cho service và user","difficulty":"intermediate","goal":"Kiểm soát quyền mặc định của file mới và hiểu tương tác giữa umask, mode và ACL.","prerequisites":[9,23,37]},
     {"axis":"Storage","topic":"rsync snapshot-style backup với hard links và verification","difficulty":"intermediate","goal":"Tạo bản backup theo phiên tiết kiệm dung lượng, verify dữ liệu và phân biệt hard link với copy độc lập.","prerequisites":[4,14,18,21,24]},
     {"axis":"Công cụ mới","topic":"bat: xem file có syntax highlight, paging và line range","difficulty":"basic","goal":"Dùng bat như lớp đọc file tương tác, biết fallback về cat/sed khi script cần output ổn định.","prerequisites":[25,39]},
     {"axis":"Monitoring","topic":"Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ","difficulty":"advanced","goal":"Hiểu PSI là tín hiệu riêng của Linux và xây phép so sánh hợp lý với pressure evidence trên FreeBSD mà không giả đồng nghĩa.","prerequisites":[19,26,40]},
@@ -26,6 +25,7 @@
     {"axis":"Monitoring","topic":"Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD","difficulty":"intermediate","goal":"Phân biệt load average với CPU utilization và dùng run queue để nhận diện scheduler pressure kéo dài.","prerequisites":[19,26,40]},
     {"axis":"Automation","topic":"Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi","difficulty":"advanced","goal":"Gom task theo failure boundary, dùng rescue cho recovery có kiểm soát và always để thu bằng chứng hoặc cleanup sau lỗi.","prerequisites":[20,27,41]},
     {"axis":"Ôn tập","topic":"Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job","difficulty":"advanced","goal":"Truy một sự cố do lệch đồng hồ: chứng chỉ báo hết hạn giả, log lệch thứ tự và job chạy sai giờ, rồi khôi phục đồng bộ có bằng chứng.","prerequisites":[5,12,34,49]},
-    {"axis":"Networking","topic":"Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS","difficulty":"intermediate","goal":"Đọc neighbor cache trên Linux và FreeBSD để tách lỗi ARP/IPv6 ND khỏi lỗi route, firewall hoặc DNS trước khi thay đổi cấu hình.","prerequisites":[1,8,22,36,43]}
+    {"axis":"Networking","topic":"Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS","difficulty":"intermediate","goal":"Đọc neighbor cache trên Linux và FreeBSD để tách lỗi ARP/IPv6 ND khỏi lỗi route, firewall hoặc DNS trước khi thay đổi cấu hình.","prerequisites":[1,8,22,36,43]},
+    {"axis":"Bảo mật","topic":"SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key","difficulty":"advanced","goal":"Dùng option trong authorized_keys để thu hẹp quyền của credential SSH theo nguồn, command và forwarding thay vì cấp public key toàn quyền.","prerequisites":[2,23,44]}
   ]
 }
