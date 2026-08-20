@@ -1,6 +1,19 @@
 {
-  "count": 50,
+  "count": 51,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-08-20",
+      "href": "posts/post-051-umask-secure-file-creation-policy.html",
+      "issue": 51,
+      "lede": "Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.",
+      "tags": [
+        "file creation policy"
+      ],
+      "title": "umask và policy tạo file: secure defaults cho service và user"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",

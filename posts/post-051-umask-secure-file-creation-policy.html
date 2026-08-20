@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="umask và policy tạo file: secure defaults cho service và user">
-<meta property="og:description" content="Đặt quyền mặc định có chủ đích: phân biệt umask, mode yêu cầu và ACL trên Linux/FreeBSD.">
+<meta property="og:description" content="Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="umask và policy tạo file: secure defaults cho service và user">
-<meta name="twitter:description" content="Đặt quyền mặc định có chủ đích: phân biệt umask, mode yêu cầu và ACL trên Linux/FreeBSD.">
+<meta name="twitter:description" content="Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -58,10 +58,16 @@
 <main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#051 · 20·08·2026</span></div></div>
@@ -185,7 +191,28 @@ systemctl cat &lt;service&gt;</code></pre></div>
 <li><a href="https://man7.org/linux/man-pages/man5/systemd.exec.5.html">systemd.exec(5) — UMask=</a> — upstream.</li>
 <li><a href="https://man.freebsd.org/cgi/man.cgi?query=umask&amp;sektion=2">FreeBSD Manual — umask(2)</a> — official.</li>
 </ul></section>
-<footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><span>Linux Daily #051 · Bảo mật</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-044-ssh-agent-forwarding-credential-risk.html"><span class="series-kicker">#044</span><span>SSH agent forwarding và rủi ro lộ credential</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-037-acl-default-acl-shared-access.html">#037 · ACL và default ACL: quyền chia sẻ không cần chmod 777</a></li>
+      <li><a href="post-030-login-privilege-escalation-audit.html">#030 · Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</a></li>
+      <li><a href="post-023-sudo-doas-least-privilege.html">#023 · Least privilege: sudo trên Linux, doas trên FreeBSD</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><span>Linux Daily #051 · Bảo mật</span></div></footer>
 </div></main>
 </body>
 </html>
