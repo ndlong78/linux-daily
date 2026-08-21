@@ -13,6 +13,18 @@ on:
 permissions:
   contents: read
 
+# Gom theo số PR để commit mới huỷ CI của commit cũ trên cùng PR — trong các đợt
+# sửa lỗi liên tiếp, phần lớn run cũ đã vô nghĩa trước khi chạy xong.
+#
+# Push vào main thì gom theo `github.sha`, mỗi commit một nhóm riêng, và
+# cancel-in-progress tắt. Đây là điều kiện bắt buộc, không phải tuỳ chọn:
+# `tools/release.py` (WORKFLOWS) đòi CI và Production Smoke xanh trên ĐÚNG SHA
+# của main. Nếu commit sau huỷ CI của commit trước thì SHA đó vĩnh viễn không có
+# CI xanh và không release được từ nó nữa.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   quality-gate:
     runs-on: ubuntu-latest
@@ -31,9 +43,6 @@ jobs:
           python tools/pr_hygiene.py
           --base "${{ github.event.pull_request.base.sha }}"
           --head "${{ github.event.pull_request.head.sha }}"
-
-      - name: Cài font monospace cho render_code
-        run: sudo apt-get update && sudo apt-get install -y fonts-dejavu-core
 
       - name: Cài dependency (Pillow + dev tools)
         run: |

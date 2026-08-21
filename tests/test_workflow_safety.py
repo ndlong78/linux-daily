@@ -126,3 +126,34 @@ def test_third_party_module_set_matches_pyproject():
         f"dependency đã đổi ({declared}); cập nhật THIRD_PARTY_MODULES trong workflow_safety.py"
     )
     assert workflow_safety.THIRD_PARTY_MODULES == {"PIL", "jinja2"}
+
+
+# --- concurrency của CI không được huỷ run trên main ---
+
+ROOT = Path(__file__).resolve().parents[1]
+CI_WORKFLOW = ROOT / ".github" / "workflows" / "ci.yml"
+
+
+def test_ci_concurrency_never_cancels_main_runs():
+    """`tools/release.py` đòi CI xanh trên ĐÚNG SHA của main.
+
+    Nếu `cancel-in-progress` bật vô điều kiện, hai commit vào main liền nhau sẽ
+    khiến commit sau huỷ CI của commit trước — SHA đó vĩnh viễn không có CI xanh
+    và không release được từ nó nữa. Đây là cái bẫy của phiên bản một dòng, nên
+    nó phải có test riêng chứ không chỉ nằm trong comment.
+    """
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+
+    assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in text, (
+        "cancel-in-progress phải bị giới hạn trong pull_request"
+    )
+    assert "group: ci-${{ github.event.pull_request.number || github.sha }}" in text, (
+        "push vào main phải gom theo github.sha để mỗi commit một nhóm riêng"
+    )
+
+
+def test_release_gate_still_requires_ci_and_production_smoke():
+    """Bất biến mà test trên đang bảo vệ — nếu nó đổi thì phải xem lại concurrency."""
+    import release
+
+    assert release.WORKFLOWS == (("CI", "ci.yml"), ("Production Smoke", "production-smoke.yml"))
