@@ -1,9 +1,13 @@
 """Smoke test cho render_code — cần Pillow (CI cài sẵn; local bỏ qua nếu thiếu)."""
+from pathlib import Path
+
 import pytest
 
 pytest.importorskip("PIL")
 
 import render_code  # noqa: E402
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_split_comment_keeps_gap():
@@ -60,3 +64,32 @@ def test_render_empty_input_errors(tmp_path):
     finally:
         sys.argv = argv
     assert not out.exists()
+
+
+# --- CI không còn cài font hệ thống: bundle trong repo phải tự đủ ---
+
+def test_bundled_fonts_are_tracked_in_the_repository():
+    """CI đã bỏ `apt-get install fonts-dejavu-core`, nên bundle phải có thật.
+
+    Bước apt đó cài một fallback không bao giờ được dùng tới (load_font đọc
+    tools/fonts/ trước) nhưng lại là bước chậm nhất của CI và đã treo runner.
+    Xoá được nó chỉ vì hai file dưới đây nằm trong git — nếu ai đó gỡ chúng thì
+    render_code sẽ hỏng trên runner sạch, ở bước cuối cùng của CI.
+    """
+    fonts = ROOT / "tools" / "fonts"
+    for name in ("JetBrainsMono-Regular.ttf", "JetBrainsMono-Bold.ttf"):
+        assert (fonts / name).is_file(), f"thiếu font bundle {name}"
+
+
+def test_load_font_never_depends_on_a_system_font():
+    """Font thực dùng phải nằm trong repo, không phải /usr/share/fonts.
+
+    Đây là bất biến cho phép CI chạy trên runner không cài font nào.
+    """
+    fonts_dir = (ROOT / "tools" / "fonts").resolve()
+    for bold in (False, True):
+        resolved = Path(render_code.load_font(bold=bold, size=16).path).resolve()
+        assert resolved.parent == fonts_dir, (
+            f"load_font(bold={bold}) rơi về font hệ thống {resolved}; "
+            "CI không cài font nên trên runner sạch bước này sẽ hỏng"
+        )
