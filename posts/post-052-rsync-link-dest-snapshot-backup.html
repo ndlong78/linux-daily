@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="rsync snapshot-style backup với hard links và verification">
-<meta property="og:description" content="Tạo nhiều phiên backup bằng --link-dest: file không đổi dùng chung inode, file thay đổi được copy mới, và mỗi phiên vẫn nhìn như một cây thư mục hoàn chỉnh.">
+<meta property="og:description" content="Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="rsync snapshot-style backup với hard links và verification">
-<meta name="twitter:description" content="Tạo nhiều phiên backup bằng --link-dest và kiểm bằng inode, checksum, restore test.">
+<meta name="twitter:description" content="Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -57,10 +57,16 @@
 <main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#052 · 21·08·2026</span></div></div>
@@ -195,7 +201,28 @@ cmp "$lab/source/data.txt" "$lab/restore/data.txt"</code></pre></div>
 <li><a href="https://download.samba.org/pub/rsync/rsync.1">rsync(1) upstream manual — --link-dest</a> — upstream.</li>
 <li><a href="https://man.freebsd.org/cgi/man.cgi?query=rsync&amp;sektion=1">FreeBSD Manual — rsync(1)</a> — official.</li>
 </ul></section>
-<footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-045-fsck-zfs-scrub-filesystem-integrity.html"><span class="series-kicker">#045</span><span>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-038-smart-nvme-health-disk-degradation.html">#038 · SMART và NVMe health: phát hiện disk degradation trước khi hỏng</a></li>
+      <li><a href="post-031-mount-options-filesystem-protection.html">#031 · Mount options: giảm bề mặt tấn công của filesystem</a></li>
+      <li><a href="post-024-filesystem-inode-zfs-capacity.html">#024 · Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></div></footer>
 </div></main>
 </body>
 </html>

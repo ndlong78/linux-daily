@@ -2,19 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-08-20</lastmod>
+    <lastmod>2026-08-21</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html</loc>
+    <lastmod>2026-08-21</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html</loc>
