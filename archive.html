@@ -32,11 +32,11 @@
 <!-- back-to-top:end -->
 <header class="site">
   <h1 class="site">Search &amp; Archive</h1>
-  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 51 bài theo chủ đề.</p>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 52 bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">
     <label for="archive-search">Tìm bài</label>
     <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
-    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 51 bài.</p>
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 52 bài.</p>
   </form>
 </header>
 <main id="main-content">
@@ -133,8 +133,13 @@
     </div>
   </section>
   <section class="archive-group" id="storage">
-    <h2>Storage &amp; hệ thống tệp <span class="archive-count">7</span></h2>
+    <h2>Storage &amp; hệ thống tệp <span class="archive-count">8</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-052-rsync-link-dest-snapshot-backup.html">
+        <span class="archive-meta">#052 · 2026-08-21</span>
+        <strong>rsync snapshot-style backup với hard links và verification</strong>
+        <span>Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.</span>
+      </a>
       <a class="archive-item" href="posts/post-045-fsck-zfs-scrub-filesystem-integrity.html">
         <span class="archive-meta">#045 · 2026-08-14</span>
         <strong>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</strong>

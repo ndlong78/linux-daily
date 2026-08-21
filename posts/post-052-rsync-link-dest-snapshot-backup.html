@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>rsync snapshot-style backup với hard links và verification — Linux Daily #052</title>
+<meta name="description" content="Dùng rsync --link-dest để tạo các phiên backup dạng snapshot tiết kiệm dung lượng, rồi kiểm hard link, checksum và khả năng restore trên Linux và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="rsync snapshot-style backup với hard links và verification">
+<meta property="og:description" content="Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="rsync snapshot-style backup với hard links và verification">
+<meta name="twitter:description" content="Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 52,
+  "date": "2026-08-21",
+  "axis": "Storage",
+  "eyebrow": "Storage · rsync snapshot-style backup",
+  "slug": "rsync-link-dest-snapshot-backup",
+  "title": "rsync snapshot-style backup với hard links và verification",
+  "lede": "Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-21",
+  "changes_system": false,
+  "sources": [
+    {"title":"rsync(1) upstream manual — --link-dest","url":"https://download.samba.org/pub/rsync/rsync.1","kind":"upstream"},
+    {"title":"FreeBSD Manual — rsync(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=rsync&sektion=1","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#052 · 21·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Storage · rsync snapshot-style backup</p>
+  <h1>rsync snapshot-style backup với hard links và verification</h1>
+  <p class="lede">Dùng <code>--link-dest</code> để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.</p>
+  <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-21 · đối chiếu rsync upstream manual và FreeBSD rsync(1).</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Tạo hai phiên backup bằng <code>rsync --link-dest</code>, chứng minh file không đổi dùng chung inode, file thay đổi tách inode, rồi kiểm checksum và restore.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+<li>Đã nắm filesystem/inode ở bài #024 và backup/restore ở #014/#021.</li>
+<li>Có <code>rsync</code> trong PATH; bài không cài package và không sửa service hay cấu hình hệ thống.</li>
+<li>Có shell user thường trên Ubuntu hoặc Xubuntu, Debian, Fedora hoặc FreeBSD và đủ dung lượng cho một lab nhỏ trong thư mục tạm.</li>
+<li>Hai cây snapshot phải nằm trên cùng filesystem nếu muốn hard link hoạt động; hard link không vượt filesystem boundary.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Hai snapshot rsync dùng chung file không đổi bằng hard link">
+<rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="45" y="50" width="210" height="150" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="150" y="78" font-size="13" font-weight="700">SNAPSHOT A</text><text x="150" y="112" font-size="11">config.ini → inode 101</text><text x="150" y="142" font-size="11">data.txt → inode 102</text>
+<rect x="505" y="50" width="210" height="150" rx="8" fill="#FFFFFF" stroke="#14201D"/><text x="610" y="78" font-size="13" font-weight="700">SNAPSHOT B</text><text x="610" y="112" font-size="11">config.ini → inode 101</text><text x="610" y="142" font-size="11">data.txt → inode 205</text>
+<path d="M255 112H505" stroke="#0C6E61" stroke-width="3"/><text x="380" y="101" font-size="10" fill="#0C6E61">hard link: file không đổi</text>
+<path d="M255 142H505" stroke="#B23A2E" stroke-width="2" stroke-dasharray="7 6"/><text x="380" y="165" font-size="10" fill="#B23A2E">file đổi → inode mới</text>
+</g></svg>
+<figcaption>Hình 1 — Snapshot mới vẫn có đầy đủ path, nhưng file không đổi có thể trỏ vào cùng inode với snapshot trước; file đã thay đổi được ghi thành object mới.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p>Copy toàn bộ một cây dữ liệu mỗi ngày dễ hiểu nhưng tốn dung lượng. <code>rsync --link-dest=&lt;DIR&gt;</code> cho phép tạo một destination mới: file không đổi và có metadata phù hợp được hard-link từ cây tham chiếu, còn file mới hoặc thay đổi được truyền bình thường. Kết quả là mỗi thư mục snapshot có thể duyệt độc lập như một bản đầy đủ.</p>
+<p>Đây không phải snapshot filesystem kiểu ZFS/Btrfs. Nó là một kỹ thuật backup ở mức file. Vì hard link dùng chung inode, sửa trực tiếp file bên trong một snapshot cũ có thể ảnh hưởng snapshot khác đang cùng trỏ vào inode đó. Vì vậy snapshot destination phải được xem là read-only về mặt vận hành.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+<li><strong><code>--link-dest</code>:</strong> rsync tìm file không đổi trong directory tham chiếu và hard-link vào destination mới thay vì copy data block lại.</li>
+<li><strong>Destination mới:</strong> upstream khuyến nghị dùng <code>--link-dest</code> với cây đích mới/rỗng; tránh tiếp tục chỉnh file đã tồn tại trong snapshot.</li>
+<li><strong>Trailing slash:</strong> <code>source/</code> nghĩa là copy nội dung của source vào destination; thiếu slash có thể thêm một tầng directory ngoài ý muốn.</li>
+<li><strong>Verification:</strong> cùng inode là bằng chứng hard link; checksum giống nhau là bằng chứng nội dung; restore test mới chứng minh bản backup dùng được.</li>
+<li><strong>Ubuntu/Xubuntu, Debian, Fedora:</strong> cùng dùng rsync upstream; khác biệt distro chủ yếu nằm ở package lifecycle, không ở semantics của <code>--link-dest</code>.</li>
+<li><strong>FreeBSD:</strong> rsync là tool userland/ports package, không dùng systemd; cú pháp <code>--link-dest</code> giữ cùng semantics theo rsync(1).</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="Quy trình verify snapshot rsync theo ba lớp inode checksum restore">
+<rect width="760" height="245" fill="#FFFFFF"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="45" y="82" width="180" height="82" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="135" y="112" font-size="13" font-weight="700">1 · INODE</text><text x="135" y="139" font-size="10">file không đổi cùng inode</text>
+<path d="M225 123H290" stroke="#0C6E61" stroke-width="3"/><polygon points="290,123 278,116 278,130" fill="#0C6E61"/>
+<rect x="290" y="82" width="180" height="82" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="112" font-size="13" font-weight="700">2 · CHECKSUM</text><text x="380" y="139" font-size="10">nội dung nguồn = backup</text>
+<path d="M470 123H535" stroke="#0C6E61" stroke-width="3"/><polygon points="535,123 523,116 523,130" fill="#0C6E61"/>
+<rect x="535" y="82" width="180" height="82" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="625" y="112" font-size="13" font-weight="700">3 · RESTORE</text><text x="625" y="139" font-size="10">copy ra cây riêng và cmp</text>
+</g></svg>
+<figcaption>Hình 2 — Không dừng ở “rsync exit 0”. Kiểm inode để xác nhận space-saving, checksum để xác nhận dữ liệu và restore sang cây riêng để kiểm khả năng phục hồi.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Kiểm rsync và tạo lab tạm</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">rsync --version | head -n 1
+lab="$(mktemp -d)"
+mkdir -p "$lab/source" "$lab/snapshots"
+printf 'stable-v1\n' &gt; "$lab/source/config.ini"
+printf 'data-v1\n' &gt; "$lab/source/data.txt"</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">rsync --version | head -n 1
+lab="$(mktemp -d)"
+mkdir -p "$lab/source" "$lab/snapshots"
+printf 'stable-v1\n' &gt; "$lab/source/config.ini"
+printf 'data-v1\n' &gt; "$lab/source/data.txt"</code></pre></div>
+<p><code>lab</code> là directory tạm duy nhất của bài; mọi thao tác sau đều nằm dưới path này.</p></li>
+<li><h3>Tạo snapshot đầu tiên</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">rsync -a "$lab/source/" "$lab/snapshots/2026-08-20/"
+find "$lab/snapshots/2026-08-20" -type f -maxdepth 1 -print</code></pre></div>
+<p>Snapshot đầu chưa có basis directory nên là một copy đầy đủ ở mức file.</p></li>
+<li><h3>Đổi một file nguồn và tạo snapshot thứ hai bằng link-dest</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">printf 'data-v2\n' &gt; "$lab/source/data.txt"
+rsync -a --link-dest="$lab/snapshots/2026-08-20" \
+  "$lab/source/" "$lab/snapshots/2026-08-21/"</code></pre></div>
+<p><code>config.ini</code> không đổi nên đủ điều kiện để hard-link; <code>data.txt</code> thay đổi nên snapshot mới phải có inode riêng.</p></li>
+<li><h3>Kiểm hard link bằng inode và link count</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ls -li "$lab/snapshots/2026-08-20/config.ini" "$lab/snapshots/2026-08-21/config.ini"
+ls -li "$lab/snapshots/2026-08-20/data.txt" "$lab/snapshots/2026-08-21/data.txt"</code></pre></div>
+<p>Kỳ vọng: hai path <code>config.ini</code> có cùng inode; hai path <code>data.txt</code> có inode khác nhau.</p></li>
+<li><h3>Kiểm checksum theo hệ điều hành</h3>
+<p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">sha256sum "$lab/source/config.ini" "$lab/snapshots/2026-08-21/config.ini"
+sha256sum "$lab/source/data.txt" "$lab/snapshots/2026-08-21/data.txt"</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">sha256 "$lab/source/config.ini" "$lab/snapshots/2026-08-21/config.ini"
+sha256 "$lab/source/data.txt" "$lab/snapshots/2026-08-21/data.txt"</code></pre></div>
+<p>Trong từng cặp, digest phải giống nhau.</p></li>
+<li><h3>Restore snapshot mới sang cây riêng và so sánh</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">mkdir "$lab/restore"
+rsync -a "$lab/snapshots/2026-08-21/" "$lab/restore/"
+cmp "$lab/source/config.ini" "$lab/restore/config.ini"
+cmp "$lab/source/data.txt" "$lab/restore/data.txt"</code></pre></div>
+<p><code>cmp</code> im lặng và exit 0 cho cả hai file là bằng chứng restore khớp nguồn hiện tại của lab.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<p><strong>Expected Output / Kết quả mong đợi:</strong></p><ul class="clean">
+<li><code>rsync</code> hoàn tất không lỗi.</li>
+<li>Hai <code>config.ini</code> ở snapshot 20/08 và 21/08 có cùng inode; link count thường tăng vì cùng inode có nhiều tên.</li>
+<li>Hai <code>data.txt</code> có inode khác nhau sau khi nguồn thay đổi.</li>
+<li>Checksum của source và snapshot 21/08 giống nhau cho từng file.</li>
+<li>Hai lệnh <code>cmp</code> sau restore exit 0.</li>
+</ul>
+<div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">test -f "$lab/restore/config.ini"
+test -f "$lab/restore/data.txt"
+cmp "$lab/source/config.ini" "$lab/restore/config.ini"
+cmp "$lab/source/data.txt" "$lab/restore/data.txt"</code></pre></div>
+</section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+<li><strong>File không hard-link:</strong> kiểm hai snapshot có cùng filesystem, ownership/permission/timestamp có phù hợp và <code>--link-dest</code> có trỏ đúng basis directory.</li>
+<li><strong>Thừa một tầng directory:</strong> kiểm trailing slash ở source. <code>source/</code> và <code>source</code> có semantics khác nhau.</li>
+<li><strong>Destination đã tồn tại:</strong> ưu tiên một directory mới/rỗng cho từng phiên. Reuse destination làm semantics khó kiểm và có thể tác động attribute của hard-linked file.</li>
+<li><strong>Không dùng <code>--inplace</code> theo phản xạ:</strong> với cây snapshot hard-linked, sửa trực tiếp inode dùng chung làm tăng rủi ro phá tính bất biến của phiên cũ.</li>
+<li><strong>Rsync thành công nhưng backup chưa đáng tin:</strong> thêm checksum và restore test; exit code của lệnh copy chỉ là một lớp bằng chứng.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+<p>Đặt snapshot directory ở nơi user/service backup có quyền ghi nhưng workload nguồn không có quyền sửa. Sau khi một phiên hoàn tất, coi nội dung của phiên đó là immutable về mặt quy trình. Nếu cần retention, chỉ xoá cả snapshot directory đã hết hạn sau khi xác nhận target; không sửa từng file bên trong snapshot cũ.</p>
+<p>Với dữ liệu production, bổ sung kiểm soát consistency ở tầng ứng dụng trước rsync. <code>--link-dest</code> không tự tạo transaction boundary cho database hoặc ứng dụng đang ghi liên tục; snapshot-style ở mức file không thay thế application-consistent backup.</p>
+</section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol>
+<li>Thêm file thứ ba không đổi qua ba phiên và quan sát inode/link count.</li>
+<li>Tạo một snapshot mới sau khi đổi permission của file nhưng không đổi nội dung; quan sát khi nào rsync không còn hard-link do preserved attributes khác.</li>
+<li>So sánh tổng dung lượng của toàn cây <code>snapshots</code> với việc copy ba bản độc lập.</li>
+<li>Viết checklist retention yêu cầu verify target trước khi xoá một snapshot hết hạn.</li>
+</ol></section>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean">
+<li><a href="https://download.samba.org/pub/rsync/rsync.1">rsync(1) upstream manual — --link-dest</a> — upstream.</li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=rsync&amp;sektion=1">FreeBSD Manual — rsync(1)</a> — official.</li>
+</ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-045-fsck-zfs-scrub-filesystem-integrity.html"><span class="series-kicker">#045</span><span>fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-038-smart-nvme-health-disk-degradation.html">#038 · SMART và NVMe health: phát hiện disk degradation trước khi hỏng</a></li>
+      <li><a href="post-031-mount-options-filesystem-protection.html">#031 · Mount options: giảm bề mặt tấn công của filesystem</a></li>
+      <li><a href="post-024-filesystem-inode-zfs-capacity.html">#024 · Đĩa chưa đầy mà vẫn lỗi: đọc block, inode và ZFS dataset</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></div></footer>
+</div></main>
+</body>
+</html>

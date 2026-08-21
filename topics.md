@@ -54,3 +54,4 @@
 #049 | 2026-08-18 | Ôn tập | Lab TLS certificate outage: expiry, chain và hostname mismatch
 #050 | 2026-08-19 | Networking | State table: conntrack/nftables trên Linux và pf state trên FreeBSD
 #051 | 2026-08-20 | Bảo mật | umask và policy tạo file: secure defaults cho service và user
+#052 | 2026-08-21 | Storage | rsync snapshot-style backup với hard links và verification

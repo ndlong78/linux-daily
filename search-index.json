@@ -1,6 +1,19 @@
 {
-  "count": 51,
+  "count": 52,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-08-21",
+      "href": "posts/post-052-rsync-link-dest-snapshot-backup.html",
+      "issue": 52,
+      "lede": "Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.",
+      "tags": [
+        "rsync snapshot-style backup"
+      ],
+      "title": "rsync snapshot-style backup với hard links và verification"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",
