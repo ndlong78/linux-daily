@@ -27,7 +27,7 @@
       "title": "Automation & Operations",
       "goal": "Biến thao tác lặp lại thành automation có kiểm soát và có tín hiệu quan sát khi vận hành.",
       "audience": "Sysadmin muốn chuẩn hóa scripting, scheduling, configuration management và troubleshooting.",
-      "steps": [11,13,12,6,5,19,14,20,25,26,27,32,33,34,39,40,41,42,46,47,48]
+      "steps": [11,13,12,6,5,19,14,20,25,26,27,32,33,34,39,40,41,42,46,47,48,53]
     }
   ]
 }

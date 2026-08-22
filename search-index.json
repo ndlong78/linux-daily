@@ -1,6 +1,19 @@
 {
-  "count": 52,
+  "count": 53,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-22",
+      "href": "posts/post-053-bat-syntax-highlight-paging-line-range.html",
+      "issue": 53,
+      "lede": "Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.",
+      "tags": [
+        "bat"
+      ],
+      "title": "bat: xem file có syntax highlight, paging và line range"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",

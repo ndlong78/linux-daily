@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Fri, 21 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sat, 22 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>bat: xem file có syntax highlight, paging và line range</title>
+      <link>https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html</guid>
+      <pubDate>Sat, 22 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.</description>
+    </item>
     <item>
       <title>rsync snapshot-style backup với hard links và verification</title>
       <link>https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-044-ssh-agent-forwarding-credential-risk.html</guid>
       <pubDate>Thu, 13 Aug 2026 00:00:00 +0700</pubDate>
       <description>Kiểm tra socket agent được forward và giảm blast radius của credential trên jump host.</description>
-    </item>
-    <item>
-      <title>MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</title>
-      <link>https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-043-mtu-path-mtu-discovery-partial-connectivity.html</guid>
-      <pubDate>Wed, 12 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.</description>
     </item>
   </channel>
 </rss>
