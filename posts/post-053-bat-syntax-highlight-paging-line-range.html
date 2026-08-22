@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>bat: xem file có syntax highlight, paging và line range — Linux Daily #053</title>
+<meta name="description" content="Dùng bat để đọc file với syntax highlighting, paging có kiểm soát và line range; xử lý khác biệt bat/batcat trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="bat: xem file có syntax highlight, paging và line range">
+<meta property="og:description" content="Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="bat: xem file có syntax highlight, paging và line range">
+<meta name="twitter:description" content="Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 53,
+  "date": "2026-08-22",
+  "axis": "Công cụ mới",
+  "eyebrow": "Công cụ mới · bat",
+  "slug": "bat-syntax-highlight-paging-line-range",
+  "title": "bat: xem file có syntax highlight, paging và line range",
+  "lede": "Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-22",
+  "changes_system": true,
+  "sources": [
+    {"title":"bat — Upstream README","url":"https://github.com/sharkdp/bat","kind":"upstream"},
+    {"title":"Ubuntu Packages — bat (noble)","url":"https://packages.ubuntu.com/noble/bat","kind":"official"},
+    {"title":"Debian Packages — bat (trixie)","url":"https://packages.debian.org/trixie/bat","kind":"official"},
+    {"title":"Fedora Packages — bat","url":"https://packages.fedoraproject.org/pkgs/rust-bat/bat/","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#053 · 22·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Công cụ mới · bat</p>
+  <h1>bat: xem file có syntax highlight, paging và line range</h1>
+  <p class="lede">Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.</p>
+  <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-22 · đối chiếu upstream bat và package catalog chính thức của Ubuntu, Debian, Fedora; FreeBSD install path được upstream bat ghi rõ.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>bat</code> để đọc file có syntax highlight, kiểm soát pager và chỉ tải vùng dòng cần xem, đồng thời giữ output ổn định khi chuyển sang pipeline/script.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+<li>Có terminal trên Ubuntu hoặc Xubuntu, Debian, Fedora hoặc FreeBSD.</li>
+<li>Có quyền <code>sudo</code>/root chỉ cho bước cài và gỡ package; các thao tác đọc file chạy bằng user thường.</li>
+<li>Lab dùng file tạm trong <code>/tmp</code>; không sửa file cấu hình production.</li>
+<li>Đã quen với <code>cat</code>/<code>less</code> cơ bản; bài này tập trung vào workflow đọc file tương tác.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="Luồng đọc file bằng bat từ file đầu vào qua syntax highlighting và pager tới terminal">
+<rect width="760" height="240" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="35" y="72" width="155" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="112" y="104" font-size="13" font-weight="700">FILE / STDIN</text><text x="112" y="132" font-size="10">text · code · config</text>
+<rect x="230" y="72" width="135" height="92" rx="8" fill="#F4F8F6" stroke="#0C6E61" stroke-width="2"/><text x="298" y="104" font-size="16" font-weight="700">bat</text><text x="298" y="132" font-size="10">highlight · decorate</text>
+<rect x="405" y="72" width="145" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="478" y="104" font-size="13" font-weight="700">PAGER</text><text x="478" y="132" font-size="10">auto · always · never</text>
+<rect x="590" y="72" width="135" height="92" rx="8" fill="#FFFFFF" stroke="#14201D" stroke-width="2"/><text x="658" y="104" font-size="13" font-weight="700">TERMINAL</text><text x="658" y="132" font-size="10">đọc có ngữ cảnh</text>
+<path d="M190 118H224M365 118H399M550 118H584" stroke="#0C6E61" stroke-width="3"/>
+</g></svg>
+<figcaption>Hình 1 — <code>bat</code> thêm syntax highlighting và decorations; pager là lớp riêng có thể để tự động hoặc tắt khi cần output tuyến tính.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2>
+<p><code>cat</code> tốt khi cần output tối giản cho pipeline, nhưng khi đọc một file cấu hình hoặc source dài bằng mắt, line number, syntax highlight và paging giúp định vị nhanh hơn. <code>bat</code> bổ sung các lớp hiển thị này mà vẫn đọc file hoặc standard input.</p>
+<p>Điểm quan trọng là không biến <code>bat</code> thành mặc định mù quáng cho mọi script. Upstream cho biết khi stdout không phải terminal tương tác, <code>bat</code> tự giảm decorations và hành xử gần với <code>cat</code>; tuy vậy script cần output ổn định vẫn nên dùng <code>cat</code>, <code>sed</code> hoặc gọi rõ <code>--plain --color=never --paging=never</code>.</p>
+</section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+<li><strong>Syntax highlighting:</strong> <code>bat</code> nhận diện nhiều ngôn ngữ theo filename/extension; với stdin có thể chỉ định <code>--language</code>.</li>
+<li><strong>Paging:</strong> mặc định là tự động. <code>--paging=never</code> phù hợp khi muốn output liên tục; <code>--paging=always</code> ép mở pager trong terminal.</li>
+<li><strong>Line range:</strong> <code>--line-range 10:20</code> chỉ hiển thị một vùng dòng; dạng <code>:200</code> hữu ích khi preview file lớn.</li>
+<li><strong>Output style:</strong> <code>--style=numbers,changes</code> chọn decorations; <code>--plain</code> bỏ toàn bộ decorations.</li>
+<li><strong>Tên executable:</strong> package tên <code>bat</code> nhưng trên Debian 13 executable chính thức vẫn có thể là <code>batcat</code>; bài dùng biến <code>BAT</code> để không đoán.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 245" role="img" aria-label="So sánh chế độ tương tác của bat với chế độ output ổn định cho pipeline">
+<rect width="760" height="245" fill="#FFFFFF"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+<rect x="45" y="42" width="300" height="158" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="195" y="76" font-size="14" font-weight="700">ĐỌC TƯƠNG TÁC</text><text x="195" y="110" font-size="11">syntax + numbers + pager</text><text x="195" y="142" font-size="10">tối ưu cho người đọc</text>
+<rect x="415" y="42" width="300" height="158" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="565" y="76" font-size="14" font-weight="700">PIPELINE / SCRIPT</text><text x="565" y="110" font-size="11">plain + no color + no pager</text><text x="565" y="142" font-size="10">output ổn định hơn</text>
+</g></svg>
+<figcaption>Hình 2 — Đừng tối ưu cùng một output cho hai mục tiêu khác nhau: terminal tương tác cần ngữ cảnh, pipeline cần tính dự đoán được.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Cài package đúng theo hệ điều hành.</h3>
+<p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y bat</code></pre></div>
+<p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y bat</code></pre></div>
+<p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y bat</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><p>FreeBSD dùng <code>pkg</code>; không dùng APT/DNF hoặc systemd.</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg install -y bat</code></pre></div></li>
+<li><h3>Xác định executable thay vì giả định tên lệnh.</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">if command -v bat &gt;/dev/null 2&gt;&amp;1; then
+  BAT=bat
+elif command -v batcat &gt;/dev/null 2&gt;&amp;1; then
+  BAT=batcat
+else
+  printf '%s\n' 'Không tìm thấy bat/batcat trong PATH' &gt;&amp;2
+  exit 1
+fi
+printf 'BAT=%s\n' "$BAT"
+"$BAT" --version</code></pre></div><p>Ubuntu/Xubuntu và Debian có thể khác nhau theo package build. Từ bước này, mọi lệnh gọi qua <code>"$BAT"</code>.</p></li>
+<li><h3>Tạo file lab và xem syntax highlight với line number.</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">workdir="$(mktemp -d /tmp/linux-daily-bat.XXXXXX)"
+awk 'BEGIN { for (i=1; i&lt;=30; i++) printf "key_%02d=value_%02d\n", i, i }' &gt; "$workdir/sample.conf"
+"$BAT" --language=ini --style=numbers --paging=never "$workdir/sample.conf"</code></pre></div><p><code>--language=ini</code> làm kết quả deterministic hơn cho file mẫu thay vì phụ thuộc auto-detection.</p></li>
+<li><h3>Chỉ đọc vùng dòng cần thiết.</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">"$BAT" --language=ini --style=numbers --paging=never --line-range 10:16 "$workdir/sample.conf"</code></pre></div><p>Với preview file rất dài, có thể dùng dạng <code>--line-range :200</code> để giới hạn phần đầu file được hiển thị.</p></li>
+<li><h3>Phân biệt terminal tương tác với output cho pipeline.</h3>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">"$BAT" --paging=never --plain --color=never "$workdir/sample.conf" | sed -n '10,12p'</code></pre></div><p>Khi mục tiêu là xử lý text, tắt pager/color/decorations rõ ràng giúp tránh phụ thuộc vào trạng thái TTY. Với script đơn giản, dùng trực tiếp <code>sed</code> hoặc <code>cat</code> vẫn là lựa chọn ít bất ngờ hơn.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2>
+<p>Kiểm ba thuộc tính độc lập: binary có thật, line range đúng phạm vi và chế độ plain không thêm decorations.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">"$BAT" --version
+"$BAT" --language=ini --paging=never --plain --color=never --line-range 10:12 "$workdir/sample.conf"</code></pre></div>
+<div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">bat 0.x.y
+key_10=value_10
+key_11=value_11
+key_12=value_12</code></pre><p>Version cụ thể phụ thuộc repository của từng hệ; không hard-code một version làm điều kiện pass.</p></div>
+</section>
+<section class="cleanup"><h2>Gỡ / Hoàn tác</h2>
+<p>Xóa thư mục lab trước, sau đó gỡ package nếu chỉ cài cho bài này.</p>
+<p class="code-label same"><span class="dot"></span>Mọi hệ — xóa dữ liệu lab</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">test -n "${workdir:-}" &amp;&amp; case "$workdir" in /tmp/linux-daily-bat.*) rm -rf -- "$workdir" ;; *) printf '%s\n' 'Từ chối xóa: workdir không đúng pattern lab' &gt;&amp;2; exit 1 ;; esac</code></pre></div>
+<p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y bat</code></pre></div>
+<p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y bat</code></pre></div>
+<p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf remove -y bat</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg delete -y bat</code></pre></div>
+</section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean">
+<li><strong><code>bat: command not found</code> sau khi cài:</strong> chạy <code>command -v batcat</code>. Debian package catalog hiện vẫn ghi executable <code>/usr/bin/batcat</code> ở một số build.</li>
+<li><strong>Không thấy màu khi pipe:</strong> đó là hành vi có chủ ý khi stdout không phải terminal. Chỉ dùng <code>--color=always</code> khi chương trình nhận phía sau thực sự hiểu ANSI color.</li>
+<li><strong>Pager gây khó trong automation:</strong> thêm <code>--paging=never</code>; với script, cân nhắc quay về <code>cat</code>/<code>sed</code>.</li>
+<li><strong>Syntax nhận sai:</strong> dùng <code>--language=&lt;name&gt;</code> và kiểm tên hợp lệ bằng <code>"$BAT" --list-languages</code>.</li>
+<li><strong>File rất lớn:</strong> dùng <code>--line-range</code> để giới hạn vùng đọc thay vì render toàn bộ file chỉ để xem vài dòng.</li>
+</ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2>
+<p><code>bat</code> là trình xem, không phải sanitizer. Không xem nội dung nhạy cảm trên terminal đang được ghi hình hoặc chia sẻ màn hình. Khi dữ liệu đến từ nguồn không tin cậy, terminal control sequences có thể gây nhầm lẫn; các version mới của upstream có option sanitize/strip ANSI, nhưng availability phụ thuộc version nên cần kiểm <code>"$BAT" --help</code> trước khi dùng.</p>
+<p>Không alias <code>cat</code> thành <code>bat</code> trên server production nếu script hoặc runbook đang dựa vào hành vi byte-oriented đơn giản của <code>cat</code>. Dùng <code>bat</code> như công cụ đọc tương tác; giữ tool xử lý text cho automation.</p>
+</section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol>
+<li>Dùng <code>--list-languages</code> để tìm tên syntax cho JSON hoặc YAML rồi ép language cho một file không có extension.</li>
+<li>So sánh <code>--style=full</code>, <code>--style=numbers</code> và <code>--plain</code> trên cùng một file.</li>
+<li>Đọc dòng 100–120 của một file dài bằng <code>--line-range</code>, sau đó đối chiếu với <code>sed -n '100,120p'</code>.</li>
+<li>Giải thích vì sao <code>--paging=never</code> phù hợp cho pipeline hơn <code>--paging=always</code>.</li>
+</ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean">
+<li><a href="https://github.com/sharkdp/bat">bat — Upstream README</a> — upstream.</li>
+<li><a href="https://packages.ubuntu.com/noble/bat">Ubuntu Packages — bat (noble)</a> — official.</li>
+<li><a href="https://packages.debian.org/trixie/bat">Debian Packages — bat (trixie)</a> — official.</li>
+<li><a href="https://packages.fedoraproject.org/pkgs/rust-bat/bat/">Fedora Packages — bat</a> — official.</li>
+</ul></section>
+<footer><div class="foot-row"><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></div></footer>
+</div></main>
+</body>
+</html>
