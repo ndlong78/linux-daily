@@ -56,3 +56,4 @@
 #051 | 2026-08-20 | Bảo mật | umask và policy tạo file: secure defaults cho service và user
 #052 | 2026-08-21 | Storage | rsync snapshot-style backup với hard links và verification
 #053 | 2026-08-22 | Công cụ mới | bat: xem file có syntax highlight, paging và line range
+#054 | 2026-08-23 | Monitoring | Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ
