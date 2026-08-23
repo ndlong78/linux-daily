@@ -130,8 +130,15 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
         errors.append(f"{rel}: auto-merge requires contents: write")
     if not re.search(r"^\s{2}pull-requests:\s*read\s*$", permissions, re.MULTILINE):
         errors.append(f"{rel}: auto-merge requires pull-requests: read")
+    # `actions: write` là bắt buộc, không phải tuỳ chọn: squash-merge bằng
+    # GITHUB_TOKEN không kích `on: push`, nên auto-merge phải tự dispatch CI và
+    # Production Smoke trên main, nếu không release gate không bao giờ thoả.
+    # Bắt buộc thay vì chỉ cho phép, để không ai gỡ quyền rồi làm bước dispatch
+    # fail lặng lẽ mỗi ngày.
+    if not re.search(r"^\s{2}actions:\s*write\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: auto-merge requires actions: write for post-merge dispatch")
     if re.search(
-        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+        r"^\s{2}(pull-requests|issues|packages|deployments|id-token|security-events):\s*write\s*$",
         permissions,
         re.MULTILINE,
     ):
@@ -150,6 +157,13 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
         '"repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge"',
         "-f merge_method=squash",
         '-f sha="${CI_HEAD_SHA}"',
+        # Dispatch sau merge phải có, và phải TỰ XÁC NHẬN. Endpoint dispatch trả
+        # 204 kể cả khi không có run nào chạy, nên thiếu vòng chờ + `exit 1` thì
+        # bước này xanh trong khi main vẫn không có gate — hỏng im lặng.
+        '"repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/dispatches"',
+        "-f ref=main",
+        "head_sha=${merged_sha}&event=workflow_dispatch",
+        'if test -z "${found}"; then',
     )
     for marker in required_markers:
         if marker not in text:
@@ -267,6 +281,13 @@ def validate_file(path: Path) -> list[str]:
         errors.append(f"{rel}: workflow must not stage, commit, or push repository changes")
 
     for banned in ("actions", "pull-requests", "issues", "packages", "deployments"):
+        # Ngoại lệ duy nhất: auto-merge cần `actions: write` để dispatch CI và
+        # Production Smoke trên main sau khi merge — squash-merge bằng
+        # GITHUB_TOKEN không kích `on: push`, nên không có nó thì release gate
+        # không bao giờ thoả. _validate_auto_merge() bắt buộc quyền này và vẫn
+        # chặn mọi quyền ghi khác, nên nới ở đây không mở rộng phạm vi.
+        if banned == "actions" and is_auto_merge:
+            continue
         if re.search(rf"^\s{{2}}{re.escape(banned)}:\s*write\s*$", permissions, re.MULTILINE):
             errors.append(f"{rel}: {banned}: write is not allowed")
 
