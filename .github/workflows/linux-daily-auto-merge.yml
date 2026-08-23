@@ -14,6 +14,9 @@ on:
 permissions:
   contents: write
   pull-requests: read
+  # Cần cho bước dispatch xác thực sau merge ở cuối job. Không nới thêm gì khác:
+  # tools/workflow_safety.py cấm mọi quyền ghi ngoài ba dòng này.
+  actions: write
 
 jobs:
   squash-merge:
@@ -89,3 +92,61 @@ jobs:
           fi
 
           echo "Squash-merged PR #${PR_NUMBER} after exact-head CI success."
+
+      - name: Dispatch post-merge validation on main
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          # Sự kiện sinh bởi GITHUB_TOKEN không tạo workflow run mới. Squash-merge
+          # ở bước trên vì thế KHÔNG kích `on: push` của ci.yml lẫn
+          # production-smoke.yml — đo được trên 4/4 commit auto-merge, trong khi
+          # mọi commit merge tay đều có run push.
+          #
+          # Hậu quả: commit bài hằng ngày không có CI trên main, nên
+          # `tools/release.py` (WORKFLOWS = CI + Production Smoke, đòi xanh trên
+          # ĐÚNG SHA của main) không bao giờ thoả — không release được từ bài nào.
+          #
+          # workflow_dispatch là ngoại lệ gọi được bằng GITHUB_TOKEN, nhưng ta
+          # KHÔNG tin vào giả định đó: endpoint dispatch trả 204 kể cả khi không
+          # có gì chạy. Thiếu bước xác nhận thì đây là hỏng im lặng đúng nghĩa —
+          # workflow xanh, release vẫn hỏng, không ai biết cho tới lúc cắt tag.
+          #
+          # Bước này fail thì PR ĐÃ merge rồi; đó là chủ ý. Không undo merge —
+          # chỉ báo đỏ để biết SHA đó thiếu gate, thay vì lặng lẽ bỏ qua.
+          #
+          # Phạm vi xác nhận: chỉ khẳng định run ĐÃ ĐƯỢC TẠO, không chờ nó xanh.
+          # Chờ xanh sẽ buộc auto-merge treo theo CI và biến kết quả CI thành lỗi
+          # của auto-merge. Run đỏ hay bị huỷ vẫn hiện trên main và release gate
+          # vẫn từ chối SHA đó — đúng chỗ nó cần bị từ chối.
+
+          merged_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
+          echo "main sau merge: ${merged_sha}"
+
+          for wf in ci.yml production-smoke.yml; do
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/dispatches" \
+              -f ref=main
+
+            # Khớp theo ĐÚNG SHA vừa merge, không theo "run mới nhất": một push
+            # khác vào main có thể tạo run và làm ta tưởng dispatch đã thành công.
+            found=""
+            for _ in $(seq 1 30); do
+              sleep 5
+              found="$(gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/runs?branch=main&head_sha=${merged_sha}&event=workflow_dispatch&per_page=1" \
+                --jq '.workflow_runs[0].id // ""')"
+              if test -n "${found}"; then
+                break
+              fi
+            done
+
+            if test -z "${found}"; then
+              echo "Dispatch ${wf} không tạo run nào cho ${merged_sha} sau 150s." >&2
+              echo "GITHUB_TOKEN không kích được workflow_dispatch; commit này thiếu ${wf} trên main và release gate sẽ từ chối nó." >&2
+              exit 1
+            fi
+            echo "${wf}: đã tạo run ${found} trên ${merged_sha}"
+          done
