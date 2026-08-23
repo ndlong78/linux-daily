@@ -53,6 +53,7 @@
     {"issue":50,"difficulty":"advanced","prerequisites":[7,16,20,29,36]},
     {"issue":51,"difficulty":"intermediate","prerequisites":[9,23,37]},
     {"issue":52,"difficulty":"intermediate","prerequisites":[4,14,18,21,24]},
-    {"issue":53,"difficulty":"basic","prerequisites":[25,39]}
+    {"issue":53,"difficulty":"basic","prerequisites":[25,39]},
+    {"issue":54,"difficulty":"advanced","prerequisites":[19,26,40]}
   ]
 }
