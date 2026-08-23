@@ -1,6 +1,19 @@
 {
-  "count": 53,
+  "count": 54,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-23",
+      "href": "posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html",
+      "issue": 54,
+      "lede": "PSI cho Linux biết thời gian workload bị stall vì thiếu CPU, memory hoặc I/O; FreeBSD cần ghép bằng chứng từ vmstat và systat thay vì giả định có chỉ số tương đương một-một.",
+      "tags": [
+        "resource pressure"
+      ],
+      "title": "Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",

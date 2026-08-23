@@ -5,11 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ — Linux Daily #054</title>
 <meta name="description" content="Đọc PSI trên Linux và dùng vmstat/systat trên FreeBSD để nhận diện CPU, memory và I/O pressure mà không đánh đồng hai hệ đo lường.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
 <link rel="canonical" href="https://linux.no.id.vn/posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html">
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ — Linux Daily #054">
-<meta property="og:description" content="Đọc PSI trên Linux và dùng vmstat/systat trên FreeBSD để nhận diện CPU, memory và I/O pressure mà không đánh đồng hai hệ đo lường.">
+<meta property="og:title" content="Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ">
+<meta property="og:description" content="PSI cho Linux biết thời gian workload bị stall vì thiếu CPU, memory hoặc I/O; FreeBSD cần ghép bằng chứng từ vmstat và systat thay vì giả định có chỉ số tương đương một-một.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -19,13 +22,10 @@
 <meta property="og:image:height" content="642">
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ — Linux Daily #054">
-<meta name="twitter:description" content="Đọc PSI trên Linux và dùng vmstat/systat trên FreeBSD để nhận diện CPU, memory và I/O pressure mà không đánh đồng hai hệ đo lường.">
+<meta name="twitter:title" content="Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ">
+<meta name="twitter:description" content="PSI cho Linux biết thời gian workload bị stall vì thiếu CPU, memory hoặc I/O; FreeBSD cần ghép bằng chứng từ vmstat và systat thay vì giả định có chỉ số tương đương một-một.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
-<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
-<link rel="stylesheet" href="../assets/fonts.css">
-<link rel="stylesheet" href="../assets/style.css">
 <script type="application/json" id="ld-meta">
 {
   "issue": 54,
@@ -52,6 +52,7 @@
   ]
 }
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post">
 <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
@@ -66,7 +67,9 @@
   </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#054 · 23·08·2026</span></div></div>
@@ -201,7 +204,28 @@ full avg10=&lt;value&gt; avg60=&lt;value&gt; avg300=&lt;value&gt; total=&lt;micr
   <li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8">FreeBSD Manual — vmstat(8)</a> — official.</li>
   <li><a href="https://man.freebsd.org/cgi/man.cgi?query=systat&amp;sektion=1">FreeBSD Manual — systat(1)</a> — official.</li>
 </ul></section>
-<footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-047-socket-ownership-ss-lsof-sockstat-fstat.html"><span class="series-kicker">#047</span><span>Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-040-pidstat-procstat-process-timeseries.html">#040 · pidstat và procstat: theo dõi process theo thời gian</a></li>
+      <li><a href="post-033-process-tree-service-ownership.html">#033 · Process tree và service ownership: PID này thuộc service nào?</a></li>
+      <li><a href="post-026-vmstat-systat-resource-pressure.html">#026 · vmstat và systat: đọc pressure trước khi đoán bottleneck</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer>
   <a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a>
   <div class="foot-row"><span>Linux Daily #054 · Monitoring</span><span class="hashtags">#Linux #FreeBSD #Monitoring #PSI</span></div>
 </footer>
