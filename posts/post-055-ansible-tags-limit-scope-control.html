@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành">
-<meta property="og:description" content="Tags chọn task; --limit chọn host. Kiểm tra phạm vi trước khi apply để giảm blast radius.">
+<meta property="og:description" content="Tags chọn phần việc; --limit chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-055-ansible-tags-limit-scope-control.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành">
-<meta name="twitter:description" content="Tags chọn task; --limit chọn host. Kiểm tra phạm vi trước khi apply để giảm blast radius.">
+<meta name="twitter:description" content="Tags chọn phần việc; --limit chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -32,10 +32,22 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#055 · 24·08·2026</span></div></div>
-<header class="post"><p class="eyebrow">Automation · Ansible scope control</p><h1>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</h1><p class="lede">Tags chọn phần việc; <code>--limit</code> chọn host. Kiểm tra cả hai trước khi apply để giảm blast radius.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-24</span></div></header>
+<header class="post"><p class="eyebrow">Automation · Ansible scope control</p><h1>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</h1><p class="lede">Tags chọn phần việc; <code>--limit</code> chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-24</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Thu hẹp đồng thời host và task của playbook, rồi chứng minh selection trước khi thay đổi hệ thống.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Đã nắm Ansible ở #006 và rollout ở #048.</li><li>Control node có <code>ansible-playbook</code>; managed host truy cập được qua SSH.</li><li>Ubuntu hoặc Xubuntu, Debian, Fedora và FreeBSD có Python phù hợp; FreeBSD giữ nhóm riêng.</li><li>Lab ghi file tạm trong <code>/tmp</code>; có bước hoàn tác.</li></ul></section>
 <figure><svg viewBox="0 0 760 230" role="img" aria-label="Hai chiều giới hạn phạm vi Ansible"><rect width="760" height="230" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="45" y="65" width="190" height="100" rx="8" fill="#fff" stroke="#14201D"/><text x="140" y="100" font-size="14" font-weight="700">--limit</text><text x="140" y="130" font-size="11">chọn HOST</text><rect x="285" y="65" width="190" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="100" font-size="14" font-weight="700">--tags</text><text x="380" y="130" font-size="11">chọn TASK</text><rect x="525" y="65" width="190" height="100" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="620" y="100" font-size="14" font-weight="700">APPLY</text><text x="620" y="130" font-size="11">phạm vi giao nhau</text><path d="M235 115H279M475 115H519" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — <code>--limit</code> thu hẹp host, tags thu hẹp task; apply chỉ tác động phần giao.</figcaption></figure>
@@ -61,7 +73,7 @@ ansible_user=&lt;ssh-user&gt;</code></pre></div><p>Thay placeholder bằng đị
         dest: /tmp/linux-daily-055.txt
         content: "scope=linux\n"
         mode: "0644"
-      tags: [scope_demo]</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — task riêng</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre><code class="language-yaml">- name: Scope lab FreeBSD
+      tags: [scope_demo]</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — task riêng</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre class="bsd"><code class="language-yaml">- name: Scope lab FreeBSD
   hosts: freebsd
   become: true
   tasks:
@@ -74,11 +86,32 @@ ansible_user=&lt;ssh-user&gt;</code></pre></div><p>Thay placeholder bằng đị
 ansible-playbook -i inventory.ini scope.yml --limit ubuntu-lab --tags scope_demo --list-tags
 ansible-playbook -i inventory.ini scope.yml --limit ubuntu-lab --tags scope_demo --list-tasks</code></pre></div><p><strong>Expected Output:</strong> chỉ <code>ubuntu-lab</code>, tag <code>scope_demo</code> và đúng task marker.</p></li><li><h3>Preview rồi apply</h3><p class="code-label same"><span class="dot"></span>Control node</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook -i inventory.ini scope.yml --limit ubuntu-lab --tags scope_demo --check --diff
 ansible-playbook -i inventory.ini scope.yml --limit ubuntu-lab --tags scope_demo</code></pre></div><p><strong>Expected Output:</strong> preview báo thay đổi dự kiến; apply chỉ đổi canary. Check mode không phải rollback guarantee.</p></li></ol></section>
-<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible linux -i inventory.ini --limit ubuntu-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-055.txt'</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible freebsd -i inventory.ini --limit freebsd-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-055.txt'</code></pre></div><p><strong>Expected Output:</strong> host đã apply trả marker đúng OS; host chưa rollout không có file.</p></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible linux -i inventory.ini --limit ubuntu-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-055.txt'</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ansible freebsd -i inventory.ini --limit freebsd-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-055.txt'</code></pre></div><p><strong>Expected Output:</strong> host đã apply trả marker đúng OS; host chưa rollout không có file.</p></section>
 <section><h2>Gỡ / Hoàn tác</h2><p class="code-label same"><span class="dot"></span>Chỉ target đã chạy lab</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible all -i inventory.ini --limit ubuntu-lab -b -m ansible.builtin.file -a 'path=/tmp/linux-daily-055.txt state=absent'</code></pre></div><p><strong>Expected Output:</strong> marker trên canary bị xóa.</p></section>
 <section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Không có host: kiểm <code>--list-hosts</code> trước SSH.</li><li>Tag không chạy: kiểm <code>--list-tags</code>/<code>--list-tasks</code> và inheritance.</li><li>Limit quá rộng: dùng một canary hostname và xác nhận lại.</li><li>FreeBSD lỗi Python: xác minh interpreter; không chuyển sang systemd/path Linux.</li></ul></section>
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Tag không phải authorization boundary; vẫn cần credential, inventory và review.</li><li>Không đặt secret trong tag, extra vars hoặc diff.</li><li>Ghi inventory revision, limit pattern và tags trong change record.</li><li>Thay đổi nhạy cảm nên kết hợp limit với serial, health verification và rollback.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Thêm tag <code>verify</code> cho task chỉ đọc và so sánh selection.</li><li>Tạo group canary và kiểm intersection bằng <code>--list-hosts</code>.</li><li>Giải thích vì sao <code>--limit</code> không thay <code>serial</code>.</li></ol></section>
-<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible-core/2.19/cli/ansible-playbook.html">Ansible Core — ansible-playbook CLI</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_execution.html">Ansible Community — Executing playbooks</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html">Ansible Community — Playbook Keywords</a></li><li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core — Managing BSD hosts</a></li></ul></section>
-<footer><p><a class="foot-home" href="../index.html">← Linux Daily</a> · #055 · Automation · 24·08·2026</p></footer>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible-core/2.19/cli/ansible-playbook.html">Ansible Core Documentation — ansible-playbook CLI</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_execution.html">Ansible Community Documentation — Executing playbooks</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html">Ansible Community Documentation — Playbook Keywords</a></li><li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core Documentation — Managing BSD hosts with Ansible</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-048-ansible-check-diff-serial-rolling-change.html"><span class="series-kicker">#048</span><span>Ansible check mode, diff và serial: rolling change có kiểm soát</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-041-ansible-handlers-templates-idempotent-restart.html">#041 · Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</a></li>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><p><a class="foot-home" href="../index.html">← Linux Daily</a> · #055 · Automation · 24·08·2026</p></footer>
 </div></main></body></html>
