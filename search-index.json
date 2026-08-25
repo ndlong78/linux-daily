@@ -1,6 +1,19 @@
 {
-  "count": 55,
+  "count": 56,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-08-25",
+      "href": "posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html",
+      "issue": 56,
+      "lede": "Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.",
+      "tags": [
+        "Disk I/O latency lab"
+      ],
+      "title": "Lab disk I/O latency: process, device health và recovery boundary"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab disk I/O latency: process, device health và recovery boundary — Linux Daily #056</title>
+<meta name="description" content="Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab disk I/O latency: process, device health và recovery boundary">
+<meta property="og:description" content="Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab disk I/O latency: process, device health và recovery boundary">
+<meta name="twitter:description" content="Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 56,
+  "date": "2026-08-25",
+  "axis": "Ôn tập",
+  "eyebrow": "Ôn tập · Disk I/O latency lab",
+  "slug": "lab-disk-io-latency-process-device-health-recovery-boundary",
+  "title": "Lab disk I/O latency: process, device health và recovery boundary",
+  "lede": "Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-25",
+  "changes_system": true,
+  "sources": [
+    {"title":"fio Documentation — fio","url":"https://fio.readthedocs.io/en/latest/fio_doc.html","kind":"upstream"},
+    {"title":"Debian Manpages — pidstat(1)","url":"https://manpages.debian.org/trixie/sysstat/pidstat.1.en.html","kind":"official"},
+    {"title":"smartmontools — smartctl documentation index","url":"https://www.smartmontools.org/wiki/TocDoc","kind":"upstream"},
+    {"title":"FreeBSD Manual — iostat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=iostat&sektion=8","kind":"official"},
+    {"title":"FreeBSD Manual — gstat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=gstat&sektion=8","kind":"official"}
+  ],
+  "lab": {
+    "version": 1,
+    "profile": "advanced",
+    "topology": ["observer-shell", "io-target"],
+    "risks": ["resource-pressure"],
+    "verification": ["functional", "negative", "recovery", "observability"],
+    "rollback_required": true,
+    "cleanup_required": true,
+    "failure_injection": true
+  }
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#056 · 25·08·2026</span></div></div>
+<header class="post"><p class="eyebrow">Ôn tập · Disk I/O latency lab</p><h1>Lab disk I/O latency: process, device health và recovery boundary</h1><p class="lede">Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~20 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-25</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt workload gây I/O, device có dấu hiệu suy giảm và filesystem pressure; sau đó chọn recovery boundary dựa trên bằng chứng thay vì sửa storage theo phản xạ.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Host lab dùng riêng, có ít nhất 1 GiB trống trong <code>/var/tmp</code>; không chạy failure injection trên production, VM shared hoặc storage đang phục vụ workload thật.</li><li>Đã đọc #019, #024, #026, #033, #038 và #040 để hiểu CPU/RAM/I/O baseline, filesystem capacity, process ownership và disk health.</li><li>Ubuntu hoặc Xubuntu, Debian và Fedora dùng Linux device model; FreeBSD dùng GEOM và công cụ BSD riêng.</li><li>Cần quyền <code>sudo</code>/root để cài tool và đọc health của device; workload <code>fio</code> chạy bằng user thường trên file lab, không ghi raw device.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Ba lớp bằng chứng khi triage disk I/O latency: process, device và filesystem"><rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="72" width="190" height="106" rx="8" fill="#fff" stroke="#14201D"/><text x="130" y="104" font-size="13" font-weight="700">PROCESS</text><text x="130" y="130" font-size="10">ai đang đọc/ghi?</text><text x="130" y="151" font-size="10">pidstat / procstat</text><rect x="285" y="72" width="190" height="106" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="104" font-size="13" font-weight="700">DEVICE</text><text x="380" y="130" font-size="10">latency + queue + health</text><text x="380" y="151" font-size="10">iostat / gstat / SMART</text><rect x="535" y="72" width="190" height="106" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="630" y="104" font-size="13" font-weight="700">FILESYSTEM</text><text x="630" y="130" font-size="10">capacity / inode / errors</text><text x="630" y="151" font-size="10">df + logs</text><path d="M225 125H279M475 125H529" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Không gọi mọi “disk chậm” là lỗi đĩa. Cần bằng chứng ở process, device và filesystem trước khi chọn recovery boundary.</figcaption></figure>
+<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Ứng dụng phản hồi chậm, load tăng và người vận hành thấy storage busy. Ba nguyên nhân có thể cho triệu chứng gần giống nhau: một process đang tạo quá nhiều I/O, device bắt đầu lỗi, hoặc filesystem bị pressure do capacity/writeback. Chọn sai boundary dễ dẫn tới restart vô ích, thay disk nhầm hoặc chạy repair khi chưa có backup.</p><p>Lab này chỉ inject <strong>resource pressure có giới hạn</strong> bằng một file trong <code>/var/tmp</code>. Không inject media error, không benchmark raw device và không cố làm đầy filesystem.</p></section>
+<section data-lab-section="topology"><h2>Topology lab</h2><ul class="clean"><li><strong>observer-shell:</strong> terminal theo dõi process, device latency, health và kernel/system log.</li><li><strong>io-target:</strong> cùng host lab nhưng là file riêng <code>/var/tmp/linux-daily-056/io-test.bin</code>; đây là blast radius duy nhất của failure injection.</li><li>Không dùng mount production, volume database, root filesystem gần đầy hoặc shared SAN/NAS làm target.</li></ul></section>
+<section data-lab-section="safety"><h2>Safety boundary</h2><ul class="clean"><li>Kiểm tra dung lượng trước khi tạo file. Nếu <code>/var/tmp</code> còn dưới 1 GiB, dừng lab.</li><li>Workload có timeout 30 giây, file tối đa 256 MiB, chỉ 2 jobs và không dùng raw block device.</li><li>Nếu SMART/health báo lỗi hoặc log xuất hiện media/controller error mới, dừng <code>fio</code> ngay và chuyển sang backup/evacuation; không tiếp tục stress.</li><li>Ghi baseline trước failure injection để có điểm so sánh. Một con số latency đơn lẻ không đủ để kết luận.</li></ul></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Process evidence:</strong> xác định workload nào tạo read/write thay vì suy từ tên service.</li><li><strong>Device evidence:</strong> queue/latency/utilization cho biết device đang bận; health/log cho biết có dấu hiệu lỗi phần cứng hay controller hay không.</li><li><strong>Filesystem evidence:</strong> capacity, inode và lỗi filesystem có thể làm ứng dụng chậm dù SMART vẫn sạch.</li><li><strong>Recovery boundary:</strong> workload-bound → throttle/stop workload; device-health-bound → bảo toàn dữ liệu và thay device; filesystem-bound → xử lý capacity/integrity theo đúng filesystem.</li></ul><p>SMART “PASSED” không chứng minh device nhanh hoặc hoàn toàn khỏe. Ngược lại, latency cao trong lúc workload cố ý chạy không chứng minh phần cứng hỏng.</p></section>
+<figure><svg viewBox="0 0 760 260" role="img" aria-label="Decision tree cho recovery boundary của disk I/O latency"><rect width="760" height="260" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="280" y="20" width="200" height="55" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="53" font-size="12" font-weight="700">LATENCY CAO</text><path d="M380 75V105M380 105H125M380 105H635" stroke="#0C6E61" stroke-width="3" fill="none"/><rect x="35" y="115" width="180" height="88" rx="8" fill="#fff" stroke="#14201D"/><text x="125" y="143" font-size="11" font-weight="700">PROCESS RÕ</text><text x="125" y="165" font-size="9">health sạch</text><text x="125" y="184" font-size="9">→ workload boundary</text><rect x="290" y="115" width="180" height="88" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="380" y="143" font-size="11" font-weight="700">FS PRESSURE</text><text x="380" y="165" font-size="9">capacity / errors</text><text x="380" y="184" font-size="9">→ filesystem boundary</text><rect x="545" y="115" width="180" height="88" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="635" y="143" font-size="11" font-weight="700">HEALTH ERROR</text><text x="635" y="165" font-size="9">media/controller</text><text x="635" y="184" font-size="9">→ data/device boundary</text></g></svg><figcaption>Hình 2 — Recovery boundary được chọn theo bằng chứng. Không tăng timeout ứng dụng để che lỗi device, và không thay device chỉ vì workload đang tạo pressure.</figcaption></figure>
+<section data-lab-section="execution"><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Cài tool quan sát trên host lab</h3><p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu / Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y fio sysstat smartmontools</code></pre></div><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y fio sysstat smartmontools</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg install -y fio smartmontools</code></pre></div><p>FreeBSD đã có <code>iostat</code>, <code>gstat</code> và <code>procstat</code> trong base system; không dùng <code>apt</code>, <code>dnf</code> hoặc <code>systemctl</code>.</p></li>
+<li><h3>Xác định filesystem và device chứa target</h3><p class="code-label linux"><span class="dot"></span>Ubuntu / Xubuntu / Debian / Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">df -h /var/tmp
+findmnt -T /var/tmp -o SOURCE,TARGET,FSTYPE,OPTIONS
+lsblk -o NAME,TYPE,SIZE,FSTYPE,MOUNTPOINTS</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">df -h /var/tmp
+mount
+gpart show</code></pre></div><p><strong>Expected Output:</strong> xác định được filesystem của <code>/var/tmp</code> và device bên dưới. Chỉ tiếp tục khi còn ít nhất 1 GiB trống.</p></li>
+<li><h3>Ghi baseline trước khi tạo pressure</h3><p class="code-label linux"><span class="dot"></span>Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">iostat -xz 1 5
+vmstat 1 5</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">iostat -x -w 1 -c 5
+gstat -p -I 1s</code></pre></div><p>Với <code>gstat</code>, quan sát vài chu kỳ rồi nhấn <code>q</code>. Ghi lại device đang chứa target, latency và busy percentage trước failure injection.</p></li>
+<li><h3>Kiểm tra device health trước khi stress</h3><p class="code-label linux"><span class="dot"></span>Linux</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo smartctl --scan-open
+sudo smartctl -H -A /dev/&lt;device&gt;</code></pre></div><p>Thay <code>&lt;device&gt;</code> bằng device đã inventory, ví dụ <code>sda</code> hoặc device NVMe phù hợp. Đây là lệnh đọc; không dùng placeholder này cho lệnh phá hủy.</p><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">smartctl --scan-open
+smartctl -H -A /dev/&lt;device&gt;</code></pre></div><p>Trên FreeBSD, device có thể là <code>ada0</code>, <code>da0</code> hoặc NVMe tương ứng. Nếu health không sạch hoặc có media error, dừng lab.</p></li>
+</ol></section>
+<section data-lab-section="failure-injection"><h2>Failure injection — tạo I/O pressure có giới hạn</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">mkdir -p /var/tmp/linux-daily-056
+fio --name=linux-daily-056 \
+  --filename=/var/tmp/linux-daily-056/io-test.bin \
+  --size=256m --rw=randwrite --bs=4k --iodepth=8 --numjobs=2 \
+  --direct=1 --runtime=30 --time_based --group_reporting \
+  --output=/var/tmp/linux-daily-056/fio.txt &amp;
+echo $! &gt; /var/tmp/linux-daily-056/fio.pid</code></pre></div><p><strong>Expected failure state:</strong> trong tối đa 30 giây, device latency/queue tăng so với baseline và process <code>fio</code> xuất hiện như nguồn I/O. Nếu host mất responsiveness hoặc log báo lỗi device, dừng workload bằng PID đã lưu.</p></section>
+<section data-lab-section="verification"><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label linux"><span class="dot"></span>Linux — process + device evidence</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">pidstat -d -C fio 1 5
+iostat -xz 1 5
+sudo dmesg --level=err,warn | tail -n 30</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — process + device evidence</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">procstat -r "$(pgrep -n fio)"
+iostat -x -w 1 -c 5
+gstat -p -I 1s</code></pre></div><p><strong>Expected Output / Kết quả mong đợi:</strong></p><ul class="clean"><li><strong>Observability:</strong> process <code>fio</code> có block I/O; device chứa <code>/var/tmp</code> thể hiện pressure cao hơn baseline trong cửa sổ 30 giây.</li><li><strong>Negative:</strong> không có media/controller error mới; SMART/health không chuyển sang trạng thái xấu chỉ vì workload synthetic.</li><li><strong>Functional:</strong> workload tự kết thúc theo timeout và file output <code>fio.txt</code> ghi kết quả hoàn chỉnh.</li><li><strong>Recovery:</strong> sau khi <code>fio</code> kết thúc, rerun <code>iostat</code>/<code>gstat</code>; queue/latency phải trở về gần baseline và không còn process stressor.</li></ul><p class="code-label same"><span class="dot"></span>Mọi hệ — xác nhận stressor đã dừng</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">wait "$(cat /var/tmp/linux-daily-056/fio.pid)" 2&gt;/dev/null || true
+pgrep -af fio || true
+cat /var/tmp/linux-daily-056/fio.txt | tail -n 20</code></pre></div></section>
+<section data-lab-section="rollback"><h2>Gỡ / Hoàn tác</h2><p>Nếu cần dừng sớm, chỉ kill đúng PID đã lưu; không dùng <code>killall fio</code> trên host có workload khác.</p><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">test -f /var/tmp/linux-daily-056/fio.pid &amp;&amp; kill "$(cat /var/tmp/linux-daily-056/fio.pid)" 2&gt;/dev/null || true
+pgrep -af fio || true</code></pre></div><p>Sau rollback, lặp lại baseline. Nếu latency vẫn cao khi stressor đã dừng, boundary không còn là workload lab; chuyển sang kiểm device/filesystem thay vì chạy lại stress.</p></section>
+<section data-lab-section="cleanup"><h2>Cleanup</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">pgrep -af fio || true
+rm -f /var/tmp/linux-daily-056/io-test.bin /var/tmp/linux-daily-056/fio.txt /var/tmp/linux-daily-056/fio.pid
+rmdir /var/tmp/linux-daily-056 2&gt;/dev/null || true</code></pre></div><p>⚠️ Lệnh <code>rm</code> chỉ nhắm đúng ba file lab trong thư mục cố định. Xác nhận đường dẫn là <code>/var/tmp/linux-daily-056</code> trước khi chạy.</p><p>Nếu <code>fio</code>, <code>sysstat</code> hoặc <code>smartmontools</code> đã tồn tại trước lab thì giữ nguyên. Chỉ gỡ package khi bạn chắc chắn chúng được cài riêng cho bài này.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>direct=1</code> không được filesystem hỗ trợ:</strong> bỏ <code>--direct=1</code>, ghi rõ rằng page cache tham gia và không so số liệu với lần direct I/O.</li><li><strong>Latency cao nhưng SMART sạch:</strong> kiểm process, queue, virtualized storage và backend shared. SMART sạch không loại trừ contention.</li><li><strong>SMART báo lỗi hoặc kernel log có I/O error:</strong> dừng benchmark. Ưu tiên backup/evacuation và thay device theo maintenance window.</li><li><strong>Filesystem gần đầy/inode cạn:</strong> quay lại #024; đừng tăng <code>fio</code> size để “test thêm”.</li><li><strong>Không thấy process nhưng device vẫn busy:</strong> có thể I/O đến từ kernel, VM khác hoặc storage backend. Thu thêm evidence trước khi restart service.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Disk health output có serial/model và topology thiết bị; che thông tin nhận dạng khi đưa vào ticket công khai. Không chạy stressor trên volume chứa database, hypervisor datastore hoặc backup repository đang hoạt động.</p><p>Recovery boundary nên được ghi vào incident timeline: workload-bound, filesystem-bound, device-health-bound hoặc chưa đủ bằng chứng. Chỉ boundary cuối cùng mới quyết định restart, cleanup, repair hay thay phần cứng.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi baseline 5 mẫu rồi chạy lab. So sánh latency trước/trong/sau và giải thích vì sao một spike đơn lẻ chưa đủ kết luận.</li><li>Giả lập ca “process-bound”: giữ device health sạch, chỉ tăng workload; viết recovery plan không đụng filesystem repair.</li><li>Đọc một SMART report mẫu có warning và viết boundary mới: hành động nào phải dừng, dữ liệu nào cần bảo toàn trước.</li><li>Trên FreeBSD, đối chiếu <code>iostat</code> với <code>gstat</code>; trên Linux, đối chiếu <code>pidstat</code> với <code>iostat</code>. Ghi điểm mà process evidence và device evidence bổ sung cho nhau.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://fio.readthedocs.io/en/latest/fio_doc.html">fio Documentation — fio</a> — upstream.</li><li><a href="https://manpages.debian.org/trixie/sysstat/pidstat.1.en.html">Debian Manpages — pidstat(1)</a> — official.</li><li><a href="https://www.smartmontools.org/wiki/TocDoc">smartmontools — smartctl documentation index</a> — upstream.</li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=iostat&amp;sektion=8">FreeBSD Manual — iostat(8)</a> — official.</li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=gstat&amp;sektion=8">FreeBSD Manual — gstat(8)</a> — official.</li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-049-lab-tls-certificate-outage-expiry-chain-hostname.html"><span class="series-kicker">#049</span><span>Lab TLS certificate outage: expiry, chain và hostname mismatch</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
+      <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
+      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #056 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Storage #Performance</span></div></footer>
+</div></main>
+</body>
+</html>
