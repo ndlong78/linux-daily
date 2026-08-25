@@ -12,6 +12,10 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 - `.github/workflows/linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp: chỉ được gọi merge API sau khi CI của **exact head SHA** đã success; không checkout PR code, không self-mutation, không bypass protection.
 - `state.json` là nguồn sự thật của cadence; `topics.md` là lịch sử nội dung, không dùng làm clock vận hành.
 - Từ #019, claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
+- **Mọi URL nguồn mới phải được HTTP-check trước khi mở PR.** "Kiểm chứng được" nghĩa là
+  đã thật sự gọi thử và nhận 2xx — không phải trông có vẻ đúng. URL không tồn tại là lỗi
+  nặng hơn thiếu nguồn: nó tạo ra vẻ ngoài của bằng chứng ở nơi không có bằng chứng nào.
+  Ưu tiên URL đã có sẵn trong repo cho cùng công cụ, vì chúng đã qua link check.
 - Từ #041, bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và backfill theo PR riêng.
 - Social output Facebook/X đang tạm dừng.
 - Scheduled Task không được coi việc thiếu local writable checkout là blocker nếu GitHub connector vẫn có quyền ghi feature branch/PR an toàn. Khi đó dùng API-only fallback và để CI read-only làm remote validation authoritative.
