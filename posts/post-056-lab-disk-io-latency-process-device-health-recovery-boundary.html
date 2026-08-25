@@ -70,10 +70,16 @@
 <main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#056 · 25·08·2026</span></div></div>
@@ -124,7 +130,28 @@ rmdir /var/tmp/linux-daily-056 2&gt;/dev/null || true</code></pre></div><p>⚠�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Disk health output có serial/model và topology thiết bị; che thông tin nhận dạng khi đưa vào ticket công khai. Không chạy stressor trên volume chứa database, hypervisor datastore hoặc backup repository đang hoạt động.</p><p>Recovery boundary nên được ghi vào incident timeline: workload-bound, filesystem-bound, device-health-bound hoặc chưa đủ bằng chứng. Chỉ boundary cuối cùng mới quyết định restart, cleanup, repair hay thay phần cứng.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi baseline 5 mẫu rồi chạy lab. So sánh latency trước/trong/sau và giải thích vì sao một spike đơn lẻ chưa đủ kết luận.</li><li>Giả lập ca “process-bound”: giữ device health sạch, chỉ tăng workload; viết recovery plan không đụng filesystem repair.</li><li>Đọc một SMART report mẫu có warning và viết boundary mới: hành động nào phải dừng, dữ liệu nào cần bảo toàn trước.</li><li>Trên FreeBSD, đối chiếu <code>iostat</code> với <code>gstat</code>; trên Linux, đối chiếu <code>pidstat</code> với <code>iostat</code>. Ghi điểm mà process evidence và device evidence bổ sung cho nhau.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://fio.readthedocs.io/en/latest/fio_doc.html">fio Documentation — fio</a> — upstream.</li><li><a href="https://manpages.debian.org/trixie/sysstat/pidstat.1.en.html">Debian Manpages — pidstat(1)</a> — official.</li><li><a href="https://www.smartmontools.org/wiki/SmartctlExamples">smartmontools — smartctl examples</a> — upstream.</li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=iostat&amp;sektion=8">FreeBSD Manual — iostat(8)</a> — official.</li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=gstat&amp;sektion=8">FreeBSD Manual — gstat(8)</a> — official.</li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #056 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Storage #Performance</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-049-lab-tls-certificate-outage-expiry-chain-hostname.html"><span class="series-kicker">#049</span><span>Lab TLS certificate outage: expiry, chain và hostname mismatch</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
+      <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
+      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #056 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Storage #Performance</span></div></footer>
 </div></main>
 </body>
 </html>

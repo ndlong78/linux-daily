@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 24 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 25 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab disk I/O latency: process, device health và recovery boundary</title>
+      <link>https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html</guid>
+      <pubDate>Tue, 25 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.</description>
+    </item>
     <item>
       <title>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</title>
       <link>https://linux.no.id.vn/posts/post-055-ansible-tags-limit-scope-control.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-047-socket-ownership-ss-lsof-sockstat-fstat.html</guid>
       <pubDate>Sun, 16 Aug 2026 00:00:00 +0700</pubDate>
       <description>Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.</description>
-    </item>
-    <item>
-      <title>fzf cho chọn file, process và history tương tác</title>
-      <link>https://linux.no.id.vn/posts/post-046-fzf-interactive-file-process-history.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-046-fzf-interactive-file-process-history.html</guid>
-      <pubDate>Sat, 15 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.</description>
     </item>
   </channel>
 </rss>
