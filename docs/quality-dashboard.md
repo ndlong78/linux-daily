@@ -1,48 +1,48 @@
 # Linux Daily — P7 Audit & Quality Dashboard
 
-Derived quality snapshot · as of **2026-08-23**.
+Derived quality snapshot · as of **2026-08-24**.
 
 ## Executive status
 
 - P7 quality: **ATTENTION**
-- Published posts: **54**
+- Published posts: **55**
 - Hard errors: **0**
 - Remediation queue: **5**
 
 | Signal | Status | Detail |
 |---|---|---|
-| Distro coverage & portability | **ATTENTION** | 49/54 complete · FreeBSD blocks 54/54 · violations 0 |
-| Command & configuration | **PASS** | 415 blocks · 1506 lines · blockers 0 · review 0 |
-| Content freshness | **PASS** | current 54 · review-due 0 · historically-valid 0 |
-| Source quality | **PASS** | backed 54/54 · reviewed 54/54 · sources 190 |
+| Distro coverage & portability | **ATTENTION** | 50/55 complete · FreeBSD blocks 55/55 · violations 0 |
+| Command & configuration | **PASS** | 423 blocks · 1544 lines · blockers 0 · review 0 |
+| Content freshness | **PASS** | current 55 · review-due 0 · historically-valid 0 |
+| Source quality | **PASS** | backed 55/55 · reviewed 55/55 · sources 194 |
 
 ## Quality evidence
 
 ### Distro portability
 
-- Complete four-platform coverage: **49/54**
-- Explicit FreeBSD blocks: **54/54**
+- Complete four-platform coverage: **50/55**
+- Explicit FreeBSD blocks: **55/55**
 - Linux-only semantics inside FreeBSD blocks: **0**
 
 ### Command / configuration safety
 
-- Code blocks scanned: **415**
-- Command/config lines scanned: **1506**
+- Code blocks scanned: **423**
+- Command/config lines scanned: **1544**
 - Privileged lines: **328**
 - Destructive storage examples: **8**
 - Blocking findings: **0**
 
 ### Freshness / technical drift
 
-- Current: **54**
+- Current: **55**
 - Review due: **0**
 - Historically valid: **0**
 
 ### Source evidence
 
-- Posts with structured source evidence: **54/54**
-- Source-backed posts with mergeable review status: **54/54**
-- Official/upstream technical sources: **190**
+- Posts with structured source evidence: **55/55**
+- Source-backed posts with mergeable review status: **55/55**
+- Official/upstream technical sources: **194**
 
 ## Remediation queue
 

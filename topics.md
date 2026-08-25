@@ -57,3 +57,4 @@
 #052 | 2026-08-21 | Storage | rsync snapshot-style backup với hard links và verification
 #053 | 2026-08-22 | Công cụ mới | bat: xem file có syntax highlight, paging và line range
 #054 | 2026-08-23 | Monitoring | Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ
+#055 | 2026-08-24 | Automation | Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành

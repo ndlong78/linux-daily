@@ -1,6 +1,19 @@
 {
-  "count": 54,
+  "count": 55,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-24",
+      "href": "posts/post-055-ansible-tags-limit-scope-control.html",
+      "issue": 55,
+      "lede": "Tags chọn phần việc; --limit chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.",
+      "tags": [
+        "Ansible scope control"
+      ],
+      "title": "Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",

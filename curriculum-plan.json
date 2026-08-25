@@ -1,19 +1,7 @@
 {
   "version": 1,
-  "policy": {
-    "planning_horizon_days": 14,
-    "axis_source": "taxonomy.json",
-    "published_source": "posts/post-*.html",
-    "learning_paths_source": "learning-paths.json",
-    "learning_metadata_source": "learning-metadata.json",
-    "readiness": {
-      "required_platforms": ["ubuntu","debian","fedora","freebsd"],
-      "minimum_primary_sources": 2,
-      "semantic_similarity_block_threshold": 0.72
-    }
-  },
+  "policy": {"planning_horizon_days":14,"axis_source":"taxonomy.json","published_source":"posts/post-*.html","learning_paths_source":"learning-paths.json","learning_metadata_source":"learning-metadata.json","readiness":{"required_platforms":["ubuntu","debian","fedora","freebsd"],"minimum_primary_sources":2,"semantic_similarity_block_threshold":0.72}},
   "topics": [
-    {"axis":"Automation","topic":"Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành","difficulty":"intermediate","goal":"Chạy đúng subset host và task để giảm blast radius mà không nhân bản playbook hoặc bỏ qua verification.","prerequisites":[6,41]},
     {"axis":"Ôn tập","topic":"Lab disk I/O latency: process, device health và recovery boundary","difficulty":"advanced","goal":"Tách process gây I/O, thiết bị suy giảm và filesystem pressure rồi chọn recovery boundary có bằng chứng trước khi thay đổi hệ thống.","prerequisites":[19,24,26,33,38,40]},
     {"axis":"Networking","topic":"TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD","difficulty":"advanced","goal":"Hiểu MSS clamping chỉ tác động TCP, biết khi nào dùng như biện pháp tương thích và vẫn giữ PMTUD/ICMP đúng chuẩn.","prerequisites":[20,29,36,43]},
     {"axis":"Bảo mật","topic":"OpenSSH certificates: user CA, validity interval và thu hồi credential","difficulty":"advanced","goal":"Phân biệt SSH certificate với public key tĩnh, giới hạn thời hạn credential và chuẩn bị đường thu hồi theo trust boundary rõ ràng.","prerequisites":[2,23,30,37,44]},
@@ -26,6 +14,7 @@
     {"axis":"Bảo mật","topic":"SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key","difficulty":"advanced","goal":"Dùng option trong authorized_keys để thu hẹp quyền của credential SSH theo nguồn, command và forwarding thay vì cấp public key toàn quyền.","prerequisites":[2,23,44]},
     {"axis":"Storage","topic":"Sparse files: apparent size, allocated blocks và backup semantics","difficulty":"intermediate","goal":"Phân biệt kích thước logic với block thực cấp phát, kiểm sparse extent và hiểu khi nào công cụ backup bảo toàn hay làm phình sparse file.","prerequisites":[10,24,38]},
     {"axis":"Công cụ mới","topic":"zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script","difficulty":"basic","goal":"Dùng zoxide để nhảy nhanh giữa thư mục tương tác, hiểu database lịch sử và giữ cd/path tường minh trong automation.","prerequisites":[11,39,46]},
-    {"axis":"Monitoring","topic":"Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường","difficulty":"advanced","goal":"Đọc interrupt/softirq counters trên Linux và interrupt statistics trên FreeBSD để nhận diện IRQ storm hoặc network softirq pressure mà không quy mọi CPU spike cho application.","prerequisites":[19,26,40,47]}
+    {"axis":"Monitoring","topic":"Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường","difficulty":"advanced","goal":"Đọc interrupt/softirq counters trên Linux và interrupt statistics trên FreeBSD để nhận diện IRQ storm hoặc network softirq pressure mà không quy mọi CPU spike cho application.","prerequisites":[19,26,40,47]},
+    {"axis":"Automation","topic":"Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy","difficulty":"intermediate","goal":"Dùng inventory pattern, intersection và exclusion có kiểm chứng bằng --list-hosts để chọn đúng target trước khi chạy automation.","prerequisites":[6,48,55]}
   ]
 }
