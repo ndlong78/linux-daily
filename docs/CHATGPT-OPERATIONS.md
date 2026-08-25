@@ -72,6 +72,12 @@ Mỗi lần chạy, ChatGPT phải:
 9. Nếu branch chuẩn của đúng issue đã tồn tại, chưa có PR và head vẫn bằng `main`, coi đó là interrupted empty branch và resume chính branch đó.
 10. Chuẩn bị bài theo `templates/post.template.html`, `AGENTS.md`, `STYLE.md` và validators hiện hành.
 11. Từ #019: kiểm tra claim/lệnh bằng ít nhất 2 nguồn official/upstream, ghi `review_status` + `sources`, tạo section **Nguồn kỹ thuật** khớp metadata.
+11b. **HTTP-check từng URL nguồn mới trước khi mở PR** — gọi thử và xác nhận 2xx, không suy
+    đoán từ dạng URL. Bài #056 (25·08·2026) trích `smartmontools.org/wiki/SmartctlExamples`,
+    một trang không tồn tại; CI đỏ vì HTTP 404 và bài trễ một vòng. Ưu tiên URL đã có sẵn
+    trong repo cho cùng công cụ — chúng đã qua link check nên chắc chắn sống.
+    HTTP 429 khi kiểm hàng loạt cùng một host là rate limit, **không** phải link chết:
+    `check_links.py` xếp 429 vào `TRANSIENT_STATUSES` và chỉ cảnh báo. Đừng đổi URL vì 429.
 12. Từ #041: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
 13. Không tạo finalizer/self-mutating workflow để Actions sửa, commit hoặc push ngược branch.
 14. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
