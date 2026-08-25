@@ -12,7 +12,7 @@ Derived quality snapshot · as of **2026-08-24**.
 | Signal | Status | Detail |
 |---|---|---|
 | Distro coverage & portability | **ATTENTION** | 50/55 complete · FreeBSD blocks 55/55 · violations 0 |
-| Command & configuration | **PASS** | 423 blocks · 1543 lines · blockers 0 · review 0 |
+| Command & configuration | **PASS** | 423 blocks · 1544 lines · blockers 0 · review 0 |
 | Content freshness | **PASS** | current 55 · review-due 0 · historically-valid 0 |
 | Source quality | **PASS** | backed 55/55 · reviewed 55/55 · sources 194 |
 
@@ -27,7 +27,7 @@ Derived quality snapshot · as of **2026-08-24**.
 ### Command / configuration safety
 
 - Code blocks scanned: **423**
-- Command/config lines scanned: **1543**
+- Command/config lines scanned: **1544**
 - Privileged lines: **328**
 - Destructive storage examples: **8**
 - Blocking findings: **0**

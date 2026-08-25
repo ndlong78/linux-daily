@@ -32,8 +32,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#055 · 24·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Automation · Ansible scope control</p><h1>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</h1><p class="lede">Tags chọn phần việc; --limit chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-24</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Thu hẹp đồng thời host và task của playbook, chứng minh selection trước khi thay đổi hệ thống, rồi rollback sạch sau lab.</p></section>
@@ -80,5 +92,26 @@ ansible-playbook -i inventory.ini scope.yml --limit ubuntu-lab --tags scope_demo
 ansible all -i inventory.ini -m ansible.builtin.command -a 'test ! -e /tmp/linux-daily-055.txt'</code></pre></div><p><strong>Expected Output:</strong> marker bị xoá trên mọi host; lần kiểm tra cuối trả về thành công.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Thêm tag <code>config</code> và <code>verify</code>, rồi dùng <code>--list-tags</code> để chứng minh selection.</li><li>Tạo group <code>canary</code> gồm một Linux host và một FreeBSD host; kết hợp group với <code>--tags scope_demo</code>.</li><li>Giải thích vì sao <code>--limit canary</code> và <code>serial: 1</code> giải quyết hai bài toán khác nhau.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức của upstream; title và URL khớp <code>ld-meta.sources</code>.</p><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible-core/2.19/cli/ansible-playbook.html">Ansible Core Documentation — ansible-playbook CLI</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_execution.html">Ansible Community Documentation — Executing playbooks</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/reference_appendices/playbooks_keywords.html">Ansible Community Documentation — Playbook Keywords</a></li><li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core Documentation — Managing BSD hosts with Ansible</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-048-ansible-check-diff-serial-rolling-change.html"><span class="series-kicker">#048</span><span>Ansible check mode, diff và serial: rolling change có kiểm soát</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-041-ansible-handlers-templates-idempotent-restart.html">#041 · Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</a></li>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+      <li><a href="post-027-idempotent-shell-admin-tasks.html">#027 · Shell idempotent: chạy lại không phá trạng thái</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a></footer>
 </div></main></body></html>
