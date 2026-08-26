@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD — Linux Daily #057</title>
+<meta name="description" content="Phân biệt TCP MSS với Path MTU, nhận diện lúc MSS clamping là workaround hợp lý và giữ PMTUD/ICMP đúng chuẩn trên Linux cùng FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD">
+<meta property="og:description" content="MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD">
+<meta name="twitter:description" content="MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue": 57,
+  "date": "2026-08-26",
+  "axis": "Networking",
+  "eyebrow": "Networking · TCP MSS / PMTUD",
+  "slug": "tcp-mss-clamping-pmtud-boundary",
+  "title": "TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD",
+  "lede": "MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.",
+  "review_status": "reviewed",
+  "tested_on": [
+    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
+    "Debian 13 stable (documentation-verified)",
+    "Fedora 42 (documentation-verified)",
+    "FreeBSD 14.4-RELEASE (documentation-verified)"
+  ],
+  "last_verified": "2026-08-26",
+  "changes_system": false,
+  "sources": [
+    {"title":"RFC 9293 — Transmission Control Protocol (TCP)","url":"https://www.rfc-editor.org/rfc/rfc9293.html","kind":"official"},
+    {"title":"Linux Kernel Documentation — IP Sysctl","url":"https://cdn.kernel.org/doc/html/latest/networking/ip-sysctl.html","kind":"official"},
+    {"title":"nftables Wiki — Mangling packet headers","url":"https://wiki.nftables.org/wiki-nftables/index.php/Mangling_packet_headers","kind":"upstream"},
+    {"title":"FreeBSD Manual — pf.conf(5)","url":"https://man.freebsd.org/cgi/man.cgi?query=pf.conf","kind":"official"}
+  ]
+}
+</script>
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#057 · 26·08·2026</span></div></div>
+<header class="post">
+  <p class="eyebrow">Networking · TCP MSS / PMTUD</p>
+  <h1>TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD</h1>
+  <p class="lede">MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.</p>
+  <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~14 PHÚT</span></div>
+</header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng">
+  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
+  <p><strong>Last verified:</strong> 2026-08-26 · đối chiếu RFC 9293, Linux kernel documentation, nftables upstream và FreeBSD pf.conf(5); bài chỉ đọc trạng thái và đưa mẫu cấu hình, không tự thay firewall.</p>
+</section>
+<section class="objective"><h2>Mục tiêu</h2><p>Xác định khi nào TCP MSS clamping là workaround hợp lý, chọn phạm vi đủ hẹp và chứng minh vì sao PMTUD vẫn phải hoạt động.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
+  <li>Đã nắm #020, #029, #036 và #043.</li>
+  <li>Có một flow TCP đi qua tunnel, PPPoE, VPN hoặc path có MTU nhỏ hơn link MTU của endpoint.</li>
+  <li>Ubuntu hoặc Xubuntu, Debian, Fedora hay FreeBSD có quyền đọc route/interface; quyền <code>sudo</code> chỉ cần khi capture packet.</li>
+  <li>Không áp rule clamping vào production trước khi đã capture SYN và xác định path/MTU liên quan.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 240" role="img" aria-label="MSS clamping chỉ tác động TCP SYN trong khi PMTUD mô tả giới hạn của toàn đường truyền">
+  <rect width="760" height="240" fill="#F7FAF9"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="30" y="70" width="175" height="95" rx="8" fill="#fff" stroke="#14201D"/><text x="118" y="101" font-size="14" font-weight="700">TCP ENDPOINT</text><text x="118" y="130" font-size="11">SYN + MSS</text>
+    <rect x="292" y="55" width="175" height="125" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="380" y="92" font-size="14" font-weight="700">ROUTER / FIREWALL</text><text x="380" y="121" font-size="11">clamp MSS trên SYN</text><text x="380" y="148" font-size="10">chỉ TCP</text>
+    <rect x="555" y="70" width="175" height="95" rx="8" fill="#fff" stroke="#14201D"/><text x="643" y="101" font-size="14" font-weight="700">REMOTE</text><text x="643" y="130" font-size="11">effective send MSS</text>
+    <path d="M205 112H286M467 112H549" stroke="#0C6E61" stroke-width="3"/>
+    <path d="M118 195H643" stroke="#B23A2E" stroke-width="3" stroke-dasharray="8 6"/><text x="380" y="218" font-size="11" fill="#B23A2E">PMTUD / Packet Too Big vẫn cần cho path</text>
+  </g>
+</svg>
+<figcaption>Hình 1 — MSS clamping sửa một TCP option khi mở kết nối; PMTUD xử lý giới hạn truyền của path và không chỉ phục vụ TCP.</figcaption>
+</figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một tunnel có overhead có thể làm PMTU nhỏ hơn 1500. Nếu endpoint vẫn quảng bá MSS quá lớn, TCP có thể gửi segment vượt giới hạn path. Khi ICMP báo Packet Too Big/Fragmentation Needed bị lọc hoặc một middlebox xử lý PMTUD kém, flow TCP có thể handshake được nhưng treo khi truyền payload lớn. MSS clamping đôi khi giúp tương thích bằng cách hạ MSS ngay từ SYN, nhưng nó không sửa nguyên nhân gốc của PMTUD.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean">
+  <li>RFC 9293 định nghĩa MSS là kích thước dữ liệu TCP tối đa mà endpoint quảng bá trong SYN; MSS không phải MTU.</li>
+  <li>MSS clamping chỉ sửa TCP SYN/SYN-ACK. UDP, QUIC, ICMP và traffic không có TCP MSS option không được hưởng lợi.</li>
+  <li>Giá trị clamp quá thấp làm giảm hiệu quả truyền. Giá trị quá cao không giải quyết packet vượt PMTU.</li>
+  <li>Linux có TCP MTU probing ở transport layer, nhưng đây vẫn không phải lý do để chặn ICMP cần cho PMTUD của toàn stack.</li>
+  <li>Ưu tiên sửa tunnel MTU, route MTU và ICMP policy. Chỉ dùng clamp như compatibility boundary khi không kiểm soát được endpoint/path hoặc cần giảm blast radius cho riêng TCP.</li>
+</ul></section>
+<figure>
+<svg viewBox="0 0 760 250" role="img" aria-label="Cây quyết định cho MTU, PMTUD và MSS clamping">
+  <rect width="760" height="250" fill="#fff"/>
+  <g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle">
+    <rect x="35" y="75" width="155" height="90" rx="8" fill="#fff" stroke="#14201D"/><text x="113" y="108" font-size="12" font-weight="700">CAPTURE SYN</text><text x="113" y="135" font-size="10">MSS thực tế?</text>
+    <rect x="218" y="75" width="155" height="90" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="296" y="108" font-size="12" font-weight="700">VERIFY PMTU</text><text x="296" y="135" font-size="10">path / ICMP?</text>
+    <rect x="401" y="75" width="155" height="90" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="479" y="108" font-size="12" font-weight="700">FIX ROOT CAUSE</text><text x="479" y="135" font-size="10">MTU + ICMP</text>
+    <rect x="584" y="75" width="145" height="90" rx="8" fill="#FBF1F0" stroke="#B23A2E"/><text x="657" y="108" font-size="12" font-weight="700">CLAMP IF NEEDED</text><text x="657" y="135" font-size="10">TCP-only boundary</text>
+    <path d="M190 120H212M373 120H395M556 120H578" stroke="#0C6E61" stroke-width="3"/>
+  </g>
+</svg>
+<figcaption>Hình 2 — Đo trước, sửa PMTUD/MTU nếu kiểm soát được, chỉ clamp khi có lý do tương thích rõ ràng.</figcaption>
+</figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Xác định interface và MTU đầu ra.</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ip route get &lt;peer-ip&gt;
+ip link show dev &lt;wan-interface&gt;</code></pre></div><p><code>&lt;peer-ip&gt;</code> là peer thật của flow lỗi; <code>&lt;wan-interface&gt;</code> là interface do route chọn.</p><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">route -n get &lt;peer-ip&gt;
+ifconfig &lt;wan-interface&gt;</code></pre></div><p><strong>Expected Output:</strong> xác định đúng interface egress và MTU link; chưa suy ra PMTU chỉ từ con số này.</p></li>
+<li><h3>Capture MSS thật trong SYN.</h3><p class="code-label same"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora · FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo tcpdump -ni &lt;wan-interface&gt; -c 6 'tcp[tcpflags] &amp; tcp-syn != 0'</code></pre></div><p>Tạo một kết nối TCP mới trong cửa sổ capture và đọc option <code>mss</code> ở SYN/SYN-ACK. Nếu không thấy SYN, kiểm lại interface hoặc flow filter trước khi thay đổi firewall.</p></li>
+<li><h3>So sánh với PMTU thay vì lấy 1500 làm mặc định.</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ip route get &lt;peer-ip&gt;
+sysctl net.ipv4.tcp_mtu_probing</code></pre></div><p>Route cache và TCP probing chỉ là bằng chứng bổ sung. Quay lại kỹ thuật probe ở #043 nếu cần xác định packet size thật đi qua path.</p><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">route -n get &lt;peer-ip&gt;
+netstat -rn</code></pre></div><p>FreeBSD không dùng Linux <code>tcp_mtu_probing</code> sysctl. Kiểm route/path và ICMP theo công cụ BSD.</p></li>
+<li><h3>Chỉ chuẩn bị rule clamp sau khi đã có giá trị mục tiêu.</h3><p>Ví dụ Linux nftables dưới đây là cấu hình tham khảo, chưa phải lệnh apply. Thay <code>&lt;mss&gt;</code> bằng giá trị đã tính từ path thật.</p><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora — nftables</p><div class="code-wrap"><pre><code class="language-text">tcp flags syn tcp option maxseg size set &lt;mss&gt;</code></pre></div><p>Upstream nftables cũng hỗ trợ <code>set rt mtu</code>; chỉ dùng khi route MTU/PMTU cache phản ánh đúng đường đi. Không dùng như phép màu để che một PMTUD black hole chưa hiểu nguyên nhân.</p><p class="code-label bsd"><span class="dot"></span>FreeBSD — PF</p><div class="code-wrap"><pre class="bsd"><code class="language-text">match in all scrub (max-mss &lt;mss&gt;)</code></pre></div><p><code>pf.conf(5)</code> mô tả <code>max-mss</code> là giới hạn MSS trên TCP SYN và cảnh báo có thể có tác dụng phụ. Validate ruleset và giới hạn interface/direction phù hợp trước khi triển khai thật.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Kiểm chứng phải có cả bằng chứng TCP và bằng chứng path. Capture SYN mới để xác nhận MSS đã đúng nếu bạn triển khai clamp ở môi trường lab; đồng thời giữ ICMP cần cho PMTUD và thử lại payload lớn. Nếu chỉ TCP hoạt động nhưng UDP/QUIC vẫn lỗi, đó là dấu hiệu workaround đang che lỗi path chứ chưa sửa gốc.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>SYN/SYN-ACK quảng bá MSS không vượt boundary đã thiết kế.</li><li>Không cần hạ MTU vô cớ trên endpoint không liên quan.</li><li>ICMP Packet Too Big/Fragmentation Needed không bị chặn theo path cần PMTUD.</li><li>TCP payload lớn ổn định; các protocol ngoài TCP được kiểm riêng thay vì suy diễn từ kết quả MSS clamp.</li></ul></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Handshake được nhưng tải lớn treo:</strong> capture SYN và ICMP trước; đừng mặc định nguyên nhân là DNS hoặc application.</li><li><strong>Clamp không giúp:</strong> kiểm tra flow có thật sự đi qua box đặt rule và rule có thấy cả SYN/SYN-ACK không.</li><li><strong>Chỉ QUIC/UDP còn lỗi:</strong> MSS clamping không áp dụng cho chúng; quay lại PMTU/ICMP.</li><li><strong>Throughput giảm:</strong> giá trị MSS có thể đang bị đặt quá thấp. So sánh với PMTU thực thay vì sao chép 1360/1400/1452 từ môi trường khác.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Ưu tiên scope nhỏ nhất: interface/tunnel và traffic TCP thực sự cần workaround. Không biến MSS clamping thành rule mặc định toàn mạng. Với IPv6, giữ ICMPv6 Packet Too Big; chặn nó làm suy yếu PMTUD và có thể tạo black hole cho protocol không liên quan TCP. Lưu capture trước/sau và lý do chọn MSS để người vận hành sau biết đây là compatibility boundary, không phải thiết kế MTU chuẩn.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Capture SYN của một flow TCP qua VPN và ghi MSS hai chiều.</li><li>Từ MTU tunnel thực, tính MSS IPv4 cơ sở rồi giải thích vì sao TCP options không nên bị trừ trực tiếp vào giá trị quảng bá theo RFC 9293.</li><li>Viết một rule nftables và một rule PF ở dạng review-only cho cùng boundary, nhưng không apply.</li><li>Liệt kê ba loại traffic mà MSS clamping không thể sửa và nêu bằng chứng cần thu cho từng loại.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Các URL dưới đây đã được HTTP-check ngày 2026-08-26 trước khi mở PR.</p><ul class="clean">
+<li><a href="https://www.rfc-editor.org/rfc/rfc9293.html">RFC 9293 — Transmission Control Protocol (TCP)</a></li>
+<li><a href="https://cdn.kernel.org/doc/html/latest/networking/ip-sysctl.html">Linux Kernel Documentation — IP Sysctl</a></li>
+<li><a href="https://wiki.nftables.org/wiki-nftables/index.php/Mangling_packet_headers">nftables Wiki — Mangling packet headers</a></li>
+<li><a href="https://man.freebsd.org/cgi/man.cgi?query=pf.conf">FreeBSD Manual — pf.conf(5)</a></li>
+</ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #057 · Networking</span><span class="hashtags">#Linux #Networking #TCP #MSS #PMTUD</span></div></footer>
+</div></main>
+</body>
+</html>
