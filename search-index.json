@@ -1,6 +1,19 @@
 {
-  "count": 56,
+  "count": 57,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-08-26",
+      "href": "posts/post-057-tcp-mss-clamping-pmtud-boundary.html",
+      "issue": 57,
+      "lede": "MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.",
+      "tags": [
+        "TCP MSS / PMTUD"
+      ],
+      "title": "TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",

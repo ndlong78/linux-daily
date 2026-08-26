@@ -59,10 +59,16 @@
 <main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#057 · 26·08·2026</span></div></div>
@@ -137,7 +143,28 @@ netstat -rn</code></pre></div><p>FreeBSD không dùng Linux <code>tcp_mtu_probin
 <li><a href="https://wiki.nftables.org/wiki-nftables/index.php/Mangling_packet_headers">nftables Wiki — Mangling packet headers</a></li>
 <li><a href="https://man.freebsd.org/cgi/man.cgi?query=pf.conf">FreeBSD Manual — pf.conf(5)</a></li>
 </ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #057 · Networking</span><span class="hashtags">#Linux #Networking #TCP #MSS #PMTUD</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-050-conntrack-nftables-pf-state-table.html"><span class="series-kicker">#050</span><span>State table: conntrack/nftables trên Linux và pf state trên FreeBSD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-043-mtu-path-mtu-discovery-partial-connectivity.html">#043 · MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</a></li>
+      <li><a href="post-036-tcpdump-targeted-packet-capture.html">#036 · tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</a></li>
+      <li><a href="post-029-policy-routing-multiple-default-gateways.html">#029 · Nhiều default gateway: policy routing không cắt SSH</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #057 · Networking</span><span class="hashtags">#Linux #Networking #TCP #MSS #PMTUD</span></div></footer>
 </div></main>
 </body>
 </html>
