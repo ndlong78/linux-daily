@@ -59,3 +59,4 @@
 #054 | 2026-08-23 | Monitoring | Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ
 #055 | 2026-08-24 | Automation | Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành
 #056 | 2026-08-25 | Ôn tập | Lab disk I/O latency: process, device health và recovery boundary
+#057 | 2026-08-26 | Networking | TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD
