@@ -32,8 +32,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#058 · 27·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Bảo mật · OpenSSH user certificates</p><h1>OpenSSH certificates: user CA, validity interval và thu hồi credential</h1><p class="lede">Dùng OpenSSH user certificate để tách trust khỏi authorized_keys tĩnh, giới hạn thời hạn credential và thu hồi bằng KRL có kiểm chứng.</p><div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~14 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-27</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Cấu hình một user CA cho OpenSSH, phát hành certificate ngắn hạn theo principal, kiểm tra thời hạn rồi thu hồi credential bằng KRL mà không quay lại quản lý từng public key trên từng host.</p></section>
@@ -60,5 +72,26 @@ ssh-keygen -Q -f ./revoked-user-keys.krl ./id_ed25519_ld058-cert.pub</code></pre
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Đặt CA private key ngoài SSH server; giới hạn người/quy trình có quyền ký.</li><li>Dùng serial khác 0 và key ID có ý nghĩa để audit/revoke theo sự kiện.</li><li>Ưu tiên certificate ngắn hạn; KRL là đường thu hồi khẩn cấp, không phải lý do để cấp validity dài.</li><li>Không bật certificate trust trên fleet trước khi có inventory host, rollback và cách phân phối CA/KRL nhất quán.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Phát hành hai certificate cho cùng public key với serial 1001 và 1002, validity khác nhau.</li><li>Thu hồi chỉ certificate serial 1001 bằng KRL và chứng minh serial 1002 vẫn đăng nhập được.</li><li>Đổi principal sang một user khác và dùng <code>ssh-keygen -L</code> để giải thích vì sao login ban đầu fail.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ba URL dưới đây đã được HTTP-check ngày 2026-08-27.</p><ul class="clean"><li><a href="https://man.openbsd.org/ssh-keygen">OpenBSD manual — ssh-keygen(1)</a></li><li><a href="https://man.openbsd.org/sshd_config">OpenBSD manual — sshd_config(5)</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/security/">FreeBSD Handbook — Security</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #058 · Bảo mật</span><span class="hashtags">#OpenSSH #SSHCertificates #Security #FreeBSD</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-051-umask-secure-file-creation-policy.html"><span class="series-kicker">#051</span><span>umask và policy tạo file: secure defaults cho service và user</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-044-ssh-agent-forwarding-credential-risk.html">#044 · SSH agent forwarding và rủi ro lộ credential</a></li>
+      <li><a href="post-037-acl-default-acl-shared-access.html">#037 · ACL và default ACL: quyền chia sẻ không cần chmod 777</a></li>
+      <li><a href="post-030-login-privilege-escalation-audit.html">#030 · Audit đăng nhập và privilege escalation: lần theo ai đã làm gì</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #058 · Bảo mật</span><span class="hashtags">#OpenSSH #SSHCertificates #Security #FreeBSD</span></div></footer>
 </div></main></body></html>

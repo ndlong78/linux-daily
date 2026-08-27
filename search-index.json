@@ -1,6 +1,19 @@
 {
-  "count": 57,
+  "count": 58,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-08-27",
+      "href": "posts/post-058-openssh-certificates-user-ca-validity-revocation.html",
+      "issue": 58,
+      "lede": "Dùng OpenSSH user certificate để tách trust khỏi authorized_keys tĩnh, giới hạn thời hạn credential và thu hồi bằng KRL có kiểm chứng.",
+      "tags": [
+        "OpenSSH user certificates"
+      ],
+      "title": "OpenSSH certificates: user CA, validity interval và thu hồi credential"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",
