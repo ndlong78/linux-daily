@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Wed, 26 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Thu, 27 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>OpenSSH certificates: user CA, validity interval và thu hồi credential</title>
+      <link>https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</guid>
+      <pubDate>Thu, 27 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Dùng OpenSSH user certificate để tách trust khỏi authorized_keys tĩnh, giới hạn thời hạn credential và thu hồi bằng KRL có kiểm chứng.</description>
+    </item>
     <item>
       <title>TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD</title>
       <link>https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html</guid>
       <pubDate>Tue, 18 Aug 2026 00:00:00 +0700</pubDate>
       <description>Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.</description>
-    </item>
-    <item>
-      <title>Ansible check mode, diff và serial: rolling change có kiểm soát</title>
-      <link>https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-048-ansible-check-diff-serial-rolling-change.html</guid>
-      <pubDate>Mon, 17 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Preview thay đổi bằng --check --diff, thu nhỏ blast radius với serial và verify từng batch trước khi rollout tiếp.</description>
     </item>
   </channel>
 </rss>
