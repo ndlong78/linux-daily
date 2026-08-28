@@ -1,6 +1,19 @@
 {
-  "count": 58,
+  "count": 59,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-08-28",
+      "href": "posts/post-059-trim-discard-fstrim-zfs-autotrim.html",
+      "issue": 59,
+      "lede": "Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.",
+      "tags": [
+        "TRIM/discard"
+      ],
+      "title": "TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",
