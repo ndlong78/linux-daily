@@ -61,3 +61,4 @@
 #056 | 2026-08-25 | Ôn tập | Lab disk I/O latency: process, device health và recovery boundary
 #057 | 2026-08-26 | Networking | TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD
 #058 | 2026-08-27 | Bảo mật | OpenSSH certificates: user CA, validity interval và thu hồi credential
+#059 | 2026-08-28 | Storage | TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD
