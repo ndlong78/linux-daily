@@ -29,13 +29,23 @@
 <script type="application/json" id="ld-meta">
 {"issue":59,"date":"2026-08-28","axis":"Storage","eyebrow":"Storage · TRIM/discard","slug":"trim-discard-fstrim-zfs-autotrim","title":"TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD","lede":"Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-08-28","changes_system":true,"sources":[{"title":"util-linux — fstrim(8) Manual Page","url":"https://github.com/util-linux/util-linux/blob/master/sys-utils/fstrim.8.adoc","kind":"upstream"},{"title":"OpenZFS — zpoolprops(7)","url":"https://openzfs.github.io/openzfs-docs/man/master/7/zpoolprops.7.html","kind":"upstream"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#059 · 28·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Storage · TRIM/discard</p><h1>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</h1><p class="lede">Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-28</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Phân biệt periodic TRIM, continuous discard và ZFS autotrim; kiểm khả năng discard trước khi bật để tránh tạo thêm I/O không cần thiết.</p></section>
@@ -67,5 +77,26 @@ zpool get autotrim &lt;pool&gt;</code></pre></div></section>
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>TRIM/discard là storage lifecycle signal, không phải secure erase guarantee. Không dùng output của <code>fstrim</code> hay <code>autotrim=on</code> làm bằng chứng xóa dữ liệu nhạy cảm. Với thin provisioning, phối hợp policy giữa guest, hypervisor và storage backend để tránh hiểu sai capacity.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Trên một VM lab, ghi baseline <code>lsblk -D</code> và timer state, chạy <code>fstrim -v</code>, rồi giải thích vì sao byte count không phải secure erase evidence.</li><li>Trên FreeBSD ZFS lab, ghi <code>autotrim</code> trước/sau thay đổi và hoàn tác về baseline.</li><li>So sánh periodic trim với mount <code>discard</code> theo ba tiêu chí: thời điểm phát I/O, khả năng quan sát và blast radius.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL dưới đây đã được gọi trực tiếp trước authoring và trả nội dung từ upstream.</p><ul class="clean"><li><a href="https://github.com/util-linux/util-linux/blob/master/sys-utils/fstrim.8.adoc">util-linux — fstrim(8) Manual Page</a></li><li><a href="https://openzfs.github.io/openzfs-docs/man/master/7/zpoolprops.7.html">OpenZFS — zpoolprops(7)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #059 · Storage</span><span class="hashtags">#Linux #Storage #TRIM #FreeBSD #ZFS</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-052-rsync-link-dest-snapshot-backup.html"><span class="series-kicker">#052</span><span>rsync snapshot-style backup với hard links và verification</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-045-fsck-zfs-scrub-filesystem-integrity.html">#045 · fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</a></li>
+      <li><a href="post-038-smart-nvme-health-disk-degradation.html">#038 · SMART và NVMe health: phát hiện disk degradation trước khi hỏng</a></li>
+      <li><a href="post-031-mount-options-filesystem-protection.html">#031 · Mount options: giảm bề mặt tấn công của filesystem</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #059 · Storage</span><span class="hashtags">#Linux #Storage #TRIM #FreeBSD #ZFS</span></div></footer>
 </div></main></body></html>

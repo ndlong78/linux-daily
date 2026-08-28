@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Thu, 27 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Fri, 28 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</title>
+      <link>https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</guid>
+      <pubDate>Fri, 28 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.</description>
+    </item>
     <item>
       <title>OpenSSH certificates: user CA, validity interval và thu hồi credential</title>
       <link>https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-050-conntrack-nftables-pf-state-table.html</guid>
       <pubDate>Wed, 19 Aug 2026 00:00:00 +0700</pubDate>
       <description>Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.</description>
-    </item>
-    <item>
-      <title>Lab TLS certificate outage: expiry, chain và hostname mismatch</title>
-      <link>https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-049-lab-tls-certificate-outage-expiry-chain-hostname.html</guid>
-      <pubDate>Tue, 18 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.</description>
     </item>
   </channel>
 </rss>
