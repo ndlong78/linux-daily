@@ -1,6 +1,19 @@
 {
-  "count": 59,
+  "count": 60,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-08-29",
+      "href": "posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html",
+      "issue": 60,
+      "lede": "Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.",
+      "tags": [
+        "hyperfine"
+      ],
+      "title": "hyperfine: benchmark command có warmup và nhiều lần chạy"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",

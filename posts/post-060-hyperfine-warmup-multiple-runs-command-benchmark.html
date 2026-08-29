@@ -32,8 +32,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#060 · 29·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · hyperfine</p><h1>hyperfine: benchmark command có warmup và nhiều lần chạy</h1><p class="lede">Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div></header>
 <section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p><p><strong>Last verified:</strong> 2026-08-29 · đối chiếu README và manpage upstream hyperfine.</p></section>
@@ -58,5 +70,26 @@ hyperfine --version</code></pre></div><p><strong>Expected Output:</strong> đư�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Benchmark command có thể chạy nhiều lần; chỉ benchmark thao tác idempotent hoặc lab-safe. Không đưa command thay đổi production state, gửi request thật hoặc xóa dữ liệu vào <code>--runs</code>. Hyperfine đo runtime, không thay thế profiling CPU, memory, I/O hay load test production.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>So sánh hai cách tạo cùng một output nhỏ bằng 3 warmup và 15 timing run. Ghi lại mean, range và relative result, rồi nêu ít nhất hai yếu tố ngoài command có thể làm kết quả thay đổi.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL upstream dưới đây đã được truy xuất trước khi mở PR.</p><ul class="clean"><li><a href="https://github.com/sharkdp/hyperfine/blob/master/README.md">hyperfine — Upstream README</a></li><li><a href="https://github.com/sharkdp/hyperfine/blob/master/doc/hyperfine.1">hyperfine — Upstream manual page</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #060 · Công cụ mới</span><span class="hashtags">#LinuxDaily #hyperfine #benchmark</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-053-bat-syntax-highlight-paging-line-range.html"><span class="series-kicker">#053</span><span>bat: xem file có syntax highlight, paging và line range</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-046-fzf-interactive-file-process-history.html">#046 · fzf cho chọn file, process và history tương tác</a></li>
+      <li><a href="post-039-fd-find-files-fast.html">#039 · fd: tìm file nhanh nhưng phải hiểu ignore và hidden</a></li>
+      <li><a href="post-032-jq-json-operations.html">#032 · jq: biến JSON thành dữ liệu vận hành dùng được</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #060 · Công cụ mới</span><span class="hashtags">#LinuxDaily #hyperfine #benchmark</span></div></footer>
 </div></main></body></html>
