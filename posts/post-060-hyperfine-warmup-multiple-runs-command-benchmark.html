@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>hyperfine: benchmark command có warmup và nhiều lần chạy — Linux Daily #060</title>
+<meta name="description" content="Dùng hyperfine để benchmark command với warmup, nhiều lần chạy và so sánh có thống kê trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="hyperfine: benchmark command có warmup và nhiều lần chạy">
+<meta property="og:description" content="Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="hyperfine: benchmark command có warmup và nhiều lần chạy">
+<meta name="twitter:description" content="Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":60,"date":"2026-08-29","axis":"Công cụ mới","eyebrow":"Công cụ mới · hyperfine","slug":"hyperfine-warmup-multiple-runs-command-benchmark","title":"hyperfine: benchmark command có warmup và nhiều lần chạy","lede":"Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-08-29","changes_system":true,"sources":[{"title":"hyperfine — Upstream README","url":"https://github.com/sharkdp/hyperfine/blob/master/README.md","kind":"upstream"},{"title":"hyperfine — Upstream manual page","url":"https://github.com/sharkdp/hyperfine/blob/master/doc/hyperfine.1","kind":"upstream"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#060 · 29·08·2026</span></div></div>
+<header class="post"><p class="eyebrow">Công cụ mới · hyperfine</p><h1>hyperfine: benchmark command có warmup và nhiều lần chạy</h1><p class="lede">Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div></header>
+<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p><p><strong>Last verified:</strong> 2026-08-29 · đối chiếu README và manpage upstream hyperfine.</p></section>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>hyperfine</code> để so sánh command bằng warmup và nhiều lần đo, rồi đọc mean/range/relative result mà không suy diễn thành hiệu năng production.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Có terminal trên Ubuntu hoặc Xubuntu, Debian, Fedora hoặc FreeBSD.</li><li>Có quyền <code>sudo</code>/root chỉ cho bước cài và gỡ package.</li><li>Dùng command không phá hủy dữ liệu; bài này benchmark <code>sleep</code> để tách công cụ đo khỏi workload thật.</li><li>Không chạy benchmark khi máy đang có tải nền lớn nếu mục tiêu là so sánh ổn định.</li></ul></section>
+<figure><svg viewBox="0 0 760 230" role="img" aria-label="Luồng benchmark từ warmup qua nhiều timing run đến thống kê"><rect width="760" height="230" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="68" width="150" height="94" rx="8" fill="#fff" stroke="#14201D"/><text x="110" y="102" font-size="13" font-weight="700">WARMUP</text><text x="110" y="130" font-size="10">không tính vào kết quả</text><rect x="225" y="68" width="150" height="94" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="300" y="102" font-size="13" font-weight="700">TIMED RUNS</text><text x="300" y="130" font-size="10">lặp N lần</text><rect x="415" y="68" width="150" height="94" rx="8" fill="#fff" stroke="#14201D"/><text x="490" y="102" font-size="13" font-weight="700">STATISTICS</text><text x="490" y="130" font-size="10">mean · min · max</text><rect x="605" y="68" width="120" height="94" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="665" y="102" font-size="13" font-weight="700">COMPARE</text><text x="665" y="130" font-size="10">relative</text><path d="M185 115H219M375 115H409M565 115H599" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Warmup làm nóng trạng thái trước measurement; kết quả đáng tin hơn một lần chạy đơn lẻ vì có nhiều timing run.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một lần chạy bằng <code>time</code> dễ bị nhiễu bởi scheduler, cache, startup và tải nền. Upstream hyperfine cung cấp thống kê qua nhiều lần chạy, warmup trước measurement và so sánh nhiều command trong cùng một invocation.</p><p>Hyperfine vẫn là microbenchmark. Nếu workload thật phụ thuộc network, disk queue, dataset production hoặc concurrency dài hạn, kết quả local chỉ trả lời câu hỏi hẹp của lab.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>--warmup N</code> chạy command N lần trước phần đo và không tính các lần này vào thống kê.</li><li><code>--runs N</code> ép đúng số timing run; nếu bỏ, hyperfine tự chọn số lần phù hợp.</li><li>Truyền nhiều command để nhận bảng comparison và tỷ lệ relative.</li><li>Command trên Unix mặc định chạy qua shell; với workload cực ngắn có thể cân nhắc <code>--shell=none</code>, nhưng khi đó không dùng syntax shell như glob hoặc pipeline.</li><li>Không dùng <code>--prepare</code> để xóa cache hệ thống một cách mù quáng; cold-cache benchmark là bài toán riêng và có thể cần quyền cao.</li></ul></section>
+<figure><svg viewBox="0 0 760 235" role="img" aria-label="So sánh benchmark tốt với benchmark dễ gây hiểu sai"><rect width="760" height="235" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="50" y="42" width="300" height="150" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="200" y="78" font-size="14" font-weight="700">SO SÁNH CÓ KIỂM SOÁT</text><text x="200" y="112" font-size="11">cùng input · warmup · nhiều run</text><text x="200" y="145" font-size="10">đọc cả độ phân tán</text><rect x="410" y="42" width="300" height="150" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="560" y="78" font-size="14" font-weight="700">KẾT LUẬN QUÁ MỨC</text><text x="560" y="112" font-size="11">1 run · khác input · tải nền</text><text x="560" y="145" font-size="10">gán thành production performance</text></g></svg><figcaption>Hình 2 — Hyperfine giúp chuẩn hóa phép đo; nó không tự loại bỏ sai lệch do thiết kế benchmark.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Cài hyperfine từ package repository.</h3><p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y hyperfine</code></pre></div><p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt update
+sudo apt install -y hyperfine</code></pre></div><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf install -y hyperfine</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg install -y hyperfine</code></pre></div></li>
+<li><h3>Kiểm tra binary và version.</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">command -v hyperfine
+hyperfine --version</code></pre></div><p><strong>Expected Output:</strong> đường dẫn executable và một dòng version của hyperfine.</p></li>
+<li><h3>Chạy benchmark cơ bản bằng nhiều lần đo.</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">hyperfine --runs 10 'sleep 0.05'</code></pre></div><p><strong>Expected Output:</strong> một summary có mean, min, max; giá trị cụ thể thay đổi theo máy.</p></li>
+<li><h3>Thêm warmup rồi so sánh hai command.</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">hyperfine --warmup 3 --runs 10 'sleep 0.05' 'sleep 0.08'</code></pre></div><p><strong>Expected Output:</strong> hai benchmark và phần comparison cho biết command nào nhanh hơn theo tỷ lệ tương đối.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">hyperfine --warmup 2 --runs 8 'sleep 0.02' 'sleep 0.04'</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><p>Có 8 timing run cho mỗi command sau warmup, summary thống kê cho từng command và comparison trong đó <code>sleep 0.02</code> thường nhanh hơn. Không yêu cầu con số thời gian tuyệt đối giống nhau giữa máy.</p></div></section>
+<section><h2>Gỡ / Hoàn tác</h2><p class="code-label ubuntu"><span class="dot"></span>Ubuntu / Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y hyperfine</code></pre></div><p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo apt remove -y hyperfine</code></pre></div><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo dnf remove -y hyperfine</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg delete -y hyperfine</code></pre></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Kết quả dao động mạnh: giảm tải nền, dùng cùng input và tăng số run.</li><li>Command đầu tiên chậm rõ rệt: thêm warmup nếu mục tiêu là warm-cache/steady-state measurement.</li><li>Benchmark quá ngắn: shell startup và timer noise chiếm tỷ lệ lớn; cân nhắc workload dài hơn hoặc <code>--shell=none</code> khi phù hợp.</li><li>Hai command không cùng semantics: sửa benchmark trước khi đọc comparison.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Benchmark command có thể chạy nhiều lần; chỉ benchmark thao tác idempotent hoặc lab-safe. Không đưa command thay đổi production state, gửi request thật hoặc xóa dữ liệu vào <code>--runs</code>. Hyperfine đo runtime, không thay thế profiling CPU, memory, I/O hay load test production.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>So sánh hai cách tạo cùng một output nhỏ bằng 3 warmup và 15 timing run. Ghi lại mean, range và relative result, rồi nêu ít nhất hai yếu tố ngoài command có thể làm kết quả thay đổi.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL upstream dưới đây đã được truy xuất trước khi mở PR.</p><ul class="clean"><li><a href="https://github.com/sharkdp/hyperfine/blob/master/README.md">hyperfine — Upstream README</a></li><li><a href="https://github.com/sharkdp/hyperfine/blob/master/doc/hyperfine.1">hyperfine — Upstream manual page</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-053-bat-syntax-highlight-paging-line-range.html"><span class="series-kicker">#053</span><span>bat: xem file có syntax highlight, paging và line range</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-046-fzf-interactive-file-process-history.html">#046 · fzf cho chọn file, process và history tương tác</a></li>
+      <li><a href="post-039-fd-find-files-fast.html">#039 · fd: tìm file nhanh nhưng phải hiểu ignore và hidden</a></li>
+      <li><a href="post-032-jq-json-operations.html">#032 · jq: biến JSON thành dữ liệu vận hành dùng được</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #060 · Công cụ mới</span><span class="hashtags">#LinuxDaily #hyperfine #benchmark</span></div></footer>
+</div></main></body></html>

@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Fri, 28 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sat, 29 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>hyperfine: benchmark command có warmup và nhiều lần chạy</title>
+      <link>https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html</guid>
+      <pubDate>Sat, 29 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.</description>
+    </item>
     <item>
       <title>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</title>
       <link>https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html</guid>
       <pubDate>Thu, 20 Aug 2026 00:00:00 +0700</pubDate>
       <description>Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.</description>
-    </item>
-    <item>
-      <title>State table: conntrack/nftables trên Linux và pf state trên FreeBSD</title>
-      <link>https://linux.no.id.vn/posts/post-050-conntrack-nftables-pf-state-table.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-050-conntrack-nftables-pf-state-table.html</guid>
-      <pubDate>Wed, 19 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.</description>
     </item>
   </channel>
 </rss>
