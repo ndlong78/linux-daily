@@ -63,3 +63,4 @@
 #058 | 2026-08-27 | Bảo mật | OpenSSH certificates: user CA, validity interval và thu hồi credential
 #059 | 2026-08-28 | Storage | TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD
 #060 | 2026-08-29 | Công cụ mới | hyperfine: benchmark command có warmup và nhiều lần chạy
+#061 | 2026-08-30 | Monitoring | Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD
