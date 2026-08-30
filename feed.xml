@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sat, 29 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 30 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</title>
+      <link>https://linux.no.id.vn/posts/post-061-load-average-run-queue-scheduler-pressure.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-061-load-average-run-queue-scheduler-pressure.html</guid>
+      <pubDate>Sun, 30 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.</description>
+    </item>
     <item>
       <title>hyperfine: benchmark command có warmup và nhiều lần chạy</title>
       <link>https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html</guid>
       <pubDate>Fri, 21 Aug 2026 00:00:00 +0700</pubDate>
       <description>Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.</description>
-    </item>
-    <item>
-      <title>umask và policy tạo file: secure defaults cho service và user</title>
-      <link>https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-051-umask-secure-file-creation-policy.html</guid>
-      <pubDate>Thu, 20 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.</description>
     </item>
   </channel>
 </rss>

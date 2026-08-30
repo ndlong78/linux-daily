@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD — Linux Daily #061</title>
+<meta name="description" content="Phân biệt load average với CPU utilization và đọc run queue bằng uptime, vmstat để nhận diện scheduler pressure kéo dài trên Linux và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-061-load-average-run-queue-scheduler-pressure.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD">
+<meta property="og:description" content="Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-061-load-average-run-queue-scheduler-pressure.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD">
+<meta name="twitter:description" content="Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":61,"date":"2026-08-30","axis":"Monitoring","eyebrow":"Monitoring · Scheduler pressure","slug":"load-average-run-queue-scheduler-pressure","title":"Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD","lede":"Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-08-30","changes_system":false,"sources":[{"title":"Linux Kernel Documentation — The /proc Filesystem","url":"https://docs.kernel.org/filesystems/proc.html","kind":"upstream"},{"title":"FreeBSD Manual — uptime(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=uptime&sektion=1","kind":"official"},{"title":"FreeBSD Manual — vmstat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8","kind":"official"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#061 · 30·08·2026</span></div></div>
+<header class="post"><p class="eyebrow">Monitoring · Scheduler pressure</p><h1>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</h1><p class="lede">Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.</p><div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~10 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-30</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt load average với CPU utilization và dùng run queue để xác định scheduler pressure kéo dài trước khi tối ưu process hoặc tăng tài nguyên.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Đã đọc #019, #026 và #040 để quen với <code>vmstat</code>, process và pressure.</li><li>Có quyền user thường; bài chỉ đọc trạng thái, không thay đổi hệ thống.</li><li>Ubuntu và Xubuntu dùng cùng nhánh lệnh Linux trong bài; Debian và Fedora cũng dùng các lệnh đọc tương ứng.</li></ul></section>
+<figure><svg viewBox="0 0 760 230" role="img" aria-label="Load average là trung bình theo thời gian còn run queue là ảnh chụp tức thời"><rect width="760" height="230" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="45" y="65" width="200" height="100" rx="8" fill="#fff" stroke="#14201D"/><text x="145" y="102" font-size="14" font-weight="700">LOAD AVERAGE</text><text x="145" y="132" font-size="11">1 · 5 · 15 phút</text><rect x="280" y="65" width="200" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="102" font-size="14" font-weight="700">RUN QUEUE</text><text x="380" y="132" font-size="11">ảnh chụp hiện tại</text><rect x="515" y="65" width="200" height="100" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="615" y="102" font-size="14" font-weight="700">CPU IDLE</text><text x="615" y="132" font-size="11">bối cảnh quyết định</text><path d="M245 115H274M480 115H509" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Không kết luận từ một con số: đọc xu hướng load, hàng đợi runnable và CPU idle cùng lúc.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một máy có load 8 không tự động là “CPU 800%”. Cùng giá trị đó có thể bình thường trên máy nhiều CPU hoặc là dấu hiệu nghẽn trên máy ít CPU. Trên Linux, <code>/proc/loadavg</code> còn cho biết số task runnable hiện tại; trên FreeBSD, <code>uptime</code> hiển thị load 1, 5 và 15 phút.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Load average là xu hướng theo 1, 5 và 15 phút; không phải CPU utilization.</li><li>Run queue cho biết số thread đang chạy hoặc chờ CPU tại thời điểm lấy mẫu.</li><li>Linux <code>vmstat</code> cột <code>r</code> là runnable; FreeBSD <code>vmstat</code> cột <code>r</code> là running hoặc trong run queue, còn <code>b</code> là blocked vì resource như I/O hoặc paging.</li><li>Pressure đáng chú ý khi hàng đợi cao lặp lại qua nhiều mẫu và CPU idle thấp; một spike đơn lẻ chưa đủ kết luận.</li></ul></section>
+<figure><svg viewBox="0 0 760 230" role="img" aria-label="Cây quyết định đọc scheduler pressure"><rect width="760" height="230" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="70" width="160" height="90" rx="8" fill="#fff" stroke="#14201D"/><text x="115" y="105" font-size="12" font-weight="700">LOAD TĂNG?</text><rect x="220" y="70" width="160" height="90" rx="8" fill="#fff" stroke="#14201D"/><text x="300" y="105" font-size="12" font-weight="700">r CAO LẶP LẠI?</text><rect x="405" y="70" width="160" height="90" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="485" y="105" font-size="12" font-weight="700">IDLE THẤP?</text><rect x="590" y="70" width="135" height="90" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="657" y="105" font-size="12" font-weight="700">TRUY PROCESS</text><path d="M195 115H214M380 115H399M565 115H584" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Chỉ khi nhiều tín hiệu cùng chỉ về scheduler contention mới nên truy process hoặc capacity.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Đọc load average</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">uptime
+cat /proc/loadavg
+nproc</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">uptime
+sysctl -n hw.ncpu</code></pre></div><p>So sánh load với số CPU chỉ để lấy ngữ cảnh, không dùng tỷ lệ này như ngưỡng tuyệt đối.</p></li>
+<li><h3>Lấy nhiều mẫu run queue</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">vmstat 1 6</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">vmstat -w 1 -c 6</code></pre></div><p><strong>Expected Output:</strong> sáu mẫu; từ mẫu thứ hai trở đi phản ánh khoảng đo mới. Quan sát <code>r</code>, CPU idle và trên FreeBSD cả <code>b</code>.</p></li>
+<li><h3>Đối chiếu process khi pressure kéo dài</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ps -eo pid,ppid,stat,pcpu,comm --sort=-pcpu | head -n 15</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ps -axo pid,ppid,state,%cpu,command -r | head -n 15</code></pre></div><p>Không kill process chỉ vì đứng đầu danh sách; cần liên hệ với service ownership, request rate và workload dự kiến.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">uptime</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><p>Ba giá trị load 1/5/15 phút. Khi kết hợp với chuỗi mẫu <code>vmstat</code>, bạn xác định được pressure là spike ngắn hay hàng đợi kéo dài thay vì suy từ một snapshot.</p></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Load cao nhưng CPU idle vẫn cao: kiểm I/O wait, blocked task hoặc workload không thuần CPU trước.</li><li><code>r</code> tăng một mẫu rồi trở về thấp: chưa đủ bằng chứng cho saturation.</li><li>Đừng so load giữa hai máy có topology CPU và workload khác nhau như một KPI tuyệt đối.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Các lệnh trong bài là read-only. Khi cần đào sâu process của user khác, chỉ nâng quyền tối thiểu cần thiết và tránh thu thập command line chứa secret vào log hoặc ticket.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi <code>uptime</code> và sáu mẫu <code>vmstat</code> lúc máy rảnh.</li><li>Lặp lại khi chạy workload hợp lệ của lab.</li><li>Giải thích bằng ba tín hiệu: load trend, <code>r</code> và CPU idle; không dùng câu “load cao nên CPU quá tải”.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức của upstream hoặc hệ điều hành.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/proc.html">Linux Kernel Documentation — The /proc Filesystem</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=uptime&amp;sektion=1">FreeBSD Manual — uptime(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8">FreeBSD Manual — vmstat(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html"><span class="series-kicker">#054</span><span>Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-047-socket-ownership-ss-lsof-sockstat-fstat.html">#047 · Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</a></li>
+      <li><a href="post-040-pidstat-procstat-process-timeseries.html">#040 · pidstat và procstat: theo dõi process theo thời gian</a></li>
+      <li><a href="post-033-process-tree-service-ownership.html">#033 · Process tree và service ownership: PID này thuộc service nào?</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #061 · Monitoring</span><span class="hashtags">#Linux #FreeBSD #Monitoring</span></div></footer>
+</div></main></body></html>
