@@ -1,6 +1,19 @@
 {
-  "count": 60,
+  "count": 61,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-08-30",
+      "href": "posts/post-061-load-average-run-queue-scheduler-pressure.html",
+      "issue": 61,
+      "lede": "Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.",
+      "tags": [
+        "Scheduler pressure"
+      ],
+      "title": "Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",
