@@ -79,7 +79,7 @@ ansible_user=&lt;ssh-user&gt;</code></pre></div><p>Thay các placeholder bằng 
 
         - name: Show failed task name
           ansible.builtin.debug:
-            msg: "recovered_from={{ ansible_failed_task.name }}"
+            var: ansible_failed_task.name
 
       always:
         - name: Write audit marker
