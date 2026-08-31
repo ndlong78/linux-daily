@@ -32,8 +32,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#062 · 31·08·2026</span></div></div>
 <header class="post"><p class="eyebrow">Automation · Ansible failure recovery</p><h1>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</h1><p class="lede">Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~13 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-31</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Gom các task vào một failure boundary, chạy recovery chỉ khi task thật sự fail, và luôn ghi evidence hoặc cleanup sau cả đường thành công lẫn thất bại.</p></section>
@@ -129,5 +141,26 @@ ansible freebsd -i inventory.ini -b -m ansible.builtin.file -a 'path=/tmp/linux-
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Đặt recovery gần failure boundary để giảm blast radius và giúp log dễ đọc.</li><li>Không dùng <code>ignore_errors: true</code> như mặc định để ép playbook đi tiếp; điều đó có thể che trạng thái hỏng một phần.</li><li>Khi block thay cấu hình thật, backup/rollback phải tồn tại trước task rủi ro và verification phải kiểm trạng thái phục vụ, không chỉ exit code của Ansible.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Bỏ task <code>fail</code> và chứng minh <code>rescue</code> không chạy nhưng <code>always</code> vẫn tạo audit marker.</li><li>Trong <code>rescue</code>, ghi <code>ansible_failed_task.name</code> vào một marker riêng rồi kiểm chứng nội dung.</li><li>Tạo một host inventory cố ý sai địa chỉ trong lab và quan sát khác biệt giữa <code>UNREACHABLE</code> với task <code>failed</code>; không dùng cách này trên production inventory.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream đã được kiểm tra URL trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_blocks.html">Ansible Community Documentation — Blocks</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html">Ansible Community Documentation — Error handling in playbooks</a></li><li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core Documentation — Managing BSD hosts with Ansible</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #062 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation #FreeBSD</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-055-ansible-tags-limit-scope-control.html"><span class="series-kicker">#055</span><span>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-048-ansible-check-diff-serial-rolling-change.html">#048 · Ansible check mode, diff và serial: rolling change có kiểm soát</a></li>
+      <li><a href="post-041-ansible-handlers-templates-idempotent-restart.html">#041 · Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</a></li>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #062 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation #FreeBSD</span></div></footer>
 </div></main></body></html>

@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 30 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</title>
+      <link>https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html</guid>
+      <pubDate>Mon, 31 Aug 2026 00:00:00 +0700</pubDate>
+      <description>Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.</description>
+    </item>
     <item>
       <title>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</title>
       <link>https://linux.no.id.vn/posts/post-061-load-average-run-queue-scheduler-pressure.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html</guid>
       <pubDate>Sat, 22 Aug 2026 00:00:00 +0700</pubDate>
       <description>Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.</description>
-    </item>
-    <item>
-      <title>rsync snapshot-style backup với hard links và verification</title>
-      <link>https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-052-rsync-link-dest-snapshot-backup.html</guid>
-      <pubDate>Fri, 21 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.</description>
     </item>
   </channel>
 </rss>
