@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi — Linux Daily #062</title>
+<meta name="description" content="Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi">
+<meta property="og:description" content="Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi">
+<meta name="twitter:description" content="Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":62,"date":"2026-08-31","axis":"Automation","eyebrow":"Automation · Ansible failure recovery","slug":"ansible-blocks-rescue-always-recovery","title":"Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi","lede":"Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-08-31","changes_system":true,"sources":[{"title":"Ansible Community Documentation — Blocks","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_blocks.html","kind":"upstream"},{"title":"Ansible Community Documentation — Error handling in playbooks","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html","kind":"upstream"},{"title":"Ansible Core Documentation — Managing BSD hosts with Ansible","url":"https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html","kind":"upstream"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#062 · 31·08·2026</span></div></div>
+<header class="post"><p class="eyebrow">Automation · Ansible failure recovery</p><h1>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</h1><p class="lede">Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~13 PHÚT</span></div><div class="style-meta"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-31</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Gom các task vào một failure boundary, chạy recovery chỉ khi task thật sự fail, và luôn ghi evidence hoặc cleanup sau cả đường thành công lẫn thất bại.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Đã nắm Ansible cơ bản, handlers và rolling/check mode.</li><li>Control node có <code>ansible-playbook</code>; managed host truy cập được qua SSH.</li><li>Ubuntu hoặc Xubuntu, Debian, Fedora và FreeBSD có Python phù hợp; FreeBSD giữ play riêng.</li><li>Lab chỉ tạo marker trong <code>/tmp</code>; không thay service hoặc cấu hình production.</li></ul></section>
+<figure><svg viewBox="0 0 760 230" role="img" aria-label="Luồng Ansible block rescue always"><rect width="760" height="230" fill="#F7FAF9"/><g font-family="sans-serif" text-anchor="middle"><rect x="35" y="65" width="190" height="100" rx="8" fill="#fff" stroke="#14201D"/><text x="130" y="100" font-size="14" font-weight="700">BLOCK</text><text x="130" y="130" font-size="11">task chính</text><rect x="285" y="65" width="190" height="100" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="380" y="100" font-size="14" font-weight="700">RESCUE</text><text x="380" y="130" font-size="11">chỉ khi task failed</text><rect x="535" y="65" width="190" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="630" y="100" font-size="14" font-weight="700">ALWAYS</text><text x="630" y="130" font-size="11">luôn chạy</text><path d="M225 115H279M475 115H529" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — <code>rescue</code> là nhánh recovery cho task trả trạng thái failed; <code>always</code> chạy sau cả đường bình thường và recovery.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một playbook có thể đổi trạng thái một phần rồi fail ở task kế tiếp. Dùng <code>ignore_errors</code> chỉ để tiếp tục thường làm mất failure boundary. <code>block</code>, <code>rescue</code> và <code>always</code> giúp mô tả rõ phần nào là thay đổi chính, phần nào là recovery và phần nào phải luôn thu evidence.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>Directive đặt trên <code>block</code> được các task bên trong kế thừa, ngoại trừ những thứ không áp dụng ở block như loop.</li><li><code>rescue</code> chỉ chạy sau task trả trạng thái <code>failed</code>; host <code>UNREACHABLE</code>, lỗi cú pháp hoặc task definition không hợp lệ không đi qua nhánh này.</li><li><code>always</code> chạy bất kể kết quả của <code>block</code> và <code>rescue</code>, nên phù hợp để ghi audit marker, thu log hoặc cleanup tạm thời.</li><li>Trong <code>rescue</code>, có thể đọc <code>ansible_failed_task</code> và <code>ansible_failed_result</code> để biết task nào đã kích hoạt recovery.</li></ul></section>
+<figure><svg viewBox="0 0 760 240" role="img" aria-label="Ranh giới giữa failed unreachable và always"><rect width="760" height="240" fill="#fff"/><g font-family="sans-serif"><text x="40" y="45" font-size="13" font-weight="700">Trạng thái</text><text x="310" y="45" font-size="13" font-weight="700">rescue</text><text x="535" y="45" font-size="13" font-weight="700">always</text><line x1="35" y1="60" x2="725" y2="60" stroke="#14201D"/><text x="40" y="100" font-size="12">Task trả failed</text><text x="310" y="100" font-size="12">Có</text><text x="535" y="100" font-size="12">Có</text><text x="40" y="145" font-size="12">Task thành công</text><text x="310" y="145" font-size="12">Không</text><text x="535" y="145" font-size="12">Có</text><text x="40" y="190" font-size="12">Host unreachable / task invalid</text><text x="310" y="190" font-size="12">Không dùng rescue để che lỗi</text><text x="535" y="190" font-size="12">Không giả định recovery đã chạy</text></g></svg><figcaption>Hình 2 — Failure handling chỉ đáng tin khi phân biệt task <code>failed</code> với lỗi kết nối hoặc định nghĩa playbook.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Tạo inventory lab</h3><p class="code-label same"><span class="dot"></span>Control node</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-ini">[linux]
+ubuntu-lab ansible_host=&lt;ubuntu-ip&gt;
+debian-lab ansible_host=&lt;debian-ip&gt;
+fedora-lab ansible_host=&lt;fedora-ip&gt;
+
+[freebsd]
+freebsd-lab ansible_host=&lt;freebsd-ip&gt;
+
+[all:vars]
+ansible_user=&lt;ssh-user&gt;</code></pre></div><p>Thay các placeholder bằng host lab và tài khoản SSH thực tế; không lưu password hoặc private key vào repository.</p></li>
+<li><h3>Tạo playbook cho Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre><code class="language-yaml">---
+- name: Recovery lab on Linux
+  hosts: linux
+  become: true
+  tasks:
+    - name: Protect one logical change with recovery
+      block:
+        - name: Write provisional state
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-state.txt
+            content: "state=provisional\n"
+            mode: "0644"
+
+        - name: Inject bounded task failure
+          ansible.builtin.fail:
+            msg: "intentional lab failure"
+
+      rescue:
+        - name: Write recovered state
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-state.txt
+            content: "state=recovered\n"
+            mode: "0644"
+
+        - name: Show failed task name
+          ansible.builtin.debug:
+            var: ansible_failed_task.name
+
+      always:
+        - name: Write audit marker
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-audit.txt
+            content: "always=executed\n"
+            mode: "0644"</code></pre></div><p>Lưu thành <code>recovery.yml</code>. Failure được tạo bằng module <code>fail</code>, không tác động service hay dữ liệu thật.</p></li>
+<li><h3>Thêm play riêng cho FreeBSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — play riêng</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre class="bsd"><code class="language-yaml">- name: Recovery lab on FreeBSD
+  hosts: freebsd
+  become: true
+  tasks:
+    - name: Protect one logical change with recovery
+      block:
+        - name: Write provisional state
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-state.txt
+            content: "state=provisional\n"
+            mode: "0644"
+
+        - name: Inject bounded task failure
+          ansible.builtin.fail:
+            msg: "intentional lab failure"
+
+      rescue:
+        - name: Write recovered state
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-state.txt
+            content: "state=recovered\n"
+            mode: "0644"
+
+      always:
+        - name: Write audit marker
+          ansible.builtin.copy:
+            dest: /tmp/linux-daily-062-audit.txt
+            content: "always=executed\n"
+            mode: "0644"</code></pre></div><p>FreeBSD tách riêng để không vô tình đưa systemd, APT/DNF hoặc đường dẫn Linux vào play sau này.</p></li>
+<li><h3>Chạy trên một canary trước</h3><p class="code-label same"><span class="dot"></span>Control node</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook -i inventory.ini recovery.yml --limit ubuntu-lab</code></pre></div><p><strong>Expected Output:</strong> task <code>Inject bounded task failure</code> báo failed, nhánh <code>rescue</code> chạy, sau đó task trong <code>always</code> vẫn chạy.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible linux -i inventory.ini --limit ubuntu-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-062-state.txt'
+ansible linux -i inventory.ini --limit ubuntu-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-062-audit.txt'</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">ansible freebsd -i inventory.ini --limit freebsd-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-062-state.txt'
+ansible freebsd -i inventory.ini --limit freebsd-lab -m ansible.builtin.command -a 'cat /tmp/linux-daily-062-audit.txt'</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">state=recovered
+always=executed</code></pre><p>Marker chứng minh recovery đã thay trạng thái provisional và <code>always</code> thực sự được thực thi.</p></div></section>
+<section class="cleanup"><h2>Gỡ / Hoàn tác</h2><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre><code class="language-bash">ansible linux -i inventory.ini -b -m ansible.builtin.file -a 'path=/tmp/linux-daily-062-state.txt state=absent'
+ansible linux -i inventory.ini -b -m ansible.builtin.file -a 'path=/tmp/linux-daily-062-audit.txt state=absent'</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user trên control node</p><pre class="bsd"><code class="language-bash">ansible freebsd -i inventory.ini -b -m ansible.builtin.file -a 'path=/tmp/linux-daily-062-state.txt state=absent'
+ansible freebsd -i inventory.ini -b -m ansible.builtin.file -a 'path=/tmp/linux-daily-062-audit.txt state=absent'</code></pre></div><p><strong>Expected Output:</strong> mỗi host báo file ở trạng thái <code>absent</code>.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Nếu host thành <code>UNREACHABLE</code>, đừng kỳ vọng <code>rescue</code> biến lỗi kết nối thành recovery thành công; sửa SSH/network trước.</li><li>Nếu recovery chỉ cần cho một loại failure, dùng điều kiện dựa trên <code>ansible_failed_task</code> hoặc <code>ansible_failed_result</code> thay vì nuốt mọi lỗi.</li><li><code>always</code> không đồng nghĩa rollback. Nó chỉ đảm bảo task trong section này được lên lịch theo semantics của block; nội dung cleanup vẫn phải idempotent và có thể kiểm chứng.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Đặt recovery gần failure boundary để giảm blast radius và giúp log dễ đọc.</li><li>Không dùng <code>ignore_errors: true</code> như mặc định để ép playbook đi tiếp; điều đó có thể che trạng thái hỏng một phần.</li><li>Khi block thay cấu hình thật, backup/rollback phải tồn tại trước task rủi ro và verification phải kiểm trạng thái phục vụ, không chỉ exit code của Ansible.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Bỏ task <code>fail</code> và chứng minh <code>rescue</code> không chạy nhưng <code>always</code> vẫn tạo audit marker.</li><li>Trong <code>rescue</code>, ghi <code>ansible_failed_task.name</code> vào một marker riêng rồi kiểm chứng nội dung.</li><li>Tạo một host inventory cố ý sai địa chỉ trong lab và quan sát khác biệt giữa <code>UNREACHABLE</code> với task <code>failed</code>; không dùng cách này trên production inventory.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream đã được kiểm tra URL trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_blocks.html">Ansible Community Documentation — Blocks</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_error_handling.html">Ansible Community Documentation — Error handling in playbooks</a></li><li><a href="https://docs.ansible.com/projects/ansible-core/devel/os_guide/intro_bsd.html">Ansible Core Documentation — Managing BSD hosts with Ansible</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-055-ansible-tags-limit-scope-control.html"><span class="series-kicker">#055</span><span>Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-048-ansible-check-diff-serial-rolling-change.html">#048 · Ansible check mode, diff và serial: rolling change có kiểm soát</a></li>
+      <li><a href="post-041-ansible-handlers-templates-idempotent-restart.html">#041 · Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</a></li>
+      <li><a href="post-034-systemd-timer-freebsd-periodic-cron.html">#034 · systemd timer và FreeBSD periodic/cron: lịch chạy có bằng chứng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #062 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation #FreeBSD</span></div></footer>
+</div></main></body></html>

@@ -1,6 +1,19 @@
 {
-  "count": 61,
+  "count": 62,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-08-31",
+      "href": "posts/post-062-ansible-blocks-rescue-always-recovery.html",
+      "issue": 62,
+      "lede": "Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.",
+      "tags": [
+        "Ansible failure recovery"
+      ],
+      "title": "Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",
