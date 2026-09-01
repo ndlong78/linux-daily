@@ -51,8 +51,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#063 · 01·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Time drift lab</p><h1>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</h1><p class="lede">Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-01</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Chứng minh time drift có thể làm TLS báo sai thời hạn, làm log lệch timeline và làm scheduled job chạy sai kỳ vọng; sau đó xác định và phục hồi nguồn đồng bộ thời gian có bằng chứng.</p></section>
@@ -93,5 +105,26 @@ ntpq -pn</code></pre></div><div class="expected-output"><h3>Expected Output / K�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>NTP là dependency của authentication, TLS, log correlation và audit. Theo dõi offset/reach thay vì chỉ kiểm service “active”.</li><li>Không tắt certificate time validation để che clock sai.</li><li>Không step clock trên production mà chưa đánh giá database, distributed lock, Kerberos, scheduler và log ordering.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi baseline UTC + NTP source trên một Linux host và một FreeBSD host.</li><li>Dùng <code>openssl verify -attime</code> với một certificate lab để tạo negative test mà không đổi system clock.</li><li>Viết decision note: khi nào lỗi thuộc time source, TLS, log pipeline hoặc scheduler.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức/upstream; các URL dưới đây đã được HTTP-check trước khi authoring.</p><ul class="clean"><li><a href="https://chrony-project.org/doc/4.4/chronyc.html">chrony — chronyc(1) Manual Page</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=ntpd&amp;sektion=8">FreeBSD Manual — ntpd(8)</a></li><li><a href="https://docs.openssl.org/3.0/man1/openssl-verify/">OpenSSL Documentation — openssl-verify</a></li><li><a href="https://www.rfc-editor.org/rfc/rfc5905.html">RFC 5905 — Network Time Protocol Version 4</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #063 · Ôn tập</span><span class="hashtags">#LinuxDaily #NTP #TLS #FreeBSD</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html"><span class="series-kicker">#056</span><span>Lab disk I/O latency: process, device health và recovery boundary</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-049-lab-tls-certificate-outage-expiry-chain-hostname.html">#049 · Lab TLS certificate outage: expiry, chain và hostname mismatch</a></li>
+      <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
+      <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #063 · Ôn tập</span><span class="hashtags">#LinuxDaily #NTP #TLS #FreeBSD</span></div></footer>
 </div></main></body></html>

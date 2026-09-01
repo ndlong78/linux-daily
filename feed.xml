@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 31 Aug 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 01 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</title>
+      <link>https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html</guid>
+      <pubDate>Tue, 01 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</description>
+    </item>
     <item>
       <title>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</title>
       <link>https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html</guid>
       <pubDate>Sun, 23 Aug 2026 00:00:00 +0700</pubDate>
       <description>PSI cho Linux biết thời gian workload bị stall vì thiếu CPU, memory hoặc I/O; FreeBSD cần ghép bằng chứng từ vmstat và systat thay vì giả định có chỉ số tương đương một-một.</description>
-    </item>
-    <item>
-      <title>bat: xem file có syntax highlight, paging và line range</title>
-      <link>https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-053-bat-syntax-highlight-paging-line-range.html</guid>
-      <pubDate>Sat, 22 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Đọc file nhanh hơn với syntax highlight, paging và line range mà vẫn biết khi nào phải quay về output plain cho script.</description>
     </item>
   </channel>
 </rss>
