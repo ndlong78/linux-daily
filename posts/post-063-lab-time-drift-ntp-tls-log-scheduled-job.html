@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job — Linux Daily #063</title>
+<meta name="description" content="Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job">
+<meta property="og:description" content="Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job">
+<meta name="twitter:description" content="Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue":63,
+  "date":"2026-09-01",
+  "axis":"Ôn tập",
+  "eyebrow":"Ôn tập · Time drift lab",
+  "slug":"lab-time-drift-ntp-tls-log-scheduled-job",
+  "title":"Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job",
+  "lede":"Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.",
+  "review_status":"reviewed",
+  "tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],
+  "last_verified":"2026-09-01",
+  "changes_system":true,
+  "sources":[
+    {"title":"chrony — chronyc(1) Manual Page","url":"https://chrony-project.org/doc/4.4/chronyc.html","kind":"upstream"},
+    {"title":"FreeBSD Manual — ntpd(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=ntpd&sektion=8","kind":"official"},
+    {"title":"OpenSSL Documentation — openssl-verify","url":"https://docs.openssl.org/3.0/man1/openssl-verify/","kind":"upstream"},
+    {"title":"RFC 5905 — Network Time Protocol Version 4","url":"https://www.rfc-editor.org/rfc/rfc5905.html","kind":"official"}
+  ],
+  "lab":{"version":1,"profile":"advanced","topology":["observer-shell","time-source","tls-check"],"risks":["downtime"],"verification":["functional","negative","recovery","observability"],"rollback_required":true,"cleanup_required":true,"failure_injection":true}
+}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
+<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#063 · 01·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Ôn tập · Time drift lab</p><h1>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</h1><p class="lede">Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-01</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Chứng minh time drift có thể làm TLS báo sai thời hạn, làm log lệch timeline và làm scheduled job chạy sai kỳ vọng; sau đó xác định và phục hồi nguồn đồng bộ thời gian có bằng chứng.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Chỉ dùng host lab hoặc VM disposable. Không thay đổi wall clock trên production, domain controller, database, cluster hoặc máy đang phục vụ người dùng.</li><li>Đã đọc #005, #012, #034 và #049 về log, scheduler và TLS verification.</li><li>Ubuntu hoặc Xubuntu, Debian và Fedora dùng cơ chế Linux; FreeBSD giữ nhánh riêng với <code>ntpd</code>/<code>ntpq</code>.</li><li>Cần quyền user để quan sát; quyền <code>sudo</code>/root chỉ dùng khi restart dịch vụ đồng bộ trong bước recovery.</li></ul></section>
+<figure><svg viewBox="0 0 760 240" role="img" aria-label="Time drift ảnh hưởng TLS, log và scheduled job"><rect width="760" height="240" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="72" width="180" height="95" rx="8" fill="#fff" stroke="#14201D"/><text x="125" y="105" font-size="13" font-weight="700">TLS</text><text x="125" y="132" font-size="10">notBefore / notAfter</text><rect x="290" y="72" width="180" height="95" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="105" font-size="13" font-weight="700">LOG</text><text x="380" y="132" font-size="10">timeline sai thứ tự</text><rect x="545" y="72" width="180" height="95" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="635" y="105" font-size="13" font-weight="700">SCHEDULER</text><text x="635" y="132" font-size="10">job lệch thời điểm</text><path d="M215 120H284M470 120H539" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Một clock sai có thể tạo ba triệu chứng ở các lớp khác nhau; cần kiểm clock trước khi sửa từng ứng dụng riêng lẻ.</figcaption></figure>
+<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một host có thể vẫn ping được và service vẫn chạy nhưng certificate bị coi là chưa hợp lệ hoặc hết hạn, log giữa nhiều máy không còn cùng timeline, còn timer/cron trông như chạy “sai giờ”. Trước khi sửa TLS, parser log hay scheduler, hãy kiểm tra clock và nguồn NTP.</p><p>Failure injection của lab này dùng <strong>thời điểm giả lập cho OpenSSL</strong> và file log test; không chỉnh clock hệ thống. Điều đó giữ blast radius trong thư mục <code>/tmp/linux-daily-063</code>.</p></section>
+<section data-lab-section="topology"><h2>Topology lab</h2><ul class="clean"><li><strong>observer-shell:</strong> đọc UTC, trạng thái sync và nguồn NTP.</li><li><strong>time-source:</strong> NTP source hiện tại của host; không đổi server trong lab.</li><li><strong>tls-check:</strong> certificate local hoặc certificate lab dùng với <code>openssl verify -attime</code>.</li></ul></section>
+<section data-lab-section="safety"><h2>Safety boundary</h2><ul class="clean"><li>Không dùng <code>date -s</code>, <code>timedatectl set-time</code> hoặc lệnh tương đương để inject drift trên máy thật.</li><li>Nếu host đang unsynchronised, ghi bằng chứng trước rồi phục hồi dịch vụ NTP; không che triệu chứng bằng cách tắt kiểm tra thời gian TLS.</li><li>Không dùng <code>-no_check_time</code> để “sửa” TLS. Lab dùng <code>-attime</code> chỉ để chứng minh tác động của thời điểm xác minh.</li></ul></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li>NTP đồng bộ wall clock; monotonic clock là khái niệm khác và không thay thế kiểm tra UTC.</li><li>TLS certificate có cửa sổ hiệu lực. Clock sai có thể biến certificate tốt thành “not yet valid” hoặc “expired”.</li><li>Log đa host cần clock gần nhau để correlation có ý nghĩa.</li><li>Scheduler dựa vào thời gian hệ thống và timezone; sửa biểu thức lịch khi clock sai chỉ chuyển lỗi sang nơi khác.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Quy trình triage time drift"><rect width="760" height="250" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="78" width="150" height="82" rx="8" fill="#fff" stroke="#14201D"/><text x="110" y="110" font-size="11" font-weight="700">UTC</text><text x="110" y="135" font-size="9">date</text><rect x="215" y="78" width="150" height="82" rx="8" fill="#fff" stroke="#14201D"/><text x="290" y="110" font-size="11" font-weight="700">SYNC</text><text x="290" y="135" font-size="9">tracking / ntpq</text><rect x="395" y="78" width="150" height="82" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="470" y="110" font-size="11" font-weight="700">IMPACT</text><text x="470" y="135" font-size="9">TLS · log · timer</text><rect x="575" y="78" width="150" height="82" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="650" y="110" font-size="11" font-weight="700">RECOVER</text><text x="650" y="135" font-size="9">source → sync → verify</text><path d="M185 119H209M365 119H389M545 119H569" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Triage theo thứ tự UTC → trạng thái đồng bộ → tác động → recovery; không bắt đầu bằng việc sửa ứng dụng.</figcaption></figure>
+<section data-lab-section="execution"><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>Ghi baseline UTC và trạng thái đồng bộ</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">date -u
+chronyc tracking
+chronyc sources -v</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">date -u
+ntpq -pn</code></pre></div><p><strong>Expected Output:</strong> UTC hợp lý và ít nhất một nguồn đồng bộ/peer có trạng thái sử dụng được. Nếu không có, ghi lại trạng thái thay vì tiếp tục đoán lỗi TLS.</p></li>
+<li><h3>Tạo thư mục bằng chứng</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">mkdir -p /tmp/linux-daily-063
+date -u &gt; /tmp/linux-daily-063/baseline-utc.txt</code></pre></div></li>
+<li data-lab-section="failure-injection"><h3>Mô phỏng drift khi verify TLS</h3><p class="code-label same"><span class="dot"></span>Mọi hệ có OpenSSL</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">openssl x509 -in &lt;certificate.pem&gt; -noout -dates
+openssl verify -CAfile &lt;ca.pem&gt; &lt;certificate.pem&gt;
+openssl verify -attime 4102444800 -CAfile &lt;ca.pem&gt; &lt;certificate.pem&gt;</code></pre></div><p>Thay <code>&lt;certificate.pem&gt;</code> và <code>&lt;ca.pem&gt;</code> bằng certificate/CA của lab. Timestamp <code>4102444800</code> là thời điểm giả lập xa trong tương lai; nó không đổi clock hệ thống.</p><p><strong>Expected Output:</strong> verify ở thời điểm hiện tại có thể thành công, còn verify bằng <code>-attime</code> phải thể hiện lỗi thời hạn nếu certificate không còn hiệu lực tại thời điểm giả lập.</p></li>
+<li><h3>Kiểm timeline log và scheduler trước khi sửa chúng</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">journalctl --since "10 minutes ago" --no-pager | tail -n 20
+systemctl list-timers --all --no-pager | head -n 20</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">tail -n 20 /var/log/messages
+crontab -l</code></pre></div><p><strong>Expected Output:</strong> log và lịch được đọc trong cùng ngữ cảnh UTC/timezone đã ghi ở bước 1. Không chỉnh timer/cron nếu clock đang unsynchronised.</p></li>
+<li><h3>Phục hồi đồng bộ khi daemon thực sự lỗi</h3><p class="code-label ubuntu"><span class="dot"></span>Ubuntu/Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl restart chrony
+chronyc waitsync 10 0.1</code></pre></div><p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl restart chrony
+chronyc waitsync 10 0.1</code></pre></div><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo systemctl restart chronyd
+chronyc waitsync 10 0.1</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-bash">service ntpd restart
+ntpq -pn</code></pre></div><p>Chỉ restart khi đã xác nhận daemon/source lỗi. Nếu tổ chức dùng dịch vụ time khác, giữ nguyên service hiện hành và dùng công cụ tương ứng.</p></li>
+</ol></section>
+<section data-lab-section="verification"><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">date -u
+chronyc tracking
+chronyc sources -v</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-bash">date -u
+ntpq -pn</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>Clock UTC hợp lý và daemon có nguồn đồng bộ.</li><li>Failure injection TLS chỉ fail ở thời điểm giả lập; verify bình thường không cần tắt time validation.</li><li>Log/timer được diễn giải trên clock đã xác minh.</li><li>Sau recovery, nguồn time trở lại trạng thái selectable/synchronised.</li></ul></div></section>
+<section data-lab-section="rollback"><h2>Gỡ / Hoàn tác</h2><p>Lab không chỉnh clock và không đổi NTP server. Nếu đã restart daemon ở bước recovery, kiểm lại trạng thái rồi giữ cấu hình trước lab. Không persist thay đổi source nếu chưa có change plan.</p></section>
+<section data-lab-section="cleanup"><h2>Dọn lab</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">rm -r /tmp/linux-daily-063</code></pre></div><p><strong>Expected Output:</strong> thư mục bằng chứng test được xóa; không còn process test hay cấu hình tạm.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><code>chronyc sources</code> reach bằng 0: kiểm DNS, route và UDP/123 trước khi restart liên tục.</li><li>Clock đúng nhưng TLS vẫn fail: quay lại #049 để tách expiry, chain và hostname mismatch.</li><li>Log lệch giữa nhiều host: so UTC của từng host và ingestion timestamp; đừng chỉ nhìn timezone hiển thị.</li><li>Scheduler trông lệch: kiểm timezone/DST sau khi xác nhận clock sync.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>NTP là dependency của authentication, TLS, log correlation và audit. Theo dõi offset/reach thay vì chỉ kiểm service “active”.</li><li>Không tắt certificate time validation để che clock sai.</li><li>Không step clock trên production mà chưa đánh giá database, distributed lock, Kerberos, scheduler và log ordering.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi baseline UTC + NTP source trên một Linux host và một FreeBSD host.</li><li>Dùng <code>openssl verify -attime</code> với một certificate lab để tạo negative test mà không đổi system clock.</li><li>Viết decision note: khi nào lỗi thuộc time source, TLS, log pipeline hoặc scheduler.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức/upstream; các URL dưới đây đã được HTTP-check trước khi authoring.</p><ul class="clean"><li><a href="https://chrony-project.org/doc/4.4/chronyc.html">chrony — chronyc(1) Manual Page</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=ntpd&amp;sektion=8">FreeBSD Manual — ntpd(8)</a></li><li><a href="https://docs.openssl.org/3.0/man1/openssl-verify/">OpenSSL Documentation — openssl-verify</a></li><li><a href="https://www.rfc-editor.org/rfc/rfc5905.html">RFC 5905 — Network Time Protocol Version 4</a></li></ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #063 · Ôn tập</span><span class="hashtags">#LinuxDaily #NTP #TLS #FreeBSD</span></div></footer>
+</div></main></body></html>
