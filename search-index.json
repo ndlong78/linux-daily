@@ -1,6 +1,19 @@
 {
-  "count": 62,
+  "count": 63,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-09-01",
+      "href": "posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html",
+      "issue": 63,
+      "lede": "Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.",
+      "tags": [
+        "Time drift lab"
+      ],
+      "title": "Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

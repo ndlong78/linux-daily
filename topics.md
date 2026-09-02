@@ -65,3 +65,4 @@
 #060 | 2026-08-29 | Công cụ mới | hyperfine: benchmark command có warmup và nhiều lần chạy
 #061 | 2026-08-30 | Monitoring | Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD
 #062 | 2026-08-31 | Automation | Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi
+#063 | 2026-09-01 | Ôn tập | Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job
