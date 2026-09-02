@@ -1,6 +1,19 @@
 {
-  "count": 63,
+  "count": 64,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-09-02",
+      "href": "posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html",
+      "issue": 64,
+      "lede": "Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.",
+      "tags": [
+        "Neighbor cache"
+      ],
+      "title": "Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",

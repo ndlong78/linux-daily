@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Tue, 01 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Wed, 02 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS</title>
+      <link>https://linux.no.id.vn/posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html</guid>
+      <pubDate>Wed, 02 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.</description>
+    </item>
     <item>
       <title>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</title>
       <link>https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-055-ansible-tags-limit-scope-control.html</guid>
       <pubDate>Mon, 24 Aug 2026 00:00:00 +0700</pubDate>
       <description>Tags chọn phần việc; --limit chọn host. Kết hợp cả hai với bước liệt kê phạm vi trước khi apply để giảm blast radius mà không nhân bản playbook.</description>
-    </item>
-    <item>
-      <title>Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ</title>
-      <link>https://linux.no.id.vn/posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html</guid>
-      <pubDate>Sun, 23 Aug 2026 00:00:00 +0700</pubDate>
-      <description>PSI cho Linux biết thời gian workload bị stall vì thiếu CPU, memory hoặc I/O; FreeBSD cần ghép bằng chứng từ vmstat và systat thay vì giả định có chỉ số tương đương một-một.</description>
     </item>
   </channel>
 </rss>
