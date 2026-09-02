@@ -10,6 +10,7 @@ shared site structure.
 from __future__ import annotations
 
 import argparse
+import difflib
 import glob
 import html
 import json
@@ -141,22 +142,58 @@ def render_post(path: str) -> str:
     return text.replace(marker, block + "\n" + marker, 1)
 
 
+MAX_DRIFT_LINES = 6
+MAX_DRIFT_WIDTH = 160
+
+
+def describe_drift(current: str, expected: str, limit: int = MAX_DRIFT_LINES) -> list[str]:
+    """Những dòng lệch giữa file hiện tại và bản dựng lại.
+
+    Chỉ in tên file là chưa đủ. Ở bài #055 og/twitter:description lệch
+    meta.lede, và vì log chỉ nói "chưa đồng bộ" nên người đọc đi chẩn đoán
+    nhầm sang chỗ khác. Nói thẳng dòng nào lệch thì không còn đoán.
+    """
+    diff = difflib.unified_diff(
+        current.splitlines(), expected.splitlines(),
+        fromfile="hiện tại", tofile="mong đợi", lineterm="", n=0,
+    )
+    lines = [
+        item for item in diff
+        if item[:1] in {"+", "-"} and not item.startswith(("+++", "---"))
+    ]
+    shown = [
+        item if len(item) <= MAX_DRIFT_WIDTH else item[:MAX_DRIFT_WIDTH] + " …"
+        for item in lines[:limit]
+    ]
+    if len(lines) > limit:
+        shown.append(f"… còn {len(lines) - limit} dòng lệch nữa")
+    return shown
+
+
 def run(check: bool = False) -> int:
-    changed: list[str] = []
+    changed: list[tuple[str, list[str]]] = []
     for path in sorted(glob.glob(POSTS_GLOB)):
         expected = render_post(path)
         with open(path, encoding="utf-8") as f:
             current = f.read()
         if current == expected:
             continue
-        changed.append(os.path.relpath(path, ROOT))
+        drift = describe_drift(current, expected) if check else []
+        changed.append((os.path.relpath(path, ROOT), drift))
         if not check:
             with open(path, "w", encoding="utf-8") as f:
                 f.write(expected)
 
     if check and changed:
-        for path in changed:
+        for path, drift in changed:
             print(f"LỖI: metadata/social backfill chưa đồng bộ: {path}", file=sys.stderr)
+            for line in drift:
+                print(f"    {line}", file=sys.stderr)
+        print(
+            "  Sinh lại bằng `python tools/backfill_site_metadata.py` "
+            "(hoặc `python tools/publish.py prepare`); đừng sửa tay từng dòng meta.",
+            file=sys.stderr,
+        )
         return 1
     print(
         f"OK: historical metadata/social backfill "
