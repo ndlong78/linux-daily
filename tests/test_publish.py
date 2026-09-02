@@ -5,9 +5,17 @@ from types import SimpleNamespace
 import publish
 
 
-def test_prepare_plan_regenerates_before_metadata_checks():
+def test_prepare_sinh_lai_metadata_post_truoc_khi_dung_artifact():
+    """backfill ghi lại posts/*.html, build.py dựng artifact TỪ chúng — sai thứ tự là sai kết quả.
+
+    Đây là khoảng trống đã đưa bài #055 tới production với og/twitter:description
+    lệch meta.lede: tool sinh chúng không nằm trong `prepare` nên materialize
+    không bao giờ tự sửa.
+    """
     plan = publish.command_plan("prepare")
-    assert plan[0][-1] == "tools/build.py"
+    steps = [command[-1] for command in plan]
+    assert steps[0] == "tools/backfill_site_metadata.py"
+    assert steps.index("tools/backfill_site_metadata.py") < steps.index("tools/build.py")
     assert any(command[-1] == "tools/learning_dashboard.py" for command in plan)
     assert any(command[-1] == "tools/content_mix.py" for command in plan)
     assert any(command[-1] == "tools/taxonomy.py" for command in plan)
@@ -18,8 +26,11 @@ def test_prepare_plan_regenerates_before_metadata_checks():
 
 def test_check_plan_is_read_only_and_covers_local_publish_gates():
     plan = publish.command_plan("check")
-    assert len(plan) == 21
+    assert len(plan) == 22
     flattened = [" ".join(command) for command in plan]
+    # Đứng đầu: lệch metadata post kéo theo nhiều gate khác đỏ, và người đọc log
+    # chỉ nhìn lỗi đầu tiên. Xem test_backfill_site_metadata.
+    assert flattened[0].endswith("tools/backfill_site_metadata.py --check")
     assert any("tools/build.py --check" in command for command in flattened)
     assert any("tools/validate_style.py" in command for command in flattened)
     assert any("tools/content_mix.py --check" in command for command in flattened)

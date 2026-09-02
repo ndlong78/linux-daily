@@ -21,6 +21,10 @@ PYTHON = sys.executable
 def command_plan(mode: str) -> list[list[str]]:
     if mode == "prepare":
         return [
+            # Phải chạy TRƯỚC build.py: nó ghi lại posts/*.html (canonical, og,
+            # twitter, social image) từ ld-meta, còn build.py dựng index/archive/
+            # feed/sitemap TỪ những file đó. Đảo thứ tự là dựng artifact từ post cũ.
+            [PYTHON, "tools/backfill_site_metadata.py"],
             [PYTHON, "tools/build.py"],
             [PYTHON, "tools/learning_dashboard.py"],
             [PYTHON, "tools/content_mix.py"],
@@ -30,6 +34,10 @@ def command_plan(mode: str) -> list[list[str]]:
         ]
     if mode == "check":
         return [
+            # Đứng đầu để chẩn đoán chạy trước phần ồn: og/twitter lệch ld-meta.lede
+            # sẽ kéo theo nhiều gate khác đỏ, và bài #055 cho thấy người đọc log chỉ
+            # nhìn lỗi ĐẦU TIÊN rồi kết luận sai nguyên nhân.
+            [PYTHON, "tools/backfill_site_metadata.py", "--check"],
             [PYTHON, "tools/build.py", "--check"],
             [PYTHON, "tools/validate_style.py"],
             [PYTHON, "tools/taxonomy.py"],
