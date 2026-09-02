@@ -28,7 +28,6 @@ SITE_CONFIG = os.path.join(ROOT, "site.json")
 ARCHIVE_PATH = os.path.join(ROOT, "archive.html")
 LEARNING_DASHBOARD_PATH = os.path.join(ROOT, "learning-dashboard.html")
 LEARNING_PATHS_PATH = os.path.join(ROOT, "learning-paths.html")
-POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
 USER_AGENT = "LinuxDaily-LinkChecker/1.0 (+https://linux.no.id.vn/)"
 TRANSIENT_STATUSES = {408, 425, 429, 500, 502, 503, 504}
 BLOCKED_STATUSES = {401, 403, 418}
@@ -93,32 +92,54 @@ def _html_files(root: str | None = None) -> list[str]:
     ]
 
 
-def _external_urls_under(root: str) -> set[str]:
+def _external_refs_under(root: str) -> set[tuple[str, str]]:
+    """Cặp (file, url) — không phải chỉ url.
+
+    Theo dõi theo cặp vì URL không thôi để lọt một lỗ: một link đã chết nằm sẵn
+    ở bài cũ, nếu được chép sang bài mới thì tính theo url sẽ coi là "đã có sẵn"
+    và không chặn — trong khi bài mới đang thật sự trích một nguồn chết.
+    Theo cặp thì (bài mới, url đó) là mới, nên vẫn chặn.
+
+    Dựng lại index/archive không gây nhiễu: nội dung giống nhau thì cặp giống
+    nhau. Chỉ khi một trang generated bắt đầu trích URL external theo bài — hiện
+    là 0/188 — mới có cặp mới, và khi đó chặn cũng đúng: bài mới đưa URL đó vào.
+    """
     host = _site_host()
-    urls: set[str] = set()
+    refs: set[tuple[str, str]] = set()
     for path in _html_files(root):
         if not os.path.isfile(path):
             continue
+        rel = os.path.relpath(path, root)
         for url in _parse_file(path).urls:
             split = urlsplit(url)
             if split.scheme in {"http", "https"} and split.netloc.lower() != host:
-                urls.add(url)
-    return urls
+                refs.add((rel, url))
+    return refs
 
 
-def baseline_external_urls(ref: str) -> set[str]:
-    """URL external đã tồn tại ở `ref` — thường là base SHA của PR.
+class BaselineError(RuntimeError):
+    """Không dựng được cây baseline — nói rõ nguyên nhân thay vì ném traceback."""
 
-    Dùng để phân biệt link do nhánh này đưa vào với link vốn đã nằm trên main.
-    Hai loại đó đáng bị xử lý khác nhau: xem `main()`.
-    """
+
+def baseline_external_refs(ref: str) -> set[tuple[str, str]]:
+    """Cặp (file, url) đã tồn tại ở `ref` — thường là base SHA của PR."""
     with tempfile.TemporaryDirectory() as tmp:
-        archive = subprocess.run(
-            ["git", "archive", ref, "--", *HTML_FILE_NAMES, "posts"],
-            cwd=ROOT, capture_output=True, check=True,
-        ).stdout
-        subprocess.run(["tar", "-x", "-C", tmp], input=archive, check=True)
-        return _external_urls_under(tmp)
+        try:
+            archive = subprocess.run(
+                ["git", "archive", ref, "--", *HTML_FILE_NAMES, "posts"],
+                cwd=ROOT, capture_output=True, check=True,
+            ).stdout
+            subprocess.run(["tar", "-x", "-C", tmp], input=archive, check=True)
+        except (subprocess.CalledProcessError, FileNotFoundError) as exc:
+            # Hay gặp nhất: checkout nông nên base SHA không có trong lịch sử.
+            # Phải nói thẳng, vì nếu chỉ ném traceback thì người sau dễ "sửa"
+            # bằng cách bỏ --baseline — tức là âm thầm gỡ luôn chính sách này.
+            raise BaselineError(
+                f"không dựng được cây baseline từ ref {ref!r}: {exc}. "
+                "Thường do checkout nông — cần fetch-depth: 0 để base SHA có mặt. "
+                "KHÔNG gỡ --baseline để né lỗi này."
+            ) from exc
+        return _external_refs_under(tmp)
 
 
 def _parse_file(path: str) -> LinkParser:
@@ -322,9 +343,22 @@ def main(argv=None) -> int:
             # main mà hôm nay 404 là nợ bảo trì của kho, không phải lỗi của bài
             # hôm nay — chặn bài vì nó là sai đối tượng, và thực tế đã dẫn tới
             # việc agent đi sửa hai bài cũ rồi làm hỏng một nguồn đang tốt (#063).
-            existing = baseline_external_urls(args.baseline)
-            introduced = [item for item in hard if item.url not in existing]
-            inherited = [item for item in hard if item.url in existing]
+            try:
+                existing = baseline_external_refs(args.baseline)
+            except BaselineError as exc:
+                # Fail closed. Không được lặng lẽ quay về "coi mọi link là kế
+                # thừa" — đó là gỡ gate mà không ai thấy — cũng không nên ném
+                # traceback trần, vì traceback đẩy người sửa tới chỗ bỏ --baseline.
+                print(f"✗ External links: {exc}", file=sys.stderr)
+                return 1
+            current = _external_refs_under(ROOT)
+            # URL là "mới" nếu có BẤT KỲ file nào đang trích nó mà cặp (file, url)
+            # chưa từng tồn tại ở baseline.
+            introduced_urls = {
+                url for rel, url in current if (rel, url) not in existing
+            }
+            introduced = [item for item in hard if item.url in introduced_urls]
+            inherited = [item for item in hard if item.url not in introduced_urls]
 
         if inherited:
             print(
