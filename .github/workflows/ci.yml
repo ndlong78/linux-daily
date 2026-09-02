@@ -64,8 +64,16 @@ jobs:
       - name: Deterministic publish pipeline
         run: python tools/publish.py check
 
+      # Trên PR, chỉ link MỚI do nhánh đưa vào mới chặn merge. Link đã có sẵn trên
+      # base mà hôm nay 404 là nợ bảo trì của kho — chặn bài hằng ngày vì nó là
+      # sai đối tượng. Trên push/main và lịch định kỳ thì không truyền --baseline,
+      # nên mọi link chết đều chặn: ở đó không có bài nào để chặn nên siết là đúng.
       - name: External link check (retry + non-flaky network policy)
-        run: python tools/check_links.py --external --workers 8
+        run: >-
+          python tools/check_links.py --external --workers 8
+          ${{ github.event_name == 'pull_request'
+              && format('--baseline {0}', github.event.pull_request.base.sha)
+              || '' }}
 
       - name: Smoke test cadence (state.json)
         run: |
