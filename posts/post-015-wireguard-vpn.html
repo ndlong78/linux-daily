@@ -47,9 +47,9 @@
       "kind": "upstream"
     },
     {
-      "title": "wireguard-tools — wg-quick(8)",
-      "url": "https://git.zx2c4.com/wireguard-tools/about/src/man/wg-quick.8",
-      "kind": "upstream"
+      "title": "Debian Manpages — wg-quick(8)",
+      "url": "https://manpages.debian.org/trixie/wireguard-tools/wg-quick.8.en.html",
+      "kind": "official"
     },
     {
       "title": "FreeBSD source — wireguard-tools vendor update",
@@ -140,7 +140,7 @@ netstat -rn</code></pre></section>
 <section><h2><span class="num">06</span> Lưu ý bảo mật &amp; vận hành</h2><p>Giữ private key với mode hạn chế, không đưa key vào shell history/repository. Trước full-tunnel, giữ console hoặc phiên quản trị ngoài VPN, kiểm route hiện tại và chuẩn bị lệnh <code>wg-quick down wg0</code> hoặc cơ chế tương đương để hoàn tác.</p></section>
 <div class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Dựng tunnel /32 giữa Debian và FreeBSD, chỉ route IP tunnel của peer. Xác nhận handshake và ping trước. Sau đó giải thích chính xác điều gì thay đổi ở outbound route và inbound source validation nếu đổi AllowedIPs thành <code>0.0.0.0/0</code> — chưa áp thay đổi đó trên máy đang quản trị từ xa.</p></div>
 
-<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.wireguard.com/install/">WireGuard — Installation</a></li><li><a href="https://www.wireguard.com/">WireGuard — Cryptokey Routing</a></li><li><a href="https://git.zx2c4.com/wireguard-tools/about/src/man/wg-quick.8">wireguard-tools — wg-quick(8)</a></li><li><a href="https://cgit.freebsd.org/src/commit/?h=vendor%2Fwireguard-tools">FreeBSD source — wireguard-tools vendor update</a></li></ul></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://www.wireguard.com/install/">WireGuard — Installation</a></li><li><a href="https://www.wireguard.com/">WireGuard — Cryptokey Routing</a></li><li><a href="https://manpages.debian.org/trixie/wireguard-tools/wg-quick.8.en.html">Debian Manpages — wg-quick(8)</a></li><li><a href="https://cgit.freebsd.org/src/commit/?h=vendor%2Fwireguard-tools">FreeBSD source — wireguard-tools vendor update</a></li></ul></section>
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
