@@ -12,7 +12,9 @@ import glob
 import json
 import os
 import ssl
+import subprocess
 import sys
+import tempfile
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
@@ -77,14 +79,46 @@ def _load_site() -> dict:
         return json.load(f)
 
 
-def _html_files() -> list[str]:
+# Tập file HTML được quét. Nhận root tuỳ ý để dùng lại nguyên bộ parser cho cây
+# baseline lấy từ một git ref — baseline phải đi qua đúng parser này, không phải
+# một regex xấp xỉ, nếu không "URL nào là mới" sẽ sai theo cách khó thấy.
+HTML_FILE_NAMES = ("index.html", "archive.html", "learning-dashboard.html", "learning-paths.html")
+
+
+def _html_files(root: str | None = None) -> list[str]:
+    base = root or ROOT
     return [
-        os.path.join(ROOT, "index.html"),
-        ARCHIVE_PATH,
-        LEARNING_DASHBOARD_PATH,
-        LEARNING_PATHS_PATH,
-        *sorted(glob.glob(POSTS_GLOB)),
+        *(os.path.join(base, name) for name in HTML_FILE_NAMES),
+        *sorted(glob.glob(os.path.join(base, "posts", "post-*.html"))),
     ]
+
+
+def _external_urls_under(root: str) -> set[str]:
+    host = _site_host()
+    urls: set[str] = set()
+    for path in _html_files(root):
+        if not os.path.isfile(path):
+            continue
+        for url in _parse_file(path).urls:
+            split = urlsplit(url)
+            if split.scheme in {"http", "https"} and split.netloc.lower() != host:
+                urls.add(url)
+    return urls
+
+
+def baseline_external_urls(ref: str) -> set[str]:
+    """URL external đã tồn tại ở `ref` — thường là base SHA của PR.
+
+    Dùng để phân biệt link do nhánh này đưa vào với link vốn đã nằm trên main.
+    Hai loại đó đáng bị xử lý khác nhau: xem `main()`.
+    """
+    with tempfile.TemporaryDirectory() as tmp:
+        archive = subprocess.run(
+            ["git", "archive", ref, "--", *HTML_FILE_NAMES, "posts"],
+            cwd=ROOT, capture_output=True, check=True,
+        ).stdout
+        subprocess.run(["tar", "-x", "-C", tmp], input=archive, check=True)
+        return _external_urls_under(tmp)
 
 
 def _parse_file(path: str) -> LinkParser:
@@ -252,6 +286,13 @@ def main(argv=None) -> int:
     mode.add_argument("--internal", action="store_true", help="Chỉ kiểm tra link nội bộ.")
     mode.add_argument("--external", action="store_true", help="Chỉ kiểm tra external HTTP(S) links.")
     parser.add_argument("--workers", type=int, default=8, help="Số external URL kiểm tra song song.")
+    parser.add_argument(
+        "--baseline",
+        default=None,
+        metavar="REF",
+        help="Git ref làm mốc (thường là base SHA của PR). Có mốc thì chỉ link MỚI "
+             "mới chặn CI; link đã có sẵn bị 404 được báo là nợ bảo trì.",
+    )
     args = parser.parse_args(argv)
 
     run_internal = not args.external
@@ -272,13 +313,38 @@ def main(argv=None) -> int:
         hard, warnings = check_external(max_workers=max(1, args.workers))
         for item in warnings:
             print(f"⚠ External: {item.url} — {item.detail}")
-        if hard:
+
+        # Không có mốc: mọi link chết đều chặn. Đây là chế độ cho `push: main` và
+        # lịch chạy định kỳ — ở đó không có bài nào để chặn, nên siết chặt là đúng.
+        introduced, inherited = hard, []
+        if args.baseline:
+            # Có mốc: chỉ link do nhánh này đưa vào mới chặn. Link đã có sẵn trên
+            # main mà hôm nay 404 là nợ bảo trì của kho, không phải lỗi của bài
+            # hôm nay — chặn bài vì nó là sai đối tượng, và thực tế đã dẫn tới
+            # việc agent đi sửa hai bài cũ rồi làm hỏng một nguồn đang tốt (#063).
+            existing = baseline_external_urls(args.baseline)
+            introduced = [item for item in hard if item.url not in existing]
+            inherited = [item for item in hard if item.url in existing]
+
+        if inherited:
+            print(
+                f"⚠ Link chết trong nội dung đã có ({len(inherited)}) — nợ bảo trì, "
+                "KHÔNG do nhánh này gây ra và không chặn PR:"
+            )
+            for item in inherited:
+                print(f"  ~ {item.url} — {item.detail}")
+            print("  Sửa ở PR riêng; đừng đổi nguồn trong lúc đang xuất bản bài.")
+
+        if introduced:
             failed = True
-            print(f"✗ External links: {len(hard)} link lỗi chắc chắn", file=sys.stderr)
-            for item in hard:
+            label = "link mới do nhánh này đưa vào" if args.baseline else "link lỗi chắc chắn"
+            print(f"✗ External links: {len(introduced)} {label}", file=sys.stderr)
+            for item in introduced:
                 print(f"  - {item.url} — {item.detail}", file=sys.stderr)
-        else:
+        elif not hard:
             print("✓ External links: không phát hiện HTTP client error chắc chắn.")
+        else:
+            print("✓ External links: link mới đều sống.")
 
     return 1 if failed else 0
 
