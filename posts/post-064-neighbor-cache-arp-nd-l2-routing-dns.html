@@ -12,7 +12,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS">
-<meta property="og:description" content="Đọc neighbor cache ARP/ND trên Linux và FreeBSD để tách lỗi L2 neighbor khỏi lỗi routing, firewall hoặc DNS trước khi thay đổi cấu hình.">
+<meta property="og:description" content="Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -23,17 +23,28 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS">
-<meta name="twitter:description" content="Đọc neighbor cache ARP/ND trên Linux và FreeBSD để tách lỗi L2 neighbor khỏi lỗi routing, firewall hoặc DNS trước khi thay đổi cấu hình.">
+<meta name="twitter:description" content="Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
 {"issue":64,"date":"2026-09-02","axis":"Networking","eyebrow":"Networking · Neighbor cache","slug":"neighbor-cache-arp-nd-l2-routing-dns","title":"Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS","lede":"Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-02","changes_system":false,"sources":[{"title":"Debian Manpages — ip-neighbour(8)","url":"https://manpages.debian.org/trixie/iproute2/ip-neighbour.8.en.html","kind":"official"},{"title":"FreeBSD Manual — arp(8)","url":"https://man.freebsd.org/cgi/man.cgi?apropos=0&manpath=FreeBSD+15.1-STABLE&query=arp&sektion=8","kind":"official"},{"title":"FreeBSD Manual — ndp(8)","url":"https://man.freebsd.org/ndp%288%29","kind":"official"},{"title":"RFC 4861 — Neighbor Discovery for IP version 6","url":"https://www.rfc-editor.org/rfc/rfc4861.html","kind":"official"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#064 · 02·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · Neighbor cache</p><h1>Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS</h1><p class="lede">Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-02</span></div></header>
@@ -62,5 +73,26 @@ ndp -an</code></pre></div><div class="expected-output"><h3>Expected Output / K�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Neighbor cache có thể hé lộ IP và MAC trên segment nội bộ, vì vậy chỉ chia sẻ output cần thiết khi gửi ticket. Một mapping IP→MAC bất ngờ có thể là lỗi cấu hình, thiết bị đổi NIC, proxy ARP/ND hoặc dấu hiệu cần điều tra; không kết luận spoofing chỉ từ một snapshot.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Chọn một host cùng subnet và một host ngoài subnet. Dự đoán neighbor nào sẽ xuất hiện cho từng đích rồi kiểm bằng route và neighbor cache.</li><li>Trên IPv6, so sánh output <code>ip -6 neigh</code> hoặc <code>ndp -an</code> trước và sau hai gói ping.</li><li>Viết checklist ba dòng “route → neighbor → DNS” cho một incident thật và ghi bằng chứng nào cho phép chuyển sang lớp kế tiếp.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức/upstream; các URL dưới đây đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://manpages.debian.org/trixie/iproute2/ip-neighbour.8.en.html">Debian Manpages — ip-neighbour(8)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?apropos=0&amp;manpath=FreeBSD+15.1-STABLE&amp;query=arp&amp;sektion=8">FreeBSD Manual — arp(8)</a></li><li><a href="https://man.freebsd.org/ndp%288%29">FreeBSD Manual — ndp(8)</a></li><li><a href="https://www.rfc-editor.org/rfc/rfc4861.html">RFC 4861 — Neighbor Discovery for IP version 6</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #064 · Networking</span><span class="hashtags">#Linux #FreeBSD #Networking #ARP #IPv6</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-057-tcp-mss-clamping-pmtud-boundary.html"><span class="series-kicker">#057</span><span>TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-050-conntrack-nftables-pf-state-table.html">#050 · State table: conntrack/nftables trên Linux và pf state trên FreeBSD</a></li>
+      <li><a href="post-043-mtu-path-mtu-discovery-partial-connectivity.html">#043 · MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần</a></li>
+      <li><a href="post-036-tcpdump-targeted-packet-capture.html">#036 · tcpdump có mục tiêu: DNS, TCP handshake và firewall evidence</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #064 · Networking</span><span class="hashtags">#Linux #FreeBSD #Networking #ARP #IPv6</span></div></footer>
 </div></main></body></html>
