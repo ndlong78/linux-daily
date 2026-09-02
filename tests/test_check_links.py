@@ -127,6 +127,8 @@ import subprocess  # noqa: E402
 import sys as _sys  # noqa: E402
 from pathlib import Path as _Path  # noqa: E402
 
+import pytest  # noqa: E402
+
 _ROOT = _Path(__file__).resolve().parents[1]
 
 
@@ -150,30 +152,114 @@ def _seed_repo(tmp_path):
     return repo
 
 
-def test_baseline_chi_gom_url_da_co_o_ref(tmp_path, monkeypatch):
-    """baseline_external_urls phải đi qua đúng parser thật, không phải regex xấp xỉ."""
+def _dat_kho(tmp_path, monkeypatch):
+    """Kho tạm + module check_links đã trỏ vào nó. Trả về (repo, module, base_sha)."""
     repo = _seed_repo(tmp_path)
     base = _run(["git", "rev-parse", "HEAD"], repo).stdout.strip()
-
-    (repo / "posts" / "post-002-b.html").write_text(
-        '<html><body><a href="https://moi.test/trang">mới</a></body></html>', encoding="utf-8"
-    )
-    _run(["git", "add", "-A"], repo)
-    _run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", "them"], repo)
 
     _sys.path.insert(0, str(_ROOT / "tools"))
     import check_links as cl
 
     monkeypatch.setattr(cl, "ROOT", str(repo))
-    monkeypatch.setattr(cl, "POSTS_GLOB", str(repo / "posts" / "post-*.html"))
     monkeypatch.setattr(cl, "_site_host", lambda: "linux.no.id.vn")
+    return repo, cl, base
 
-    baseline = cl.baseline_external_urls(base)
-    current = cl._external_urls_under(str(repo))
 
-    assert "https://cu.test/trang" in baseline
-    assert "https://moi.test/trang" not in baseline, "URL mới không được coi là có sẵn"
-    assert current - baseline == {"https://moi.test/trang"}
+def _commit(repo, message):
+    _run(["git", "add", "-A"], repo)
+    _run(["git", "-c", "user.email=t@t", "-c", "user.name=t", "commit", "-qm", message], repo)
+
+
+def test_baseline_chi_gom_url_da_co_o_ref(tmp_path, monkeypatch):
+    """baseline_external_refs phải đi qua đúng parser thật, không phải regex xấp xỉ."""
+    repo, cl, base = _dat_kho(tmp_path, monkeypatch)
+
+    (repo / "posts" / "post-002-b.html").write_text(
+        '<html><body><a href="https://moi.test/trang">mới</a></body></html>', encoding="utf-8"
+    )
+    _commit(repo, "them")
+
+    baseline = cl.baseline_external_refs(base)
+    current = cl._external_refs_under(str(repo))
+
+    assert ("posts/post-001-a.html", "https://cu.test/trang") in baseline
+    assert not any(url == "https://moi.test/trang" for _, url in baseline), (
+        "URL mới không được coi là có sẵn"
+    )
+    assert current - baseline == {("posts/post-002-b.html", "https://moi.test/trang")}
+
+
+def test_chep_url_chet_sang_bai_moi_van_la_moi(tmp_path, monkeypatch):
+    """Lỗ thật của cách đếm theo URL: chép nguồn chết từ bài cũ sang bài mới.
+
+    Nếu chỉ so tập URL thì URL đó "đã có trên main" nên không chặn — trong khi
+    bài hôm nay đang thật sự trích một nguồn chết. So theo cặp (file, url) thì
+    cặp mới, nên vẫn chặn. Đây là lý do duy nhất để theo dõi theo cặp.
+    """
+    repo, cl, base = _dat_kho(tmp_path, monkeypatch)
+
+    (repo / "posts" / "post-002-b.html").write_text(
+        '<html><body><a href="https://cu.test/trang">chép lại</a></body></html>',
+        encoding="utf-8",
+    )
+    _commit(repo, "chep")
+
+    existing = cl.baseline_external_refs(base)
+    current = cl._external_refs_under(str(repo))
+    moi = {url for rel, url in current if (rel, url) not in existing}
+
+    assert moi == {"https://cu.test/trang"}
+
+
+def test_dung_lai_trang_generated_khong_sinh_cap_moi(tmp_path, monkeypatch):
+    """Dựng lại index/archive với nội dung y hệt không được đẻ ra cặp mới.
+
+    Nếu có, mọi PR bài hằng ngày sẽ bị coi là đưa vào link mới và gate mất nghĩa.
+    """
+    repo, cl, base = _dat_kho(tmp_path, monkeypatch)
+
+    for name in ("index.html", "archive.html"):
+        path = repo / name
+        path.write_text(path.read_text(encoding="utf-8"), encoding="utf-8")
+    (repo / "posts" / "post-002-b.html").write_text(
+        "<html><body><p>không có link ngoài</p></body></html>", encoding="utf-8"
+    )
+    _commit(repo, "dung lai")
+
+    existing = cl.baseline_external_refs(base)
+    current = cl._external_refs_under(str(repo))
+
+    assert current == existing
+
+
+def test_ref_khong_ton_tai_bao_loi_ro_rang(tmp_path, monkeypatch):
+    """Checkout nông làm base SHA vắng mặt. Thông điệp phải chỉ đúng cách sửa."""
+    _repo, cl, _base = _dat_kho(tmp_path, monkeypatch)
+
+    with pytest.raises(cl.BaselineError) as exc:
+        cl.baseline_external_refs("0" * 40)
+
+    message = str(exc.value)
+    assert "fetch-depth: 0" in message
+    assert "KHÔNG gỡ --baseline" in message
+
+
+def test_baseline_hong_thi_fail_closed(monkeypatch, capsys):
+    """Không dựng được baseline thì phải đỏ, không được coi mọi link là kế thừa."""
+    _sys.path.insert(0, str(_ROOT / "tools"))
+    import check_links as cl
+
+    chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
+
+    def no(_ref):
+        raise cl.BaselineError("không dựng được cây baseline từ ref 'x'")
+
+    monkeypatch.setattr(cl, "baseline_external_refs", no)
+
+    code = cl.main(["--external", "--baseline", "deadbeef"])
+    assert code == 1
+    assert "không dựng được cây baseline" in capsys.readouterr().err
 
 
 def test_link_da_co_san_khong_chan_pr(tmp_path, monkeypatch, capsys):
@@ -187,7 +273,14 @@ def test_link_da_co_san_khong_chan_pr(tmp_path, monkeypatch, capsys):
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
     monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
-    monkeypatch.setattr(cl, "baseline_external_urls", lambda ref: {"https://cu.test/trang"})
+    monkeypatch.setattr(
+        cl, "baseline_external_refs",
+        lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
+    )
+    monkeypatch.setattr(
+        cl, "_external_refs_under",
+        lambda root: {("posts/post-001-a.html", "https://cu.test/trang")},
+    )
 
     code = cl.main(["--external", "--baseline", "deadbeef"])
     out = capsys.readouterr()
@@ -204,7 +297,17 @@ def test_link_moi_van_chan_pr(tmp_path, monkeypatch, capsys):
 
     chet = cl.ExternalResult("https://moi.test/khong-co-that", 404, "hard", "HTTP 404")
     monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
-    monkeypatch.setattr(cl, "baseline_external_urls", lambda ref: {"https://cu.test/trang"})
+    monkeypatch.setattr(
+        cl, "baseline_external_refs",
+        lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
+    )
+    monkeypatch.setattr(
+        cl, "_external_refs_under",
+        lambda root: {
+            ("posts/post-001-a.html", "https://cu.test/trang"),
+            ("posts/post-002-b.html", "https://moi.test/khong-co-that"),
+        },
+    )
 
     code = cl.main(["--external", "--baseline", "deadbeef"])
     err = capsys.readouterr().err
