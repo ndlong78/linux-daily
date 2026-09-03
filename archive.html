@@ -32,11 +32,11 @@
 <!-- back-to-top:end -->
 <header class="site">
   <h1 class="site">Search &amp; Archive</h1>
-  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 64 bài theo chủ đề.</p>
+  <p class="site-lede">Tìm theo tiêu đề, mô tả, trục hoặc tag; hoặc duyệt toàn bộ 65 bài theo chủ đề.</p>
   <form class="search-box" role="search" onsubmit="return false">
     <label for="archive-search">Tìm bài</label>
     <input id="archive-search" type="search" autocomplete="off" placeholder="Ví dụ: SSH, ZFS, backup, FreeBSD…" aria-describedby="search-status">
-    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 64 bài.</p>
+    <p id="search-status" class="search-status" aria-live="polite">Nhập từ khóa để lọc 65 bài.</p>
   </form>
 </header>
 <main id="main-content">
@@ -98,8 +98,13 @@
     </div>
   </section>
   <section class="archive-group" id="security">
-    <h2>Bảo mật &amp; phân quyền <span class="archive-count">9</span></h2>
+    <h2>Bảo mật &amp; phân quyền <span class="archive-count">10</span></h2>
     <div class="archive-list">
+      <a class="archive-item" href="posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html">
+        <span class="archive-meta">#065 · 2026-09-03</span>
+        <strong>SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key</strong>
+        <span>Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.</span>
+      </a>
       <a class="archive-item" href="posts/post-058-openssh-certificates-user-ca-validity-revocation.html">
         <span class="archive-meta">#058 · 2026-08-27</span>
         <strong>OpenSSH certificates: user CA, validity interval và thu hồi credential</strong>

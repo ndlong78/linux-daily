@@ -1,6 +1,19 @@
 {
-  "count": 64,
+  "count": 65,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-09-03",
+      "href": "posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html",
+      "issue": 65,
+      "lede": "Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.",
+      "tags": [
+        "SSH key policy"
+      ],
+      "title": "SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",
