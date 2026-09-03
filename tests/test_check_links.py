@@ -38,9 +38,10 @@ def test_other_https_url_is_external():
     ) is None
 
 
-def test_external_status_policy_is_strict_only_for_definite_client_errors():
+def test_external_status_classification_only_marks_2xx_as_ok():
     assert check_links.classify_status("https://example.test", 200).outcome == "ok"
-    assert check_links.classify_status("https://example.test", 301).outcome == "ok"
+    assert check_links.classify_status("https://example.test", 204).outcome == "ok"
+    assert check_links.classify_status("https://example.test", 301).outcome == "warning"
     assert check_links.classify_status("https://example.test", 404).outcome == "hard"
     assert check_links.classify_status("https://example.test", 410).outcome == "hard"
     assert check_links.classify_status("https://example.test", 403).outcome == "warning"
@@ -313,8 +314,64 @@ def test_link_moi_van_chan_pr(tmp_path, monkeypatch, capsys):
     err = capsys.readouterr().err
 
     assert code == 1
-    assert "link mới do nhánh này đưa vào" in err
+    assert "link mới chưa xác minh được HTTP 2xx" in err
     assert "moi.test" in err
+
+
+@pytest.mark.parametrize(
+    ("status", "detail"),
+    [
+        (301, "HTTP 301 (redirect unresolved)"),
+        (403, "HTTP 403 (auth/bot-block)"),
+        (503, "HTTP 503 (transient)"),
+        (None, "network/timeout sau 3 lần"),
+    ],
+)
+def test_link_moi_chua_nhan_2xx_phai_chan_pr(
+    monkeypatch, capsys, status: int | None, detail: str
+):
+    """Nguồn mới phải nhận 2xx thật; warning mạng không đủ để qua PR gate."""
+    result = check_links.ExternalResult(
+        "https://moi.test/nguon",
+        status,
+        "warning",
+        detail,
+    )
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
+    monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: set())
+    monkeypatch.setattr(
+        check_links,
+        "_external_refs_under",
+        lambda root: {("posts/post-002-b.html", "https://moi.test/nguon")},
+    )
+
+    code = check_links.main(["--external", "--baseline", "deadbeef"])
+    captured = capsys.readouterr()
+
+    assert code == 1
+    assert "chưa xác minh được HTTP 2xx" in captured.err
+    assert "moi.test" in captured.err
+
+
+def test_warning_cua_link_ke_thua_khong_chan_pr(monkeypatch, capsys):
+    """Lỗi mạng của URL đã có vẫn là cảnh báo để PR hằng ngày không flaky."""
+    result = check_links.ExternalResult(
+        "https://cu.test/nguon",
+        None,
+        "warning",
+        "network/timeout sau 3 lần",
+    )
+    pair = ("posts/post-001-a.html", "https://cu.test/nguon")
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
+    monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: {pair})
+    monkeypatch.setattr(check_links, "_external_refs_under", lambda root: {pair})
+
+    code = check_links.main(["--external", "--baseline", "deadbeef"])
+    captured = capsys.readouterr()
+
+    assert code == 0
+    assert "⚠ External" in captured.out
+    assert captured.err == ""
 
 
 def test_khong_co_baseline_thi_moi_link_chet_deu_chan(monkeypatch, capsys):

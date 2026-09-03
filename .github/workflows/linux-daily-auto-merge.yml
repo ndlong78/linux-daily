@@ -26,7 +26,9 @@ jobs:
       github.event.workflow_run.pull_requests[0].number != null
     runs-on: ubuntu-latest
     concurrency:
-      group: linux-daily-auto-merge-${{ github.event.workflow_run.pull_requests[0].number }}
+      # Serialize toàn bộ merge vào main. Nhóm theo PR vẫn cho hai PR khác nhau
+      # merge đồng thời và làm SHA dùng cho post-merge validation bị nhập nhằng.
+      group: linux-daily-auto-merge-main
       cancel-in-progress: false
     env:
       GH_TOKEN: ${{ github.token }}
@@ -58,14 +60,38 @@ jobs:
 
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          review_json="$(gh api graphql \
-            -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewDecision reviewThreads(first:100){nodes{isResolved}}}}}' \
-            -F owner="${owner}" \
-            -F repo="${repo}" \
-            -F pr="${PR_NUMBER}")"
+          # Đọc hết review threads thay vì chỉ tin trang đầu 100 phần tử. Nếu API
+          # trả pageInfo không hợp lệ hoặc cursor không tiến triển, fail closed để
+          # workflow có quyền ghi không thể merge khi trạng thái review chưa rõ.
+          cursor="null"
+          previous_cursor=""
+          unresolved_threads=0
+          review_decision=""
+          while true; do
+            review_json="$(gh api graphql \
+              -f query='query($owner:String!,$repo:String!,$pr:Int!,$cursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewDecision reviewThreads(first:100,after:$cursor){nodes{isResolved} pageInfo{hasNextPage endCursor}}}}}' \
+              -F owner="${owner}" \
+              -F repo="${repo}" \
+              -F pr="${PR_NUMBER}" \
+              -F cursor="${cursor}")"
 
-          review_decision="$(jq -r '.data.repository.pullRequest.reviewDecision // ""' <<<"${review_json}")"
-          unresolved_threads="$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length' <<<"${review_json}")"
+            test "$(jq -r '.data.repository.pullRequest != null' <<<"${review_json}")" = "true"
+            review_decision="$(jq -r '.data.repository.pullRequest.reviewDecision // ""' <<<"${review_json}")"
+            page_unresolved="$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length' <<<"${review_json}")"
+            has_next_page="$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage' <<<"${review_json}")"
+            end_cursor="$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor // ""' <<<"${review_json}")"
+            [[ "${page_unresolved}" =~ ^[0-9]+$ ]]
+            unresolved_threads="$(( unresolved_threads + page_unresolved ))"
+
+            if test "${has_next_page}" = "false"; then
+              break
+            fi
+            test "${has_next_page}" = "true"
+            test -n "${end_cursor}"
+            test "${end_cursor}" != "${previous_cursor}"
+            previous_cursor="${end_cursor}"
+            cursor="${end_cursor}"
+          done
 
           test "${review_decision}" != "CHANGES_REQUESTED"
           test "${unresolved_threads}" = "0"
@@ -73,6 +99,7 @@ jobs:
           echo "Validated PR #${PR_NUMBER}: ${head_ref} @ ${head_sha}"
 
       - name: Squash merge exact CI head
+        id: squash_merge
         shell: bash
         run: |
           set -euo pipefail
@@ -84,19 +111,22 @@ jobs:
             -f sha="${CI_HEAD_SHA}")"
 
           merged="$(jq -r '.merged' <<<"${response}")"
+          merged_sha="$(jq -r '.sha // ""' <<<"${response}")"
           message="$(jq -r '.message // ""' <<<"${response}")"
 
-          if test "${merged}" != "true"; then
+          if test "${merged}" != "true" || ! [[ "${merged_sha}" =~ ^[0-9a-f]{40}$ ]]; then
             echo "Auto-merge refused: ${message}" >&2
             exit 1
           fi
 
-          echo "Squash-merged PR #${PR_NUMBER} after exact-head CI success."
+          echo "merged_sha=${merged_sha}" >> "${GITHUB_OUTPUT}"
+          echo "Squash-merged PR #${PR_NUMBER} thành ${merged_sha} sau exact-head CI success."
 
       - name: Dispatch post-merge validation on main
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          MERGED_SHA: ${{ steps.squash_merge.outputs.merged_sha }}
         run: |
           set -euo pipefail
 
@@ -122,7 +152,15 @@ jobs:
           # của auto-merge. Run đỏ hay bị huỷ vẫn hiện trên main và release gate
           # vẫn từ chối SHA đó — đúng chỗ nó cần bị từ chối.
 
-          merged_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
+          # Dùng đúng SHA do merge endpoint trả về, không đọc lại head của main:
+          # main có thể đã tiến lên giữa hai bước và khiến job nhận nhầm commit.
+          merged_sha="${MERGED_SHA}"
+          [[ "${merged_sha}" =~ ^[0-9a-f]{40}$ ]]
+          current_main_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
+          if test "${current_main_sha}" != "${merged_sha}"; then
+            echo "main đã tiến từ ${merged_sha} lên ${current_main_sha}; từ chối dispatch validation cho sai SHA." >&2
+            exit 1
+          fi
           echo "main sau merge: ${merged_sha}"
 
           for wf in ci.yml production-smoke.yml; do
