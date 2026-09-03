@@ -58,14 +58,38 @@ jobs:
 
           owner="${GITHUB_REPOSITORY%%/*}"
           repo="${GITHUB_REPOSITORY#*/}"
-          review_json="$(gh api graphql \
-            -f query='query($owner:String!,$repo:String!,$pr:Int!){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewDecision reviewThreads(first:100){nodes{isResolved}}}}}' \
-            -F owner="${owner}" \
-            -F repo="${repo}" \
-            -F pr="${PR_NUMBER}")"
+          # Đọc hết review threads thay vì chỉ tin trang đầu 100 phần tử. Nếu API
+          # trả pageInfo không hợp lệ hoặc cursor không tiến triển, fail closed để
+          # workflow có quyền ghi không thể merge khi trạng thái review chưa rõ.
+          cursor="null"
+          previous_cursor=""
+          unresolved_threads=0
+          review_decision=""
+          while true; do
+            review_json="$(gh api graphql \
+              -f query='query($owner:String!,$repo:String!,$pr:Int!,$cursor:String){repository(owner:$owner,name:$repo){pullRequest(number:$pr){reviewDecision reviewThreads(first:100,after:$cursor){nodes{isResolved} pageInfo{hasNextPage endCursor}}}}}' \
+              -F owner="${owner}" \
+              -F repo="${repo}" \
+              -F pr="${PR_NUMBER}" \
+              -F cursor="${cursor}")"
 
-          review_decision="$(jq -r '.data.repository.pullRequest.reviewDecision // ""' <<<"${review_json}")"
-          unresolved_threads="$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length' <<<"${review_json}")"
+            test "$(jq -r '.data.repository.pullRequest != null' <<<"${review_json}")" = "true"
+            review_decision="$(jq -r '.data.repository.pullRequest.reviewDecision // ""' <<<"${review_json}")"
+            page_unresolved="$(jq '[.data.repository.pullRequest.reviewThreads.nodes[] | select(.isResolved == false)] | length' <<<"${review_json}")"
+            has_next_page="$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.hasNextPage' <<<"${review_json}")"
+            end_cursor="$(jq -r '.data.repository.pullRequest.reviewThreads.pageInfo.endCursor // ""' <<<"${review_json}")"
+            [[ "${page_unresolved}" =~ ^[0-9]+$ ]]
+            unresolved_threads="$(( unresolved_threads + page_unresolved ))"
+
+            if test "${has_next_page}" = "false"; then
+              break
+            fi
+            test "${has_next_page}" = "true"
+            test -n "${end_cursor}"
+            test "${end_cursor}" != "${previous_cursor}"
+            previous_cursor="${end_cursor}"
+            cursor="${end_cursor}"
+          done
 
           test "${review_decision}" != "CHANGES_REQUESTED"
           test "${unresolved_threads}" = "0"

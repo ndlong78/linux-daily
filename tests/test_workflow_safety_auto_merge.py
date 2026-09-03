@@ -27,6 +27,19 @@ def test_auto_merge_workflow_is_exact_sha_and_no_checkout():
     assert "--admin" not in text
 
 
+def test_auto_merge_paginates_all_review_threads_and_fails_closed():
+    text = (ROOT / ".github" / "workflows" / workflow_safety.AUTO_MERGE_WORKFLOW).read_text(
+        encoding="utf-8"
+    )
+
+    assert "reviewThreads(first:100,after:$cursor)" in text
+    assert "pageInfo{hasNextPage endCursor}" in text
+    assert 'test "${has_next_page}" = "true"' in text
+    assert 'test -n "${end_cursor}"' in text
+    assert 'test "${end_cursor}" != "${previous_cursor}"' in text
+    assert 'unresolved_threads="$(( unresolved_threads + page_unresolved ))"' in text
+
+
 def test_auto_merge_policy_rejects_checkout_with_write_token(tmp_path):
     source = (
         ROOT / ".github" / "workflows" / workflow_safety.AUTO_MERGE_WORKFLOW
@@ -41,6 +54,24 @@ def test_auto_merge_policy_rejects_checkout_with_write_token(tmp_path):
 
     errors = workflow_safety.validate_file(path)
     assert any("must not checkout PR code" in error for error in errors)
+
+
+def test_auto_merge_policy_rejects_single_page_review_query(tmp_path: Path):
+    errors = _mutated(
+        tmp_path,
+        "reviewThreads(first:100,after:$cursor)",
+        "reviewThreads(first:100)",
+    )
+    assert any("safety marker missing" in error for error in errors), errors
+
+
+def test_auto_merge_policy_requires_review_pagination_cursor_progress(tmp_path: Path):
+    errors = _mutated(
+        tmp_path,
+        'test "${end_cursor}" != "${previous_cursor}"',
+        "true",
+    )
+    assert any("safety marker missing" in error for error in errors), errors
 
 
 # --- Dispatch xác thực sau merge ---
