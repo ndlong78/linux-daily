@@ -258,8 +258,13 @@ def _request_once(url: str, timeout: float) -> int:
 
 
 def classify_status(url: str, status: int) -> ExternalResult:
-    if 200 <= status < 400:
+    # Chỉ 2xx chứng minh URL đã thật sự phục vụ tài liệu. Redirect thường được
+    # urllib đi theo tới response cuối; nếu vẫn nhận 3xx thì chưa xác minh được
+    # đích cuối và URL mới trên PR phải bị chặn.
+    if 200 <= status < 300:
         return ExternalResult(url, status, "ok", f"HTTP {status}")
+    if 300 <= status < 400:
+        return ExternalResult(url, status, "warning", f"HTTP {status} (redirect unresolved)")
     if status in BLOCKED_STATUSES:
         return ExternalResult(url, status, "warning", f"HTTP {status} (auth/bot-block)")
     if status in TRANSIENT_STATUSES:
@@ -332,8 +337,6 @@ def main(argv=None) -> int:
 
     if run_external:
         hard, warnings = check_external(max_workers=max(1, args.workers))
-        for item in warnings:
-            print(f"⚠ External: {item.url} — {item.detail}")
 
         # Không có mốc: mọi link chết đều chặn. Đây là chế độ cho `push: main` và
         # lịch chạy định kỳ — ở đó không có bài nào để chặn, nên siết chặt là đúng.
@@ -357,8 +360,17 @@ def main(argv=None) -> int:
             introduced_urls = {
                 url for rel, url in current if (rel, url) not in existing
             }
-            introduced = [item for item in hard if item.url in introduced_urls]
+            # URL mới chỉ pass khi check trả `ok`, tức response cuối là 2xx.
+            # 403/bot-block, timeout, lỗi TLS/DNS, 3xx chưa resolve và 5xx đều
+            # không chứng minh được nguồn tồn tại, nên phải fail closed trên PR.
+            introduced = [
+                item for item in [*hard, *warnings] if item.url in introduced_urls
+            ]
             inherited = [item for item in hard if item.url not in introduced_urls]
+            warnings = [item for item in warnings if item.url not in introduced_urls]
+
+        for item in warnings:
+            print(f"⚠ External: {item.url} — {item.detail}")
 
         if inherited:
             print(
@@ -371,7 +383,11 @@ def main(argv=None) -> int:
 
         if introduced:
             failed = True
-            label = "link mới do nhánh này đưa vào" if args.baseline else "link lỗi chắc chắn"
+            label = (
+                "link mới chưa xác minh được HTTP 2xx"
+                if args.baseline
+                else "link lỗi chắc chắn"
+            )
             print(f"✗ External links: {len(introduced)} {label}", file=sys.stderr)
             for item in introduced:
                 print(f"  - {item.url} — {item.detail}", file=sys.stderr)
