@@ -151,12 +151,21 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
         'test "${head_sha}" = "${CI_HEAD_SHA}"',
         "reviewDecision",
-        "reviewThreads(first:100)",
+        "reviewThreads(first:100,after:$cursor)",
+        "pageInfo{hasNextPage endCursor}",
+        'test "${has_next_page}" = "true"',
+        'test "${end_cursor}" != "${previous_cursor}"',
         'test "${unresolved_threads}" = "0"',
         'test "${review_decision}" != "CHANGES_REQUESTED"',
         '"repos/${GITHUB_REPOSITORY}/pulls/${PR_NUMBER}/merge"',
         "-f merge_method=squash",
         '-f sha="${CI_HEAD_SHA}"',
+        "group: linux-daily-auto-merge-main",
+        "id: squash_merge",
+        "merged_sha=\"$(jq -r '.sha // \"\"'",
+        'echo "merged_sha=${merged_sha}" >> "${GITHUB_OUTPUT}"',
+        "MERGED_SHA: ${{ steps.squash_merge.outputs.merged_sha }}",
+        'test "${current_main_sha}" != "${merged_sha}"',
         # Dispatch sau merge phải có, và phải TỰ XÁC NHẬN. Endpoint dispatch trả
         # 204 kể cả khi không có run nào chạy, nên thiếu vòng chờ + `exit 1` thì
         # bước này xanh trong khi main vẫn không có gate — hỏng im lặng.
@@ -168,6 +177,9 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
     for marker in required_markers:
         if marker not in text:
             errors.append(f"{rel}: auto-merge safety marker missing: {marker}")
+
+    if 'merged_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main"' in text:
+        errors.append(f"{rel}: merged SHA must come from the merge response, not a later main lookup")
 
     if "actions/checkout" in text:
         errors.append(f"{rel}: workflow_run auto-merge must not checkout PR code with a write token")
