@@ -9,6 +9,8 @@ sys.path.insert(0, str(TOOLS))
 
 import workflow_safety  # noqa: E402
 
+WORKFLOW = ROOT / ".github" / "workflows" / workflow_safety.AUTO_MERGE_WORKFLOW
+
 
 def test_real_auto_merge_workflow_passes_safety_contract():
     path = ROOT / ".github" / "workflows" / workflow_safety.AUTO_MERGE_WORKFLOW
@@ -25,6 +27,19 @@ def test_auto_merge_workflow_is_exact_sha_and_no_checkout():
     assert "-f merge_method=squash" in text
     assert '-f sha="${CI_HEAD_SHA}"' in text
     assert "--admin" not in text
+
+
+def test_auto_merge_uses_merge_response_sha_and_serializes_main():
+    text = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "group: linux-daily-auto-merge-main" in text
+    assert "id: squash_merge" in text
+    assert "merged_sha=\"$(jq -r '.sha // \"\"'" in text
+    assert 'echo "merged_sha=${merged_sha}" >> "${GITHUB_OUTPUT}"' in text
+    assert "MERGED_SHA: ${{ steps.squash_merge.outputs.merged_sha }}" in text
+    assert 'merged_sha="${MERGED_SHA}"' in text
+    assert 'test "${current_main_sha}" != "${merged_sha}"' in text
+    assert 'merged_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main"' not in text
 
 
 def test_auto_merge_paginates_all_review_threads_and_fails_closed():
@@ -74,9 +89,32 @@ def test_auto_merge_policy_requires_review_pagination_cursor_progress(tmp_path: 
     assert any("safety marker missing" in error for error in errors), errors
 
 
-# --- Dispatch xác thực sau merge ---
+def test_auto_merge_policy_rejects_per_pr_merge_concurrency(tmp_path: Path):
+    errors = _mutated(
+        tmp_path,
+        "group: linux-daily-auto-merge-main",
+        "group: linux-daily-auto-merge-${{ github.event.workflow_run.pull_requests[0].number }}",
+    )
+    assert any("safety marker missing" in error for error in errors), errors
 
-WORKFLOW = ROOT / ".github" / "workflows" / workflow_safety.AUTO_MERGE_WORKFLOW
+
+def test_auto_merge_policy_rejects_sha_read_back_from_main(tmp_path: Path):
+    text = WORKFLOW.read_text(encoding="utf-8")
+    old = 'merged_sha="${MERGED_SHA}"'
+    assert old in text
+    unsafe = text.replace(
+        old,
+        'merged_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq \'.sha\')"',
+        1,
+    )
+    path = tmp_path / WORKFLOW.name
+    path.write_text(unsafe, encoding="utf-8")
+
+    errors = workflow_safety.validate_file(path)
+    assert any("merge response" in error for error in errors), errors
+
+
+# --- Dispatch xác thực sau merge ---
 
 
 def _mutated(tmp_path: Path, old: str, new: str) -> list[str]:
