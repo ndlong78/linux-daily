@@ -12,7 +12,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key">
-<meta property="og:description" content="Dùng from, restrict và command trong authorized_keys để thu hẹp quyền của từng SSH key, kiểm chứng trên Linux và FreeBSD mà không khóa mất đường quản trị.">
+<meta property="og:description" content="Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -23,17 +23,28 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key">
-<meta name="twitter:description" content="Dùng from, restrict và command trong authorized_keys để thu hẹp quyền của từng SSH key, kiểm chứng trên Linux và FreeBSD mà không khóa mất đường quản trị.">
+<meta name="twitter:description" content="Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
 {"issue":65,"date":"2026-09-03","axis":"Bảo mật","eyebrow":"Bảo mật · SSH key policy","slug":"ssh-authorized-keys-restrictions-source-command-forwarding","title":"SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key","lede":"Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-03","changes_system":true,"sources":[{"title":"OpenBSD Manual — sshd(8), AUTHORIZED_KEYS FILE FORMAT","url":"https://man.openbsd.org/sshd.8","kind":"upstream"},{"title":"Debian Manpages — authorized_keys(5)","url":"https://manpages.debian.org/trixie/openssh-server/authorized_keys.5.en.html","kind":"official"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#065 · 03·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Bảo mật · SSH key policy</p><h1>SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key</h1><p class="lede">Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng <code>authorized_keys</code> để giảm blast radius khi credential bị lộ.</p><div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~14 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-03</span></div></header>
@@ -64,5 +75,26 @@ chmod 600 ~/.ssh/authorized_keys</code></pre></div><p>Chỉ xóa backup sau khi 
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Ưu tiên một key riêng cho từng automation thay vì dùng chung key quản trị. Gắn comment có owner/purpose, giới hạn nguồn bằng CIDR khi topology ổn định, và thu hồi key khi job hoặc người sở hữu không còn cần quyền.</p><p><code>command=</code> chỉ ép command server-side; nếu script được gọi có quyền quá rộng, key vẫn có thể tạo tác động tương ứng. Review chính script, quyền file và dữ liệu đầu vào như một phần của trust boundary.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Tạo một key test chỉ chạy <code>/usr/bin/id</code> và chứng minh interactive shell không mở.</li><li>Thêm <code>from=</code> cho subnet quản trị trong lab rồi thử từ một nguồn ngoài subnet.</li><li>So sánh rủi ro giữa key trần, <code>command=</code> đơn lẻ và <code>restrict,command=</code>.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức/upstream; các URL dưới đây đã được kiểm tra truy cập trước khi mở PR.</p><ul class="clean"><li><a href="https://man.openbsd.org/sshd.8">OpenBSD Manual — sshd(8), AUTHORIZED_KEYS FILE FORMAT</a></li><li><a href="https://manpages.debian.org/trixie/openssh-server/authorized_keys.5.en.html">Debian Manpages — authorized_keys(5)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #065 · Bảo mật</span><span class="hashtags">#LinuxDaily #OpenSSH #Security</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-058-openssh-certificates-user-ca-validity-revocation.html"><span class="series-kicker">#058</span><span>OpenSSH certificates: user CA, validity interval và thu hồi credential</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-051-umask-secure-file-creation-policy.html">#051 · umask và policy tạo file: secure defaults cho service và user</a></li>
+      <li><a href="post-044-ssh-agent-forwarding-credential-risk.html">#044 · SSH agent forwarding và rủi ro lộ credential</a></li>
+      <li><a href="post-037-acl-default-acl-shared-access.html">#037 · ACL và default ACL: quyền chia sẻ không cần chmod 777</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #065 · Bảo mật</span><span class="hashtags">#LinuxDaily #OpenSSH #Security</span></div></footer>
 </div></main></body></html>
