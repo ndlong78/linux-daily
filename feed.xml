@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Thu, 03 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Fri, 04 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Sparse files: apparent size, allocated blocks và backup semantics</title>
+      <link>https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</guid>
+      <pubDate>Fri, 04 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.</description>
+    </item>
     <item>
       <title>SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key</title>
       <link>https://linux.no.id.vn/posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html</guid>
       <pubDate>Wed, 26 Aug 2026 00:00:00 +0700</pubDate>
       <description>MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.</description>
-    </item>
-    <item>
-      <title>Lab disk I/O latency: process, device health và recovery boundary</title>
-      <link>https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html</guid>
-      <pubDate>Tue, 25 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.</description>
     </item>
   </channel>
 </rss>
