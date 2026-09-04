@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Sparse files: apparent size, allocated blocks và backup semantics">
-<meta property="og:description" content="Một file có thể báo kích thước 1 GiB nhưng chỉ chiếm vài block; hãy đo cả apparent size lẫn allocated blocks trước và sau backup/restore.">
+<meta property="og:description" content="Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,15 +24,25 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sparse files: apparent size, allocated blocks và backup semantics">
-<meta name="twitter:description" content="Một file có thể báo kích thước 1 GiB nhưng chỉ chiếm vài block; hãy đo cả apparent size lẫn allocated blocks trước và sau backup/restore.">
+<meta name="twitter:description" content="Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">{"issue":66,"date":"2026-09-04","axis":"Storage","eyebrow":"Storage · Sparse files","slug":"sparse-files-apparent-size-allocated-blocks-backup-semantics","title":"Sparse files: apparent size, allocated blocks và backup semantics","lede":"Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-04","changes_system":false,"sources":[{"title":"GNU Coreutils Manual — du, cp và sparse files","url":"https://www.gnu.org/software/coreutils/manual/coreutils.html","kind":"upstream"},{"title":"FreeBSD Manual — stat(2), st_size và st_blocks","url":"https://man.freebsd.org/cgi/man.cgi?query=stat&sektion=2&manpath=FreeBSD+12.2-RELEASE","kind":"official"}]}</script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#066 · 04·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Storage · Sparse files</p><h1>Sparse files: apparent size, allocated blocks và backup semantics</h1><p class="lede">Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-04</span></div></header>
@@ -66,5 +76,26 @@ du -h sparse-lab-source.img sparse-lab-copy.img</code></pre></div><p><strong>K�
 <section><h2>Dọn file lab</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">rm sparse-lab-source.img sparse-lab-copy.img
 cd ..
 rmdir sparse-lab</code></pre></div><p>Chỉ xóa các file lab vừa tạo.</p></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #066 · Storage</span><span class="hashtags">#LinuxDaily #Storage #SparseFiles</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-059-trim-discard-fstrim-zfs-autotrim.html"><span class="series-kicker">#059</span><span>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-052-rsync-link-dest-snapshot-backup.html">#052 · rsync snapshot-style backup với hard links và verification</a></li>
+      <li><a href="post-045-fsck-zfs-scrub-filesystem-integrity.html">#045 · fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</a></li>
+      <li><a href="post-038-smart-nvme-health-disk-degradation.html">#038 · SMART và NVMe health: phát hiện disk degradation trước khi hỏng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #066 · Storage</span><span class="hashtags">#LinuxDaily #Storage #SparseFiles</span></div></footer>
 </div></main></body></html>

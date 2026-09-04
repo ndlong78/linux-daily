@@ -1,6 +1,19 @@
 {
-  "count": 65,
+  "count": 66,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-09-04",
+      "href": "posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html",
+      "issue": 66,
+      "lede": "Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.",
+      "tags": [
+        "Sparse files"
+      ],
+      "title": "Sparse files: apparent size, allocated blocks và backup semantics"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",
