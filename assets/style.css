@@ -102,6 +102,14 @@ a.card:hover{transform:translateY(-2px); box-shadow:0 8px 22px rgba(20,32,29,.08
 a.card h2{display:block; font-family:"Be Vietnam Pro",sans-serif; font-weight:700; font-size:22px; line-height:1.22; margin:0 0 8px; letter-spacing:-.01em}
 a.card p{color:var(--muted); font-size:16px; line-height:1.6; margin:0}
 .empty{color:var(--muted)}
+
+/* Pagination: danh sách bài chia trang để index.html không tăng vô hạn theo series.
+   Dùng token màu chung nên tự đúng ở cả light lẫn dark, không cần khai lại. */
+.pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:30px 0 4px;padding-top:16px;border-top:1px solid var(--line);font-family:"JetBrains Mono",monospace;font-size:13px;letter-spacing:.04em}
+.pagination a{color:var(--accent-deep);text-decoration:none;padding:6px 0}
+.pagination a:hover{color:var(--accent);text-decoration:underline}
+.pagination .page-status{color:var(--muted);font-size:12px}
+.pagination .is-disabled{color:var(--line)}
 body.home footer{font-family:"JetBrains Mono",monospace; font-size:12px; color:var(--muted); letter-spacing:.04em}
 
 /* Global navigation: one compact information-architecture contract site-wide. */

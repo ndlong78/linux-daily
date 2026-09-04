@@ -3,12 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề</title>
+<title>Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề{% if page > 1 %} · trang {{ page }}/{{ total_pages }}{% endif %}</title>
 <meta name="description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
 <link rel="canonical" href="{{ canonical_url }}">
+{% if prev_href %}
+<link rel="prev" href="{{ prev_href }}">
+{% endif %}
+{% if next_href %}
+<link rel="next" href="{{ next_href }}">
+{% endif %}
 <link rel="alternate" type="application/rss+xml" title="{{ site_title }} RSS" href="{{ feed_url }}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề">
+<meta property="og:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề{% if page > 1 %} · trang {{ page }}/{{ total_pages }}{% endif %}">
 <meta property="og:description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
 <meta property="og:url" content="{{ canonical_url }}">
 <meta property="og:site_name" content="{{ site_title }}">
@@ -20,7 +26,7 @@
 <meta property="og:image:height" content="{{ social_image_height }}">
 <meta property="og:image:alt" content="{{ social_image_alt }}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề">
+<meta name="twitter:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề{% if page > 1 %} · trang {{ page }}/{{ total_pages }}{% endif %}">
 <meta name="twitter:description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
 <meta name="twitter:image" content="{{ social_image_url }}">
 <meta name="twitter:image:alt" content="{{ social_image_alt }}">
@@ -33,12 +39,12 @@
   <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
   <div class="wrap">
 {% set nav_prefix = "" %}
-{% set nav_current = "home" %}
+{% set nav_current = "home" if page == 1 else "" %}
 {% include "_global-nav.template.html" %}
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">{{ count }} BÀI</div>
+      <div class="count">{{ count }} BÀI{% if total_pages > 1 %} · TRANG {{ page }}/{{ total_pages }}{% endif %}</div>
     </header>
     <main id="main-content" class="list">
 {% if posts %}
@@ -57,6 +63,21 @@
 <p class="empty">Chưa có bài nào.</p>
 {% endif %}
     </main>
+{% if total_pages > 1 %}
+    <nav class="pagination" aria-label="Phân trang danh sách bài">
+{% if prev_href %}
+      <a class="page-prev" href="{{ prev_href }}" rel="prev">← Bài mới hơn</a>
+{% else %}
+      <span class="page-prev is-disabled" aria-hidden="true">← Bài mới hơn</span>
+{% endif %}
+      <span class="page-status">Trang {{ page }} / {{ total_pages }}</span>
+{% if next_href %}
+      <a class="page-next" href="{{ next_href }}" rel="next">Bài cũ hơn →</a>
+{% else %}
+      <span class="page-next is-disabled" aria-hidden="true">Bài cũ hơn →</span>
+{% endif %}
+    </nav>
+{% endif %}
     <footer>Linux Daily · #LinuxDaily #SysAdmin</footer>
   </div>
 </body>

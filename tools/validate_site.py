@@ -277,7 +277,15 @@ def run() -> Report:
         else:
             canonicals[canonical] = rel
 
-    for path in (ARCHIVE_PATH, LEARNING_DASHBOARD_PATH, LEARNING_PATHS_PATH):
+    # Trang phân trang cũng là page thật: có canonical riêng, nằm trong sitemap,
+    # và phải qua đúng phép kiểm global-nav như mọi trang khác.
+    paging_paths = sorted(glob.glob(os.path.join(ROOT, "trang-*.html")))
+    for path in paging_paths:
+        # `None` = trang này không phải điểm đến trong global nav, nên không được
+        # mang aria-current. Cùng quy ước với trang bài.
+        _check_global_navigation(path, "", None, report)
+
+    for path in (ARCHIVE_PATH, LEARNING_DASHBOARD_PATH, LEARNING_PATHS_PATH, *paging_paths):
         canonical = _secondary_page_canonical(path, site, report)
         if not canonical:
             continue
@@ -309,14 +317,36 @@ def run() -> Report:
     if not feed_urls <= post_urls:
         report.errors.append("feed.xml chứa URL không phải canonical post")
 
-    with open(INDEX_PATH, encoding="utf-8") as f:
-        index_text = f.read()
+    # Danh sách bài đã phân trang: bài nằm ở index.html hoặc một trang-N.html.
+    # Bất biến KHÔNG đổi — mọi bài vẫn phải được liên kết từ chuỗi trang danh
+    # sách; chỉ có chỗ chứa nó là nhiều file thay vì một. Gộp nội dung rồi mới
+    # kiểm, để một bài rơi khỏi mọi trang vẫn bị bắt.
+    listing_paths = [INDEX_PATH, *sorted(glob.glob(os.path.join(ROOT, "trang-*.html")))]
+    listing_text = ""
+    for path in listing_paths:
+        with open(path, encoding="utf-8") as f:
+            listing_text += f.read()
     for path in posts:
         href = "posts/" + os.path.basename(path)
-        if href not in index_text:
-            report.errors.append(f"orphan post: {href} không được homepage liên kết{REBUILD_HINT}")
+        if href not in listing_text:
+            report.errors.append(
+                f"orphan post: {href} không được trang danh sách nào liên kết{REBUILD_HINT}"
+            )
+
+    with open(INDEX_PATH, encoding="utf-8") as f:
+        index_text = f.read()
     if "archive.html" not in index_text:
         report.errors.append(f"archive.html không được homepage liên kết{REBUILD_HINT}")
+
+    # Chuỗi phân trang phải đi được từ đầu tới cuối: đứt một mắt là các bài phía
+    # sau thành mồ côi mà phép kiểm trên vẫn xanh (chúng vẫn nằm trong file).
+    for index, path in enumerate(listing_paths[:-1], start=1):
+        nxt = os.path.basename(listing_paths[index])
+        with open(path, encoding="utf-8") as f:
+            if nxt not in f.read():
+                report.errors.append(
+                    f"{os.path.basename(path)} không trỏ tới {nxt}{REBUILD_HINT}"
+                )
 
     with open(ROBOTS_PATH, encoding="utf-8") as f:
         robots = f.read()

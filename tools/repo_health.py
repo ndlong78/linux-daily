@@ -106,7 +106,11 @@ def collect() -> Health:
         )
         if os.path.isfile(os.path.join(ROOT, name))
     )
-    health.metrics["generated_pages"] = len(posts) + static_pages
+    # Trang phân trang của danh sách bài — số lượng thay đổi theo series nên đếm
+    # động, không liệt kê cứng như bốn trang trên.
+    paging_pages = len(glob.glob(os.path.join(ROOT, "trang-*.html")))
+    health.metrics["paging_pages"] = paging_pages
+    health.metrics["generated_pages"] = len(posts) + static_pages + paging_pages
     health.metrics["technical_sources"] = sum(_post_sources(path, health) for path in posts)
     health.metrics["social_code_images"] = len(glob.glob(SOCIAL_GLOB))
     health.metrics["social_preview_coverage"] = _social_preview_coverage(posts, health)

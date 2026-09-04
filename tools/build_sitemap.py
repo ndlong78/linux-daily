@@ -9,6 +9,7 @@ import os
 from urllib.parse import urljoin
 from xml.sax.saxutils import escape
 
+import build_index
 import postmeta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -41,8 +42,20 @@ def collect_urls(posts_dir: str = POSTS_DIR, site_config: str = SITE_CONFIG) -> 
         })
     posts.sort(key=lambda item: item["issue"], reverse=True)
     newest = posts[0]["date"] if posts else "2026-01-01"
+    # Trang danh sách đã phân trang. Bài vốn đã có mục riêng trong sitemap, nhưng
+    # khai cả chuỗi trang giúp crawler hiểu đây là một danh sách liên tục.
+    #
+    # Lấy tên trang từ chính build_index chứ KHÔNG glob trên đĩa: khi series ngắn
+    # lại, build.py dựng sitemap trước rồi mới xoá trang thừa, nên bản glob sẽ
+    # khai một trang vừa bị xoá và làm gate đỏ ở lần chạy sau.
+    total_pages = len(build_index.paginate(build_index.collect_posts(posts_dir)))
+    listing = [
+        {"loc": urljoin(site["url"], build_index.page_name(page)), "date": newest}
+        for page in range(2, total_pages + 1)
+    ]
     return [
         {"loc": site["url"], "date": newest},
+        *listing,
         {"loc": urljoin(site["url"], "archive.html"), "date": newest},
         {"loc": urljoin(site["url"], "learning-dashboard.html"), "date": newest},
         {"loc": urljoin(site["url"], "learning-paths.html"), "date": newest},

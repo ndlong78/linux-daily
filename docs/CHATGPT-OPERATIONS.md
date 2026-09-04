@@ -126,6 +126,14 @@ python3 tools/pr_preflight.py
 
 Chỉ sau khi preflight sạch mới commit/push source + deterministic artifacts.
 
+**Trang chủ đã phân trang.** `index.html` chỉ giữ 20 bài mới nhất; phần còn lại nằm
+ở `trang-2.html`, `trang-3.html`… Cứ 20 bài lại sinh thêm một trang, nên có ngày
+`prepare` tạo ra một file `trang-N.html` **hoàn toàn mới** — commit nó cùng các
+artifact khác, đừng bỏ sót vì tưởng là file lạc. Nếu số bài giảm, `prepare` sẽ
+**xoá** trang thừa; commit cả phần xoá. Không sửa tay các file này: chúng gác
+byte-exact và `validate_site.py` sẽ báo `orphan post` nếu một bài rơi khỏi chuỗi
+trang. Chi tiết ở `AGENTS.md`, mục "Trang chủ đã phân trang".
+
 ### 2. API-only fallback
 
 Dùng khi Scheduled Task không có local writable checkout nhưng GitHub connector vẫn có write access.
@@ -210,7 +218,7 @@ Capability phải được xác định trước khi tạo branch mới để tr
 2. chuẩn bị bài/source-backed review/STYLE metadata;
 3. chạy `publish.py prepare`, `cadence.py record`, `pr_preflight.py`;
 4. tạo/resume branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>` từ `main`;
-5. commit chính xác source + generated artifacts đã materialize;
+5. commit chính xác source + generated artifacts đã materialize (gồm cả `trang-N.html` mới sinh hoặc bị xoá khi số trang danh sách thay đổi);
 6. push và mở/resume PR vào `main`;
 7. kiểm duplicate/state/diff/review thread rồi chuyển PR sang Ready **trước khi CI success**;
 8. `CI` chạy read-only trên exact head SHA;

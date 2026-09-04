@@ -41,11 +41,14 @@ def collect() -> tuple[list[Finding], dict[str, int]]:
     failures: list[Finding] = []
     metrics: dict[str, int] = {}
 
-    homepage = ROOT / "index.html"
-    metrics["homepage_html"] = _size(homepage)
-    f = _over("homepage_html", homepage, BUDGETS["homepage_html"])
-    if f:
-        failures.append(f)
+    # Gác mọi trang danh sách chứ không riêng index.html: phân trang giữ từng
+    # trang nhỏ, nhưng nếu thẻ bài phình ra thì trang nào cũng có thể vượt.
+    listing_pages = [ROOT / "index.html", *sorted(ROOT.glob("trang-*.html"))]
+    metrics["homepage_html"] = max(_size(page) for page in listing_pages)
+    for page in listing_pages:
+        f = _over("homepage_html", page, BUDGETS["homepage_html"])
+        if f:
+            failures.append(f)
 
     posts = [Path(p) for p in glob.glob(str(ROOT / "posts" / "post-*.html"))]
     metrics["post_html_max"] = max((_size(p) for p in posts), default=0)

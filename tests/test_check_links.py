@@ -251,7 +251,7 @@ def test_baseline_hong_thi_fail_closed(monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, host_delay=0: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
 
     def no(_ref):
         raise cl.BaselineError("không dựng được cây baseline từ ref 'x'")
@@ -273,7 +273,7 @@ def test_link_da_co_san_khong_chan_pr(tmp_path, monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, host_delay=0: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
     monkeypatch.setattr(
         cl, "baseline_external_refs",
         lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
@@ -297,7 +297,7 @@ def test_link_moi_van_chan_pr(tmp_path, monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://moi.test/khong-co-that", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, host_delay=0: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
     monkeypatch.setattr(
         cl, "baseline_external_refs",
         lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
@@ -337,7 +337,7 @@ def test_link_moi_chua_nhan_2xx_phai_chan_pr(
         "warning",
         detail,
     )
-    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8, host_delay=0: ([], [result]))
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
     monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: set())
     monkeypatch.setattr(
         check_links,
@@ -362,7 +362,7 @@ def test_warning_cua_link_ke_thua_khong_chan_pr(monkeypatch, capsys):
         "network/timeout sau 3 lần",
     )
     pair = ("posts/post-001-a.html", "https://cu.test/nguon")
-    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8, host_delay=0: ([], [result]))
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
     monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: {pair})
     monkeypatch.setattr(check_links, "_external_refs_under", lambda root: {pair})
 
@@ -380,87 +380,8 @@ def test_khong_co_baseline_thi_moi_link_chet_deu_chan(monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, host_delay=0: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
 
     code = cl.main(["--external"])
     assert code == 1
     assert "link lỗi chắc chắn" in capsys.readouterr().err
-
-
-# --- giãn nhịp theo host ---------------------------------------------------
-
-
-def _ghi_lai_nhip(monkeypatch, urls):
-    """Chạy check_external với mạng giả, trả về nhật ký (thời điểm, host, url).
-
-    Dùng đồng hồ thật nhưng host_delay rất nhỏ: thứ cần khẳng định là THỨ TỰ và
-    tính chồng lấn, không phải con số giây.
-    """
-    import threading
-    import time as _time
-
-    _sys.path.insert(0, str(_ROOT / "tools"))
-    import check_links as cl
-
-    nhat_ky = []
-    khoa = threading.Lock()
-    moc = _time.monotonic()
-
-    def gia_lap(url, timeout=6.0, retries=2, host_delay=cl.HOST_DELAY_SECONDS):
-        with khoa:
-            nhat_ky.append((_time.monotonic() - moc, cl._host_of(url), url))
-        _time.sleep(0.02)  # thời gian "gọi mạng"
-        return cl.ExternalResult(url, 200, "ok", "HTTP 200")
-
-    monkeypatch.setattr(cl, "collect_external_urls", lambda: urls)
-    monkeypatch.setattr(cl, "check_external_url", gia_lap)
-    cl.check_external(max_workers=8, host_delay=0.05)
-    return sorted(nhat_ky), cl
-
-
-def test_cung_host_thi_tuan_tu_va_cach_nhau_dung_nhip(monkeypatch):
-    """Đây là điều PR này tồn tại để bảo đảm: không bắn song song vào một host."""
-    urls = [f"https://mot-host.test/{i}" for i in range(4)]
-    nhat_ky, _ = _ghi_lai_nhip(monkeypatch, urls)
-
-    assert len(nhat_ky) == 4
-    khoang_cach = [b[0] - a[0] for a, b in zip(nhat_ky, nhat_ky[1:], strict=False)]
-    assert all(kc >= 0.05 for kc in khoang_cach), f"có request chồng lên nhau: {khoang_cach}"
-
-
-def test_khac_host_thi_van_chay_song_song(monkeypatch):
-    """Giãn nhịp không được biến toàn bộ phép kiểm thành tuần tự."""
-    urls = [f"https://host-{i}.test/a" for i in range(6)]
-    nhat_ky, _ = _ghi_lai_nhip(monkeypatch, urls)
-
-    assert len(nhat_ky) == 6
-    # 6 host trên 8 worker: tất cả phải khởi động gần như cùng lúc, tổng thời
-    # gian không được cộng dồn theo số host.
-    assert nhat_ky[-1][0] < 0.05, f"các host bị tuần tự hoá: {[t for t, _, _ in nhat_ky]}"
-
-
-def test_khong_lam_mat_hay_nhan_doi_url(monkeypatch):
-    """Gom theo host là phép chia lại tập URL — không được đổi tập đó."""
-    urls = [
-        "https://a.test/1", "https://a.test/2",
-        "https://b.test/1",
-        "https://c.test/1", "https://c.test/2", "https://c.test/3",
-    ]
-    nhat_ky, _ = _ghi_lai_nhip(monkeypatch, urls)
-
-    assert sorted(u for _, _, u in nhat_ky) == sorted(urls)
-
-
-def test_retry_khong_nhanh_hon_nhip_cua_host(monkeypatch):
-    """429 nghĩa là host đang từ chối; retry sau 0.5s chỉ chuốc thêm 429."""
-    _sys.path.insert(0, str(_ROOT / "tools"))
-    import check_links as cl
-
-    da_ngu = []
-    monkeypatch.setattr(cl.time, "sleep", lambda giay: da_ngu.append(giay))
-    monkeypatch.setattr(cl, "_request_once", lambda url, timeout: 429)
-
-    ket_qua = cl.check_external_url("https://x.test/a", retries=2, host_delay=1.0)
-
-    assert ket_qua.outcome == "warning" and ket_qua.status == 429
-    assert da_ngu and all(giay >= 1.0 for giay in da_ngu), da_ngu

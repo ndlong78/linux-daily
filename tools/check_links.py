@@ -274,23 +274,7 @@ def classify_status(url: str, status: int) -> ExternalResult:
     return ExternalResult(url, status, "warning", f"HTTP {status}")
 
 
-# Giãn nhịp giữa hai request tới CÙNG một host. Không phải để lịch sự suông:
-# kho có 37 URL man.freebsd.org và 15 URL docs.ansible.com, và bắn chúng song
-# song làm chính ta lĩnh 429 — đo được trong 4/4 log CI, đúng 15 URL ansible mỗi
-# lần. Trước PR #141 đó chỉ là cảnh báo bị bỏ qua; sau #141, một URL nguồn MỚI
-# dính 429 sẽ chặn bài. Nghĩa là cổng đúng, còn thứ làm nó nổ lại do chính công
-# cụ tự gây ra.
-HOST_DELAY_SECONDS = 1.0
-
-
-def _host_of(url: str) -> str:
-    return urlsplit(url).netloc.lower()
-
-
-def check_external_url(
-    url: str, timeout: float = 6.0, retries: int = 2,
-    host_delay: float = HOST_DELAY_SECONDS,
-) -> ExternalResult:
+def check_external_url(url: str, timeout: float = 6.0, retries: int = 2) -> ExternalResult:
     last_error = ""
     for attempt in range(retries + 1):
         try:
@@ -303,52 +287,22 @@ def check_external_url(
             if attempt == retries:
                 break
         if attempt < retries:
-            # Retry cũng gõ vào đúng host vừa từ chối, nên không bao giờ nhanh
-            # hơn nhịp ta tự đặt cho host đó.
-            time.sleep(max(0.5 * (attempt + 1), host_delay))
+            time.sleep(0.5 * (attempt + 1))
     return ExternalResult(url, None, "warning", f"network/timeout sau {retries + 1} lần: {last_error}")
 
 
-def _check_host_serially(
-    urls: list[str], timeout: float, host_delay: float,
-) -> list[ExternalResult]:
-    """Mọi URL của một host, tuần tự, cách nhau `host_delay` giây."""
-    results: list[ExternalResult] = []
-    for index, url in enumerate(urls):
-        if index:
-            time.sleep(host_delay)
-        results.append(check_external_url(url, timeout=timeout, host_delay=host_delay))
-    return results
-
-
-def check_external(
-    max_workers: int = 8, host_delay: float = HOST_DELAY_SECONDS,
-) -> tuple[list[ExternalResult], list[ExternalResult]]:
-    """Song song GIỮA các host, tuần tự TRONG mỗi host.
-
-    `max_workers` vì thế là số host chạy đồng thời, không phải số URL — kho có
-    ~190 URL trải trên ~60 host, nên mức song song thực tế gần như không đổi.
-    Thời gian chạy bị chặn dưới bởi host đông URL nhất (37 × host_delay), không
-    phải bởi tổng số URL.
-    """
+def check_external(max_workers: int = 8) -> tuple[list[ExternalResult], list[ExternalResult]]:
     hard: list[ExternalResult] = []
     warnings: list[ExternalResult] = []
-
-    by_host: dict[str, list[str]] = {}
-    for url in collect_external_urls():
-        by_host.setdefault(_host_of(url), []).append(url)
-
+    urls = collect_external_urls()
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futures = [
-            pool.submit(_check_host_serially, host_urls, 6.0, host_delay)
-            for host_urls in by_host.values()
-        ]
+        futures = {pool.submit(check_external_url, url): url for url in urls}
         for future in as_completed(futures):
-            for result in future.result():
-                if result.outcome == "hard":
-                    hard.append(result)
-                elif result.outcome == "warning":
-                    warnings.append(result)
+            result = future.result()
+            if result.outcome == "hard":
+                hard.append(result)
+            elif result.outcome == "warning":
+                warnings.append(result)
     return sorted(hard, key=lambda item: item.url), sorted(warnings, key=lambda item: item.url)
 
 
@@ -357,15 +311,7 @@ def main(argv=None) -> int:
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--internal", action="store_true", help="Chỉ kiểm tra link nội bộ.")
     mode.add_argument("--external", action="store_true", help="Chỉ kiểm tra external HTTP(S) links.")
-    parser.add_argument(
-        "--workers", type=int, default=8,
-        help="Số HOST kiểm tra song song (trong mỗi host luôn tuần tự).",
-    )
-    parser.add_argument(
-        "--host-delay", type=float, default=HOST_DELAY_SECONDS, metavar="GIÂY",
-        help="Giãn nhịp giữa hai request tới cùng một host. Hạ xuống 0 sẽ làm "
-             "công cụ tự chuốc 429 như trước — chỉ dùng khi chạy thử cục bộ.",
-    )
+    parser.add_argument("--workers", type=int, default=8, help="Số external URL kiểm tra song song.")
     parser.add_argument(
         "--baseline",
         default=None,
@@ -390,9 +336,7 @@ def main(argv=None) -> int:
             print("✓ Internal links: tất cả target/fragment đều hợp lệ.")
 
     if run_external:
-        hard, warnings = check_external(
-            max_workers=max(1, args.workers), host_delay=max(0.0, args.host_delay)
-        )
+        hard, warnings = check_external(max_workers=max(1, args.workers))
 
         # Không có mốc: mọi link chết đều chặn. Đây là chế độ cho `push: main` và
         # lịch chạy định kỳ — ở đó không có bài nào để chặn, nên siết chặt là đúng.
