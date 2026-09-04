@@ -530,3 +530,30 @@ def test_ttl_0_van_hoi_moi_url_nhung_van_ghi_cache(tmp_path, monkeypatch):
     assert da_hoi == [url], "TTL 0 phải hỏi lại mọi URL, kể cả vừa cache xong"
     assert cache.hits == 0
     assert url in cache.entries, "TTL 0 vẫn phải GHI, nếu không thì không gieo được cache"
+
+
+def test_cache_key_doi_moi_run_nen_lan_luu_nao_cung_that():
+    """Không có cái này thì cache đóng băng ở lần lưu đầu tiên.
+
+    `actions/cache` BỎ QUA bước lưu khi key primary đã tồn tại. Bản đầu dùng key
+    cố định theo nội dung bài, nên sau lần lưu đầu mọi verdict 2xx mới thu được
+    đều bị vứt. Log PR #146 cho thấy đúng vậy: 15 URL `docs.ansible.com` vừa trả
+    2xx, nhưng `Cache hit ... not saving cache`, nên lần sau vẫn phải hỏi lại
+    đúng 15 URL ấy — vĩnh viễn, vì key chỉ đổi khi có bài mới.
+
+    `github.run_id` trong key làm mỗi run một key riêng, nên lần lưu nào cũng
+    thật. Đọc ci.yml dạng text chứ không parse YAML: PyYAML không nằm trong
+    dependency của kho (xem pyproject.toml), test này mà import yaml thì xanh ở
+    máy có sẵn nhưng đỏ trên CI.
+    """
+    ci = (_ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    key_line = next(
+        line for line in ci.splitlines() if line.strip().startswith("key: link-cache-")
+    )
+
+    assert "github.run_id" in key_line, (
+        "key cache phải đổi mỗi run, nếu không actions/cache sẽ bỏ qua bước lưu "
+        "và verdict mới không bao giờ được ghi"
+    )
+    # Và vẫn phải có đường lùi rộng nhất, nếu không nhánh mới sẽ khởi động lạnh.
+    assert "\n            link-cache-\n" in ci, "thiếu restore-keys bao trùm `link-cache-`"

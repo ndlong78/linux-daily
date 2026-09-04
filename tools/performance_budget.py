@@ -11,12 +11,39 @@ ROOT = Path(__file__).resolve().parents[1]
 
 BUDGETS = {
     "homepage_html": 256 * 1024,
+    # Ba artifact khám phá dưới đây tăng TUYẾN TÍNH theo số bài và trước PR này
+    # không có cổng nào canh. Hồi quy trên 7 điểm lịch sử (#34 → #66):
+    #
+    #     archive.html          479 B/bài   → 474 KiB ở 1000 bài, chạm 256 KiB ở #533
+    #     search-index.json     575 B/bài   → 565 KiB ở 1000 bài, chạm 256 KiB ở #449
+    #     learning-paths.html  1037 B/bài   → 1006 KiB ở 1000 bài, chạm 256 KiB ở #259
+    #
+    # `learning-paths.html` mới là chỗ đau, không phải archive: nó tăng gấp đôi
+    # archive và chạm trần chỉ sau ~193 bài nữa. Đặt cùng trần 256 KiB với
+    # homepage để khi cái nào chạm thì xử lý giống nhau — phân trang hoặc tách
+    # file — chứ không phải nới trần.
+    "archive_html": 256 * 1024,
+    "search_index_json": 256 * 1024,
+    "learning_paths_html": 256 * 1024,
     "post_html_each": 512 * 1024,
     "css_each": 128 * 1024,
     "font_each": 1280 * 1024,
     "fonts_total": 2560 * 1024,
     "social_image_each": 2 * 1024 * 1024,
     "social_images_total": 32 * 1024 * 1024,
+}
+
+
+# Metric nào soi được vào trần nào. Không phải metric nào cũng có trần
+# (css_total chỉ để tham khảo, trần đặt theo từng file), nên tra bằng .get().
+METRIC_LIMIT = {
+    "homepage_html": "homepage_html",
+    "archive_html": "archive_html",
+    "search_index_json": "search_index_json",
+    "learning_paths_html": "learning_paths_html",
+    "post_html_max": "post_html_each",
+    "fonts_total": "fonts_total",
+    "social_images_total": "social_images_total",
 }
 
 
@@ -47,6 +74,20 @@ def collect() -> tuple[list[Finding], dict[str, int]]:
     metrics["homepage_html"] = max(_size(page) for page in listing_pages)
     for page in listing_pages:
         f = _over("homepage_html", page, BUDGETS["homepage_html"])
+        if f:
+            failures.append(f)
+
+    # Artifact khám phá: mỗi cái một file duy nhất, phình theo số bài.
+    for label, name in (
+        ("archive_html", "archive.html"),
+        ("search_index_json", "search-index.json"),
+        ("learning_paths_html", "learning-paths.html"),
+    ):
+        path = ROOT / name
+        if not path.exists():
+            continue
+        metrics[label] = _size(path)
+        f = _over(label, path, BUDGETS[label])
         if f:
             failures.append(f)
 
@@ -110,7 +151,12 @@ def main(argv=None) -> int:
     failures, metrics = collect()
     print("Linux Daily — Performance Budget")
     for key, value in sorted(metrics.items()):
-        print(f"{key:22} {_fmt(value)}")
+        # In cả % đã dùng: một cổng chỉ báo lúc đã vượt thì luôn báo quá muộn.
+        # Artifact khám phá tăng tuyến tính theo số bài, nên % chính là dư địa
+        # còn lại tính bằng bài viết.
+        limit = BUDGETS.get(METRIC_LIMIT.get(key, ""))
+        pct = f"{value / limit * 100:5.1f}% ngân sách" if limit else ""
+        print(f"{key:22} {_fmt(value):>10}  {pct}".rstrip())
     if failures:
         print("\nFAIL: performance budget exceeded")
         for f in failures:
