@@ -322,7 +322,7 @@ class LinkCache:
                 if isinstance(raw, dict):
                     self.entries = {
                         url: float(ts) for url, ts in raw.get("ok", {}).items()
-                        if isinstance(ts, (int, float))
+                        if isinstance(ts, int | float)
                     }
             except (OSError, ValueError):
                 # Cache hỏng không được làm đỏ CI: mất cache chỉ tốn thời gian,
