@@ -191,6 +191,29 @@ Actions bị khoá theo ref — PR chỉ đọc được cache từ nhánh mặc
 - `.link-cache.json` do `actions/cache` quản lý, **không commit vào git**. Thấy nó
   trong `git status` là sai — nó đã nằm trong `.gitignore`.
 
+#### Ngân sách kích thước artifact khám phá
+
+`performance_budget.py` (nằm trong `publish.py check`, tức cổng CI) canh trần
+**256 KiB** cho `archive.html`, `search-index.json` và `learning-paths.html`.
+Ba file này tăng tuyến tính theo số bài — hồi quy trên lịch sử git #34 → #66:
+
+| file | B/bài | nay (#66) | chạm 256 KiB |
+|---|---:|---:|---:|
+| `archive.html` | 479 | 37,4 KiB | bài #533 |
+| `search-index.json` | 575 | 41,0 KiB | bài #449 |
+| `learning-paths.html` | 1037 | 59,8 KiB | **bài #259** |
+
+Điều agent cần biết:
+
+- Chạy `python3 tools/performance_budget.py` sẽ in **% ngân sách đã dùng** cho
+  mỗi metric. Vì ba file trên tăng tuyến tính, % chính là dư địa còn lại quy ra
+  số bài — đọc nó trước khi lo, đừng đợi CI đỏ.
+- Khi một file chạm trần, cách xử lý là **phân trang hoặc tách file** như đã làm
+  với `index.html` ở PR #144 — **không nới trần**. Nới trần là bỏ cổng chứ không
+  phải sửa vấn đề.
+- `learning-paths.html` là file sẽ chạm trước, và còn cách khá xa (~193 bài).
+  Chưa cần làm gì, nhưng đừng thêm nội dung theo bài vào nó mà không đo lại.
+
 #### Trang chủ đã phân trang — `trang-N.html`
 
 Danh sách bài **không còn nằm hết trong `index.html`**. `index.html` là trang 1 với
