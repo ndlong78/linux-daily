@@ -60,13 +60,41 @@ def test_orphan_post_error_tells_operator_how_to_fix(monkeypatch, tmp_path):
 
 
 def test_rebuild_hint_is_attached_to_every_stale_artifact_error():
-    """Cả bốn lỗi cùng nguyên nhân đều phải mang cùng một hướng dẫn."""
+    """Mọi lỗi cùng nguyên nhân "artifact chưa dựng lại" đều phải mang hướng dẫn.
+
+    Đọc theo AST chứ không theo dòng: bản cũ quét từng dòng nguồn nên chỉ cần
+    xuống dòng một lời gọi `append` là test vỡ dù hành vi không đổi — brittle
+    theo cách che mất tín hiệu thật.
+    """
+    import ast
+
     source = (ROOT / "tools" / "validate_site.py").read_text(encoding="utf-8")
+    tree = ast.parse(source)
+
+    def literals(node) -> str:
+        return " ".join(
+            sub.value for sub in ast.walk(node)
+            if isinstance(sub, ast.Constant) and isinstance(sub.value, str)
+        )
+
+    def names(node) -> set[str]:
+        return {sub.id for sub in ast.walk(node) if isinstance(sub, ast.Name)}
+
+    appends = [
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Attribute)
+        and node.func.attr == "append"
+    ]
+
     for message in (
         "sitemap thiếu canonical",
         "sitemap có URL không phải page canonical",
         "orphan post",
         "archive.html không được homepage liên kết",
+        "không trỏ tới",
     ):
-        line = next(ln for ln in source.splitlines() if message in ln and "append" in ln)
-        assert "REBUILD_HINT" in line, f"thiếu hướng dẫn khắc phục cho: {message}"
+        khop = [call for call in appends if message in literals(call)]
+        assert khop, f"không tìm thấy lời gọi append nào cho: {message}"
+        for call in khop:
+            assert "REBUILD_HINT" in names(call), f"thiếu hướng dẫn khắc phục cho: {message}"

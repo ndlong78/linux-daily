@@ -23,6 +23,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import postmeta  # noqa: E402
 import socialmeta  # noqa: E402
 
+# Trang chủ liệt kê bài mới nhất; phần còn lại nằm ở trang-2.html, trang-3.html…
+#
+# Vì sao phải phân trang: index.html trước đây liệt kê MỌI bài, và đo trên lịch sử
+# git cho thấy nó tăng tuyến tính 0.570 KiB mỗi bài (5 mốc, từ #044 tới #065).
+# Ngân sách `homepage_html` là 256 KiB và `performance_budget.py` nằm trong
+# `publish.py check`, nên ở khoảng bài #435 nó sẽ CHẶN CỨNG việc ra bài hằng ngày.
+# 20 bài/trang giữ mỗi trang ở ~19 KiB bất kể series dài bao nhiêu.
+POSTS_PER_PAGE = 20
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 POSTS_DIR = os.path.join(ROOT, "posts")
 INDEX_PATH = os.path.join(ROOT, "index.html")
@@ -73,37 +82,75 @@ def _env() -> Environment:
     )
 
 
-def render_index(posts_dir=POSTS_DIR, site_config=SITE_CONFIG):
-    """Dựng nội dung HTML của trang chủ (không ghi ra đĩa)."""
+def page_name(page: int) -> str:
+    """Trang 1 là index.html — không đổi URL trang chủ đã publish."""
+    return "index.html" if page <= 1 else f"trang-{page}.html"
+
+
+def paginate(posts: list, per_page: int = POSTS_PER_PAGE) -> list[list]:
+    """Chia bài thành các trang. Kho rỗng vẫn cho đúng một trang (index.html)."""
+    if not posts:
+        return [[]]
+    return [posts[i:i + per_page] for i in range(0, len(posts), per_page)]
+
+
+def render_pages(posts_dir=POSTS_DIR, site_config=SITE_CONFIG) -> tuple[dict[str, str], int]:
+    """{tên file: nội dung} cho mọi trang danh sách. Không ghi ra đĩa."""
     posts = collect_posts(posts_dir)
     site = _load_site(site_config)
-    ctx = [{
-        "href": html.escape(p["href"]),
-        "num": html.escape(p["num"]),
-        "axis": html.escape(p["axis"]),
-        "date": html.escape(p["date"]),
-        "title": html.escape(p["title"]),
-        "lede": html.escape(p["lede"]),
-    } for p in posts]
+    pages = paginate(posts)
+    total_pages = len(pages)
 
     social = None
     if posts:
         latest = posts[0]
         social = socialmeta.image_info(latest["n"], latest["title"], site["url"])
 
-    out = _env().get_template(INDEX_TEMPLATE).render(
-        posts=ctx,
-        count=len(posts),
-        canonical_url=html.escape(site["url"], quote=True),
-        feed_url=html.escape(urljoin(site["url"], site["feed_path"]), quote=True),
-        site_title=html.escape(site["title"], quote=True),
-        social_image_url=html.escape(str(social["url"]), quote=True) if social else "",
-        social_image_width=social["width"] if social else 0,
-        social_image_height=social["height"] if social else 0,
-        social_image_alt=html.escape(str(social["alt"]), quote=True) if social else "",
-        social_image_mime=html.escape(str(social["mime"]), quote=True) if social else "",
-    )
+    template = _env().get_template(INDEX_TEMPLATE)
+    out: dict[str, str] = {}
+    for index, page_posts in enumerate(pages, start=1):
+        name = page_name(index)
+        canonical = site["url"] if index == 1 else urljoin(site["url"], name)
+        out[name] = template.render(
+            posts=[{
+                "href": html.escape(p["href"]),
+                "num": html.escape(p["num"]),
+                "axis": html.escape(p["axis"]),
+                "date": html.escape(p["date"]),
+                "title": html.escape(p["title"]),
+                "lede": html.escape(p["lede"]),
+            } for p in page_posts],
+            count=len(posts),
+            page=index,
+            total_pages=total_pages,
+            prev_href=html.escape(page_name(index - 1), quote=True) if index > 1 else "",
+            next_href=html.escape(page_name(index + 1), quote=True) if index < total_pages else "",
+            canonical_url=html.escape(canonical, quote=True),
+            feed_url=html.escape(urljoin(site["url"], site["feed_path"]), quote=True),
+            site_title=html.escape(site["title"], quote=True),
+            social_image_url=html.escape(str(social["url"]), quote=True) if social else "",
+            social_image_width=social["width"] if social else 0,
+            social_image_height=social["height"] if social else 0,
+            social_image_alt=html.escape(str(social["alt"]), quote=True) if social else "",
+            social_image_mime=html.escape(str(social["mime"]), quote=True) if social else "",
+        )
     return out, len(posts)
+
+
+def stale_pages(expected: dict[str, str], root: str = ROOT) -> list[str]:
+    """trang-N.html còn sót khi series ngắn lại — không dọn thì chúng thành trang mồ côi."""
+    keep = set(expected)
+    return sorted(
+        os.path.basename(path)
+        for path in glob.glob(os.path.join(root, "trang-*.html"))
+        if os.path.basename(path) not in keep
+    )
+
+
+def render_index(posts_dir=POSTS_DIR, site_config=SITE_CONFIG):
+    """Chỉ trang 1. Giữ lại vì test và công cụ khác đang gọi."""
+    pages, count = render_pages(posts_dir, site_config)
+    return pages[page_name(1)], count
 
 
 def main():
@@ -115,26 +162,37 @@ def main():
     )
     args = ap.parse_args()
 
-    out, n = render_index()
+    pages, n = render_pages()
+    stale = stale_pages(pages)
 
     if args.check:
-        current = ""
-        if os.path.exists(INDEX_PATH):
-            with open(INDEX_PATH, encoding="utf-8") as f:
-                current = f.read()
-        if current != out:
+        lech = []
+        for name, content in sorted(pages.items()):
+            path = os.path.join(ROOT, name)
+            current = ""
+            if os.path.exists(path):
+                with open(path, encoding="utf-8") as f:
+                    current = f.read()
+            if current != content:
+                lech.append(name)
+        lech.extend(f"{name} (thừa, cần xoá)" for name in stale)
+        if lech:
             print(
-                "LỖI: index.html chưa đồng bộ với posts/. "
-                "Chạy `python3 tools/build_index.py` rồi commit lại.",
+                "LỖI: trang danh sách chưa đồng bộ với posts/: " + ", ".join(lech)
+                + ". Chạy `python3 tools/build_index.py` rồi commit lại.",
                 file=sys.stderr,
             )
             return 1
-        print(f"OK: index.html đã đồng bộ ({n} bài).")
+        print(f"OK: {len(pages)} trang danh sách đã đồng bộ ({n} bài).")
         return 0
 
-    with open(INDEX_PATH, "w", encoding="utf-8") as f:
-        f.write(out)
-    print(f"Đã dựng index.html với {n} bài.")
+    for name, content in pages.items():
+        with open(os.path.join(ROOT, name), "w", encoding="utf-8") as f:
+            f.write(content)
+    for name in stale:
+        os.remove(os.path.join(ROOT, name))
+    thua = f", xoá {len(stale)} trang thừa" if stale else ""
+    print(f"Đã dựng {len(pages)} trang danh sách với {n} bài{thua}.")
     return 0
 
 

@@ -64,13 +64,29 @@ def main(argv=None) -> int:
     )
     args = ap.parse_args(argv)
 
-    index_out, post_count = build_index.render_index()
+    # MỌI trang danh sách, không chỉ index.html. Gọi render_index() ở đây sẽ
+    # bỏ quên trang-N.html, và vì materialize chạy `publish.py prepare` nên
+    # agent hằng ngày sẽ commit trang phân trang cũ mà không hay biết.
+    index_pages, post_count = build_index.render_pages()
+    stale_listing = build_index.stale_pages(index_pages)
     feed_out, feed_count = build_feed.render_feed()
     sitemap_out, sitemap_count = build_sitemap.render_sitemap()
     robots_out = build_sitemap.render_robots()
 
     if args.check:
-        ok_index = _check_file(build_index.INDEX_PATH, index_out, "index.html")
+        ok_index = all(
+            _check_file(os.path.join(build_index.ROOT, name), content, name)
+            for name, content in sorted(index_pages.items())
+        )
+        if stale_listing:
+            # Trang phân trang thừa lại sau khi series ngắn đi. Chúng vẫn mở được
+            # và vẫn nằm trong sitemap, nên im lặng bỏ qua là để lại trang mồ côi.
+            print(
+                "LỖI: trang danh sách thừa: " + ", ".join(stale_listing)
+                + ". Chạy `python3 tools/build.py` rồi commit lại.",
+                file=sys.stderr,
+            )
+            ok_index = False
         ok_feed = _check_file(build_feed.FEED_PATH, feed_out, "feed.xml")
         ok_sitemap = _check_file(build_sitemap.SITEMAP_PATH, sitemap_out, "sitemap.xml")
         ok_robots = _check_file(build_sitemap.ROBOTS_PATH, robots_out, "robots.txt")
@@ -92,13 +108,16 @@ def main(argv=None) -> int:
             return 1
         if related_content.run(check=True) != 0:
             return 1
-        print(f"OK: index.html đã đồng bộ ({post_count} bài).")
+        print(f"OK: {len(index_pages)} trang danh sách đã đồng bộ ({post_count} bài).")
         print(f"OK: feed.xml đã đồng bộ ({feed_count} bài mới nhất).")
         print(f"OK: sitemap.xml đã đồng bộ ({sitemap_count} URL).")
         print("OK: robots.txt đã đồng bộ.")
     else:
-        with open(build_index.INDEX_PATH, "w", encoding="utf-8") as f:
-            f.write(index_out)
+        for name, content in index_pages.items():
+            with open(os.path.join(build_index.ROOT, name), "w", encoding="utf-8") as f:
+                f.write(content)
+        for name in stale_listing:
+            os.remove(os.path.join(build_index.ROOT, name))
         with open(build_feed.FEED_PATH, "w", encoding="utf-8") as f:
             f.write(feed_out)
         with open(build_sitemap.SITEMAP_PATH, "w", encoding="utf-8") as f:

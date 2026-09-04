@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề · trang 4/4</title>
+<meta name="description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
+<link rel="canonical" href="https://linux.no.id.vn/trang-4.html">
+<link rel="prev" href="trang-3.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề · trang 4/4">
+<meta property="og:description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
+<meta property="og:url" content="https://linux.no.id.vn/trang-4.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Linux Daily — Học quản trị Linux/Unix mỗi bài một chủ đề · trang 4/4">
+<meta name="twitter:description" content="Series bài học Linux/Unix system administration: Ubuntu, Xubuntu, Debian, Fedora và FreeBSD. Mỗi bài một chủ đề, có sơ đồ và lệnh copy-paste.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<link rel="preload" href="assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/fonts.css">
+<link rel="stylesheet" href="assets/style.css">
+</head>
+<body class="home">
+  <a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+  <div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="learning-paths.html">Lộ trình học</a>
+    <a href="learning-dashboard.html">Tổng quan</a>
+    <a href="archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+    <header class="site">
+      <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
+      <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
+      <div class="count">65 BÀI · TRANG 4/4</div>
+    </header>
+    <main id="main-content" class="list">
+      <a class="card" href="posts/post-005-doc-log-journald-syslog.html">
+        <div class="card-top">
+          <span class="c-issue">#005</span>
+          <span class="c-axis">Monitoring · Hiệu năng</span>
+          <span class="c-date">05·07·2026</span>
+        </div>
+        <h2>Đọc log hệ thống: một journal nhị phân, một đống file text</h2>
+        <p>Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi &quot;log ở đâu, đọc bằng gì&quot; lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.</p>
+      </a>
+      <a class="card" href="posts/post-004-restic-backup.html">
+        <div class="card-top">
+          <span class="c-issue">#004</span>
+          <span class="c-axis">Công cụ mới · Backup</span>
+          <span class="c-date">04·07·2026</span>
+        </div>
+        <h2>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h2>
+        <p>Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p>
+      </a>
+      <a class="card" href="posts/post-003-zfs-snapshots.html">
+        <div class="card-top">
+          <span class="c-issue">#003</span>
+          <span class="c-axis">Storage · Hệ thống tệp</span>
+          <span class="c-date">03·07·2026</span>
+        </div>
+        <h2>Ảnh chụp ZFS: lệnh giống nhau, cài đặt mới là chuyện</h2>
+        <p>Lần này thì ngược lại với mọi bài trước: một khi đã có ZFS, lệnh chụp và khôi phục giống hệt nhau trên Linux lẫn FreeBSD. Phần khác nhau — và khó — nằm ở chỗ làm sao có ZFS trên mỗi hệ điều hành. FreeBSD thì khỏi lo, nó nằm sẵn trong base.</p>
+      </a>
+      <a class="card" href="posts/post-002-ssh-hardening.html">
+        <div class="card-top">
+          <span class="c-issue">#002</span>
+          <span class="c-axis">Bảo mật · Phân quyền</span>
+          <span class="c-date">02·07·2026</span>
+        </div>
+        <h2>Gia cố SSH: khóa cửa trước khi có người gõ</h2>
+        <p>Cổng 22 mở ra mạng là bị dò mật khẩu ngay trong vài phút. Bản thân sshd_config gần như giống nhau ở mọi hệ điều hành — nhưng cách nạp lại dịch vụ, tên service và tường lửa thì mỗi nơi một khác, và FreeBSD tách hẳn.</p>
+      </a>
+      <a class="card" href="posts/post-001-static-ip.html">
+        <div class="card-top">
+          <span class="c-issue">#001</span>
+          <span class="c-axis">Networking · Kết nối</span>
+          <span class="c-date">01·07·2026</span>
+        </div>
+        <h2>Một IP tĩnh, bốn cách khai báo</h2>
+        <p>Cùng một mục tiêu — gán địa chỉ cố định và một cặp DNS dự phòng cho máy — nhưng Ubuntu, Debian, Fedora và FreeBSD đặt cấu hình ở bốn nơi hoàn toàn khác nhau. Đây là bản đồ để bạn không lạc.</p>
+      </a>
+    </main>
+    <nav class="pagination" aria-label="Phân trang danh sách bài">
+      <a class="page-prev" href="trang-3.html" rel="prev">← Bài mới hơn</a>
+      <span class="page-status">Trang 4 / 4</span>
+      <span class="page-next is-disabled" aria-hidden="true">Bài cũ hơn →</span>
+    </nav>
+    <footer>Linux Daily · #LinuxDaily #SysAdmin</footer>
+  </div>
+</body>
+</html>

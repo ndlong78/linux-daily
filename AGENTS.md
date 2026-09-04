@@ -173,9 +173,38 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 - nếu CI báo regression do source (STYLE, source-backed, cadence, state), sửa đúng source trên cùng branch rồi để CI chạy lại;
 - không vô hiệu hóa/nới test, validator, workflow safety hoặc STYLE gate để ép xanh.
 
+#### Trang chủ đã phân trang — `trang-N.html`
+
+Danh sách bài **không còn nằm hết trong `index.html`**. `index.html` là trang 1 với
+20 bài mới nhất; phần còn lại ở `trang-2.html`, `trang-3.html`… do
+`tools/build_index.py` sinh ra.
+
+Vì sao: `index.html` cũ liệt kê mọi bài và tăng **0.570 KiB/bài** (đo trên 5 mốc git
+từ #044 tới #065). Ngân sách `homepage_html` là 256 KiB và `performance_budget.py`
+nằm trong `publish.py check`, nên quanh **bài #435** nó sẽ chặn cứng việc ra bài.
+
+Điều agent cần biết:
+
+- **Không sửa tay `index.html` hay `trang-N.html`.** Chúng là artifact dẫn xuất,
+  gác byte-exact. Sinh lại bằng `python3 tools/publish.py prepare`, hoặc dispatch
+  `Materialize Artifacts` nếu không có Python runtime.
+- **Số trang đổi theo số bài.** Cứ 20 bài là thêm một trang, nên có ngày commit
+  bài sẽ kèm một file `trang-N.html` HOÀN TOÀN MỚI. Đó là bình thường, không phải
+  file lạc.
+- Trang 1 vẫn là `index.html` và canonical vẫn là gốc site — URL trang chủ không đổi.
+- Nếu số bài giảm, `build.py` tự **xoá** `trang-N.html` thừa; commit cả phần xoá đó.
+
+Ba gate canh phần này, không được nới:
+
+| Gate | Bắt gì |
+|---|---|
+| `validate_site.py` | mọi bài phải được **một** trang danh sách liên kết; chuỗi trang không được đứt mắt |
+| `build.py --check` | trang phân trang stale hoặc thừa |
+| `performance_budget.py` | **từng** trang danh sách phải dưới 256 KiB |
+
 #### Materialize artifact khi không có Python runtime
 
-Quality gate so khớp artifact **byte-exact** (`tools/build.py` so `current != expected`), nên nội dung artifact không thể suy đoán mà phải do generator sinh ra. Một bài mới luôn kéo theo cả cụm artifact render lại — `index.html`, `archive.html`, `feed.xml`, `sitemap.xml`, `search-index.json`, `learning-paths.html`, `learning-dashboard.html`, các report trong `docs/`, và related-navigation của những bài lân cận.
+Quality gate so khớp artifact **byte-exact** (`tools/build.py` so `current != expected`), nên nội dung artifact không thể suy đoán mà phải do generator sinh ra. Một bài mới luôn kéo theo cả cụm artifact render lại — `index.html` **và các trang phân trang `trang-N.html`**, `archive.html`, `feed.xml`, `sitemap.xml`, `search-index.json`, `learning-paths.html`, `learning-dashboard.html`, các report trong `docs/`, và related-navigation của những bài lân cận.
 
 Agent API-only ghi được source core và metadata JSON nhưng **không chạy được `tools/publish.py prepare`**. Đường gỡ là dispatch workflow `Materialize Artifacts` bằng chính GitHub API mà agent đang dùng:
 
