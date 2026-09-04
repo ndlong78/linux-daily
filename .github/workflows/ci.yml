@@ -48,12 +48,24 @@ jobs:
       # nếu chỉ PR mới ghi cache thì cache nằm trong phạm vi riêng của PR đó,
       # PR hôm sau không với tới, tỉ lệ trúng thực tế ~0. Main ghi cache thì
       # mọi PR sau đều khôi phục được từ nhánh mặc định.
+      #
+      # Key có `github.run_id` nên KHÔNG BAO GIỜ trùng key đã có, và đó là chủ
+      # ý: `actions/cache` bỏ qua bước lưu khi key primary đã tồn tại. Với key
+      # cố định theo nội dung bài, mọi verdict 2xx thu được sau lần lưu đầu đều
+      # bị vứt. Log PR #146 cho thấy đúng chuyện đó — 15 URL docs.ansible.com
+      # vừa trả 2xx nhưng `not saving cache`, nên lần chạy sau vẫn phải hỏi lại
+      # đúng 15 URL ấy. Key duy nhất mỗi run thì lần lưu nào cũng thật.
+      #
+      # restore-keys đi từ hẹp tới rộng: ưu tiên cache của cùng tập bài, không
+      # có thì lấy cache gần nhất bất kỳ.
       - name: Cache link check
         uses: actions/cache@v4
         with:
           path: .link-cache.json
-          key: link-cache-${{ hashFiles('posts/post-*.html') }}
-          restore-keys: link-cache-
+          key: link-cache-${{ hashFiles('posts/post-*.html') }}-${{ github.run_id }}
+          restore-keys: |
+            link-cache-${{ hashFiles('posts/post-*.html') }}-
+            link-cache-
 
       - name: PR commit/path hygiene
         if: github.event_name == 'pull_request'
