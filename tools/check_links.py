@@ -291,18 +291,91 @@ def check_external_url(url: str, timeout: float = 6.0, retries: int = 2) -> Exte
     return ExternalResult(url, None, "warning", f"network/timeout sau {retries + 1} lần: {last_error}")
 
 
-def check_external(max_workers: int = 8) -> tuple[list[ExternalResult], list[ExternalResult]]:
+# Cache kết quả kiểm link. Ở 66 bài kho đã có ~195 URL và mỗi run hỏi lại toàn
+# bộ; ở 1000 bài là ~3000 URL, tức ~9 phút mỗi run và gần như chắc chắn dính rate
+# limit. Cache đổi bài toán từ "hỏi mọi URL mỗi lần" thành "chỉ hỏi URL chưa biết".
+#
+# Ba ràng buộc để nó KHÔNG làm yếu cổng:
+#
+#   1. Chỉ cache verdict `ok`. Cache một lần hỏng là biến sự cố nhất thời thành
+#      vĩnh viễn, và che mất lúc nó đã được sửa.
+#   2. Có hạn dùng. Không TTL thì một link chết sau khi vào cache sẽ không bao
+#      giờ bị phát hiện lại — đó là gỡ cổng chứ không phải tối ưu.
+#   3. URL MỚI luôn bỏ qua cache — xem `bypass` trong check_external(). Thiếu
+#      điều này thì một link chết chép từ bài cũ sang bài mới sẽ được cache che,
+#      tức mở lại đúng lỗ mà PR #134 đã bịt.
+CACHE_TTL_DAYS = 7
+
+
+class LinkCache:
+    """url → thời điểm nhận 2xx gần nhất. Đọc/ghi JSON, hỏng thì coi như rỗng."""
+
+    def __init__(self, path: str | None, ttl_days: int = CACHE_TTL_DAYS):
+        self.path = path
+        self.ttl = ttl_days * 86400
+        self.entries: dict[str, float] = {}
+        self.hits = 0
+        if path and os.path.exists(path):
+            try:
+                with open(path, encoding="utf-8") as f:
+                    raw = json.load(f)
+                if isinstance(raw, dict):
+                    self.entries = {
+                        url: float(ts) for url, ts in raw.get("ok", {}).items()
+                        if isinstance(ts, (int, float))
+                    }
+            except (OSError, ValueError):
+                # Cache hỏng không được làm đỏ CI: mất cache chỉ tốn thời gian,
+                # còn dừng vì nó là biến một tối ưu thành điểm hỏng đơn lẻ.
+                self.entries = {}
+
+    def fresh(self, url: str, now: float) -> bool:
+        ts = self.entries.get(url)
+        return ts is not None and (now - ts) < self.ttl
+
+    def remember(self, url: str, now: float) -> None:
+        self.entries[url] = now
+
+    def save(self) -> None:
+        if not self.path:
+            return
+        try:
+            with open(self.path, "w", encoding="utf-8") as f:
+                json.dump({"ok": self.entries}, f, indent=0, sort_keys=True)
+        except OSError:
+            pass
+
+
+def check_external(
+    max_workers: int = 8,
+    cache: LinkCache | None = None,
+    bypass: frozenset[str] = frozenset(),
+) -> tuple[list[ExternalResult], list[ExternalResult]]:
+    """`bypass`: URL phải hỏi lại thật, bất kể cache — dành cho URL mới trên PR."""
     hard: list[ExternalResult] = []
     warnings: list[ExternalResult] = []
     urls = collect_external_urls()
+    now = time.time()
+
+    can_hoi = [
+        url for url in urls
+        if url in bypass or cache is None or not cache.fresh(url, now)
+    ]
+    if cache is not None:
+        cache.hits = len(urls) - len(can_hoi)
+
     with ThreadPoolExecutor(max_workers=max_workers) as pool:
-        futures = {pool.submit(check_external_url, url): url for url in urls}
+        futures = {pool.submit(check_external_url, url): url for url in can_hoi}
         for future in as_completed(futures):
             result = future.result()
             if result.outcome == "hard":
                 hard.append(result)
             elif result.outcome == "warning":
                 warnings.append(result)
+            elif cache is not None:
+                cache.remember(result.url, now)
+    if cache is not None:
+        cache.save()
     return sorted(hard, key=lambda item: item.url), sorted(warnings, key=lambda item: item.url)
 
 
@@ -318,6 +391,15 @@ def main(argv=None) -> int:
         metavar="REF",
         help="Git ref làm mốc (thường là base SHA của PR). Có mốc thì chỉ link MỚI "
              "mới chặn CI; link đã có sẵn bị 404 được báo là nợ bảo trì.",
+    )
+    parser.add_argument(
+        "--cache", default=None, metavar="FILE",
+        help="File cache kết quả 2xx. Không truyền thì hỏi lại mọi URL — đó là "
+             "chế độ đúng cho push:main và lịch định kỳ.",
+    )
+    parser.add_argument(
+        "--cache-ttl-days", type=int, default=CACHE_TTL_DAYS, metavar="NGÀY",
+        help="Hạn dùng của một verdict 2xx đã cache.",
     )
     args = parser.parse_args(argv)
 
@@ -336,16 +418,10 @@ def main(argv=None) -> int:
             print("✓ Internal links: tất cả target/fragment đều hợp lệ.")
 
     if run_external:
-        hard, warnings = check_external(max_workers=max(1, args.workers))
-
-        # Không có mốc: mọi link chết đều chặn. Đây là chế độ cho `push: main` và
-        # lịch chạy định kỳ — ở đó không có bài nào để chặn, nên siết chặt là đúng.
-        introduced, inherited = hard, []
+        # Tính URL mới TRƯỚC khi chạm mạng: phép này thuần git/file, và kết quả
+        # của nó quyết định URL nào không được phép lấy từ cache.
+        introduced_urls: set[str] = set()
         if args.baseline:
-            # Có mốc: chỉ link do nhánh này đưa vào mới chặn. Link đã có sẵn trên
-            # main mà hôm nay 404 là nợ bảo trì của kho, không phải lỗi của bài
-            # hôm nay — chặn bài vì nó là sai đối tượng, và thực tế đã dẫn tới
-            # việc agent đi sửa hai bài cũ rồi làm hỏng một nguồn đang tốt (#063).
             try:
                 existing = baseline_external_refs(args.baseline)
             except BaselineError as exc:
@@ -360,6 +436,20 @@ def main(argv=None) -> int:
             introduced_urls = {
                 url for rel, url in current if (rel, url) not in existing
             }
+
+        cache = LinkCache(args.cache, args.cache_ttl_days) if args.cache else None
+        hard, warnings = check_external(
+            max_workers=max(1, args.workers),
+            cache=cache,
+            bypass=frozenset(introduced_urls),
+        )
+        if cache is not None:
+            print(f"↺ Cache: {cache.hits} URL bỏ qua nhờ verdict 2xx còn hạn.")
+
+        # Không có mốc: mọi link chết đều chặn. Đây là chế độ cho `push: main` và
+        # lịch chạy định kỳ — ở đó không có bài nào để chặn, nên siết chặt là đúng.
+        introduced, inherited = hard, []
+        if args.baseline:
             # URL mới chỉ pass khi check trả `ok`, tức response cuối là 2xx.
             # 403/bot-block, timeout, lỗi TLS/DNS, 3xx chưa resolve và 5xx đều
             # không chứng minh được nguồn tồn tại, nên phải fail closed trên PR.

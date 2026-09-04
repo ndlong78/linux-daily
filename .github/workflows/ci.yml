@@ -37,6 +37,18 @@ jobs:
         with:
           python-version: "3.11"
 
+      # Cache kết quả link check GIỮA các run, không commit vào git — artifact
+      # thay đổi mỗi ngày mà commit lại thì phình lịch sử, đúng thứ đang làm
+      # .git nặng lên. Key theo nội dung bài: thêm bài thì key đổi, nhưng
+      # restore-keys cho lấy lại cache gần nhất rồi bổ sung phần mới.
+      - name: Cache link check
+        if: github.event_name == 'pull_request'
+        uses: actions/cache@v4
+        with:
+          path: .link-cache.json
+          key: link-cache-${{ hashFiles('posts/post-*.html') }}
+          restore-keys: link-cache-
+
       - name: PR commit/path hygiene
         if: github.event_name == 'pull_request'
         run: >-
@@ -64,6 +76,10 @@ jobs:
       - name: Deterministic publish pipeline
         run: python tools/publish.py check
 
+      # Cache CHỈ dùng trên PR. Trên push:main và lịch định kỳ thì không, để mọi
+      # URL được hỏi lại thật — đó là chỗ phát hiện link mục, và cache ở đó sẽ
+      # làm chậm việc phát hiện mà không đổi lại được gì.
+      #
       # Trên PR, chỉ link MỚI do nhánh đưa vào mới chặn merge. Link đã có sẵn trên
       # base mà hôm nay 404 là nợ bảo trì của kho — chặn bài hằng ngày vì nó là
       # sai đối tượng. Trên push/main và lịch định kỳ thì không truyền --baseline,
@@ -72,7 +88,8 @@ jobs:
         run: >-
           python tools/check_links.py --external --workers 8
           ${{ github.event_name == 'pull_request'
-              && format('--baseline {0}', github.event.pull_request.base.sha)
+              && format('--baseline {0} --cache .link-cache.json',
+                        github.event.pull_request.base.sha)
               || '' }}
 
       - name: Smoke test cadence (state.json)
