@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sparse files: apparent size, allocated blocks và backup semantics — Linux Daily #066</title>
+<meta name="description" content="Phân biệt kích thước logic với block thực cấp phát của sparse file, đo trên Linux và FreeBSD, rồi kiểm chứng copy/backup không vô tình làm phình dữ liệu.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Sparse files: apparent size, allocated blocks và backup semantics">
+<meta property="og:description" content="Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Sparse files: apparent size, allocated blocks và backup semantics">
+<meta name="twitter:description" content="Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">{"issue":66,"date":"2026-09-04","axis":"Storage","eyebrow":"Storage · Sparse files","slug":"sparse-files-apparent-size-allocated-blocks-backup-semantics","title":"Sparse files: apparent size, allocated blocks và backup semantics","lede":"Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-04","changes_system":false,"sources":[{"title":"GNU Coreutils Manual — du, cp và sparse files","url":"https://www.gnu.org/software/coreutils/manual/coreutils.html","kind":"upstream"},{"title":"FreeBSD Manual — stat(2), st_size và st_blocks","url":"https://man.freebsd.org/cgi/man.cgi?query=stat&sektion=2&manpath=FreeBSD+12.2-RELEASE","kind":"official"}]}</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#066 · 04·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Storage · Sparse files</p><h1>Sparse files: apparent size, allocated blocks và backup semantics</h1><p class="lede">Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-04</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt apparent size với block thực cấp phát, tạo sparse file an toàn và kiểm chứng copy/backup có bảo toàn tính sparse hay không.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Dùng thư mục thử nghiệm và user thường; không cần quyền root.</li><li>Ubuntu và Xubuntu dùng GNU Coreutils; Debian và Fedora dùng nhóm lệnh tương tự. FreeBSD dùng <code>stat</code> với cú pháp riêng.</li><li>Không dùng file production; mọi file lab đều nằm trong thư mục <code>sparse-lab</code>.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="So sánh apparent size và allocated blocks"><rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="45" y="70" width="300" height="120" rx="8" fill="#fff" stroke="#14201D"/><text x="70" y="105" font-size="12" font-weight="700">Apparent size</text><text x="70" y="140" font-size="18" font-weight="800">1 GiB</text><rect x="415" y="70" width="300" height="120" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="440" y="105" font-size="12" font-weight="700">Allocated blocks</text><text x="440" y="140" font-size="18" font-weight="800">≈ 0–vài KiB</text></g></svg><figcaption>Hình 1 — Sparse file có logical size lớn nhưng filesystem chưa cần cấp block cho toàn bộ vùng zero.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Disk image, database file và VM image có thể chứa vùng zero dài. Nếu các vùng đó là sparse holes, <code>ls -lh</code> vẫn báo logical size lớn trong khi dung lượng thực nhỏ hơn nhiều.</p><p>Rủi ro nằm ở copy, backup và restore: checksum có thể vẫn đúng nhưng hole bị materialize thành block thật, làm tăng nhu cầu storage.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Apparent size</strong> là kích thước logic của file.</li><li><strong>Allocated blocks</strong> là lượng storage filesystem thực cấp cho file.</li><li><strong>Sparse không phải compression.</strong> Hole là vùng chưa cấp phát nhưng đọc ra như zero.</li><li><strong>Backup đúng dữ liệu chưa chắc đúng allocation.</strong> Sau restore, kiểm cả checksum và block usage.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Luồng kiểm sparse file sau copy và restore"><rect width="760" height="250" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="30" y="85" width="150" height="75" rx="8" fill="#fff" stroke="#14201D"/><text x="105" y="118" font-size="11" font-weight="700">SOURCE</text><rect x="220" y="85" width="150" height="75" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="295" y="118" font-size="11" font-weight="700">COPY/BACKUP</text><rect x="410" y="85" width="150" height="75" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="485" y="118" font-size="11" font-weight="700">RESTORE</text><rect x="600" y="85" width="130" height="75" rx="8" fill="#fff" stroke="#14201D"/><text x="665" y="118" font-size="11" font-weight="700">VERIFY</text><path d="M180 122H214M370 122H404M560 122H594" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Xác minh riêng tính đúng của dữ liệu và mức block được cấp phát.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Tạo sparse file thử nghiệm</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">mkdir sparse-lab
+cd sparse-lab
+truncate -s 1G sparse-lab-source.img</code></pre></div><p><code>truncate</code> đặt logical end-of-file mà không ghi 1 GiB zero vào đĩa.</p></li>
+<li><h3>2. So kích thước logic với disk usage</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">ls -lh sparse-lab-source.img
+du -h sparse-lab-source.img</code></pre></div><p><strong>Expected Output:</strong> <code>ls</code> báo khoảng <code>1.0G</code>; <code>du</code> thường rất nhỏ. Giá trị cụ thể phụ thuộc filesystem.</p></li>
+<li><h3>3. Đọc size và blocks trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">stat -c 'size=%s blocks=%b block-bytes=%B' sparse-lab-source.img</code></pre></div></li>
+<li><h3>4. Đọc size và blocks trên FreeBSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">stat -f 'size=%z blocks=%b io-block=%k' sparse-lab-source.img</code></pre></div><p>FreeBSD không dùng cú pháp <code>stat -c</code> của GNU/Linux.</p></li>
+<li><h3>5. Copy sparse-aware trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">cp --sparse=always sparse-lab-source.img sparse-lab-copy.img
+du -h sparse-lab-source.img sparse-lab-copy.img
+sha256sum sparse-lab-source.img sparse-lab-copy.img</code></pre></div><p><strong>Expected Output:</strong> checksum giống nhau; disk usage của copy vẫn nhỏ nếu filesystem hỗ trợ sparse.</p></li>
+<li><h3>6. Copy và đo lại trên FreeBSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — đo thay vì giả định</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">cp sparse-lab-source.img sparse-lab-copy.img
+stat -f 'size=%z blocks=%b' sparse-lab-source.img sparse-lab-copy.img
+sha256 sparse-lab-source.img sparse-lab-copy.img</code></pre></div><p><strong>Expected Output:</strong> checksum giống nhau. So <code>blocks=</code> để biết allocation có được bảo toàn hay không.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">ls -lh sparse-lab-source.img sparse-lab-copy.img
+du -h sparse-lab-source.img sparse-lab-copy.img</code></pre></div><p><strong>Kết quả mong đợi:</strong> apparent size của source và copy bằng nhau; allocated usage có thể khác. Nếu copy gần 1 GiB, đường copy/backup đã materialize hole.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>du</code> không gần 0:</strong> filesystem và metadata có thể làm số block khác ví dụ; so tương quan thay vì đòi một giá trị tuyệt đối.</li><li><strong>Checksum đúng nhưng disk usage tăng:</strong> dữ liệu logic đúng, nhưng tính sparse không được bảo toàn.</li><li><strong><code>stat</code> báo lỗi option:</strong> kiểm đúng nhánh Linux hay FreeBSD.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Không tạo sparse lab trên filesystem production đang gần đầy; copy không bảo toàn hole có thể tăng dung lượng nhanh.</li><li>Với VM/database backup, ghi nhận logical bytes, transferred bytes và allocated bytes sau restore.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol class="clean"><li>Tạo file 4 GiB bằng <code>truncate</code>, ghi 1 MiB dữ liệu rồi đo lại <code>du</code>.</li><li>Restore sparse file qua công cụ backup đang dùng và so logical size, blocks, checksum.</li></ol></section>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><p>Nguồn official/upstream đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://www.gnu.org/software/coreutils/manual/coreutils.html">GNU Coreutils Manual — du, cp và sparse files</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=stat&amp;sektion=2&amp;manpath=FreeBSD+12.2-RELEASE">FreeBSD Manual — stat(2), st_size và st_blocks</a></li></ul></section>
+<section><h2>Dọn file lab</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">rm sparse-lab-source.img sparse-lab-copy.img
+cd ..
+rmdir sparse-lab</code></pre></div><p>Chỉ xóa các file lab vừa tạo.</p></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-059-trim-discard-fstrim-zfs-autotrim.html"><span class="series-kicker">#059</span><span>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-052-rsync-link-dest-snapshot-backup.html">#052 · rsync snapshot-style backup với hard links và verification</a></li>
+      <li><a href="post-045-fsck-zfs-scrub-filesystem-integrity.html">#045 · fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</a></li>
+      <li><a href="post-038-smart-nvme-health-disk-degradation.html">#038 · SMART và NVMe health: phát hiện disk degradation trước khi hỏng</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #066 · Storage</span><span class="hashtags">#LinuxDaily #Storage #SparseFiles</span></div></footer>
+</div></main></body></html>
