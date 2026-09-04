@@ -49,9 +49,18 @@
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">65 BÀI · TRANG 3/4</div>
+      <div class="count">66 BÀI · TRANG 3/4</div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-026-vmstat-systat-resource-pressure.html">
+        <div class="card-top">
+          <span class="c-issue">#026</span>
+          <span class="c-axis">Monitoring · Resource pressure</span>
+          <span class="c-date">26·07·2026</span>
+        </div>
+        <h2>vmstat và systat: đọc pressure trước khi đoán bottleneck</h2>
+        <p>CPU cao chưa chắc là bottleneck CPU. `vmstat` và `systat` cho góc nhìn theo thời gian về runnable process, memory, paging và I/O để bạn phân biệt pressure thực.</p>
+      </a>
       <a class="card" href="posts/post-025-ripgrep-log-config-search.html">
         <div class="card-top">
           <span class="c-issue">#025</span>
@@ -222,15 +231,6 @@
         </div>
         <h2>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</h2>
         <p>Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</p>
-      </a>
-      <a class="card" href="posts/post-006-ansible-multi-os.html">
-        <div class="card-top">
-          <span class="c-issue">#006</span>
-          <span class="c-axis">Automation · Scripting</span>
-          <span class="c-date">06·07·2026</span>
-        </div>
-        <h2>Ansible: một playbook, bốn hệ điều hành</h2>
-        <p>Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</p>
       </a>
     </main>
     <nav class="pagination" aria-label="Phân trang danh sách bài">
