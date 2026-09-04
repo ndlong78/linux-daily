@@ -175,8 +175,10 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 
 #### Link check có cache — điều đó đổi gì với agent
 
-`check_links.py --cache` bỏ qua URL đã nhận 2xx trong 7 ngày gần nhất. CI chỉ bật
-cache **trên PR**; `push: main` và lịch định kỳ vẫn hỏi lại mọi URL.
+`check_links.py --cache` bỏ qua URL đã nhận 2xx trong 7 ngày gần nhất. CI chỉ ĐỌC
+cache **trên PR**; `push: main` chạy với `--cache-ttl-days 0`, tức vẫn hỏi lại đủ
+100% URL như trước, chỉ ghi lại kết quả để gieo cache cho các PR sau (cache của
+Actions bị khoá theo ref — PR chỉ đọc được cache từ nhánh mặc định).
 
 Điều agent cần biết:
 

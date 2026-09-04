@@ -492,3 +492,41 @@ def test_cache_ghi_roi_doc_lai_duoc(tmp_path):
     lai = cl.LinkCache(str(tmp_path / "lc.json"))
     assert lai.fresh("https://a.test/x", _t.time())
     assert not lai.fresh("https://chua-biet.test/y", _t.time())
+
+
+def test_ttl_0_van_hoi_moi_url_nhung_van_ghi_cache(tmp_path, monkeypatch):
+    """Hợp đồng của chế độ "chỉ ghi" mà push:main dùng — xem ci.yml.
+
+    Cache của GitHub Actions bị khoá theo ref: một run chỉ đọc được cache do
+    CHÍNH nhánh nó hoặc nhánh mặc định tạo ra. Nếu chỉ `pull_request` mới ghi
+    cache thì cache đó nằm trong phạm vi của riêng PR ấy, PR hôm sau không với
+    tới — mà kho này mỗi ngày một PR mới, chạy CI đúng một lần rồi merge. Tức
+    là tỉ lệ trúng thực tế ~0.
+
+    Nên main cũng ghi cache, nhưng với `--cache-ttl-days 0`: không verdict nào
+    còn hạn, main vẫn hỏi lại đủ 100% URL (siết y như trước), chỉ có điều nó
+    để lại cache trên nhánh mặc định cho các PR sau dùng.
+
+    Test này khoá cả hai vế. Bỏ vế đầu là main lặng lẽ thôi kiểm tra thật; bỏ
+    vế sau là cache không bao giờ được gieo và cả PR #145 thành vô nghĩa.
+    """
+    import time as _t
+
+    cl, cache = _cache(tmp_path, ttl_days=0)
+    url = "https://song.test/a"
+    cache.remember(url, _t.time())  # vừa cache xong, mới tinh
+
+    da_hoi = []
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: [url])
+
+    def _ghi_nhan(u, **_):
+        da_hoi.append(u)
+        return cl.ExternalResult(u, 200, "ok", "HTTP 200")
+
+    monkeypatch.setattr(cl, "check_external_url", _ghi_nhan)
+
+    cl.check_external(cache=cache)
+
+    assert da_hoi == [url], "TTL 0 phải hỏi lại mọi URL, kể cả vừa cache xong"
+    assert cache.hits == 0
+    assert url in cache.entries, "TTL 0 vẫn phải GHI, nếu không thì không gieo được cache"

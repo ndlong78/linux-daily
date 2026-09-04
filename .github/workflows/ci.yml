@@ -41,8 +41,14 @@ jobs:
       # thay đổi mỗi ngày mà commit lại thì phình lịch sử, đúng thứ đang làm
       # .git nặng lên. Key theo nội dung bài: thêm bài thì key đổi, nhưng
       # restore-keys cho lấy lại cache gần nhất rồi bổ sung phần mới.
+      #
+      # Chạy trên CẢ push:main, không chỉ PR. Cache của Actions bị khoá theo
+      # ref: một run chỉ đọc được cache do chính nhánh nó hoặc nhánh mặc định
+      # tạo ra. Kho này mỗi ngày một PR mới, chạy CI đúng một lần rồi merge —
+      # nếu chỉ PR mới ghi cache thì cache nằm trong phạm vi riêng của PR đó,
+      # PR hôm sau không với tới, tỉ lệ trúng thực tế ~0. Main ghi cache thì
+      # mọi PR sau đều khôi phục được từ nhánh mặc định.
       - name: Cache link check
-        if: github.event_name == 'pull_request'
         uses: actions/cache@v4
         with:
           path: .link-cache.json
@@ -76,9 +82,12 @@ jobs:
       - name: Deterministic publish pipeline
         run: python tools/publish.py check
 
-      # Cache CHỈ dùng trên PR. Trên push:main và lịch định kỳ thì không, để mọi
-      # URL được hỏi lại thật — đó là chỗ phát hiện link mục, và cache ở đó sẽ
-      # làm chậm việc phát hiện mà không đổi lại được gì.
+      # Cache CHỈ được ĐỌC trên PR. Ngoài PR (push:main, workflow_dispatch) thì
+      # truyền `--cache-ttl-days 0`: không verdict nào còn hạn nên mọi URL vẫn
+      # bị hỏi lại thật — chỗ phát hiện link mục không hề bị nới — nhưng verdict
+      # 2xx thu được vẫn được ghi lại, gieo cache trên nhánh mặc định cho các PR
+      # sau. Hợp đồng "hỏi lại đủ 100% mà vẫn ghi" được khoá bằng
+      # tests/test_check_links.py::test_ttl_0_van_hoi_moi_url_nhung_van_ghi_cache.
       #
       # Trên PR, chỉ link MỚI do nhánh đưa vào mới chặn merge. Link đã có sẵn trên
       # base mà hôm nay 404 là nợ bảo trì của kho — chặn bài hằng ngày vì nó là
@@ -90,7 +99,7 @@ jobs:
           ${{ github.event_name == 'pull_request'
               && format('--baseline {0} --cache .link-cache.json',
                         github.event.pull_request.base.sha)
-              || '' }}
+              || '--cache .link-cache.json --cache-ttl-days 0' }}
 
       - name: Smoke test cadence (state.json)
         run: |
