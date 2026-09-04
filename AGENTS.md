@@ -173,6 +173,24 @@ API-only fallback là đường vận hành hợp lệ của Scheduled Task khi 
 - nếu CI báo regression do source (STYLE, source-backed, cadence, state), sửa đúng source trên cùng branch rồi để CI chạy lại;
 - không vô hiệu hóa/nới test, validator, workflow safety hoặc STYLE gate để ép xanh.
 
+#### Link check có cache — điều đó đổi gì với agent
+
+`check_links.py --cache` bỏ qua URL đã nhận 2xx trong 7 ngày gần nhất. CI chỉ ĐỌC
+cache **trên PR**; `push: main` chạy với `--cache-ttl-days 0`, tức vẫn hỏi lại đủ
+100% URL như trước, chỉ ghi lại kết quả để gieo cache cho các PR sau (cache của
+Actions bị khoá theo ref — PR chỉ đọc được cache từ nhánh mặc định).
+
+Điều agent cần biết:
+
+- **URL nguồn MỚI luôn bị hỏi thật, không lấy từ cache.** Cache không phải đường
+  lách contract "mọi URL nguồn mới phải nhận 2xx trước khi mở PR" — nó chỉ bỏ
+  qua URL đã có sẵn và còn hạn.
+- Dòng `↺ Cache: N URL bỏ qua` trong log là bình thường, không phải cảnh báo.
+- Chạy tay ở máy thì **không** truyền `--cache`; hỏi lại toàn bộ mới là thứ bạn
+  muốn khi đang kiểm một bài mới.
+- `.link-cache.json` do `actions/cache` quản lý, **không commit vào git**. Thấy nó
+  trong `git status` là sai — nó đã nằm trong `.gitignore`.
+
 #### Trang chủ đã phân trang — `trang-N.html`
 
 Danh sách bài **không còn nằm hết trong `index.html`**. `index.html` là trang 1 với

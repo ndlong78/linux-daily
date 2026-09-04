@@ -16,3 +16,6 @@ dist/
 # File tạm khi soạn snippet cho render_code
 *.snippet.tmp
 scratch/
+
+# Cache link check (do actions/cache quản lý, không commit)
+.link-cache.json

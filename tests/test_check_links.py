@@ -251,7 +251,7 @@ def test_baseline_hong_thi_fail_closed(monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([chet], []))
 
     def no(_ref):
         raise cl.BaselineError("không dựng được cây baseline từ ref 'x'")
@@ -273,7 +273,7 @@ def test_link_da_co_san_khong_chan_pr(tmp_path, monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([chet], []))
     monkeypatch.setattr(
         cl, "baseline_external_refs",
         lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
@@ -297,7 +297,7 @@ def test_link_moi_van_chan_pr(tmp_path, monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://moi.test/khong-co-that", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([chet], []))
     monkeypatch.setattr(
         cl, "baseline_external_refs",
         lambda ref: {("posts/post-001-a.html", "https://cu.test/trang")},
@@ -337,7 +337,7 @@ def test_link_moi_chua_nhan_2xx_phai_chan_pr(
         "warning",
         detail,
     )
-    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([], [result]))
     monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: set())
     monkeypatch.setattr(
         check_links,
@@ -362,7 +362,7 @@ def test_warning_cua_link_ke_thua_khong_chan_pr(monkeypatch, capsys):
         "network/timeout sau 3 lần",
     )
     pair = ("posts/post-001-a.html", "https://cu.test/nguon")
-    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8: ([], [result]))
+    monkeypatch.setattr(check_links, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([], [result]))
     monkeypatch.setattr(check_links, "baseline_external_refs", lambda ref: {pair})
     monkeypatch.setattr(check_links, "_external_refs_under", lambda root: {pair})
 
@@ -380,8 +380,153 @@ def test_khong_co_baseline_thi_moi_link_chet_deu_chan(monkeypatch, capsys):
     import check_links as cl
 
     chet = cl.ExternalResult("https://cu.test/trang", 404, "hard", "HTTP 404")
-    monkeypatch.setattr(cl, "check_external", lambda max_workers=8: ([chet], []))
+    monkeypatch.setattr(cl, "check_external", lambda max_workers=8, cache=None, bypass=frozenset(): ([chet], []))
 
     code = cl.main(["--external"])
     assert code == 1
     assert "link lỗi chắc chắn" in capsys.readouterr().err
+
+
+# --- cache kết quả 2xx ------------------------------------------------------
+
+
+def _cache(tmp_path, **kw):
+    _sys.path.insert(0, str(_ROOT / "tools"))
+    import check_links as cl
+    return cl, cl.LinkCache(str(tmp_path / "lc.json"), **kw)
+
+
+def test_chi_cache_verdict_ok(tmp_path, monkeypatch):
+    """Cache một lần hỏng là biến sự cố nhất thời thành vĩnh viễn."""
+    cl, cache = _cache(tmp_path)
+    ket_qua = {
+        "https://song.test/a": cl.ExternalResult("https://song.test/a", 200, "ok", "HTTP 200"),
+        "https://chet.test/b": cl.ExternalResult("https://chet.test/b", 404, "hard", "HTTP 404"),
+        "https://ban.test/c": cl.ExternalResult("https://ban.test/c", 429, "warning", "HTTP 429"),
+    }
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: list(ket_qua))
+    monkeypatch.setattr(cl, "check_external_url", lambda url, **_: ket_qua[url])
+
+    cl.check_external(cache=cache)
+
+    assert set(cache.entries) == {"https://song.test/a"}
+
+
+def test_url_moi_khong_duoc_lay_tu_cache(tmp_path, monkeypatch):
+    """Đây là lỗ mà PR #134 đã bịt; cache không được mở lại nó.
+
+    Một URL đã 2xx từ lâu (nên nằm trong cache) bị CHÉP sang bài mới. Nếu lấy
+    verdict cũ từ cache thì nguồn của bài hôm nay chưa hề được xác minh.
+    """
+    cl, cache = _cache(tmp_path)
+    url = "https://cu.test/trang"
+    cache.remember(url, __import__("time").time())
+
+    da_hoi = []
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: [url])
+    monkeypatch.setattr(
+        cl, "check_external_url",
+        lambda u, **_: (da_hoi.append(u), cl.ExternalResult(u, 200, "ok", "HTTP 200"))[1],
+    )
+
+    cl.check_external(cache=cache, bypass=frozenset({url}))
+
+    assert da_hoi == [url], "URL mới phải được hỏi lại thật, không lấy từ cache"
+
+
+def test_verdict_qua_han_bi_hoi_lai(tmp_path, monkeypatch):
+    """Không TTL thì link chết sau khi vào cache sẽ không bao giờ lộ ra nữa."""
+    import time as _t
+
+    cl, cache = _cache(tmp_path, ttl_days=7)
+    url = "https://cu.test/a"
+    cache.entries[url] = _t.time() - 8 * 86400
+
+    da_hoi = []
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: [url])
+    monkeypatch.setattr(
+        cl, "check_external_url",
+        lambda u, **_: (da_hoi.append(u), cl.ExternalResult(u, 200, "ok", "HTTP 200"))[1],
+    )
+
+    cl.check_external(cache=cache)
+    assert da_hoi == [url]
+
+
+def test_khong_co_cache_thi_hoi_moi_url(tmp_path, monkeypatch):
+    """Chế độ push:main và lịch định kỳ — không truyền --cache, siết như cũ."""
+    _sys.path.insert(0, str(_ROOT / "tools"))
+    import check_links as cl
+
+    urls = [f"https://x.test/{i}" for i in range(5)]
+    da_hoi = []
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: urls)
+    monkeypatch.setattr(
+        cl, "check_external_url",
+        lambda u, **_: (da_hoi.append(u), cl.ExternalResult(u, 200, "ok", "HTTP 200"))[1],
+    )
+
+    cl.check_external(cache=None)
+    assert sorted(da_hoi) == sorted(urls)
+
+
+def test_cache_hong_khong_lam_do_ci(tmp_path):
+    """Mất cache chỉ tốn thời gian; dừng vì nó là biến tối ưu thành điểm hỏng."""
+    _sys.path.insert(0, str(_ROOT / "tools"))
+    import check_links as cl
+
+    hong = tmp_path / "lc.json"
+    hong.write_text("{khong-phai-json", encoding="utf-8")
+
+    cache = cl.LinkCache(str(hong))
+    assert cache.entries == {}
+
+
+def test_cache_ghi_roi_doc_lai_duoc(tmp_path):
+    import time as _t
+
+    cl, cache = _cache(tmp_path)
+    cache.remember("https://a.test/x", _t.time())
+    cache.save()
+
+    lai = cl.LinkCache(str(tmp_path / "lc.json"))
+    assert lai.fresh("https://a.test/x", _t.time())
+    assert not lai.fresh("https://chua-biet.test/y", _t.time())
+
+
+def test_ttl_0_van_hoi_moi_url_nhung_van_ghi_cache(tmp_path, monkeypatch):
+    """Hợp đồng của chế độ "chỉ ghi" mà push:main dùng — xem ci.yml.
+
+    Cache của GitHub Actions bị khoá theo ref: một run chỉ đọc được cache do
+    CHÍNH nhánh nó hoặc nhánh mặc định tạo ra. Nếu chỉ `pull_request` mới ghi
+    cache thì cache đó nằm trong phạm vi của riêng PR ấy, PR hôm sau không với
+    tới — mà kho này mỗi ngày một PR mới, chạy CI đúng một lần rồi merge. Tức
+    là tỉ lệ trúng thực tế ~0.
+
+    Nên main cũng ghi cache, nhưng với `--cache-ttl-days 0`: không verdict nào
+    còn hạn, main vẫn hỏi lại đủ 100% URL (siết y như trước), chỉ có điều nó
+    để lại cache trên nhánh mặc định cho các PR sau dùng.
+
+    Test này khoá cả hai vế. Bỏ vế đầu là main lặng lẽ thôi kiểm tra thật; bỏ
+    vế sau là cache không bao giờ được gieo và cả PR #145 thành vô nghĩa.
+    """
+    import time as _t
+
+    cl, cache = _cache(tmp_path, ttl_days=0)
+    url = "https://song.test/a"
+    cache.remember(url, _t.time())  # vừa cache xong, mới tinh
+
+    da_hoi = []
+    monkeypatch.setattr(cl, "collect_external_urls", lambda: [url])
+
+    def _ghi_nhan(u, **_):
+        da_hoi.append(u)
+        return cl.ExternalResult(u, 200, "ok", "HTTP 200")
+
+    monkeypatch.setattr(cl, "check_external_url", _ghi_nhan)
+
+    cl.check_external(cache=cache)
+
+    assert da_hoi == [url], "TTL 0 phải hỏi lại mọi URL, kể cả vừa cache xong"
+    assert cache.hits == 0
+    assert url in cache.entries, "TTL 0 vẫn phải GHI, nếu không thì không gieo được cache"
