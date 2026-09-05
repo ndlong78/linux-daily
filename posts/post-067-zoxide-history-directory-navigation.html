@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script — Linux Daily #067</title>
+<meta name="description" content="Dùng zoxide để nhảy nhanh giữa thư mục tương tác trên Linux và FreeBSD, hiểu database xếp hạng và giữ cd/path tường minh trong script automation.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script">
+<meta property="og:description" content="Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script">
+<meta name="twitter:description" content="Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">{"issue":67,"date":"2026-09-05","axis":"Công cụ mới","eyebrow":"Công cụ mới · zoxide","slug":"zoxide-history-directory-navigation","title":"zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script","lede":"Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-05","changes_system":true,"sources":[{"title":"zoxide README — installation, shell setup và configuration","url":"https://github.com/ajeetdsouza/zoxide/blob/main/README.md","kind":"upstream"},{"title":"zoxide(1) upstream man page","url":"https://github.com/ajeetdsouza/zoxide/blob/main/man/man1/zoxide.1","kind":"upstream"}]}</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#067 · 05·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Công cụ mới · zoxide</p><h1>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</h1><p class="lede">Dùng zoxide cho shell tương tác; trong script vẫn giữ <code>cd</code> và path tường minh để hành vi có thể dự đoán.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-05</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Cài và khởi tạo zoxide cho shell tương tác, đọc database xếp hạng, dùng <code>z</code>/<code>zi</code> đúng ngữ cảnh và giữ automation độc lập với lịch sử cá nhân.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Shell tương tác Bash hoặc shell tương thích với hướng dẫn init của zoxide.</li><li>Ubuntu và Xubuntu dùng cùng nhánh hướng dẫn; Debian dùng cùng quy trình tải installer khi package distro không được upstream khuyến nghị. Fedora và FreeBSD dùng package manager riêng.</li><li>Cần Internet để cài lần đầu. Các thao tác lab chạy bằng user thường, trừ bước cài package Fedora/FreeBSD.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="So sánh cd theo đường dẫn với zoxide theo lịch sử"><rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="45" y="70" width="300" height="120" rx="8" fill="#fff" stroke="#14201D"/><text x="70" y="105" font-size="12" font-weight="700">cd</text><text x="70" y="135" font-size="10">Đường dẫn tường minh</text><text x="70" y="158" font-size="10">Ổn định cho script</text><rect x="415" y="70" width="300" height="120" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="440" y="105" font-size="12" font-weight="700">zoxide</text><text x="440" y="135" font-size="10">Lịch sử + xếp hạng</text><text x="440" y="158" font-size="10">Nhanh cho shell tương tác</text></g></svg><figcaption>Hình 1 — <code>cd</code> định vị bằng path; zoxide chọn kết quả dựa trên database sử dụng của chính user.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Khi làm việc với nhiều repository, gõ lại các đường dẫn dài làm chậm thao tác. zoxide ghi nhận các thư mục đã dùng và cho phép nhảy tới kết quả có thứ hạng phù hợp bằng vài từ khóa.</p><p>Điểm quan trọng là database này mang tính cá nhân và thay đổi theo lịch sử. Vì vậy zoxide phù hợp cho terminal tương tác, còn script production nên dùng <code>cd</code> và path đã biết thay vì phụ thuộc vào rank của một user.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong><code>zoxide init</code></strong> sinh shell integration; lệnh <code>z</code> và <code>zi</code> chỉ xuất hiện sau khi shell nạp phần init đó.</li><li><strong>Database có rank.</strong> zoxide theo dõi các thư mục thường dùng và tìm kết quả phù hợp thay vì coi từ khóa là path tuyệt đối.</li><li><strong><code>zoxide query</code></strong> cho phép xem kết quả mà không đổi thư mục, hữu ích khi cần kiểm chứng trước khi nhảy.</li><li><strong>Không thay <code>cd</code> trong script.</strong> Script cần hành vi deterministic, không phụ thuộc lịch sử tương tác của người chạy.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Luồng sử dụng zoxide từ init tới query và jump"><rect width="760" height="250" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="85" width="145" height="75" rx="8" fill="#fff" stroke="#14201D"/><text x="108" y="118" font-size="11" font-weight="700">INIT</text><rect x="225" y="85" width="145" height="75" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="298" y="118" font-size="11" font-weight="700">VISIT</text><rect x="415" y="85" width="145" height="75" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="488" y="118" font-size="11" font-weight="700">QUERY</text><rect x="605" y="85" width="120" height="75" rx="8" fill="#fff" stroke="#14201D"/><text x="665" y="118" font-size="11" font-weight="700">JUMP</text><path d="M180 122H219M370 122H409M560 122H599" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Shell integration ghi nhận thay đổi thư mục; query giúp kiểm kết quả trước khi dùng <code>z</code> để chuyển vị trí.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Cài zoxide trên Ubuntu/Xubuntu và Debian theo installer upstream có kiểm tra</h3><p class="code-label ubuntu"><span class="dot"></span>Ubuntu/Xubuntu</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">curl -fsSLo /tmp/zoxide-install.sh https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh
+less /tmp/zoxide-install.sh
+sh /tmp/zoxide-install.sh</code></pre></div><p class="code-label debian"><span class="dot"></span>Debian</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">curl -fsSLo /tmp/zoxide-install.sh https://raw.githubusercontent.com/ajeetdsouza/zoxide/main/install.sh
+less /tmp/zoxide-install.sh
+sh /tmp/zoxide-install.sh</code></pre></div><p>Không nối trực tiếp <code>curl</code> vào shell. Đọc file installer trước khi chạy. Nếu installer thêm <code>~/.local/bin</code>, mở shell mới hoặc cập nhật <code>PATH</code> theo thông báo của installer.</p></li>
+<li><h3>2. Cài bằng package manager trên Fedora</h3><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-sh">sudo dnf install zoxide</code></pre></div></li>
+<li><h3>3. Cài bằng pkg trên FreeBSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg install zoxide</code></pre></div><p>FreeBSD không dùng <code>apt</code>, <code>dnf</code> hay systemd cho bước này.</p></li>
+<li><h3>4. Kiểm binary trước khi sửa cấu hình shell</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">command -v zoxide
+zoxide --version</code></pre></div><p><strong>Expected Output:</strong> dòng đầu là đường dẫn tới binary zoxide; dòng sau in phiên bản đã cài.</p></li>
+<li><h3>5. Khởi tạo zoxide cho Bash</h3><p class="code-label same"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora · FreeBSD dùng Bash</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">printf '\neval "$(zoxide init bash)"\n' &gt;&gt; "$HOME/.bashrc"
+. "$HOME/.bashrc"
+type z</code></pre></div><p><strong>Expected Output:</strong> <code>type z</code> cho biết <code>z</code> là function do zoxide tạo. Nếu dùng shell khác, dùng cú pháp init tương ứng trong tài liệu upstream thay vì chép Bash config.</p></li>
+<li><h3>6. Tạo lab và để zoxide ghi nhận lịch sử</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">mkdir -p "$HOME/zoxide-lab/alpha" "$HOME/zoxide-lab/beta-project"
+cd "$HOME/zoxide-lab/alpha"
+cd "$HOME/zoxide-lab/beta-project"
+cd "$HOME"</code></pre></div><p>Các lần đổi thư mục sau khi init giúp database tích lũy history cho user hiện tại.</p></li>
+<li><h3>7. Query trước, rồi nhảy bằng từ khóa</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">zoxide query beta-project
+z beta-project
+pwd</code></pre></div><p><strong>Expected Output:</strong> query trả về đường dẫn kết thúc bằng <code>/zoxide-lab/beta-project</code>; sau <code>z beta-project</code>, <code>pwd</code> trỏ tới cùng thư mục.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">zoxide query --list | grep 'zoxide-lab'
+zoxide query alpha
+zoxide query beta-project</code></pre></div><p><strong>Kết quả mong đợi:</strong> database chứa các thư mục lab và từng query trả về path phù hợp. Nếu không có kết quả, xác nhận shell đã nạp <code>zoxide init</code> trước khi truy cập các thư mục.</p></section>
+<section><h2>Gỡ / Hoàn tác</h2><p>Xóa dòng <code>eval "$(zoxide init bash)"</code> khỏi <code>~/.bashrc</code>, rồi mở shell mới.</p><p class="code-label fedora"><span class="dot"></span>Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-sh">sudo dnf remove zoxide</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="root"><strong>Run as:</strong> root</p><pre class="bsd"><code class="language-sh">pkg delete zoxide</code></pre></div><p>Với Ubuntu/Xubuntu hoặc Debian cài bằng installer upstream, chạy <code>command -v zoxide</code> để xác nhận vị trí binary trước khi xóa file do installer tạo. Không dùng <code>rm -rf</code> theo đường dẫn đoán.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>z: command not found</code>:</strong> shell chưa nạp output của <code>zoxide init</code>; kiểm <code>~/.bashrc</code> và mở shell mới.</li><li><strong>Query không thấy thư mục:</strong> truy cập thư mục sau khi init hoặc dùng <code>zoxide add &lt;directory&gt;</code> để thêm tường minh.</li><li><strong>Nhiều kết quả gần giống:</strong> thêm từ khóa để thu hẹp; dùng <code>zi</code> khi đã cài <code>fzf</code> phù hợp.</li><li><strong>Script chạy khác giữa máy:</strong> loại <code>z</code> khỏi script và quay về <code>cd &lt;known-path&gt;</code>.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Database zoxide phản ánh tên/path thư mục từng dùng; không đưa file database cá nhân vào repository hay log công khai.</li><li>Đặt biến môi trường cấu hình trước <code>zoxide init</code> nếu cần thay data directory hoặc exclude path.</li><li>Không dùng lịch sử/rank của zoxide làm input cho job tự động, cron, systemd timer hoặc FreeBSD periodic.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Tạo ba thư mục có tên gần giống, truy cập với tần suất khác nhau rồi so kết quả <code>zoxide query</code>.</li><li>Dùng <code>zoxide query --list</code> để xác nhận database thay đổi sau khi truy cập thêm một thư mục.</li><li>Viết một shell script nhỏ dùng <code>cd &lt;known-path&gt;</code> và giải thích vì sao không thay bằng <code>z &lt;keyword&gt;</code>.</li></ol></section>
+<section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/ajeetdsouza/zoxide/blob/main/README.md">zoxide README — installation, shell setup và configuration</a> · upstream</li><li><a href="https://github.com/ajeetdsouza/zoxide/blob/main/man/man1/zoxide.1">zoxide(1) upstream man page</a> · upstream</li></ul></section>
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #067 · Công cụ mới</span><span class="hashtags">#LinuxDaily #zoxide #CLI</span></div></footer>
+</div></main></body></html>

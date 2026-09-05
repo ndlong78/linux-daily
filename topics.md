@@ -69,3 +69,4 @@
 #064 | 2026-09-02 | Networking | Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS
 #065 | 2026-09-03 | Bảo mật | SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key
 #066 | 2026-09-04 | Storage | Sparse files: apparent size, allocated blocks và backup semantics
+#067 | 2026-09-05 | Công cụ mới | zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script
