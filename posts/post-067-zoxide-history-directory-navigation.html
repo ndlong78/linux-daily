@@ -39,7 +39,9 @@
   </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#067 · 05·09·2026</span></div></div>
@@ -79,5 +81,26 @@ zoxide query beta-project</code></pre></div><p><strong>Kết quả mong đợi:<
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Database zoxide phản ánh tên/path thư mục từng dùng; không đưa file database cá nhân vào repository hay log công khai.</li><li>Đặt biến môi trường cấu hình trước <code>zoxide init</code> nếu cần thay data directory hoặc exclude path.</li><li>Không dùng lịch sử/rank của zoxide làm input cho job tự động, cron, systemd timer hoặc FreeBSD periodic.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Tạo ba thư mục có tên gần giống, truy cập với tần suất khác nhau rồi so kết quả <code>zoxide query</code>.</li><li>Dùng <code>zoxide query --list</code> để xác nhận database thay đổi sau khi truy cập thêm một thư mục.</li><li>Viết một shell script nhỏ dùng <code>cd &lt;known-path&gt;</code> và giải thích vì sao không thay bằng <code>z &lt;keyword&gt;</code>.</li></ol></section>
 <section class="sources"><h2>Nguồn kỹ thuật</h2><ul class="clean"><li><a href="https://github.com/ajeetdsouza/zoxide/blob/main/README.md">zoxide README — installation, shell setup và configuration</a> · upstream</li><li><a href="https://github.com/ajeetdsouza/zoxide/blob/main/man/man1/zoxide.1">zoxide(1) upstream man page</a> · upstream</li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #067 · Công cụ mới</span><span class="hashtags">#LinuxDaily #zoxide #CLI</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-060-hyperfine-warmup-multiple-runs-command-benchmark.html"><span class="series-kicker">#060</span><span>hyperfine: benchmark command có warmup và nhiều lần chạy</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-053-bat-syntax-highlight-paging-line-range.html">#053 · bat: xem file có syntax highlight, paging và line range</a></li>
+      <li><a href="post-046-fzf-interactive-file-process-history.html">#046 · fzf cho chọn file, process và history tương tác</a></li>
+      <li><a href="post-039-fd-find-files-fast.html">#039 · fd: tìm file nhanh nhưng phải hiểu ignore và hidden</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #067 · Công cụ mới</span><span class="hashtags">#LinuxDaily #zoxide #CLI</span></div></footer>
 </div></main></body></html>
