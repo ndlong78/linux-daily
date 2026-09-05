@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Fri, 04 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</title>
+      <link>https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</guid>
+      <pubDate>Sat, 05 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.</description>
+    </item>
     <item>
       <title>Sparse files: apparent size, allocated blocks và backup semantics</title>
       <link>https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</guid>
       <pubDate>Thu, 27 Aug 2026 00:00:00 +0700</pubDate>
       <description>Dùng OpenSSH user certificate để tách trust khỏi authorized_keys tĩnh, giới hạn thời hạn credential và thu hồi bằng KRL có kiểm chứng.</description>
-    </item>
-    <item>
-      <title>TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD</title>
-      <link>https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-057-tcp-mss-clamping-pmtud-boundary.html</guid>
-      <pubDate>Wed, 26 Aug 2026 00:00:00 +0700</pubDate>
-      <description>MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.</description>
     </item>
   </channel>
 </rss>

@@ -1,6 +1,19 @@
 {
-  "count": 66,
+  "count": 67,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-09-05",
+      "href": "posts/post-067-zoxide-history-directory-navigation.html",
+      "issue": 67,
+      "lede": "Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.",
+      "tags": [
+        "zoxide"
+      ],
+      "title": "zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",
