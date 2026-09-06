@@ -20,7 +20,7 @@ VERSION_PATH = ROOT / "site-version.json"
 # trước /robots.txt rồi nối nguyên bản của repo phía sau. Đó là biến đổi hợp lệ
 # ở edge, không phải deploy hỏng — nên file này không so được theo byte và cũng
 # không được nằm trong hash tổng, nếu không hash tổng sẽ luôn lệch và che mất
-# drift thật của 5 file còn lại. check_production đổi sang kiểm containment:
+# drift thật của các file còn lại. check_production đổi sang kiểm containment:
 # nguyên bản repo phải xuất hiện nguyên vẹn trong body mà production trả về.
 EDGE_MANAGED_PATHS = frozenset({"/robots.txt"})
 
@@ -44,7 +44,7 @@ def served_files() -> list[tuple[str, Path]]:
     latest = latest_post_path()
     issue = int(latest.name.split("-")[1])
     social_relpath = socialmeta.image_relpath(issue)
-    return [
+    core = [
         ("/", ROOT / "index.html"),
         ("/feed.xml", ROOT / "feed.xml"),
         ("/sitemap.xml", ROOT / "sitemap.xml"),
@@ -52,6 +52,18 @@ def served_files() -> list[tuple[str, Path]]:
         (f"/posts/{latest.name}", latest),
         (f"/{social_relpath}", ROOT / social_relpath),
     ]
+    # Cùng danh sách làm manifest và HTTP smoke: không để một asset được hash
+    # nhưng không được fetch, hoặc chỉ kiểm trang chủ khi archive/phân trang hỏng.
+    discovery = [
+        ROOT / "archive.html",
+        ROOT / "search-index.json",
+        ROOT / "learning-paths.html",
+        ROOT / "learning-dashboard.html",
+        *sorted(ROOT.glob("trang-*.html")),
+        *sorted((ROOT / "assets").glob("*.css")),
+        *sorted((ROOT / "assets").glob("*.js")),
+    ]
+    return core + [("/" + path.relative_to(ROOT).as_posix(), path) for path in discovery]
 
 
 def fingerprinted_files() -> list[tuple[str, Path]]:
