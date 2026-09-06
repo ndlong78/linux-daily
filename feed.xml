@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sat, 05 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 06 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường</title>
+      <link>https://linux.no.id.vn/posts/post-068-interrupt-softirq-pressure-irq-storm.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-068-interrupt-softirq-pressure-irq-storm.html</guid>
+      <pubDate>Sun, 06 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.</description>
+    </item>
     <item>
       <title>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</title>
       <link>https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</guid>
       <pubDate>Fri, 28 Aug 2026 00:00:00 +0700</pubDate>
       <description>Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.</description>
-    </item>
-    <item>
-      <title>OpenSSH certificates: user CA, validity interval và thu hồi credential</title>
-      <link>https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-058-openssh-certificates-user-ca-validity-revocation.html</guid>
-      <pubDate>Thu, 27 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng OpenSSH user certificate để tách trust khỏi authorized_keys tĩnh, giới hạn thời hạn credential và thu hồi bằng KRL có kiểm chứng.</description>
     </item>
   </channel>
 </rss>

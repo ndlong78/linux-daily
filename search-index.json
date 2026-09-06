@@ -1,6 +1,19 @@
 {
-  "count": 67,
+  "count": 68,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-09-06",
+      "href": "posts/post-068-interrupt-softirq-pressure-irq-storm.html",
+      "issue": 68,
+      "lede": "Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.",
+      "tags": [
+        "IRQ/softirq pressure"
+      ],
+      "title": "Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",
