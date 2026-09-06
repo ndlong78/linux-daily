@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường">
-<meta property="og:description" content="Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để tách IRQ storm khỏi CPU workload bình thường.">
+<meta property="og:description" content="Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-068-interrupt-softirq-pressure-irq-storm.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường">
-<meta name="twitter:description" content="Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để tách IRQ storm khỏi CPU workload bình thường.">
+<meta name="twitter:description" content="Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">{"issue":68,"date":"2026-09-06","axis":"Monitoring","eyebrow":"Monitoring · IRQ/softirq pressure","slug":"interrupt-softirq-pressure-irq-storm","title":"Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường","lede":"Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-06","changes_system":false,"sources":[{"title":"Linux Kernel Documentation — The /proc Filesystem","url":"https://www.kernel.org/doc/html/latest/filesystems/proc.html","kind":"upstream"},{"title":"FreeBSD Manual — vmstat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8","kind":"official"}]}</script>
@@ -32,10 +32,16 @@
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#068 · 06·09·2026</span></div></div>
@@ -73,5 +79,26 @@ Traffic/workload cùng thời điểm: ...</code></pre></div><p>Template này l�
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Các lệnh trong bài chỉ đọc state, phù hợp để thu thập evidence trước khi escalation.</li><li>Không thay IRQ affinity, RSS/RPS, driver parameter hoặc sysctl trong production chỉ vì một snapshot ngắn.</li><li>Lưu timestamp, device/interface và cửa sổ quan sát để có thể đối chiếu với monitoring, network traffic và log sự cố.</li><li>Nếu pressure lặp lại, xác định device/driver trước rồi mới thiết kế thay đổi có rollback và kiểm chứng riêng.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Trên một máy lab Linux, chụp hai bộ <code>/proc/interrupts</code> và <code>/proc/softirqs</code> cách nhau 5 giây khi idle, sau đó lặp lại khi tạo network traffic hợp lệ. Ghi IRQ và softirq có delta lớn nhất. Trên FreeBSD, làm cùng bài bằng <code>vmstat -i</code> và <code>vmstat -w 1 -c 5</code>, rồi giải thích điểm khác nhau về evidence giữa hai hệ.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL dưới đây đã được kiểm tra truy cập thành công ngày 06/09/2026.</p><ul class="clean"><li><a href="https://www.kernel.org/doc/html/latest/filesystems/proc.html">Linux Kernel Documentation — The /proc Filesystem</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8">FreeBSD Manual — vmstat(8)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #068 · Monitoring</span><span class="hashtags">#LinuxDaily #SysAdmin</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-061-load-average-run-queue-scheduler-pressure.html"><span class="series-kicker">#061</span><span>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html">#054 · Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ</a></li>
+      <li><a href="post-047-socket-ownership-ss-lsof-sockstat-fstat.html">#047 · Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</a></li>
+      <li><a href="post-040-pidstat-procstat-process-timeseries.html">#040 · pidstat và procstat: theo dõi process theo thời gian</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #068 · Monitoring</span><span class="hashtags">#LinuxDaily #SysAdmin</span></div></footer>
 </div></main></body></html>
