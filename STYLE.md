@@ -209,6 +209,6 @@ Mọi bài có `changes_system=true` phải có mục **Gỡ / Hoàn tác** và 
 ## 10. Enforcement trong repository
 
 - `AGENTS.md` là operating contract; `STYLE.md` là source of truth về ngôn ngữ, trình bày và safety affordance của bài.
-- `tools/validate_style.py` audit toàn bộ lịch sử nhưng chỉ **enforce từ Linux Daily #041**.
-- #001–#040 là legacy baseline và được backfill theo PR/batch riêng; không grandfather khi sao chép nội dung sang bài mới.
+- `tools/validate_style.py` audit và **enforce toàn bộ Linux Daily #001+**.
+- Backfill #001–#040 đã hoàn tất; bài lịch sử và bài mới đều bị chặn khi regress. Xem `docs/STYLE-AUDIT.md`.
 - `python3 tools/publish.py check` phải chạy style gate trước khi PR được coi là sẵn sàng review.

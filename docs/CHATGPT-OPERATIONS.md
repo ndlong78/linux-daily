@@ -78,7 +78,7 @@ Mỗi lần chạy, ChatGPT phải:
     trong repo cho cùng công cụ — chúng đã qua link check nên chắc chắn sống.
     HTTP 429 khi kiểm hàng loạt cùng một host là rate limit, **không** phải link chết:
     `check_links.py` xếp 429 vào `TRANSIENT_STATUSES` và chỉ cảnh báo. Đừng đổi URL vì 429.
-12. Từ #041: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
+12. Toàn bộ #001+: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
 13. Không tạo finalizer/self-mutating workflow để Actions sửa, commit hoặc push ngược branch.
 14. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
 15. Khi đã có quyền GitHub write của Scheduled Task, được tạo branch/commit/push/PR theo contract. Không push trực tiếp `main`.
@@ -152,7 +152,7 @@ Chỉ khi **cả local writable checkout và GitHub remote write đều không k
 
 ## STYLE.md review
 
-Linux Daily #041+ phải đạt style contract:
+Toàn bộ Linux Daily #001+ phải đạt style contract:
 
 - metadata hiển thị `Tested on` + `Last verified`;
 - `ld-meta` có `tested_on`, `last_verified`, `changes_system`;
@@ -170,7 +170,7 @@ Linux Daily #041+ phải đạt style contract:
 - `changes_system=true` thì có **Gỡ / Hoàn tác**;
 - không shell prompt trong command block, không `curl | sh` chạy trực tiếp, không placeholder legacy kiểu `YOUR_*`.
 
-#001–#040 được audit nhưng chưa fail CI. Không được tận dụng legacy exemption cho bài mới.
+Backfill #001–#040 đã hoàn tất. Bài lịch sử và bài mới đều fail CI khi vi phạm style contract; không còn legacy exemption.
 
 ## Source-backed technical review
 
@@ -267,6 +267,7 @@ Không tạo helper/workflow one-shot kiểu `prNN_finalizer` hoặc `tools/prNN
 - exact current PR head SHA phải bằng `workflow_run.head_sha`;
 - không `CHANGES_REQUESTED`, không unresolved thread;
 - gọi merge API với exact SHA precondition và squash;
+- dùng `actions: write` để dispatch CI và Production Smoke trên `main` sau merge, xác nhận run thuộc commit vừa merge đã được tạo; kết quả xanh của các run này phải được kiểm tra riêng;
 - không stage/commit/push, không `--admin`, không sửa branch protection.
 
 Vì auto-merge kiểm `draft=false`, PR bài hằng ngày phải Ready **trước khi CI success**. Nếu ordering bị lỡ, rerun CI trên cùng exact SHA sau khi Ready; không tạo commit rỗng.

@@ -47,7 +47,7 @@ Mục tiêu P10 là giữ nhịp **1 bài/ngày** nhưng không biến Linux Dai
 ### P10.3 — Backlog & Coverage Intelligence ✅
 - [x] Capability catalog theo 7 axis và explainable gap recommendation từ corpus/path/plan.
 - [x] Coverage intelligence read-only, không tự sửa curriculum queue.
-- [x] `chatgpt/**` branch có remote CI pre-PR gate.
+- [x] Remote validation: API-only dựng artifact bằng `Materialize Artifacts` trước khi mở PR; CI trên PR là quality gate authoritative.
 
 ### P10.4 — Long-term Content Lifecycle ✅
 - [x] Freshness model hỗ trợ `current`, `review-due`, `historically-valid` và `superseded`.
@@ -89,7 +89,7 @@ Nếu không thuộc ba nhóm trên, ưu tiên viết bài, technical review, c�
 11. Curriculum plan là intent tương lai; `state.json` và post metadata mới là publication truth.
 12. Readiness gate trả lời “topic đã sẵn sàng để authoring chưa”; cadence gate trả lời “đã tới lúc sinh bài chưa”.
 13. Coverage intelligence chỉ đề xuất backlog có giải thích; con người/planner quyết định queue.
-14. Branch `chatgpt/**` phải qua remote CI preflight trước khi Draft PR được mở.
+14. Local flow chạy `pr_preflight.py` trước commit/push; API-only phải materialize thành công trước khi mở PR. CI hiện chạy trên PR, không phải mọi push feature branch.
 15. Nội dung superseded/historically-valid được giữ để bảo toàn lịch sử; canonical replacement mới là guidance vận hành hiện hành.
 16. Daily Operations Dashboard chỉ tổng hợp decision signals; không trở thành ledger mới và không thay các validator nguồn.
 17. Sau P10, infrastructure mặc định feature-frozen; chỉ mở rộng khi có defect/toil/content-quality evidence rõ ràng.
