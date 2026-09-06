@@ -24,12 +24,19 @@ POST_COUNT = 200
 KEYSTROKES = 5
 
 
-def _run_harness(post_count: int = POST_COUNT, keystrokes: int = KEYSTROKES) -> dict:
+def _run_harness(
+    post_count: int = POST_COUNT,
+    keystrokes: int = KEYSTROKES,
+    query: str = "tường",
+    title: str = "Cấu hình tường lửa",
+    initial_query: str = "",
+) -> dict:
     node = shutil.which("node")
     if node is None:  # pragma: no cover - phụ thuộc môi trường
         pytest.skip("cần Node để chạy harness cho search.js")
     result = subprocess.run(
-        [node, str(HARNESS), str(SEARCH_JS), str(post_count), str(keystrokes)],
+        [node, str(HARNESS), str(SEARCH_JS), str(post_count), str(keystrokes),
+         query, title, initial_query],
         cwd=ROOT,
         check=False,
         capture_output=True,
@@ -67,7 +74,34 @@ def test_search_still_returns_correct_matches(harness):
     assert "1 kết quả" in harness["statusText"]
 
 
-def test_search_matches_are_diacritic_insensitive():
-    """Bỏ dấu vẫn phải khớp — chỉ mục dựng sẵn không được làm mất tính năng này."""
-    out = _run_harness(post_count=10, keystrokes=5)
+@pytest.mark.parametrize("query", ["điều hướng", "dieu huong", "ĐIỀU HƯỚNG", "DIEU HUONG", "huong dieu"])
+def test_search_matches_are_diacritic_insensitive(query):
+    """Cùng bài phải tìm được với đ/d, dấu tiếng Việt và nhiều từ đảo thứ tự."""
+    out = _run_harness(10, len(query), query, "Điều hướng thư mục")
     assert out["rendered"] == 1
+    assert out["groupsHidden"] is True
+
+
+def test_search_without_stroked_d_keeps_other_vietnamese_accents():
+    out = _run_harness(10, 10, "tuong lua")
+    assert out["rendered"] == 1
+
+
+def test_no_match_has_empty_results_and_keeps_query_status():
+    out = _run_harness(10, 7, "xyznone")
+    assert out["rendered"] == 0
+    assert "0 kết quả" in out["statusText"]
+
+
+def test_clearing_query_restores_archive():
+    out = _run_harness(10, 1, "", initial_query="tường")
+    assert out["rendered"] == 0
+    assert out["groupsHidden"] is False
+    assert out["resultsHidden"] is True
+    assert "10 bài" in out["statusText"]
+
+
+def test_query_entered_before_index_load_is_applied():
+    out = _run_harness(10, 0, title="Điều hướng thư mục", initial_query="dieu huong")
+    assert out["rendered"] == 1
+    assert "dieu huong" in out["statusText"]
