@@ -8,10 +8,9 @@ artifact dẫn xuất. Guard này giữ nó đúng phạm vi:
   2. thay đổi do generator sinh ra không được đụng vào source of truth, tooling
      hay cấu hình CI.
 
-Dùng deny-list chứ không allow-list: danh sách output của generator thay đổi theo
-thời gian, còn tập file "generator tuyệt đối không được ghi" thì ổn định. Nếu một
-generator nào đó bắt đầu ghi vào `topics.md` hay `tools/`, workflow phải dừng chứ
-không im lặng commit.
+Chỉ cho phép artifact mà publish.py prepare đang sinh. Metadata nguồn, tooling,
+config và đường dẫn mới chưa được review đều bị từ chối; thêm output mới phải
+cập nhật contract này cùng generator trong maintenance PR.
 
 Dùng:
   python3 tools/materialize_guard.py --branch <ref>
@@ -42,11 +41,28 @@ PROTECTED_FILES = frozenset({
     "LICENSE",
     "VERSION",
     "pyproject.toml",
+    "curriculum-plan.json",
+    "coverage-catalog.json",
+    "freshness.json",
+    "learning-metadata.json",
+    "learning-paths.json",
+    "taxonomy.json",
 })
 
 # Tooling và cấu hình CI. Một workflow có contents:write không được tự sửa
 # chính bộ kiểm định đang gác nó.
 PROTECTED_DIRS = ("tools/", "tests/", ".github/", "templates/", "assets/", "labs/")
+
+GENERATED_FILES = frozenset({
+    "index.html", "archive.html", "feed.xml", "sitemap.xml", "robots.txt",
+    "search-index.json", "learning-paths.html", "learning-dashboard.html",
+    "docs/content-mix-report.md", "docs/distro-coverage-report.md", "docs/quality-dashboard.md",
+})
+GENERATED_PATH_RE = re.compile(r"(?:trang-[2-9][0-9]*\.html|trang-1[0-9]+\.html|posts/post-[0-9]{3}-[a-z0-9-]+\.html)\Z")
+
+
+def is_generated_path(path: str) -> bool:
+    return path in GENERATED_FILES or GENERATED_PATH_RE.fullmatch(path) is not None
 
 
 def validate_branch(branch: str) -> list[str]:
@@ -63,22 +79,22 @@ def validate_branch(branch: str) -> list[str]:
 def validate_changed_paths(paths: list[str]) -> list[str]:
     errors: list[str] = []
     for raw in paths:
-        path = raw.strip().replace("\\", "/")
+        path = raw
         if not path:
             continue
         if path in PROTECTED_FILES:
             errors.append(f"generator không được sửa source of truth: {path}")
             continue
-        for prefix in PROTECTED_DIRS:
-            if path.startswith(prefix):
-                errors.append(f"generator không được sửa tooling/CI: {path}")
-                break
+        if path.startswith(PROTECTED_DIRS):
+            errors.append(f"generator không được sửa tooling/CI: {path}")
+        elif not is_generated_path(path):
+            errors.append(f"generator không được sửa đường dẫn ngoài artifact contract: {path}")
     return errors
 
 
 def _changed_from_git() -> list[str]:
     result = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=all"],
+        ["git", "status", "--porcelain", "-z", "--untracked-files=all"],
         cwd=ROOT,
         check=False,
         capture_output=True,
@@ -87,13 +103,19 @@ def _changed_from_git() -> list[str]:
     if result.returncode != 0:
         detail = result.stderr.strip() or "unknown git error"
         raise RuntimeError(f"git status failed: {detail}")
-    # Dòng porcelain dạng "XY <path>"; đổi tên hiếm gặp ở đây nhưng vẫn xử lý.
+    # -z giữ nguyên tên có Unicode/khoảng trắng. Rename ghi destination trước,
+    # source sau; phải kiểm cả hai để không lọt việc chuyển metadata sang output.
     paths: list[str] = []
-    for line in result.stdout.splitlines():
-        if not line.strip():
+    entries = iter(result.stdout.split("\0"))
+    for entry in entries:
+        if not entry:
             continue
-        entry = line[3:]
-        paths.append(entry.split(" -> ", 1)[-1] if " -> " in entry else entry)
+        paths.append(entry[3:])
+        if "R" in entry[:2] or "C" in entry[:2]:
+            source = next(entries, "")
+            if not source:
+                raise RuntimeError("git status returned an incomplete rename/copy")
+            paths.append(source)
     return paths
 
 
@@ -109,7 +131,9 @@ def main(argv=None) -> int:
 
     errors = validate_branch(args.branch)
     if args.changed_from_git:
-        errors.extend(validate_changed_paths(_changed_from_git()))
+        changed = _changed_from_git()
+        errors.extend(validate_changed_paths(changed))
+        errors.extend(f"artifact không được là symlink: {path}" for path in changed if (ROOT / path).is_symlink())
 
     if errors:
         print(f"✗ materialize guard: {len(errors)} lỗi", file=sys.stderr)
