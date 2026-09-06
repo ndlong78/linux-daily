@@ -9,14 +9,14 @@ Tài liệu này là **nguồn quy tắc vận hành chính** cho mọi AI agent
 - Không push trực tiếp vào `main`.
 - Bài mới đi qua branch → PR → CI read-only → guarded post-CI squash merge.
 - CI trên PR **không được sửa, commit hoặc push ngược branch**.
-- `.github/workflows/linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp: chỉ được gọi merge API sau khi CI của **exact head SHA** đã success; không checkout PR code, không self-mutation, không bypass protection.
+- `.github/workflows/linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp: gọi merge API sau khi CI của **exact head SHA** đã success, rồi dispatch CI và Production Smoke để kiểm chứng commit sau merge; không checkout PR code, không self-mutation, không bypass protection.
 - `state.json` là nguồn sự thật của cadence; `topics.md` là lịch sử nội dung, không dùng làm clock vận hành.
 - Từ #019, claim/lệnh kỹ thuật chính phải có nguồn official/upstream kiểm chứng được.
 - **Mọi URL nguồn mới phải được HTTP-check trước khi mở PR.** "Kiểm chứng được" nghĩa là
   đã thật sự gọi thử và nhận 2xx — không phải trông có vẻ đúng. URL không tồn tại là lỗi
   nặng hơn thiếu nguồn: nó tạo ra vẻ ngoài của bằng chứng ở nơi không có bằng chứng nào.
   Ưu tiên URL đã có sẵn trong repo cho cùng công cụ, vì chúng đã qua link check.
-- Từ #041, bài mới phải qua `tools/validate_style.py`; #001–#040 là legacy baseline và backfill theo PR riêng.
+- Toàn bộ #001+ phải qua `tools/validate_style.py`; backfill #001–#040 đã hoàn tất và không còn legacy exemption.
 - Social output Facebook/X đang tạm dừng.
 - Scheduled Task không được coi việc thiếu local writable checkout là blocker nếu GitHub connector vẫn có quyền ghi feature branch/PR an toàn. Khi đó dùng API-only fallback và để CI read-only làm remote validation authoritative.
 
@@ -107,7 +107,7 @@ Review sâu hơn với networking/firewall, storage/filesystem, backup/restore, 
 
 Dùng `templates/post.template.html`, `STYLE.md`, `assets/style.css`.
 
-Từ #041, bài phải có:
+Toàn bộ #001+, gồm các bài lịch sử đã backfill, phải có:
 
 1. metadata hiển thị `Tested on` + `Last verified`;
 2. Mục tiêu;
@@ -129,8 +129,8 @@ Mỗi bài phải có:
 - 2 link về trang chủ;
 - metadata JSON `<script id="ld-meta">`;
 - #019+: `review_status`, `sources`, `<section class="sources">`;
-- #041+: `tested_on`, `last_verified`, `changes_system`;
-- #041+: mọi `<pre><code>` có `language-*`;
+- #001+: `tested_on`, `last_verified`, `changes_system`;
+- #001+: mọi `<pre><code>` có `language-*`;
 - command shell có `data-run-as="user|sudo|root"`;
 - không shell prompt `$`/`#`, không `curl | sh` mù, không placeholder legacy `YOUR_*`.
 
@@ -393,7 +393,7 @@ Repo dùng **Squash and merge** cho workflow thường ngày.
 - `CHANGES_REQUESTED` hoặc unresolved review thread chặn merge;
 - dùng REST merge endpoint với `merge_method=squash` + exact `sha` precondition;
 - không `gh pr merge`, không native auto-merge, không `--admin`, không sửa branch protection;
-- chỉ cần `contents: write` + `pull-requests: read`;
+- quyền `contents: write` + `pull-requests: read` cho merge; `actions: write` chỉ để dispatch CI và Production Smoke sau merge;
 - không stage/commit/push branch.
 
 **Ordering bắt buộc:** PR bài hằng ngày phải chuyển non-Draft/Ready ngay khi structural/diff/review gate sạch, không đợi CI xanh. Nếu exact-head CI đã success khi PR còn Draft rồi mới chuyển Ready, phải rerun CI/quality-gate trên **cùng exact head SHA** để tạo một `workflow_run success` mới; không tạo no-op commit chỉ để kích hoạt auto-merge.

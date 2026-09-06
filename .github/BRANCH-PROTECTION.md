@@ -20,7 +20,7 @@ Repository merge settings should therefore be:
 - Squash merging: **enabled**.
 - Merge commits: **disabled** for normal development.
 - Rebase merging: **disabled** for normal development.
-- Auto-merge: optional only when it still respects required checks and explicit user approval; automation must not enable or perform it by itself.
+- Native GitHub auto-merge is not used by the daily publishing workflow. The authorized `linux-daily-auto-merge.yml` performs guarded squash merges through the REST API after exact-head CI success; see `AGENTS.md`. Maintenance PRs are reviewed and squash-merged separately after their current head passes CI. Neither path may bypass branch protection.
 
 The final squash subject must be descriptive. For daily content use:
 

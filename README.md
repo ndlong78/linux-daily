@@ -33,7 +33,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
                  GitHub Actions CI
                          │
                          ▼
-                   người dùng merge
+                guarded squash merge
                          │
                          ▼
                 Cloudflare Worker
@@ -55,7 +55,7 @@ ChatGPT Plus Scheduled Task (07:00 Asia/Ho_Chi_Minh)
 - `templates/index.template.html` — khung trang chủ.
 - `tools/build.py` — build + structural/source quality gate local.
 - `tools/validate_sources.py` — source-backed technical gate.
-- `tools/validate_style.py` — audit STYLE.md toàn lịch sử và enforce từ bài #041.
+- `tools/validate_style.py` — audit và enforce STYLE.md cho toàn bộ series #001+.
 - `.github/workflows/ci.yml` — quality gate trên PR/push.
 
 ## Cấu trúc repo
@@ -124,14 +124,14 @@ python3 tools/cadence.py next
 Sau khi sinh bài hoàn chỉnh:
 
 ```bash
-python3 tools/build.py
+python3 tools/publish.py prepare
 python3 tools/cadence.py record
-python3 tools/publish.py check
+python3 tools/pr_preflight.py
 ```
 
 ## STYLE.md quality gate
 
-Từ **Linux Daily #041**, bài mới phải đáp ứng `STYLE.md` trước khi merge. Gate kiểm tra các contract máy đọc được, gồm:
+**Toàn bộ Linux Daily #001+** phải đáp ứng `STYLE.md` trước khi merge. Backfill #001–#040 đã hoàn tất. Gate kiểm tra các contract máy đọc được, gồm:
 
 - `ld-meta.tested_on`, `last_verified`, `changes_system`;
 - metadata `Tested on` / `Last verified` hiển thị trong bài;
@@ -143,7 +143,7 @@ Từ **Linux Daily #041**, bài mới phải đáp ứng `STYLE.md` trước khi
 - Gỡ / Hoàn tác khi `changes_system=true`;
 - chặn shell prompt trong command block, placeholder legacy và `curl | sh` chạy trực tiếp.
 
-Bài #001–#040 là **legacy baseline**: vẫn được audit nhưng chưa làm CI fail. Xem `docs/STYLE-AUDIT.md`.
+Bài #001–#040 được kiểm tra và chặn regression như bài mới; không còn legacy exemption. Xem `docs/STYLE-AUDIT.md`.
 
 ```bash
 python3 tools/validate_style.py
@@ -168,7 +168,9 @@ Từ **Linux Daily #019**, mỗi bài mới phải có tối thiểu **2 nguồn
 8. Chạy generator deterministic.
 9. Chạy `python3 tools/publish.py check`.
 10. Dùng branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`.
-11. Mở PR vào `main`; đợi `quality-gate` xanh; người dùng review và merge.
+11. Mở PR vào `main`; chuyển bài hằng ngày sang Ready khi diff/state/duplicate/review sạch, trước khi CI kết thúc. `Linux Daily Auto Merge` chỉ squash-merge khi CI của đúng head SHA success và các điều kiện trong `AGENTS.md` được thỏa mãn.
+
+PR bảo trì dùng branch riêng, không khớp tên branch bài hằng ngày. Chỉ squash-merge sau khi review và CI của head SHA hiện tại đạt; workflow auto-merge bài hằng ngày không xử lý các PR này.
 
 **Facebook/X đang tạm dừng.** Bài mới không cần tạo social artifact mặc định.
 

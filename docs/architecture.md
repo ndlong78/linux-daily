@@ -7,7 +7,7 @@ Linux Daily là static-site pipeline. Repository là source of truth; Cloudflare
 ```mermaid
 flowchart TD
     A[ChatGPT Plus Scheduled Task] --> B[state.json + topics.md + AGENTS.md]
-    B --> C[Post HTML + ld-meta + social assets]
+    B --> C[Post HTML + ld-meta]
     C --> D[tools/build.py]
     D --> E[Generators]
     E --> E1[index.html]
@@ -22,7 +22,7 @@ flowchart TD
     C --> G[Pull Request]
     D --> G
     G --> H[GitHub Actions quality-gate]
-    H --> I[Human review + merge]
+    H --> I[Review gates + exact-SHA squash merge]
     I --> J[Cloudflare Worker deploy]
     J --> K[https://linux.no.id.vn/]
     K --> L[Production smoke]
@@ -52,14 +52,14 @@ flowchart TD
 
 ## CI pipeline
 
-`.github/workflows/ci.yml` chạy trên pull request và push `main`:
+`.github/workflows/ci.yml` chạy trên pull request, push `main` và `workflow_dispatch`:
 
 ```text
 Ruff
   ↓
 Pytest
   ↓
-build.py --check
+publish.py check
   ↓
 External link check
   ↓
@@ -69,6 +69,8 @@ Render smoke
 ```
 
 Production smoke tách khỏi PR quality gate vì production có thể chưa deploy cùng commit trong lúc PR đang review.
+
+Bài hằng ngày đi qua `linux-daily-auto-merge.yml`: kiểm PR/review và exact head SHA trước khi squash-merge, rồi dispatch CI và Production Smoke cho commit sau merge. PR bảo trì được review và squash-merge riêng sau CI. Social output mới đang tạm dừng; asset lịch sử vẫn được giữ.
 
 ## Hosting boundary
 
