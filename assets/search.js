@@ -10,7 +10,8 @@
   // thao tác đắt, nên chỉ chạy một lần cho mỗi bài lúc tải chỉ mục — không lặp lại theo
   // từng term × từng bài × từng lần gõ phím (số bài tăng 1/ngày).
   let index = [];
-  const normalize = (value) => value.toLocaleLowerCase('vi').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const normalize = (value) => value.toLocaleLowerCase('vi').normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd');
   const haystack = (post) => normalize([post.title, post.lede, post.axis_label, ...(post.tags || [])].join(' '));
 
   const render = (matches, query) => {
@@ -73,6 +74,8 @@
         clearTimeout(pending);
         pending = setTimeout(search, 120);
       });
+      // Người đọc có thể đã gõ trong lúc fetch hoặc trình duyệt khôi phục ô nhập.
+      if (input.value.trim()) search();
     })
     .catch(() => {
       input.disabled = true;

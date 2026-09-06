@@ -7,7 +7,8 @@
 // Dùng: node search_harness.mjs <đường-dẫn-search.js> <số-bài> <số-keystroke>
 import {readFileSync} from 'node:fs';
 
-const [scriptPath, postCountRaw, keystrokesRaw] = process.argv.slice(2);
+const [scriptPath, postCountRaw, keystrokesRaw, query = 'tường',
+  firstTitle = 'Cấu hình tường lửa', initialQuery = ''] = process.argv.slice(2);
 const postCount = Number(postCountRaw);
 const keystrokes = Number(keystrokesRaw);
 
@@ -37,6 +38,7 @@ const makeNode = () => {
 };
 
 const input = makeNode();
+input.value = initialQuery;
 const status = makeNode();
 const results = makeNode();
 const groups = makeNode();
@@ -54,7 +56,7 @@ globalThis.document = {
 const posts = Array.from({length: postCount}, (_, i) => ({
   issue: i + 1,
   href: `posts/post-${String(i + 1).padStart(3, '0')}-demo.html`,
-  title: i === 0 ? 'Cấu hình tường lửa' : `Bài số ${i + 1}`,
+  title: i === 0 ? firstTitle : `Bài số ${i + 1}`,
   lede: 'Mô tả ngắn cho bài viết.',
   axis_label: 'Networking',
   date: '01·01·2026',
@@ -71,8 +73,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 250));
 await settle();
 const afterLoad = normalizeCalls;
 
-// Gõ dần "tường" — mỗi keystroke là một sự kiện input.
-const query = 'tường';
+// Gõ dần truy vấn; gửi nhiều sự kiện liền nhau để kiểm tra debounce.
 for (let i = 1; i <= keystrokes; i += 1) {
   input.value = query.slice(0, i);
   input.dispatch('input');
@@ -87,4 +88,6 @@ console.log(JSON.stringify({
   total: normalizeCalls,
   rendered,
   statusText: status.textContent,
+  groupsHidden: groups.hidden,
+  resultsHidden: results.hidden,
 }));
