@@ -60,6 +60,45 @@ GENERATED_FILES = frozenset({
 })
 GENERATED_PATH_RE = re.compile(r"(?:trang-[2-9][0-9]*\.html|trang-1[0-9]+\.html|posts/post-[0-9]{3}-[a-z0-9-]+\.html)\Z")
 
+# Dữ liệu bài được phép khác main; mọi mã thực thi/config phải khớp main.
+SOURCE_INPUTS = frozenset({
+    "topics.md", "state.json", "curriculum-plan.json", "coverage-catalog.json",
+    "freshness.json", "learning-metadata.json", "learning-paths.json", "taxonomy.json",
+})
+
+
+def _tree(root: Path, ref: str) -> dict[str, tuple[str, str, str]]:
+    result = subprocess.run(
+        ["git", "ls-tree", "-rz", "--full-tree", ref], cwd=root,
+        check=True, capture_output=True, text=True,
+    )
+    entries = {}
+    for entry in result.stdout.split("\0"):
+        if entry:
+            info, path = entry.split("\t", 1)
+            mode, kind, oid = info.split()
+            entries[path] = (mode, kind, oid)
+    return entries
+
+
+def validate_source_tree(root: Path, trusted_ref: str) -> list[str]:
+    """Run this copy from trusted main before installing or executing branch code."""
+    trusted, candidate = _tree(root, trusted_ref), _tree(root, "HEAD")
+    errors = []
+    for path in sorted(trusted.keys() | candidate.keys()):
+        entry = candidate.get(path)
+        if entry and entry[:2] != ("100644", "blob") and entry[:2] != ("100755", "blob"):
+            errors.append(f"source không được chứa symlink/submodule: {path}")
+        if trusted.get(path) == entry:
+            continue
+        if path not in SOURCE_INPUTS and not is_generated_path(path):
+            errors.append(f"source thay đổi mã/config ngoài main: {path}")
+        elif entry and entry[:2] != ("100644", "blob"):
+            errors.append(f"input phải là file dữ liệu thường: {path}")
+    if _changed_from_git(root):
+        errors.append("source checkout phải sạch trước khi chạy generator")
+    return errors
+
 
 def is_generated_path(path: str) -> bool:
     return path in GENERATED_FILES or GENERATED_PATH_RE.fullmatch(path) is not None
@@ -92,10 +131,10 @@ def validate_changed_paths(paths: list[str]) -> list[str]:
     return errors
 
 
-def _changed_from_git() -> list[str]:
+def _changed_from_git(root: Path | None = None) -> list[str]:
     result = subprocess.run(
         ["git", "status", "--porcelain", "-z", "--untracked-files=all"],
-        cwd=ROOT,
+        cwd=root if root is not None else ROOT,
         check=False,
         capture_output=True,
         text=True,
@@ -122,6 +161,8 @@ def _changed_from_git() -> list[str]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description="Guard phạm vi cho materialize-artifacts.")
     ap.add_argument("--branch", required=True, help="Branch mà workflow đang chạy trên đó.")
+    ap.add_argument("--repo-root", type=Path, help="Checkout đích khi chạy guard từ bản main tin cậy.")
+    ap.add_argument("--trusted-ref", help="SHA main để kiểm source trước khi cài dependency.")
     ap.add_argument(
         "--changed-from-git",
         action="store_true",
@@ -130,10 +171,16 @@ def main(argv=None) -> int:
     args = ap.parse_args(argv)
 
     errors = validate_branch(args.branch)
+    root = args.repo_root.resolve() if args.repo_root else ROOT
+    if args.trusted_ref:
+        if not re.fullmatch(r"[0-9a-f]{40}", args.trusted_ref):
+            errors.append("trusted-ref phải là commit SHA đầy đủ")
+        else:
+            errors.extend(validate_source_tree(root, args.trusted_ref))
     if args.changed_from_git:
-        changed = _changed_from_git()
+        changed = _changed_from_git(root) if args.repo_root else _changed_from_git()
         errors.extend(validate_changed_paths(changed))
-        errors.extend(f"artifact không được là symlink: {path}" for path in changed if (ROOT / path).is_symlink())
+        errors.extend(f"artifact không được là symlink: {path}" for path in changed if (root / path).is_symlink())
 
     if errors:
         print(f"✗ materialize guard: {len(errors)} lỗi", file=sys.stderr)

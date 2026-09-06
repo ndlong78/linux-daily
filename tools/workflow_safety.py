@@ -225,8 +225,16 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         # để `rerun_workflow_job` dùng được — xem kiểm định branch-input bên dưới.
         '"repos/${GITHUB_REPOSITORY}/contents/state.json"',
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
-        "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
-        "tools/materialize_guard.py --branch",
+        'test "${GITHUB_REF}" = "refs/heads/main"',
+        'git show "${TRUSTED_SHA}:tools/materialize_guard.py" > "${RUNNER_TEMP}/materialize_guard.py"',
+        'python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch',
+        '--trusted-ref "${TRUSTED_SHA}"',
+        '--repo-root "${GITHUB_WORKSPACE}"',
+        'ref: ${{ env.TARGET_SHA }}',
+        'persist-credentials: false',
+        'test "$(git rev-parse HEAD)" = "${TARGET_SHA}"',
+        'test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq \'.object.sha\')" = "${TARGET_SHA}"',
+        'gh auth setup-git',
         "--changed-from-git",
         "tools/publish.py prepare",
         "tools/publish.py check",
@@ -235,6 +243,21 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
     for marker in required_markers:
         if marker not in text:
             errors.append(f"{rel}: materialize safety marker missing: {marker}")
+
+    source_guard = text.find('--trusted-ref "${TRUSTED_SHA}"')
+    install = text.find('pip install -e')
+    prepare = text.find('python tools/publish.py prepare', text.find('steps:'))
+    if not 0 <= source_guard < install < prepare:
+        errors.append(f"{rel}: trusted source guard must run before dependency installation and generator")
+    if text.count('--changed-from-git --repo-root "${GITHUB_WORKSPACE}"') != 2:
+        errors.append(f"{rel}: materialize safety marker missing: output guards after prepare and before commit")
+    for step in re.split(r"^      - ", text, flags=re.MULTILINE)[1:]:
+        if any(marker in step for marker in ('pip install', 'tools/publish.py')) and (
+            'GH_TOKEN:' in step or 'github.token' in step or 'secrets.' in step
+        ):
+            errors.append(f"{rel}: generator/dependency step must not receive credentials")
+    if re.search(r"persist-credentials:\s*true", text):
+        errors.append(f"{rel}: materialize must not persist checkout credentials")
 
     # `branch` phải là input TUỲ CHỌN. Connector của agent không expose verb
     # workflow_dispatch, chỉ expose rerun; mà rerun phát lại đúng inputs cũ. Nếu branch

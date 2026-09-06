@@ -256,7 +256,14 @@ POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatche
             "confirm": "materialize-artifacts"}}
 ```
 
-Workflow checkout đúng branch đó, chạy `publish.py prepare`, verify `publish.py check`, rồi commit artifact và push. Head SHA đổi nên `CI` chạy lại, và `Linux Daily Auto Merge` vẫn kiểm exact-SHA như cũ — chuỗi bảo đảm không đổi.
+Workflow pin SHA của branch đích và main hiện tại. Trước khi cài dependency, bản
+`materialize_guard.py` lấy từ SHA main kiểm toàn bộ tree của branch: chỉ dữ liệu
+bài và artifact được khác main; tooling, dependency/config, template và workflow
+phải khớp. Branch cũ có tooling khác main phải cập nhật từ main rồi chạy lại.
+Checkout không lưu credential; token chỉ cấp cho bước đọc API và bước commit/push.
+Sau `publish.py prepare` và `publish.py check`, guard từ main kiểm đầu ra lần nữa;
+HEAD local và remote phải còn khớp SHA đã pin trước khi ghi. Push không force.
+Head SHA đổi nên `CI` chạy lại, và `Linux Daily Auto Merge` vẫn kiểm exact-SHA.
 
 Ràng buộc của đường này, do `tools/materialize_guard.py` và `tools/workflow_safety.py` cưỡng chế:
 
@@ -318,6 +325,15 @@ POST /repos/{owner}/{repo}/actions/workflows/materialize-artifacts.yml/dispatche
 **Lưu ý vận hành:** rerun dùng định nghĩa workflow của run gốc. Sau mỗi lần sửa
 `materialize-artifacts.yml`, phải dispatch tay **một lần** để tạo run gốc mới; từ đó agent
 rerun hằng ngày.
+
+Khi rollout thay đổi ranh giới tin cậy của materialize:
+
+1. CI của maintenance PR phải xanh trên đúng head SHA, không có review đang chặn.
+2. Chuẩn bị khả năng dispatch mới trước khi merge workflow; rerun cũ không kiểm chứng YAML mới.
+3. Sau merge, dispatch từ main với `confirm=materialize-artifacts`, bỏ trống `branch`,
+   trên branch bài kế tiếp có source hợp lệ; đọc log để xác nhận source guard chạy trước pip.
+4. Kiểm artifact, CI trên head mới và chu kỳ bài tiếp theo. Chưa có run thành công thì
+   không tuyên bố đường API-only đã được kiểm chứng; giữ khả năng chạy local preflight.
 
 Đường local vẫn nguyên: chạy `python3 tools/publish.py prepare` rồi commit như bình thường, không cần dispatch.
 

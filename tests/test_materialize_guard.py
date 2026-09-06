@@ -134,3 +134,70 @@ def test_symlink_cannot_be_committed_as_artifact(tmp_path, monkeypatch):
     monkeypatch.setattr(materialize_guard, "ROOT", tmp_path)
     monkeypatch.setattr(materialize_guard, "_changed_from_git", lambda: ["index.html"])
     assert materialize_guard.main(["--branch", DAILY, "--changed-from-git"]) == 1
+
+
+@pytest.fixture
+def source_repo(tmp_path):
+    def git(*args):
+        return subprocess.check_output(
+            ["git", "-c", "user.name=Test", "-c", "user.email=test@example.invalid", *args],
+            cwd=tmp_path, text=True,
+        ).strip()
+
+    git("init", "-q")
+    (tmp_path / "tools").mkdir()
+    (tmp_path / "tools/publish.py").write_text("pass\n")
+    (tmp_path / "state.json").write_text("{}\n")
+    git("add", "tools/publish.py", "state.json")
+    git("commit", "-qm", "Trusted main")
+    return tmp_path, git, git("rev-parse", "HEAD")
+
+
+@pytest.mark.parametrize("path", ["state.json", "topics.md", "learning-metadata.json",
+                                 "posts/post-069-example.html", "trang-5.html"])
+def test_source_guard_accepts_daily_data(source_repo, path):
+    root, git, trusted = source_repo
+    (root / path).parent.mkdir(parents=True, exist_ok=True)
+    (root / path).write_text("Daily input\n")
+    git("add", "--", path)
+    git("commit", "-qm", "Daily data")
+    assert materialize_guard.validate_source_tree(root, trusted) == []
+
+
+@pytest.mark.parametrize("path", ["tools/publish.py", "tools/materialize_guard.py", "pyproject.toml",
+                                 "setup.py", "sitecustomize.py", "templates/index.template.html",
+                                 ".github/workflows/ci.yml", ".gitattributes"])
+def test_source_guard_rejects_committed_code_and_config_changes(source_repo, path):
+    root, git, trusted = source_repo
+    (root / path).parent.mkdir(parents=True, exist_ok=True)
+    (root / path).write_text("Untrusted change\n")
+    git("add", "--", path)
+    git("commit", "-qm", "Changed execution inputs")
+    assert any(path in error for error in materialize_guard.validate_source_tree(root, trusted))
+
+
+def test_source_guard_rejects_deleted_tooling(source_repo):
+    root, git, trusted = source_repo
+    git("rm", "tools/publish.py")
+    git("commit", "-qm", "Removed tooling")
+    assert materialize_guard.validate_source_tree(root, trusted)
+
+
+def test_source_guard_rejects_symlink_data(source_repo):
+    root, git, trusted = source_repo
+    (root / "topics.md").symlink_to("tools/publish.py")
+    git("add", "topics.md")
+    git("commit", "-qm", "Linked input")
+    assert materialize_guard.validate_source_tree(root, trusted)
+
+
+def test_source_guard_rejects_dirty_checkout(source_repo):
+    root, _, trusted = source_repo
+    (root / "state.json").write_text("Uncommitted input\n")
+    assert any("checkout" in error for error in materialize_guard.validate_source_tree(root, trusted))
+
+
+def test_external_guard_can_validate_explicit_checkout(source_repo):
+    root, _, trusted = source_repo
+    assert materialize_guard.main(["--branch", DAILY, "--repo-root", str(root),
+                                   "--trusted-ref", trusted]) == 0
