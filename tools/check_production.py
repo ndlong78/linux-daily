@@ -174,6 +174,19 @@ def _check_once(timeout: float = 12.0) -> CheckResult:
         "latest post": (latest_url, f"/posts/{latest_name}", {"text/html"}),
         "latest social image": (image_url, f"/{social_relpath}", {"image/png"}),
     }
+    covered = {public_path for _, public_path, _ in endpoints.values()}
+    asset_types = {
+        ".html": {"text/html"},
+        ".json": {"application/json"},
+        ".css": {"text/css"},
+        ".js": {"text/javascript", "application/javascript"},
+    }
+    for public_path in expected:
+        if public_path not in covered:
+            suffix = os.path.splitext(public_path)[1]
+            endpoints[public_path] = (
+                urljoin(base, public_path.lstrip("/")), public_path, asset_types[suffix],
+            )
 
     responses: dict[str, tuple[dict[str, str], bytes, str]] = {}
     production_by_path: dict[str, bytes] = {}

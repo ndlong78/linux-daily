@@ -3,7 +3,9 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
+
+import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / "tools"
@@ -192,3 +194,50 @@ def test_non_edge_managed_paths_are_still_compared_byte_exact():
     assert check_production._body_drift("/", body, sha, body) is None
     drift = check_production._body_drift("/", body + b" ", sha, body)
     assert drift and "expected sha256" in drift
+
+
+def _serve_repo(monkeypatch, broken_path=None, failure=None):
+    """Serve real local artifacts through a fake HTTP boundary; corrupt one endpoint."""
+    _, expected = check_production._expected_by_public_path()
+    requested = []
+    types = {".html": "text/html", ".xml": "application/xml", ".txt": "text/plain",
+             ".png": "image/png", ".css": "text/css", ".js": "text/javascript",
+             ".json": "application/json"}
+
+    def fetch(url, timeout):
+        path = urlparse(url).path or "/"
+        requested.append(path)
+        body = expected[path][1]
+        mime = "text/html" if path == "/" else types[Path(path).suffix]
+        status = 200
+        if path == broken_path:
+            if failure == "missing":
+                status, body = 404, b"Not found"
+            elif failure == "html-fallback":
+                mime, body = "text/html", b"<html>Fallback</html>"
+            elif failure == "stale":
+                body += b" stale"
+        return status, {"content-type": mime, "cache-control": "public, max-age=60"}, body, url
+
+    monkeypatch.setattr(check_production, "_fetch", fetch)
+    return requested
+
+
+def test_full_smoke_requests_discovery_assets_and_pagination(monkeypatch):
+    requested = _serve_repo(monkeypatch)
+    result = check_production._check_once()
+    assert result.ok, result.errors
+    assert result.expected_fingerprint == result.production_fingerprint
+    assert {"/archive.html", "/search-index.json", "/assets/style.css", "/assets/search.js"} <= set(requested)
+    assert {"/" + p.name for p in ROOT.glob("trang-*.html")} <= set(requested)
+
+
+@pytest.mark.parametrize("path", ["/assets/style.css", "/assets/search.js", "/search-index.json",
+                                 "/archive.html", "/trang-2.html"])
+@pytest.mark.parametrize("failure", ["missing", "html-fallback", "stale"])
+def test_smoke_rejects_broken_reader_endpoints(monkeypatch, path, failure):
+    requested = _serve_repo(monkeypatch, path, failure)
+    result = check_production._check_once()
+    assert path in requested
+    assert not result.ok
+    assert any(path in error for error in result.errors), result.errors

@@ -22,6 +22,10 @@ def test_served_files_cover_public_operational_surface():
     assert paths[:4] == ["/", "/feed.xml", "/sitemap.xml", "/robots.txt"]
     assert any(path.startswith(f"/posts/post-{latest_issue:03d}-") for path in paths)
     assert expected_preview in paths
+    assert {"/archive.html", "/search-index.json", "/learning-paths.html",
+            "/learning-dashboard.html", "/assets/style.css", "/assets/search.js"} <= set(paths)
+    assert {"/" + p.name for p in ROOT.glob("trang-*.html")} <= set(paths)
+    assert len(paths) == len(set(paths))
 
 
 def test_fingerprint_is_deterministic_and_complete():
@@ -31,7 +35,7 @@ def test_fingerprint_is_deterministic_and_complete():
     assert first == second
     assert len(first) == 64
     assert files == files_again
-    assert len(files) == 6
+    assert len(files) > 6
     assert all(len(item.sha256) == 64 for item in files)
     assert all(item.size > 0 for item in files)
 
@@ -41,7 +45,7 @@ def test_manifest_exposes_latest_issue_without_commit_sha_coupling():
     assert data["schema"] == 1
     assert data["latest_issue"] == _latest_issue()
     assert data["fingerprint"]
-    assert len(data["files"]) == 6
+    assert "/assets/search.js" in {item["public_path"] for item in data["files"]}
 
 
 # --- /robots.txt bị edge viết lại: có trong manifest, ngoài hash tổng ---
@@ -68,7 +72,7 @@ def test_robots_stays_in_manifest_so_containment_still_has_bytes():
     """Loại khỏi hash tổng, nhưng vẫn phải liệt kê — checker cần bytes để so containment."""
     _, files = site_fingerprint.collect()
     assert "/robots.txt" in {item.public_path for item in files}
-    assert len(files) == 6
+    assert len(files) > 6
 
 
 def test_robots_bytes_really_are_excluded_from_the_aggregate():
