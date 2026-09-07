@@ -29,6 +29,17 @@ def test_auto_merge_workflow_is_exact_sha_and_no_checkout():
     assert "--admin" not in text
 
 
+def test_auto_merge_skips_ineligible_prs_without_reporting_failure():
+    text = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "id: contract" in text
+    assert 'echo "eligible=false" >> "${GITHUB_OUTPUT}"' in text
+    assert 'if ! [[ "${head_ref}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]; then' in text
+    assert 'if test "${state}" != "open" || test "${draft}" != "false"; then' in text
+    assert 'echo "eligible=true" >> "${GITHUB_OUTPUT}"' in text
+    assert text.count("if: steps.contract.outputs.eligible == 'true'") == 2
+
+
 def test_auto_merge_uses_merge_response_sha_and_serializes_main():
     text = WORKFLOW.read_text(encoding="utf-8")
 
