@@ -2,7 +2,10 @@
 """Validate Linux Daily posts against STYLE.md.
 
 Historical backfill is complete. Linux Daily #001-#040 and every new post are
-enforced by the STYLE.md contract.
+enforced by the STYLE.md contract. Verification evidence uses the legacy
+``tested_on`` sentinel schema through #069 and the explicit runtime/documentation
+split from #070 onward; historical posts become explicit when the deterministic
+#070 backfill runs.
 """
 from __future__ import annotations
 
@@ -19,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 POSTS_DIR = ROOT / "posts"
 BACKFILLED_THROUGH = 40
 ENFORCED_FROM_ISSUE = 41
+VERIFICATION_SPLIT_FROM_ISSUE = 70
+DOCUMENTATION_SUFFIX = "(documentation-verified)"
 
 SCRIPT_META_RE = re.compile(
     r'<script[^>]+id=["\']ld-meta["\'][^>]*>(.*?)</script>', re.IGNORECASE | re.DOTALL
@@ -38,12 +43,7 @@ LEGACY_PLACEHOLDER_RE = re.compile(r"\bYOUR_[A-Z0-9_]+\b|\[username\]|\[server-i
 RUN_AS_RE = re.compile(r'data-run-as=["\'](?:user|sudo|root)["\']', re.IGNORECASE)
 LANGUAGE_CLASS_RE = re.compile(r'class=["\'][^"\']*\blanguage-[a-z0-9_-]+\b', re.IGNORECASE)
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-# Thẻ mang nhãn không cố định: bài dùng cả <div class="code-label bsd"> lẫn
-# <p class="code-label bsd">, nên khớp theo class chứ không theo tên thẻ.
 CODE_LABEL_RE = re.compile(r'class=["\'][^"\']*\bcode-label\s+([a-z0-9_-]+)', re.IGNORECASE)
-# Từ vựng nhãn OS cho command block. `same` = lệnh giống nhau trên mọi hệ.
-# validate_repo yêu cầu riêng `code-label bsd`; ở đây kiểm chính quy ước markup,
-# để nhãn sai token không bị báo nhầm thành "thiếu khối FreeBSD".
 CODE_LABEL_TOKENS = frozenset({"bsd", "ubuntu", "debian", "fedora", "linux", "same"})
 
 REQUIRED_HEADINGS = (
@@ -105,6 +105,57 @@ def _valid_iso_date(value: object) -> bool:
     return True
 
 
+def _valid_string_list(value: object) -> bool:
+    return isinstance(value, list) and all(
+        isinstance(item, str) and item.strip() for item in value
+    )
+
+
+def _verification_errors(meta: dict, issue: int, lowered: str) -> list[str]:
+    errors: list[str] = []
+    tested_on = meta.get("tested_on")
+    split_schema = "documentation_verified_on" in meta or issue >= VERIFICATION_SPLIT_FROM_ISSUE
+
+    if not split_schema:
+        if not _valid_string_list(tested_on) or not tested_on:
+            errors.append("ld-meta.tested_on phải là danh sách OS/version đã test")
+        if "tested on:" not in lowered:
+            errors.append("thiếu metadata hiển thị `Tested on:`")
+        return errors
+
+    documentation_verified_on = meta.get("documentation_verified_on")
+    if not _valid_string_list(tested_on):
+        errors.append("ld-meta.tested_on phải là list runtime-test (có thể rỗng)")
+    if not _valid_string_list(documentation_verified_on):
+        errors.append(
+            "ld-meta.documentation_verified_on phải là list documentation review (có thể rỗng)"
+        )
+
+    runtime = tested_on if isinstance(tested_on, list) else []
+    documented = documentation_verified_on if isinstance(documentation_verified_on, list) else []
+    if not runtime and not documented:
+        errors.append("verification metadata phải có ít nhất một bằng chứng runtime hoặc documentation")
+
+    for field_name, values in (
+        ("tested_on", runtime),
+        ("documentation_verified_on", documented),
+    ):
+        for item in values:
+            if isinstance(item, str) and DOCUMENTATION_SUFFIX in item.lower():
+                errors.append(
+                    f"ld-meta.{field_name} không được chứa sentinel (documentation-verified)"
+                )
+                break
+
+    if "runtime tested:" not in lowered:
+        errors.append("thiếu metadata hiển thị `Runtime tested:`")
+    if "documentation verified:" not in lowered:
+        errors.append("thiếu metadata hiển thị `Documentation verified:`")
+    if "tested on:" in lowered:
+        errors.append("schema verification mới không được hiển thị nhãn legacy `Tested on:`")
+    return errors
+
+
 def audit_post(path: Path) -> StyleResult:
     text = path.read_text(encoding="utf-8")
     issue = _issue_from_path(path)
@@ -113,11 +164,8 @@ def audit_post(path: Path) -> StyleResult:
     if meta_error:
         errors.append(meta_error)
 
-    tested_on = meta.get("tested_on")
-    if not isinstance(tested_on, list) or not tested_on or not all(
-        isinstance(item, str) and item.strip() for item in tested_on
-    ):
-        errors.append("ld-meta.tested_on phải là danh sách OS/version đã test")
+    lowered = _plain(text).lower()
+    errors.extend(_verification_errors(meta, issue, lowered))
 
     if not _valid_iso_date(meta.get("last_verified")):
         errors.append("ld-meta.last_verified phải là ngày ISO YYYY-MM-DD")
@@ -126,9 +174,6 @@ def audit_post(path: Path) -> StyleResult:
     if not isinstance(changes_system, bool):
         errors.append("ld-meta.changes_system phải là boolean")
 
-    lowered = _plain(text).lower()
-    if "tested on:" not in lowered:
-        errors.append("thiếu metadata hiển thị `Tested on:`")
     if "last verified:" not in lowered:
         errors.append("thiếu metadata hiển thị `Last verified:`")
 
