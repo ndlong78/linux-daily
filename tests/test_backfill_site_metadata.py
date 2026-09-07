@@ -77,7 +77,7 @@ def test_verification_migration_splits_legacy_documentation_evidence():
         '"Fedora 42","FreeBSD 14.4-RELEASE"]' in migrated
     )
     assert "(documentation-verified)" not in migrated
-    assert "Runtime tested:" not in migrated, "empty runtime list should not invent evidence"
+    assert "Runtime tested:</strong> —" in migrated
     assert "Documentation verified:" in migrated
     assert "Tested on:" not in migrated
     assert "Last verified:</strong> 2026-09-07" in migrated
