@@ -26,6 +26,7 @@ Validator workflow hiện kiểm:
 - auto-merge chỉ nhận branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>` từ chính repository và do repository owner mở;
 - exact PR head SHA phải bằng `workflow_run.head_sha` trước khi merge;
 - PR phải không Draft, target `main`, không có `CHANGES_REQUESTED` hoặc review thread chưa resolve;
+- maintenance PR, PR đã đóng và daily PR còn Draft được phân loại là **không đủ điều kiện** và kết thúc sạch, không tạo failure giả; chỉ daily PR Ready mới đi tiếp tới merge gate;
 - auto-merge bắt buộc dùng REST merge endpoint với `merge_method=squash` và exact `sha` precondition;
 - auto-merge không được checkout PR code khi đang giữ write token;
 - mọi workflow ngoài `release.yml` và `materialize-artifacts.yml` không được `git add`, `git commit` hoặc `git push`;
@@ -48,7 +49,8 @@ Validator workflow hiện kiểm:
 - commit subject không mô tả như `x`, `tmp`, `test`, `wip`, `placeholder`, `fix`, `update`;
 - file tạm kiểu `*.tmp`, `*.bak`, `*.orig`, `*.rej` bị track;
 - workflow có tên `finalize`/`finalizer` dùng để tự ghi ngược branch;
-- helper migration gắn trực tiếp số PR kiểu `tools/pr93_*.py` hoặc `.sh`.
+- helper migration gắn trực tiếp số PR kiểu `tools/pr93_*.py` hoặc `.sh`;
+- với branch bài hằng ngày `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`, commit base hiện tại của PR phải là ancestor của head. Nếu `main` đã tiến lên sau lúc tạo branch, CI chặn branch stale và yêu cầu cập nhật từ `main` rồi materialize lại trước khi merge. Maintenance branch không bị áp quy tắc cadence này.
 
 Nếu cần migration/backfill, generator phải là tool bền vững theo capability, chạy **trước commit** và output deterministic phải được review trong cùng PR. Không tạo one-shot workflow/helper rồi tự xóa bằng GitHub Actions.
 

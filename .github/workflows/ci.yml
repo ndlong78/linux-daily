@@ -73,6 +73,7 @@ jobs:
           python tools/pr_hygiene.py
           --base "${{ github.event.pull_request.base.sha }}"
           --head "${{ github.event.pull_request.head.sha }}"
+          --branch "${{ github.event.pull_request.head.ref }}"
 
       - name: Cài dependency (Pillow + dev tools)
         run: |
