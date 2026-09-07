@@ -47,6 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           test "${CONFIRM}" = "materialize-artifacts"
+          test "${GITHUB_REF}" = "refs/heads/main"
 
       - name: Resolve target branch
         env:
@@ -55,6 +56,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          trusted_sha="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq '.sha')"
+          [[ "${trusted_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "TRUSTED_SHA=${trusted_sha}" >> "${GITHUB_ENV}"
 
           if test -n "${INPUT_BRANCH}"; then
             resolved="${INPUT_BRANCH}"
@@ -85,12 +89,23 @@ jobs:
           fi
 
           [[ "${resolved}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]
+          target_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${resolved}" --jq '.object.sha')"
+          [[ "${target_sha}" =~ ^[0-9a-f]{40}$ ]]
+          echo "TARGET_SHA=${target_sha}" >> "${GITHUB_ENV}"
           echo "BRANCH=${resolved}" >> "${GITHUB_ENV}"
 
       - uses: actions/checkout@v4
         with:
-          ref: ${{ env.BRANCH }}
+          ref: ${{ env.TARGET_SHA }}
           fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate source against trusted main before executing branch code
+        shell: bash
+        run: |
+          set -euo pipefail
+          git show "${TRUSTED_SHA}:tools/materialize_guard.py" > "${RUNNER_TEMP}/materialize_guard.py"
+          python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch "${BRANCH}" --repo-root "${GITHUB_WORKSPACE}" --trusted-ref "${TRUSTED_SHA}"
 
       - uses: actions/setup-python@v5
         with:
@@ -102,21 +117,25 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Guard branch trước khi ghi
-        run: python tools/materialize_guard.py --branch "${BRANCH}"
+        run: python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch "${BRANCH}" --repo-root "${GITHUB_WORKSPACE}"
 
       - name: Materialize deterministic artifacts
         run: python tools/publish.py prepare
 
       - name: Guard phạm vi thay đổi
-        run: python tools/materialize_guard.py --branch "${BRANCH}" --changed-from-git
+        run: python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch "${BRANCH}" --changed-from-git --repo-root "${GITHUB_WORKSPACE}"
 
       - name: Verify deterministic publish pipeline
         run: python tools/publish.py check
 
       - name: Commit artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${TARGET_SHA}"
+          python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch "${BRANCH}" --changed-from-git --repo-root "${GITHUB_WORKSPACE}"
 
           if test -z "$(git status --porcelain)"; then
             echo "Artifact đã đồng bộ; không có gì để commit."
@@ -125,6 +144,7 @@ jobs:
 
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config core.hooksPath /dev/null
 
           # AGENTS.md cấm stage cả thư mục: stage đúng từng file đã đổi.
           # --untracked-files=all để thư mục mới không bị gom thành một entry "dir/".
@@ -133,4 +153,6 @@ jobs:
           done < <(git status --porcelain -z --untracked-files=all)
 
           git commit -m "Dựng lại artifact site cho ${BRANCH}"
+          test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq '.object.sha')" = "${TARGET_SHA}"
+          gh auth setup-git
           git push origin "HEAD:${BRANCH}"

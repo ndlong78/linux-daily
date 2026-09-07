@@ -56,7 +56,7 @@ def test_real_materialize_workflow_passes_policy():
             id="push-thang-vao-main",
         ),
         pytest.param(
-            "          ref: ${{ env.BRANCH }}",
+            "          ref: ${{ env.TARGET_SHA }}",
             "          ref: main",
             "must never target main",
             id="checkout-main",
@@ -159,3 +159,28 @@ def test_materialize_is_the_only_new_write_capable_workflow():
             continue
         text = path.read_text(encoding="utf-8")
         assert "contents: write" not in text, f"{path.name} không được có contents: write"
+
+
+@pytest.mark.parametrize(("old", "new"), [
+    ('persist-credentials: false', 'persist-credentials: true'),
+    ('--trusted-ref "${TRUSTED_SHA}"', ''),
+    ('git show "${TRUSTED_SHA}:tools/materialize_guard.py"', 'git show "HEAD:tools/materialize_guard.py"'),
+    ('test "${GITHUB_REF}" = "refs/heads/main"', 'true'),
+    ('test "$(git rev-parse HEAD)" = "${TARGET_SHA}"', 'true'),
+    ('      - name: Cài dependency\n', '      - name: Cài dependency\n        env:\n          GH_TOKEN: ${{ github.token }}\n'),
+])
+def test_trusted_source_and_credential_boundaries_are_required(tmp_path, old, new):
+    assert _mutated(tmp_path, old, new)
+
+
+def test_source_guard_must_precede_dependency_installation(tmp_path):
+    text = WORKFLOW.read_text()
+    start = text.index('      - name: Validate source against trusted main')
+    end = text.index('      - uses: actions/setup-python', start)
+    step = text[start:end]
+    text = text[:start] + text[end:]
+    position = text.index('      - name: Guard branch')
+    text = text[:position] + step + text[position:]
+    path = tmp_path / WORKFLOW.name
+    path.write_text(text)
+    assert any('before dependency' in error for error in workflow_safety.validate_file(path))
