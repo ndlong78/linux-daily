@@ -75,6 +75,23 @@ def test_linux_command_outside_freebsd_block_is_not_a_false_positive():
     assert analysis["violations"] == []
 
 
+def test_verification_metadata_does_not_fake_editorial_distro_coverage():
+    source = '''
+    <script type="application/json" id="ld-meta">
+    {"tested_on":["Ubuntu Xubuntu"],"documentation_verified_on":["Debian","Fedora","FreeBSD"]}
+    </script>
+    <p>Thân bài chỉ nói về command semantics.</p>
+    <pre class="bsd"><code>service sshd status</code></pre>
+    '''
+    analysis = distro_coverage.analyze_source(source)
+    assert analysis["coverage"] == {
+        "ubuntu_xubuntu": False,
+        "debian": False,
+        "fedora": False,
+        "freebsd": False,
+    }
+
+
 def test_report_matches_committed_snapshot():
     expected = distro_coverage.render_report()
     assert distro_coverage.REPORT_PATH.read_text(encoding="utf-8") == expected
