@@ -1,4 +1,8 @@
+from pathlib import Path
+
 import pr_hygiene
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_descriptive_commit_subjects_pass():
@@ -67,3 +71,8 @@ def test_maintenance_branch_is_not_subject_to_daily_stale_base_gate():
 def test_remote_compare_mode_requires_branch_name():
     report = pr_hygiene.run(base="a" * 40, head="b" * 40)
     assert report.errors == ["--branch is required with --base/--head"]
+
+
+def test_ci_passes_head_branch_to_remote_hygiene_gate():
+    text = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+    assert '--branch "${{ github.event.pull_request.head.ref }}"' in text
