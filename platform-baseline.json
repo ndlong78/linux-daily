@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "last_verified": "2026-09-07",
+  "applies_from_issue": 70,
+  "historical_evidence_policy": "preserve-until-reverified",
+  "platforms": [
+    {
+      "id": "ubuntu_xubuntu",
+      "display": "Ubuntu/Xubuntu 26.04 LTS",
+      "release": "26.04 LTS",
+      "package_manager": "APT",
+      "service_manager": "systemd",
+      "official_source": "https://documentation.ubuntu.com/release-notes/26.04/",
+      "flavor_source": "https://xubuntu.org/releasedocs/26.04/release-notes/"
+    },
+    {
+      "id": "debian",
+      "display": "Debian 13 stable",
+      "release": "13",
+      "latest_point_release": "13.6",
+      "codename": "trixie",
+      "package_manager": "APT",
+      "service_manager": "systemd",
+      "official_source": "https://www.debian.org/releases/"
+    },
+    {
+      "id": "fedora",
+      "display": "Fedora 44",
+      "release": "44",
+      "package_manager": "DNF",
+      "service_manager": "systemd",
+      "security_model": "SELinux",
+      "official_source": "https://fedoramagazine.org/announcing-fedora-linux-44/"
+    },
+    {
+      "id": "freebsd",
+      "display": "FreeBSD 15.1-RELEASE",
+      "release": "15.1-RELEASE",
+      "package_manager": "pkg/ports",
+      "service_manager": "rc.d",
+      "firewall": "pf/ipfw",
+      "official_source": "https://www.freebsd.org/releases/15.1R/announce/"
+    }
+  ]
+}

@@ -60,12 +60,14 @@ Mục không áp dụng có thể bỏ, ngoại trừ metadata, Mục tiêu, Yê
 
 ## 3. Metadata block
 
-Từ Linux Daily **#070**, đặt ngay dưới phần mở đầu bài:
+Từ Linux Daily **#070**, baseline OS hiện hành lấy từ `platform-baseline.json`. Không copy version từ bài lịch sử để dùng cho bài mới.
+
+Baseline đã xác minh ngày **2026-09-07**:
 
 ```text
 Runtime tested: —
-Documentation verified: Ubuntu 24.04 · Debian 13 · Fedora 42 · FreeBSD 14.4
-Last verified: 2026-09-08
+Documentation verified: Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE
+Last verified: 2026-09-07
 ```
 
 Nếu có lab/runtime thật, thay `—` bằng đúng OS/version đã chạy. Không suy diễn từ tài liệu sang runtime.
@@ -74,12 +76,15 @@ Quy tắc:
 
 - `Runtime tested` / `ld-meta.tested_on` chỉ liệt kê OS/version **thực sự đã chạy kiểm thử**.
 - `Documentation verified` / `ld-meta.documentation_verified_on` chỉ liệt kê OS/version đã được đối chiếu với tài liệu official/upstream phù hợp.
+- Với bài mới #070+, ưu tiên baseline hiện hành trong `platform-baseline.json`: `Ubuntu/Xubuntu 26.04 LTS`, `Debian 13 stable`, `Fedora 44`, `FreeBSD 15.1-RELEASE`.
+- Nếu bài chủ động hướng dẫn một release cũ còn được hỗ trợ, ghi rõ đó là ngoại lệ và verify đúng release đó; không âm thầm hạ baseline chung.
 - Hai trường máy đọc đều là list; list có thể rỗng riêng lẻ nhưng **ít nhất một trong hai phải có bằng chứng**.
 - Cấm sentinel kiểu `(documentation-verified)` bên trong `tested_on`; loại bằng chứng phải nằm ở đúng field.
 - `Last verified` cập nhật khi review lại bài.
 - Metadata máy đọc từ #070 dùng các trường `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`.
 - `changes_system` là boolean. Nếu `true`, bài bắt buộc có mục **Gỡ / Hoàn tác**.
 - Nếu quá 6 tháng chưa verify, đưa vào freshness review.
+- Bằng chứng lịch sử giữ nguyên version đã thật sự review/test. Không đổi #001–#069 thành release mới nếu chưa re-verify claim/lệnh tương ứng.
 - #001–#069 được validator đọc tương thích với schema cũ cho tới lần materialize #070. Khi `state.json.last_issue >= 70`, `tools/backfill_site_metadata.py` chuyển deterministic toàn bộ sentinel lịch sử sang `documentation_verified_on` và sửa nhãn hiển thị; không backfill tay từng bài.
 
 ## 4. Code block & quyền chạy
@@ -120,10 +125,10 @@ Phạm vi bắt buộc của Linux Daily:
 
 | Nhóm | Hệ điều hành | Package | Service | Ghi chú |
 |---|---|---|---|---|
-| systemd | Ubuntu/Xubuntu | `apt` | `systemctl` | thường dùng Netplan/NetworkManager tùy môi trường |
-| systemd | Debian | `apt` | `systemctl` | ưu tiên Debian stable hiện hành |
-| systemd | Fedora | `dnf` | `systemctl` | SELinux, NetworkManager/firewalld |
-| BSD rc | FreeBSD | `pkg`/ports | `service` + `/etc/rc.conf` | không dùng systemd; `pf`/`ipfw` thay nftables |
+| systemd | Ubuntu/Xubuntu 26.04 LTS | `apt` | `systemctl` | thường dùng Netplan/NetworkManager tùy môi trường |
+| systemd | Debian 13 stable | `apt` | `systemctl` | Debian stable hiện hành; point release mới nhất được theo dõi trong baseline |
+| systemd | Fedora 44 | `dnf` | `systemctl` | SELinux, NetworkManager/firewalld |
+| BSD rc | FreeBSD 15.1-RELEASE | `pkg`/ports | `service` + `/etc/rc.conf` | không dùng systemd; `pf`/`ipfw` thay nftables |
 
 - Nếu chỉ khác package manager, có thể gộp bằng sub-block theo distro.
 - Nếu khác cơ chế systemd vs rc.d, tách hẳn khối FreeBSD.
@@ -199,6 +204,7 @@ Mọi bài có `changes_system=true` phải có mục **Gỡ / Hoàn tác** và 
 ## 9. Checklist trước khi publish
 
 - [ ] Có metadata `Runtime tested` + `Documentation verified` + `Last verified`.
+- [ ] Bài mới dùng baseline OS trong `platform-baseline.json`, trừ khi có ngoại lệ release được giải thích và re-verify rõ.
 - [ ] `ld-meta` có `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`.
 - [ ] `tested_on` không chứa bằng chứng chỉ được review qua tài liệu.
 - [ ] Ít nhất một trong `tested_on` / `documentation_verified_on` có OS/version thực tế.
@@ -218,6 +224,7 @@ Mọi bài có `changes_system=true` phải có mục **Gỡ / Hoàn tác** và 
 
 ## 10. Enforcement trong repository
 
+- `platform-baseline.json` là source of truth cho target OS/version hiện hành của bài mới.
 - `AGENTS.md` là operating contract; `STYLE.md` là source of truth về ngôn ngữ, trình bày và safety affordance của bài.
 - `tools/validate_style.py` audit và **enforce toàn bộ Linux Daily #001+**; schema verification split bắt buộc từ #070.
 - Backfill #001–#040 đã hoàn tất; verification metadata #001–#069 được migrate deterministic khi materialize #070. Xem `docs/STYLE-AUDIT.md`.
