@@ -27,9 +27,11 @@
 <link rel="stylesheet" href="../assets/fonts.css">
 <link rel="stylesheet" href="../assets/style.css">
 <!--
-  Linux Daily #041+ phải tuân STYLE.md:
-  - tested_on/last_verified/changes_system trong ld-meta;
-  - metadata hiển thị Tested on + Last verified;
+  Linux Daily #041+ phải tuân STYLE.md; từ #070 verification evidence tách rõ:
+  - tested_on chỉ chứa OS/version đã runtime-test thật;
+  - documentation_verified_on chỉ chứa OS/version đã review tài liệu official/upstream;
+  - last_verified/changes_system vẫn bắt buộc trong ld-meta;
+  - metadata hiển thị Runtime tested + Documentation verified + Last verified;
   - numbered steps dùng <ol class="steps">;
   - mọi <pre><code> có language-*;
   - command block shell đặt trong wrapper data-run-as="user|sudo|root";
@@ -50,6 +52,7 @@
   "lede": "{{LEDE_PLAIN}}",
   "review_status": "{{REVIEW_STATUS}}",
   "tested_on": {{TESTED_ON_JSON}},
+  "documentation_verified_on": {{DOCUMENTATION_VERIFIED_ON_JSON}},
   "last_verified": "{{LAST_VERIFIED}}",
   "changes_system": {{CHANGES_SYSTEM}},
   "sources": {{SOURCES_JSON}}
@@ -91,7 +94,8 @@
       <span class="tag">{{READ_TIME}}</span>
     </div>
     <div class="style-meta" aria-label="Môi trường kiểm chứng">
-      <span><strong>Tested on:</strong> {{TESTED_ON_DISPLAY}}</span>
+      <span><strong>Runtime tested:</strong> {{TESTED_ON_DISPLAY}}</span>
+      <span><strong>Documentation verified:</strong> {{DOCUMENTATION_VERIFIED_ON_DISPLAY}}</span>
       <span><strong>Last verified:</strong> {{LAST_VERIFIED}}</span>
     </div>
   </header>
