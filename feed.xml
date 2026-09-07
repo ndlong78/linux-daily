@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 06 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 07 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy</title>
+      <link>https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html</guid>
+      <pubDate>Mon, 07 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.</description>
+    </item>
     <item>
       <title>Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường</title>
       <link>https://linux.no.id.vn/posts/post-068-interrupt-softirq-pressure-irq-storm.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html</guid>
       <pubDate>Sat, 29 Aug 2026 00:00:00 +0700</pubDate>
       <description>Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.</description>
-    </item>
-    <item>
-      <title>TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</title>
-      <link>https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-059-trim-discard-fstrim-zfs-autotrim.html</guid>
-      <pubDate>Fri, 28 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Periodic TRIM giảm chi phí trong steady state; continuous discard và ZFS autotrim có semantics khác. Kiểm support và blast radius trước khi bật.</description>
     </item>
   </channel>
 </rss>

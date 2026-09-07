@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy — Linux Daily #069</title>
+<meta name="description" content="Dùng Ansible inventory patterns, intersection, exclusion và --list-hosts để chứng minh đúng tập target trước khi chạy automation trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy">
+<meta property="og:description" content="Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy">
+<meta name="twitter:description" content="Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":69,"date":"2026-09-07","axis":"Automation","eyebrow":"Automation · Inventory targeting","slug":"ansible-inventory-patterns-group-intersection","title":"Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy","lede":"Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.","review_status":"reviewed","tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],"last_verified":"2026-09-07","changes_system":false,"sources":[{"title":"Ansible Community Documentation source — Patterns: targeting hosts and groups","url":"https://github.com/ansible/ansible-documentation/blob/b8cf495929aa200a11abc7468d1fb6cd9c0e1613/docs/docsite/rst/inventory_guide/intro_patterns.rst","kind":"upstream"},{"title":"Ansible Community Documentation source — How to build your inventory","url":"https://github.com/ansible/ansible-documentation/blob/b8cf495929aa200a11abc7468d1fb6cd9c0e1613/docs/docsite/rst/inventory_guide/intro_inventory.rst","kind":"upstream"}]}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post">
+<a class="skip-link" href="#main-content">Đi tới nội dung chính</a>
+<main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#069 · 07·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Automation · Inventory targeting</p><h1>Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy</h1><p class="lede">Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng <code>--list-hosts</code> trước khi cho automation thực thi.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-07</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Chọn đúng host bằng union, intersection và exclusion trong Ansible inventory, rồi chứng minh tập target bằng <code>--list-hosts</code> trước khi chạy task thật.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Có <code>ansible-core</code> hoặc Ansible đã cài sẵn trên control node.</li><li>Ubuntu và Xubuntu dùng cùng cú pháp Ansible; Debian, Fedora và FreeBSD cũng dùng cùng pattern semantics.</li><li>Bài chỉ parse inventory và liệt kê target, không kết nối SSH và không thay đổi managed node.</li><li>Chạy bằng user thường trong thư mục lab riêng.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Luồng chọn host từ inventory qua pattern tới danh sách target đã kiểm chứng"><rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="80" width="180" height="80" rx="8" fill="#fff" stroke="#14201D"/><text x="125" y="112" font-size="12" font-weight="700">INVENTORY</text><text x="125" y="138" font-size="9">web · staging · canary</text><rect x="290" y="80" width="180" height="80" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="112" font-size="12" font-weight="700">PATTERN</text><text x="380" y="138" font-size="9">union · &amp; · !</text><rect x="545" y="80" width="180" height="80" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="635" y="112" font-size="12" font-weight="700">--list-hosts</text><text x="635" y="138" font-size="9">target evidence</text><path d="M215 120H284M470 120H539" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Pattern chỉ là ý định; danh sách host do Ansible resolve mới là bằng chứng trước khi chạy.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Automation sai target thường nguy hiểm hơn một lệnh chạy lỗi. Một pattern như <code>web</code> có thể rộng hơn dự kiến nếu inventory thay đổi, còn <code>web:&amp;staging:!canary</code> biểu diễn rõ hơn điều kiện “web thuộc staging nhưng không phải canary”.</p><p>Ansible resolve pattern dựa trên inventory hiện tại. Vì vậy đừng suy luận target bằng mắt từ tên group; hãy yêu cầu chính Ansible in danh sách host trước khi chạy playbook hoặc ad-hoc command.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Union:</strong> <code>web:db</code> chọn host thuộc <code>web</code> hoặc <code>db</code>.</li><li><strong>Intersection:</strong> <code>web:&amp;staging</code> chỉ giữ host đồng thời thuộc hai group.</li><li><strong>Exclusion:</strong> <code>all:!canary</code> loại group <code>canary</code> khỏi tập đã chọn.</li><li><strong>Inventory là nguồn dữ liệu:</strong> pattern không thể chọn host hoặc group không tồn tại trong inventory đang dùng.</li><li><strong><code>--limit</code> là lớp thu hẹp thêm:</strong> với playbook, limit tham chiếu inventory và không nên được xem như thay thế cho thiết kế <code>hosts:</code> rõ ràng.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="So sánh union intersection và exclusion của Ansible inventory pattern"><rect width="760" height="250" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif"><text x="45" y="42" font-size="12" font-weight="700">Pattern</text><text x="300" y="42" font-size="12" font-weight="700">Ý nghĩa</text><rect x="35" y="60" width="690" height="45" rx="6" fill="#F7FAF9" stroke="#14201D"/><text x="55" y="88" font-size="10">web:db</text><text x="310" y="88" font-size="10">web OR db</text><rect x="35" y="115" width="690" height="45" rx="6" fill="#F7FAF9" stroke="#14201D"/><text x="55" y="143" font-size="10">web:&amp;staging</text><text x="310" y="143" font-size="10">web AND staging</text><rect x="35" y="170" width="690" height="45" rx="6" fill="#F7FAF9" stroke="#14201D"/><text x="55" y="198" font-size="10">web:!canary</text><text x="310" y="198" font-size="10">web, trừ canary</text></g></svg><figcaption>Hình 2 — Ghép intersection và exclusion để biến yêu cầu vận hành thành tập target cụ thể.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Xác nhận Ansible trên control node</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible --version</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — cùng CLI, môi trường BSD tách riêng</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">ansible --version</code></pre></div><p>Nếu command không tồn tại, dừng lab và cài Ansible theo package policy của hệ điều hành; không đổi package trong bài quan sát này.</p></li>
+<li><h3>2. Tạo inventory lab tối thiểu</h3><p class="code-label same"><span class="dot"></span>Mọi hệ — file lab cục bộ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">cat &gt; inventory.ini &lt;&lt;'EOF'
+[web]
+web01 ansible_connection=local
+web02 ansible_connection=local
+
+[staging]
+web01
+
+[canary]
+web02
+EOF
+ansible-inventory -i inventory.ini --graph</code></pre></div><p><code>inventory.ini</code> chỉ là inventory lab. Các alias <code>web01</code> và <code>web02</code> dùng local connection để không cần SSH.</p></li>
+<li><h3>3. Kiểm intersection trước khi chạy</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible 'web:&amp;staging' -i inventory.ini --list-hosts</code></pre></div><p>Kết quả phải chỉ còn <code>web01</code>. Dấu nháy đơn giữ shell không diễn giải ký tự pattern.</p></li>
+<li><h3>4. Ghép intersection với exclusion</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible 'web:&amp;staging:!canary' -i inventory.ini --list-hosts</code></pre></div><p>Luôn đọc danh sách host trước. Chỉ khi tập target đúng mới thay <code>--list-hosts</code> bằng module hoặc chạy playbook thực tế.</p></li>
+<li><h3>5. Kiểm một limit thu hẹp playbook</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible all -i inventory.ini --limit 'web:&amp;staging:!canary' --list-hosts</code></pre></div><p><code>--limit</code> thu hẹp tập target của lệnh hiện tại theo inventory. Dùng nó như safety check bổ sung, không như cách che một <code>hosts:</code> quá rộng trong playbook.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Chạy ba pattern theo thứ tự từ rộng đến hẹp và so số host mà Ansible resolve.</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible web -i inventory.ini --list-hosts
+ansible 'web:&amp;staging' -i inventory.ini --list-hosts
+ansible 'web:!canary' -i inventory.ini --list-hosts</code></pre></div><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">web                    → web01, web02
+web:&amp;staging           → web01
+web:!canary            → web01</code></pre><p>Nếu số host hoặc alias khác dự kiến, dừng trước khi chạy task thật và kiểm lại inventory/group membership.</p></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>No hosts matched:</strong> kiểm tên group bằng <code>ansible-inventory -i inventory.ini --graph</code>; pattern chỉ khớp entry có trong inventory.</li><li><strong>Shell xử lý <code>!</code> hoặc <code>&amp;</code>:</strong> đặt pattern trong dấu nháy đơn.</li><li><strong>Nhầm alias với <code>ansible_host</code>:</strong> pattern khớp tên inventory/alias, không mặc định khớp địa chỉ kết nối phía sau alias.</li><li><strong>Inventory production quá lớn:</strong> lưu output <code>--list-hosts</code> vào change record hoặc review nó trước rollout.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Target selection là một control an toàn. Với thay đổi production, ưu tiên pattern có group nghiệp vụ rõ ràng, intersection theo môi trường và exclusion cho canary/break-glass host. Không dùng wildcard rộng nếu inventory có thể mở rộng ngoài phạm vi change.</p><p>Đặt bước <code>--list-hosts</code> trước command có thay đổi trạng thái trong runbook. Với playbook lớn, kết hợp target verification với <code>--check</code>, <code>--diff</code> hoặc rollout theo batch khi module hỗ trợ.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Thêm group <code>prod</code> chứa cả <code>web01</code> và <code>web02</code>.</li><li>Viết pattern chọn host vừa thuộc <code>web</code> vừa thuộc <code>prod</code> nhưng loại <code>canary</code>.</li><li>Dùng <code>--list-hosts</code> để chứng minh kết quả chỉ còn đúng host mong muốn trước khi chạy bất kỳ module nào.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream chính thức; title và URL khớp <code>ld-meta.sources</code>.</p><ul class="clean"><li><a href="https://github.com/ansible/ansible-documentation/blob/b8cf495929aa200a11abc7468d1fb6cd9c0e1613/docs/docsite/rst/inventory_guide/intro_patterns.rst">Ansible Community Documentation source — Patterns: targeting hosts and groups</a></li><li><a href="https://github.com/ansible/ansible-documentation/blob/b8cf495929aa200a11abc7468d1fb6cd9c0e1613/docs/docsite/rst/inventory_guide/intro_inventory.rst">Ansible Community Documentation source — How to build your inventory</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-062-ansible-blocks-rescue-always-recovery.html"><span class="series-kicker">#062</span><span>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-055-ansible-tags-limit-scope-control.html">#055 · Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</a></li>
+      <li><a href="post-048-ansible-check-diff-serial-rolling-change.html">#048 · Ansible check mode, diff và serial: rolling change có kiểm soát</a></li>
+      <li><a href="post-041-ansible-handlers-templates-idempotent-restart.html">#041 · Ansible handlers và templates: thay đổi có điều kiện, restart đúng lúc</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #069 · Automation</span><span class="hashtags">#LinuxDaily #Ansible #Automation</span></div></footer>
+</div></main></body></html>
