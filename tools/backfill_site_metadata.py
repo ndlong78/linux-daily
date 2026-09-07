@@ -126,24 +126,16 @@ def normalize_verification_metadata(text: str, meta: dict, *, active: bool) -> s
     else:
         text = text.replace(tested_field, f"{tested_field},{documented_field}", 1)
 
-    spans: list[str] = []
-    if runtime:
-        spans.append(
-            f'<span><strong>Runtime tested:</strong> {html.escape(" · ".join(runtime))}</span>'
-        )
-    if documented:
-        spans.append(
-            '<span><strong>Documentation verified:</strong> '
-            f'{html.escape(" · ".join(documented))}</span>'
-        )
+    runtime_display = " · ".join(runtime) if runtime else "—"
+    documented_display = " · ".join(documented) if documented else "—"
     last_verified = str(meta.get("last_verified", "")).strip()
-    spans.append(
-        f'<span><strong>Last verified:</strong> {html.escape(last_verified)}</span>'
-    )
     style_meta = (
         '<div class="style-meta" aria-label="Môi trường kiểm chứng">'
-        + "".join(spans)
-        + "</div>"
+        f'<span><strong>Runtime tested:</strong> {html.escape(runtime_display)}</span>'
+        '<span><strong>Documentation verified:</strong> '
+        f'{html.escape(documented_display)}</span>'
+        f'<span><strong>Last verified:</strong> {html.escape(last_verified)}</span>'
+        "</div>"
     )
     if not STYLE_META_RE.search(text):
         raise ValueError("thiếu style-meta nên không thể migrate verification label")
