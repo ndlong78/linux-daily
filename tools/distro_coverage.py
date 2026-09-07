@@ -44,6 +44,9 @@ _STYLE_CONTRACT_RE = re.compile(
 _TESTED_ON_META_RE = re.compile(
     r'"tested_on"\s*:\s*\[.*?\]\s*,?', re.IGNORECASE | re.DOTALL
 )
+_DOCUMENTATION_VERIFIED_META_RE = re.compile(
+    r'"documentation_verified_on"\s*:\s*\[.*?\]\s*,?', re.IGNORECASE | re.DOTALL
+)
 
 
 def visible_text(source: str) -> str:
@@ -51,15 +54,15 @@ def visible_text(source: str) -> str:
 
 
 def coverage_source(source: str) -> str:
-    """Remove STYLE-only OS inventory before measuring editorial distro coverage.
+    """Remove verification-only OS inventory before measuring editorial coverage.
 
-    `Tested on` intentionally names every supported platform. Counting those names as
-    article coverage would turn style backfills into false-positive portability gains.
-    Keep the historical ld-meta/body behavior otherwise unchanged so this correction
-    does not silently redefine the existing P7.1 baseline.
+    Runtime/documentation metadata intentionally names supported platforms. Counting
+    those names as article coverage would turn style evidence into false-positive
+    portability gains. Keep the historical body behavior otherwise unchanged.
     """
     source = _STYLE_CONTRACT_RE.sub("", source)
-    return _TESTED_ON_META_RE.sub("", source)
+    source = _TESTED_ON_META_RE.sub("", source)
+    return _DOCUMENTATION_VERIFIED_META_RE.sub("", source)
 
 
 def has_distro(text: str, key: str) -> bool:
