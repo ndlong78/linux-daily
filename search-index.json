@@ -1,6 +1,19 @@
 {
-  "count": 68,
+  "count": 69,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-09-07",
+      "href": "posts/post-069-ansible-inventory-patterns-group-intersection.html",
+      "issue": 69,
+      "lede": "Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.",
+      "tags": [
+        "Inventory targeting"
+      ],
+      "title": "Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",
