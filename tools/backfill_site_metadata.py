@@ -6,6 +6,13 @@ post title/description come from ld-meta, social image metadata comes from the e
 post-NNN-code.png assets, legacy broken source URLs are replaced with live stable sources,
 and old HTML fragments missing the common document shell are normalized back to the
 shared site structure.
+
+From Linux Daily #070 onward the same durable backfill also splits verification evidence:
+``tested_on`` contains runtime-lab evidence only, while ``documentation_verified_on``
+contains platforms reviewed against official/upstream documentation. The migration is
+activated by state.json reaching #070, so merging the contract at #069 does not leave
+main with uncommitted deterministic drift; the first #070 materialization performs the
+one-time historical normalization under the existing artifact guard.
 """
 from __future__ import annotations
 
@@ -15,6 +22,7 @@ import glob
 import html
 import json
 import os
+import re
 import sys
 from urllib.parse import urljoin
 
@@ -23,7 +31,15 @@ import socialmeta
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SITE_CONFIG = os.path.join(ROOT, "site.json")
+STATE_CONFIG = os.path.join(ROOT, "state.json")
 POSTS_GLOB = os.path.join(ROOT, "posts", "post-*.html")
+VERIFICATION_SPLIT_FROM_ISSUE = 70
+DOCUMENTATION_SUFFIX = " (documentation-verified)"
+STYLE_META_RE = re.compile(
+    r'<div class="style-meta"[^>]*>.*?</div>', re.IGNORECASE | re.DOTALL
+)
+TESTED_FIELD_RE = re.compile(r'"tested_on"\s*:\s*\[[^\]]*\]')
+DOC_FIELD_RE = re.compile(r'"documentation_verified_on"\s*:\s*\[[^\]]*\]')
 
 FEDORA_SUDO_URL = "https://fedoramagazine.org/howto-use-sudo/"
 FEDORA_OPENSSH_URL = "https://packages.fedoraproject.org/pkgs/openssh/openssh-server/"
@@ -46,6 +62,84 @@ LEGACY_TITLE_REPLACEMENTS = {
 def _load_site() -> dict:
     with open(SITE_CONFIG, encoding="utf-8") as f:
         return json.load(f)
+
+
+def _verification_split_active() -> bool:
+    with open(STATE_CONFIG, encoding="utf-8") as f:
+        state = json.load(f)
+    return int(state.get("last_issue", 0)) >= VERIFICATION_SPLIT_FROM_ISSUE
+
+
+def _clean_verification_value(value: str) -> tuple[str, bool]:
+    item = value.strip()
+    if item.lower().endswith(DOCUMENTATION_SUFFIX):
+        return item[: -len(DOCUMENTATION_SUFFIX)].strip(), True
+    return item, False
+
+
+def split_verification_evidence(meta: dict) -> tuple[list[str], list[str]]:
+    """Return (runtime-tested, documentation-verified) without legacy sentinels."""
+    runtime: list[str] = []
+    documented: list[str] = []
+
+    tested_on = meta.get("tested_on", [])
+    if isinstance(tested_on, list):
+        for raw in tested_on:
+            if not isinstance(raw, str) or not raw.strip():
+                continue
+            value, was_documented = _clean_verification_value(raw)
+            (documented if was_documented else runtime).append(value)
+
+    documentation_verified_on = meta.get("documentation_verified_on", [])
+    if isinstance(documentation_verified_on, list):
+        for raw in documentation_verified_on:
+            if not isinstance(raw, str) or not raw.strip():
+                continue
+            value, _ = _clean_verification_value(raw)
+            documented.append(value)
+
+    return list(dict.fromkeys(runtime)), list(dict.fromkeys(documented))
+
+
+def _compact_json(value: object) -> str:
+    return json.dumps(value, ensure_ascii=False, separators=(",", ":"))
+
+
+def normalize_verification_metadata(text: str, meta: dict, *, active: bool) -> str:
+    """Migrate legacy verification metadata + visible label when the split is active."""
+    if not active:
+        return text
+
+    runtime, documented = split_verification_evidence(meta)
+    if not runtime and not documented:
+        return text
+
+    tested_field = f'"tested_on":{_compact_json(runtime)}'
+    documented_field = f'"documentation_verified_on":{_compact_json(documented)}'
+
+    if not TESTED_FIELD_RE.search(text):
+        raise ValueError("ld-meta thiếu tested_on nên không thể migrate verification metadata")
+    text = TESTED_FIELD_RE.sub(tested_field, text, count=1)
+
+    if DOC_FIELD_RE.search(text):
+        text = DOC_FIELD_RE.sub(documented_field, text, count=1)
+    else:
+        text = text.replace(tested_field, f"{tested_field},{documented_field}", 1)
+
+    runtime_display = " · ".join(runtime) if runtime else "—"
+    documented_display = " · ".join(documented) if documented else "—"
+    last_verified = str(meta.get("last_verified", "")).strip()
+    style_meta = (
+        '<div class="style-meta" aria-label="Môi trường kiểm chứng">'
+        f'<span><strong>Runtime tested:</strong> {html.escape(runtime_display)}</span>'
+        '<span><strong>Documentation verified:</strong> '
+        f'{html.escape(documented_display)}</span>'
+        f'<span><strong>Last verified:</strong> {html.escape(last_verified)}</span>'
+        "</div>"
+    )
+    if not STYLE_META_RE.search(text):
+        raise ValueError("thiếu style-meta nên không thể migrate verification label")
+    return STYLE_META_RE.sub(style_meta, text, count=1)
 
 
 def _ensure_document_shell(text: str, meta: dict) -> str:
@@ -102,6 +196,9 @@ def render_post(path: str) -> str:
         text = text.replace(old, new)
 
     text = _ensure_document_shell(text, meta)
+    text = normalize_verification_metadata(
+        text, meta, active=_verification_split_active()
+    )
     text = _strip_discovery_lines(text)
     basename = os.path.basename(path)
     canonical = urljoin(site["url"], f"posts/{basename}")
@@ -147,12 +244,7 @@ MAX_DRIFT_WIDTH = 160
 
 
 def describe_drift(current: str, expected: str, limit: int = MAX_DRIFT_LINES) -> list[str]:
-    """Những dòng lệch giữa file hiện tại và bản dựng lại.
-
-    Chỉ in tên file là chưa đủ. Ở bài #055 og/twitter:description lệch
-    meta.lede, và vì log chỉ nói "chưa đồng bộ" nên người đọc đi chẩn đoán
-    nhầm sang chỗ khác. Nói thẳng dòng nào lệch thì không còn đoán.
-    """
+    """Những dòng lệch giữa file hiện tại và bản dựng lại."""
     diff = difflib.unified_diff(
         current.splitlines(), expected.splitlines(),
         fromfile="hiện tại", tofile="mong đợi", lineterm="", n=0,

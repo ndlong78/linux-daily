@@ -107,20 +107,24 @@ Review sâu hơn với networking/firewall, storage/filesystem, backup/restore, 
 
 Dùng `templates/post.template.html`, `STYLE.md`, `assets/style.css`.
 
-Toàn bộ #001+, gồm các bài lịch sử đã backfill, phải có:
+Từ Linux Daily **#070**, metadata verification phải tách loại bằng chứng rõ ràng:
 
-1. metadata hiển thị `Tested on` + `Last verified`;
-2. Mục tiêu;
-3. Yêu cầu tiên quyết;
-4. `01 Bối cảnh thực tế`;
-5. `02 Kiến thức cốt lõi`;
-6. `03 Các bước thực hiện` với `<ol class="steps">`;
-7. `04 Kiểm chứng` với Expected Output/Kết quả mong đợi;
-8. `Gỡ / Hoàn tác` nếu `changes_system=true`;
-9. `05 Lưu ý & Khắc phục lỗi`;
-10. `06 Bảo mật & vận hành`;
-11. `07 Bài tập tự luyện`;
-12. `Nguồn kỹ thuật` không đánh số.
+1. `Runtime tested` — chỉ OS/version đã thực sự chạy kiểm thử;
+2. `Documentation verified` — chỉ OS/version đã đối chiếu tài liệu official/upstream;
+3. `Last verified` — ngày review gần nhất;
+4. Mục tiêu;
+5. Yêu cầu tiên quyết;
+6. `01 Bối cảnh thực tế`;
+7. `02 Kiến thức cốt lõi`;
+8. `03 Các bước thực hiện` với `<ol class="steps">`;
+9. `04 Kiểm chứng` với Expected Output/Kết quả mong đợi;
+10. `Gỡ / Hoàn tác` nếu `changes_system=true`;
+11. `05 Lưu ý & Khắc phục lỗi`;
+12. `06 Bảo mật & vận hành`;
+13. `07 Bài tập tự luyện`;
+14. `Nguồn kỹ thuật` không đánh số.
+
+#001–#069 được validator đọc tương thích với schema cũ cho tới lần materialize #070. Khi `state.json.last_issue >= 70`, `tools/backfill_site_metadata.py` migrate deterministic toàn bộ sentinel lịch sử `(documentation-verified)` sang `documentation_verified_on` và đổi nhãn hiển thị. Không sửa tay từng bài lịch sử.
 
 Mỗi bài phải có:
 
@@ -129,7 +133,8 @@ Mỗi bài phải có:
 - 2 link về trang chủ;
 - metadata JSON `<script id="ld-meta">`;
 - #019+: `review_status`, `sources`, `<section class="sources">`;
-- #001+: `tested_on`, `last_verified`, `changes_system`;
+- #070+: `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`; hai list verification có thể rỗng riêng lẻ nhưng ít nhất một phải có bằng chứng;
+- #070+: `tested_on` không được chứa `(documentation-verified)` hoặc bất kỳ documentation-only evidence nào;
 - #001+: mọi `<pre><code>` có `language-*`;
 - command shell có `data-run-as="user|sudo|root"`;
 - không shell prompt `$`/`#`, không `curl | sh` mù, không placeholder legacy `YOUR_*`.
@@ -158,7 +163,7 @@ python3 tools/cadence.py record
 python3 tools/pr_preflight.py
 ```
 
-Trong local flow, `tools/pr_preflight.py` phải chạy sau khi deterministic artifacts đã materialize và trước commit/push.
+Trong local flow, `tools/pr_preflight.py` phải chạy sau khi deterministic artifacts đã materialize và trước commit/push. Ở mốc #070, `publish.py prepare` còn thực hiện một lần migration verification metadata cho #001–#069; diff nhiều file `posts/post-*.html` ở đúng ngày đó là artifact deterministic theo contract, không phải lý do bỏ qua hoặc sửa tay generator.
 
 ### API-only fallback
 
@@ -395,12 +400,14 @@ Repo dùng **Squash and merge** cho workflow thường ngày.
 - trigger PR và push `main`;
 - `contents: read`;
 - chạy PR hygiene, lint, pytest, workflow safety, STYLE.md, deterministic publish pipeline, link check, cadence/render smoke tests;
+- với daily PR, current base SHA phải là ancestor của head; branch stale phải cập nhật từ `main` và materialize lại;
 - không commit/push repository.
 
 `.github/workflows/linux-daily-auto-merge.yml`:
 
 - trigger **chỉ** bằng `workflow_run` của `CI` khi completed;
-- job chỉ chạy nếu CI conclusion `success` và source event là `pull_request`;
+- chỉ xét CI conclusion `success` từ source event `pull_request`;
+- maintenance/non-daily, PR đã đóng hoặc daily PR còn Draft là **ineligible** và kết thúc sạch, không tạo failure giả;
 - không checkout PR code;
 - chỉ merge PR open, non-Draft, base `main`, head cùng repo;
 - PR author phải là repository owner;
@@ -438,7 +445,7 @@ Mỗi lần chạy:
 2. kiểm cadence, duplicate branch/PR và capability **trước khi tạo branch mới**;
 3. nếu có local writable checkout, dùng local one-pass flow; nếu không có nhưng GitHub connector ghi được, dùng API-only fallback;
 4. nếu branch đúng issue đã tồn tại nhưng head == `main` và chưa có PR, resume như interrupted empty branch;
-5. chuẩn bị bài + source-backed review + STYLE review;
+5. chuẩn bị bài + source-backed review + STYLE review, gồm phân loại đúng runtime/documentation verification evidence từ #070;
 6. local path: materialize artifacts + preflight; API-only path: ghi source/artifacts vào feature branch và dùng CI làm remote preflight;
 7. commit/push/open PR theo quyền đã được người dùng ủy quyền;
 8. chuyển PR sang Ready khi structural/diff/review gate sạch, **không chờ CI success**;

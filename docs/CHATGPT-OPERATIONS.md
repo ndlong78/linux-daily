@@ -77,8 +77,9 @@ Mỗi lần chạy, ChatGPT phải:
     một trang không tồn tại; CI đỏ vì HTTP 404 và bài trễ một vòng. Ưu tiên URL đã có sẵn
     trong repo cho cùng công cụ — chúng đã qua link check nên chắc chắn sống.
     HTTP 429 khi kiểm hàng loạt cùng một host là rate limit, **không** phải link chết:
-    `check_links.py` xếp 429 vào `TRANSIENT_STATUSES` và chỉ cảnh báo. Đừng đổi URL vì 429.
-12. Toàn bộ #001+: ghi `tested_on`, `last_verified`, `changes_system`; khai báo quyền command block; dùng numbered steps; có verification output; thêm rollback khi thay đổi hệ thống.
+    `check_links.py` xếp 429 vào `TRANSIENT_STATUSES` và chỉ cảnh báo. Đừng đổi URL chỉ vì 429.
+12. Từ #070, `tested_on` chỉ chứa OS/version **đã runtime-test thật**; `documentation_verified_on` chứa OS/version đã review tài liệu official/upstream. Hai list có thể rỗng riêng lẻ nhưng ít nhất một phải có bằng chứng. Không ghi `(documentation-verified)` vào `tested_on`. Tiếp tục ghi `last_verified`, `changes_system`, quyền command block, numbered steps, verification output và rollback khi thay đổi hệ thống.
+12b. #001–#069 dùng schema legacy cho tới lần materialize #070. `tools/backfill_site_metadata.py` tự split deterministic metadata + nhãn hiển thị khi `state.json.last_issue >= 70`; không sửa tay từng bài lịch sử.
 13. Không tạo finalizer/self-mutating workflow để Actions sửa, commit hoặc push ngược branch.
 14. Không sinh Facebook/X hoặc ảnh code social trong giai đoạn social output đang tạm dừng.
 15. Khi đã có quyền GitHub write của Scheduled Task, được tạo branch/commit/push/PR theo contract. Không push trực tiếp `main`.
@@ -98,9 +99,9 @@ Mỗi lần chạy, ChatGPT phải:
 - `templates/post.template.html`: khung bài.
 - `tools/publish.py`: entrypoint quality gate local.
 - `tools/pr_preflight.py`: one-pass local PR preflight.
-- `tools/pr_hygiene.py`: guard commit/path của PR.
+- `tools/pr_hygiene.py`: guard commit/path của PR, gồm stale-base gate cho daily branch.
 - `tools/validate_sources.py`: source-backed technical gate.
-- `tools/validate_style.py`: STYLE.md audit/enforcement.
+- `tools/validate_style.py`: STYLE.md audit/enforcement và verification-evidence schema.
 - `tools/workflow_safety.py`: policy gate cho GitHub Actions.
 - `.github/workflows/ci.yml`: read-only quality gate trên PR và remote preflight authoritative cho API-only fallback.
 - `.github/workflows/linux-daily-auto-merge.yml`: post-CI exact-SHA squash merge cho PR bài hằng ngày.
@@ -134,6 +135,8 @@ artifact khác, đừng bỏ sót vì tưởng là file lạc. Nếu số bài g
 byte-exact và `validate_site.py` sẽ báo `orphan post` nếu một bài rơi khỏi chuỗi
 trang. Chi tiết ở `AGENTS.md`, mục "Trang chủ đã phân trang".
 
+Tại mốc #070, `publish.py prepare` còn thực hiện một lần migration verification metadata cho #001–#069. Diff nhiều file `posts/post-*.html` ở đúng ngày đó là **artifact deterministic đã được review theo contract**, không phải lý do bỏ qua hoặc sửa tay generator.
+
 ### 2. API-only fallback
 
 Dùng khi Scheduled Task không có local writable checkout nhưng GitHub connector vẫn có write access.
@@ -152,10 +155,12 @@ Chỉ khi **cả local writable checkout và GitHub remote write đều không k
 
 ## STYLE.md review
 
-Toàn bộ Linux Daily #001+ phải đạt style contract:
+Toàn bộ Linux Daily #001+ phải đạt style contract. Từ #070, verification evidence được tách rõ:
 
-- metadata hiển thị `Tested on` + `Last verified`;
-- `ld-meta` có `tested_on`, `last_verified`, `changes_system`;
+- metadata hiển thị `Runtime tested` + `Documentation verified` + `Last verified`;
+- `ld-meta` có `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`;
+- `tested_on` chỉ chứa runtime evidence; `documentation_verified_on` chỉ chứa documentation review;
+- ít nhất một trong hai list verification phải có OS/version; không dùng sentinel `(documentation-verified)`;
 - Mục tiêu + Yêu cầu tiên quyết;
 - các bước thực hiện dùng `<ol class="steps">`;
 - mọi code block có `language-*`;
@@ -164,13 +169,13 @@ Toàn bộ Linux Daily #001+ phải đạt style contract:
   `bsd | ubuntu | debian | fedora | linux | same`; **mỗi bài bắt buộc có ít nhất một khối
   FreeBSD gắn `code-label bsd`** (xem STYLE.md mục 5.1). Thiếu nhãn là lỗi đã từng chặn
   bài #048;
-- thân bài phải nhắc rõ cả `Ubuntu` lẫn `Xubuntu`; `tools/distro_coverage.py` bỏ qua vùng
-  `Tested on` khi đếm, nên chỉ ghi ở banner là chưa đủ;
+- thân bài phải nhắc rõ cả `Ubuntu` lẫn `Xubuntu`; `tools/distro_coverage.py` bỏ qua cả
+  runtime/documentation verification metadata khi đếm, nên chỉ ghi OS ở banner là chưa đủ;
 - verification có Expected Output/Kết quả mong đợi;
 - `changes_system=true` thì có **Gỡ / Hoàn tác**;
 - không shell prompt trong command block, không `curl | sh` chạy trực tiếp, không placeholder legacy kiểu `YOUR_*`.
 
-Backfill #001–#040 đã hoàn tất. Bài lịch sử và bài mới đều fail CI khi vi phạm style contract; không còn legacy exemption.
+#001–#069 vẫn được validator đọc tương thích trước mốc migration; khi #070 materialize, backfill deterministic chuyển lịch sử sang schema explicit rồi CI tiếp tục enforce toàn series.
 
 ## Source-backed technical review
 
@@ -194,7 +199,7 @@ Nguyên tắc an toàn:
 - không đặt `review_status="reviewed"` khi nguồn chưa được kiểm tra;
 - không giảm STYLE.md enforcement để CI xanh;
 - API-only fallback chỉ ghi feature branch/PR, không ghi `main`;
-- auto-merge chỉ áp dụng cho branch chuẩn `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`;
+- auto-merge chỉ merge branch chuẩn `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`; maintenance/non-daily/closed/Draft là ineligible và kết thúc sạch, không phải lỗi;
 - auto-merge chỉ chạy sau `CI` success của **exact head SHA**;
 - auto-merge không checkout PR code với write token;
 - merge method bắt buộc `squash`; không dùng `--admin` hoặc bypass protection;
@@ -255,12 +260,12 @@ Không tạo helper/workflow one-shot kiểu `prNN_finalizer` hoặc `tools/prNN
 
 ## CI và auto-merge
 
-`CI` giữ `contents: read` và phải đi qua `quality-gate`: PR hygiene, lint/test/validator/build/link/smoke theo workflow hiện hành.
+`CI` giữ `contents: read` và phải đi qua `quality-gate`: PR hygiene, lint/test/validator/build/link/smoke theo workflow hiện hành. Daily PR còn phải chứa current base SHA trong history; nếu `main` tiến lên sau khi branch được tạo, cập nhật branch từ `main` và materialize lại trước merge.
 
 `linux-daily-auto-merge.yml` là ngoại lệ ghi hẹp cho bài hằng ngày:
 
 - trigger `workflow_run` của `CI`;
-- chỉ chạy khi CI conclusion `success` và source event là `pull_request`;
+- CI không thuộc PR daily Ready (maintenance/non-daily/closed/Draft) được phân loại ineligible và kết thúc sạch;
 - không checkout PR code;
 - chỉ branch chuẩn từ cùng repo và do repo owner mở;
 - PR phải open và non-Draft tại lúc workflow validate;

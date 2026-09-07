@@ -24,7 +24,8 @@ Mỗi bài phải trả lời được câu hỏi: *"Người đọc dán lệnh
 - **Luôn ghi rõ quyền chạy lệnh**: user thường, `sudo`, hay root.
 - **Luôn ghi rõ nhánh OS** khi lệnh khác nhau giữa các distro.
 - **Luôn có Expected Output/Kết quả mong đợi** cho lệnh kiểm chứng.
-- Không khẳng định “chắc chắn chạy”; chỉ ghi môi trường thực sự đã test.
+- Không khẳng định “chắc chắn chạy”; chỉ ghi runtime-test khi thực sự đã chạy trên môi trường đó.
+- Review tài liệu official/upstream phải ghi riêng là **Documentation verified**, không được đổi tên thành **Runtime tested**.
 
 ### 1.3. Có thể quét mắt
 
@@ -42,7 +43,7 @@ Mỗi bài phải trả lời được câu hỏi: *"Người đọc dán lệnh
 
 Linux Daily giữ 7 mục nội dung chuyên môn để bảo toàn cấu trúc series, đồng thời thêm metadata, mục tiêu và prerequisite của style contract. Thứ tự chuẩn:
 
-1. Metadata `Tested on` + `Last verified`.
+1. Metadata `Runtime tested` + `Documentation verified` + `Last verified`.
 2. **Mục tiêu** — một câu.
 3. **Yêu cầu tiên quyết** — OS/version, quyền, mạng/cổng/dung lượng, dependency.
 4. `01 Bối cảnh thực tế`.
@@ -59,20 +60,27 @@ Mục không áp dụng có thể bỏ, ngoại trừ metadata, Mục tiêu, Yê
 
 ## 3. Metadata block
 
-Đặt ngay dưới phần mở đầu bài:
+Từ Linux Daily **#070**, đặt ngay dưới phần mở đầu bài:
 
 ```text
-Tested on: Ubuntu 24.04 · Debian 13 · Fedora 42 · FreeBSD 14.3
-Last verified: 2026-08-09
+Runtime tested: —
+Documentation verified: Ubuntu 24.04 · Debian 13 · Fedora 42 · FreeBSD 14.4
+Last verified: 2026-09-08
 ```
+
+Nếu có lab/runtime thật, thay `—` bằng đúng OS/version đã chạy. Không suy diễn từ tài liệu sang runtime.
 
 Quy tắc:
 
-- Chỉ liệt kê OS/version **thực sự đã test**.
+- `Runtime tested` / `ld-meta.tested_on` chỉ liệt kê OS/version **thực sự đã chạy kiểm thử**.
+- `Documentation verified` / `ld-meta.documentation_verified_on` chỉ liệt kê OS/version đã được đối chiếu với tài liệu official/upstream phù hợp.
+- Hai trường máy đọc đều là list; list có thể rỗng riêng lẻ nhưng **ít nhất một trong hai phải có bằng chứng**.
+- Cấm sentinel kiểu `(documentation-verified)` bên trong `tested_on`; loại bằng chứng phải nằm ở đúng field.
 - `Last verified` cập nhật khi review lại bài.
-- Metadata máy đọc trong `ld-meta` dùng các trường `tested_on`, `last_verified`, `changes_system`.
+- Metadata máy đọc từ #070 dùng các trường `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`.
 - `changes_system` là boolean. Nếu `true`, bài bắt buộc có mục **Gỡ / Hoàn tác**.
 - Nếu quá 6 tháng chưa verify, đưa vào freshness review.
+- #001–#069 được validator đọc tương thích với schema cũ cho tới lần materialize #070. Khi `state.json.last_issue >= 70`, `tools/backfill_site_metadata.py` chuyển deterministic toàn bộ sentinel lịch sử sang `documentation_verified_on` và sửa nhãn hiển thị; không backfill tay từng bài.
 
 ## 4. Code block & quyền chạy
 
@@ -190,8 +198,10 @@ Mọi bài có `changes_system=true` phải có mục **Gỡ / Hoàn tác** và 
 
 ## 9. Checklist trước khi publish
 
-- [ ] Có metadata `Tested on` + `Last verified`.
-- [ ] `ld-meta` có `tested_on`, `last_verified`, `changes_system`.
+- [ ] Có metadata `Runtime tested` + `Documentation verified` + `Last verified`.
+- [ ] `ld-meta` có `tested_on`, `documentation_verified_on`, `last_verified`, `changes_system`.
+- [ ] `tested_on` không chứa bằng chứng chỉ được review qua tài liệu.
+- [ ] Ít nhất một trong `tested_on` / `documentation_verified_on` có OS/version thực tế.
 - [ ] Mục tiêu gói trong 1 câu.
 - [ ] Prerequisites đủ OS/version, quyền và dependency/ngữ cảnh cần thiết.
 - [ ] Các bước tuyến tính dùng numbered steps.
@@ -209,6 +219,6 @@ Mọi bài có `changes_system=true` phải có mục **Gỡ / Hoàn tác** và 
 ## 10. Enforcement trong repository
 
 - `AGENTS.md` là operating contract; `STYLE.md` là source of truth về ngôn ngữ, trình bày và safety affordance của bài.
-- `tools/validate_style.py` audit và **enforce toàn bộ Linux Daily #001+**.
-- Backfill #001–#040 đã hoàn tất; bài lịch sử và bài mới đều bị chặn khi regress. Xem `docs/STYLE-AUDIT.md`.
+- `tools/validate_style.py` audit và **enforce toàn bộ Linux Daily #001+**; schema verification split bắt buộc từ #070.
+- Backfill #001–#040 đã hoàn tất; verification metadata #001–#069 được migrate deterministic khi materialize #070. Xem `docs/STYLE-AUDIT.md`.
 - `python3 tools/publish.py check` phải chạy style gate trước khi PR được coi là sẵn sàng review.

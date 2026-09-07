@@ -9,7 +9,16 @@ import validate_style
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def _post(issue: int, *, valid: bool = True, changes_system: bool = False) -> str:
+def _post(
+    issue: int,
+    *,
+    valid: bool = True,
+    changes_system: bool = False,
+    split: bool | None = None,
+    runtime: list[str] | None = None,
+    documented: list[str] | None = None,
+) -> str:
+    split = issue >= validate_style.VERIFICATION_SPLIT_FROM_ISSUE if split is None else split
     meta = {
         "issue": issue,
         "date": "2026-08-10",
@@ -22,18 +31,42 @@ def _post(issue: int, *, valid: bool = True, changes_system: bool = False) -> st
         "sources": [],
     }
     if valid:
-        meta.update(
-            {
-                "tested_on": ["Ubuntu 24.04", "Debian 13", "Fedora 42", "FreeBSD 14.3"],
-                "last_verified": "2026-08-10",
-                "changes_system": changes_system,
-            }
+        if split:
+            meta.update(
+                {
+                    "tested_on": runtime if runtime is not None else [],
+                    "documentation_verified_on": documented
+                    if documented is not None
+                    else ["Ubuntu 24.04", "Debian 13", "Fedora 42", "FreeBSD 14.4"],
+                    "last_verified": "2026-08-10",
+                    "changes_system": changes_system,
+                }
+            )
+        else:
+            meta.update(
+                {
+                    "tested_on": ["Ubuntu 24.04", "Debian 13", "Fedora 42", "FreeBSD 14.3"],
+                    "last_verified": "2026-08-10",
+                    "changes_system": changes_system,
+                }
+            )
+    if split:
+        verification_meta = (
+            "<div class=\"style-meta\">"
+            "<span>Runtime tested: —</span>"
+            "<span>Documentation verified: Ubuntu 24.04</span>"
+            "<span>Last verified: 2026-08-10</span></div>"
+        )
+    else:
+        verification_meta = (
+            "<div class=\"style-meta\"><span>Tested on: Ubuntu 24.04</span>"
+            "<span>Last verified: 2026-08-10</span></div>"
         )
     cleanup = "<section><h2>Gỡ / Hoàn tác</h2><p>Khôi phục trạng thái.</p></section>" if changes_system else ""
     return f'''<!DOCTYPE html><html><head>
 <script type="application/json" id="ld-meta">{json.dumps(meta)}</script>
 </head><body>
-<div class="style-meta"><span>Tested on: Ubuntu 24.04</span><span>Last verified: 2026-08-10</span></div>
+{verification_meta}
 <section><h2>Mục tiêu</h2><p>Hoàn tất bài test.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><ul><li>sudo</li></ul></section>
 <section><h2>01 Bối cảnh thực tế</h2><p>Test.</p></section>
@@ -95,12 +128,56 @@ def test_issue_41_requires_style_metadata(tmp_path: Path):
     assert validate_style.check([result]) == 1
 
 
-def test_issue_41_valid_post_passes(tmp_path: Path):
+def test_issue_41_valid_legacy_post_passes(tmp_path: Path):
     post = tmp_path / "post-041-style-test.html"
     post.write_text(_post(41), encoding="utf-8")
     result = validate_style.audit_post(post)
     assert result.compliant
     assert validate_style.check([result]) == 0
+
+
+def test_issue_70_documentation_only_split_passes(tmp_path: Path):
+    post = tmp_path / "post-070-style-test.html"
+    post.write_text(_post(70, runtime=[]), encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert result.compliant, result.errors
+
+
+def test_issue_70_runtime_only_split_passes(tmp_path: Path):
+    post = tmp_path / "post-070-style-test.html"
+    content = _post(70, runtime=["Ubuntu 24.04"], documented=[]).replace(
+        "Documentation verified: Ubuntu 24.04", "Documentation verified: —"
+    ).replace("Runtime tested: —", "Runtime tested: Ubuntu 24.04")
+    post.write_text(content, encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert result.compliant, result.errors
+
+
+def test_issue_70_rejects_legacy_schema_and_label(tmp_path: Path):
+    post = tmp_path / "post-070-style-test.html"
+    post.write_text(_post(70, split=False), encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert any("documentation_verified_on" in error for error in result.errors)
+    assert any("Runtime tested" in error for error in result.errors)
+
+
+def test_split_schema_rejects_documentation_sentinel_in_tested_on(tmp_path: Path):
+    post = tmp_path / "post-070-style-test.html"
+    content = _post(
+        70,
+        runtime=["Ubuntu 24.04 (documentation-verified)"],
+        documented=[],
+    ).replace("Runtime tested: —", "Runtime tested: Ubuntu 24.04")
+    post.write_text(content, encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert any("sentinel" in error for error in result.errors)
+
+
+def test_historical_post_after_deterministic_split_is_valid(tmp_path: Path):
+    post = tmp_path / "post-041-style-test.html"
+    post.write_text(_post(41, split=True), encoding="utf-8")
+    result = validate_style.audit_post(post)
+    assert result.compliant, result.errors
 
 
 def test_changes_system_requires_cleanup(tmp_path: Path):
@@ -134,7 +211,6 @@ def _audit_html(tmp_path, body: str, issue: int = 48):
     base = (ROOT / "posts" / "post-047-socket-ownership-ss-lsof-sockstat-fstat.html").read_text(
         encoding="utf-8"
     )
-    # bỏ toàn bộ nhãn sẵn có rồi chèn body thay thế
     stripped = re.sub(r'class=(["\'])([^"\']*)\bcode-label\s+[a-z0-9_-]+([^"\']*)\1',
                       r'class=\1\2code-label-removed\3\1', base)
     path = tmp_path / f"post-{issue:03d}-demo.html"
@@ -143,7 +219,6 @@ def _audit_html(tmp_path, body: str, issue: int = 48):
 
 
 def test_post_without_any_os_label_is_rejected(tmp_path):
-    """Đây là lỗi đã chặn bài #048: có command block nhưng không nhãn OS nào."""
     errors = _audit_html(tmp_path, "").errors
     assert any("phải gắn nhãn OS" in e for e in errors), errors
 
@@ -155,15 +230,12 @@ def test_valid_label_satisfies_the_rule(tmp_path):
 
 
 def test_label_tag_may_be_p_or_div(tmp_path):
-    """Bài thật dùng cả <p> lẫn <div>; kiểm theo class chứ không theo tên thẻ."""
     for tag in ("p", "div"):
         errors = _audit_html(tmp_path, f'<{tag} class="code-label bsd">FreeBSD</{tag}>').errors
         assert not any("phải gắn nhãn OS" in e for e in errors), (tag, errors)
 
 
 def test_unknown_label_token_is_named_precisely(tmp_path):
-    """`code-label freebsd` là token sai; validate_repo sẽ báo nhầm là 'thiếu khối
-    FreeBSD' trong khi khối có tồn tại. Ở đây phải chỉ đúng tên token."""
     errors = _audit_html(tmp_path, '<p class="code-label freebsd">FreeBSD</p>').errors
     assert any('code-label "freebsd" không hợp lệ' in e for e in errors), errors
 
@@ -177,7 +249,11 @@ def test_label_vocabulary_matches_what_published_posts_use():
 
 
 def test_style_doc_and_template_document_the_rule():
-    """Quy tắc từng chỉ tồn tại trong validator: agent bị từ chối vì thứ nó chưa
-    bao giờ được cho biết. Doc và khung bài phải nêu markup cụ thể."""
-    assert "code-label" in (ROOT / "STYLE.md").read_text(encoding="utf-8")
-    assert "code-label" in (ROOT / "templates" / "post.template.html").read_text(encoding="utf-8")
+    style = (ROOT / "STYLE.md").read_text(encoding="utf-8")
+    template = (ROOT / "templates" / "post.template.html").read_text(encoding="utf-8")
+    assert "code-label" in style
+    assert "code-label" in template
+    assert "documentation_verified_on" in style
+    assert "documentation_verified_on" in template
+    assert "Runtime tested:" in template
+    assert "Documentation verified:" in template
