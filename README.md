@@ -131,10 +131,13 @@ python3 tools/pr_preflight.py
 
 ## STYLE.md quality gate
 
-**Toàn bộ Linux Daily #001+** phải đáp ứng `STYLE.md` trước khi merge. Backfill #001–#040 đã hoàn tất. Gate kiểm tra các contract máy đọc được, gồm:
+**Toàn bộ Linux Daily #001+** phải đáp ứng `STYLE.md` trước khi merge. Backfill #001–#040 đã hoàn tất. Từ #070, gate tách rõ loại bằng chứng verification:
 
-- `ld-meta.tested_on`, `last_verified`, `changes_system`;
-- metadata `Tested on` / `Last verified` hiển thị trong bài;
+- `ld-meta.tested_on` — chỉ OS/version đã **runtime-test thật**; list có thể rỗng;
+- `ld-meta.documentation_verified_on` — chỉ OS/version đã đối chiếu tài liệu official/upstream; list có thể rỗng;
+- ít nhất một trong hai list phải có bằng chứng và không dùng sentinel `(documentation-verified)`;
+- metadata hiển thị `Runtime tested` / `Documentation verified` / `Last verified`;
+- `last_verified`, `changes_system` vẫn bắt buộc;
 - Mục tiêu, Yêu cầu tiên quyết, Các bước thực hiện, Kiểm chứng, Lưu ý & Khắc phục lỗi, Bài tập;
 - `<ol class="steps">` cho quy trình tuyến tính;
 - `language-*` cho mọi code block;
@@ -143,7 +146,7 @@ python3 tools/pr_preflight.py
 - Gỡ / Hoàn tác khi `changes_system=true`;
 - chặn shell prompt trong command block, placeholder legacy và `curl | sh` chạy trực tiếp.
 
-Bài #001–#040 được kiểm tra và chặn regression như bài mới; không còn legacy exemption. Xem `docs/STYLE-AUDIT.md`.
+#001–#069 được đọc tương thích với schema cũ cho tới lần materialize #070. Khi `state.json.last_issue >= 70`, `tools/backfill_site_metadata.py` chuyển deterministic metadata lịch sử sang schema explicit và sửa nhãn hiển thị; không backfill tay từng bài. Xem `docs/STYLE-AUDIT.md`.
 
 ```bash
 python3 tools/validate_style.py
@@ -163,14 +166,14 @@ Từ **Linux Daily #019**, mỗi bài mới phải có tối thiểu **2 nguồn
 3. Chọn trục theo chu kỳ 7 và tránh chủ đề trùng.
 4. Tạo HTML theo template, metadata `ld-meta` và 2 SVG.
 5. Kiểm tra claim kỹ thuật bằng tài liệu official/upstream hiện hành; ghi `sources` và `review_status`.
-6. Kiểm tra STYLE.md: metadata môi trường test, quyền lệnh, step ordering, verification output, rollback và FreeBSD portability.
+6. Kiểm tra STYLE.md: phân loại đúng runtime/documentation evidence, quyền lệnh, step ordering, verification output, rollback và FreeBSD portability.
 7. Cập nhật `topics.md`, `state.json` và learning metadata/path nếu cần.
 8. Chạy generator deterministic.
 9. Chạy `python3 tools/publish.py check`.
 10. Dùng branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`.
 11. Mở PR vào `main`; chuyển bài hằng ngày sang Ready khi diff/state/duplicate/review sạch, trước khi CI kết thúc. `Linux Daily Auto Merge` chỉ squash-merge khi CI của đúng head SHA success và các điều kiện trong `AGENTS.md` được thỏa mãn.
 
-PR bảo trì dùng branch riêng, không khớp tên branch bài hằng ngày. Chỉ squash-merge sau khi review và CI của head SHA hiện tại đạt; workflow auto-merge bài hằng ngày không xử lý các PR này.
+PR bảo trì dùng branch riêng, không khớp tên branch bài hằng ngày. Auto-merge phân loại maintenance/non-daily PR là ineligible và kết thúc sạch; PR bảo trì chỉ squash-merge sau review và CI của head SHA hiện tại đạt.
 
 **Facebook/X đang tạm dừng.** Bài mới không cần tạo social artifact mặc định.
 
