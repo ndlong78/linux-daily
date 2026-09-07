@@ -37,6 +37,7 @@ jobs:
 
     steps:
       - name: Validate exact PR contract
+        id: contract
         shell: bash
         run: |
           set -euo pipefail
@@ -50,12 +51,25 @@ jobs:
           head_repo="$(jq -r '.head.repo.full_name' <<<"${pr_json}")"
           author="$(jq -r '.user.login' <<<"${pr_json}")"
 
-          test "${state}" = "open"
-          test "${draft}" = "false"
+          # workflow_run được tạo cho mọi PR có CI xanh. Maintenance PR và daily
+          # PR còn Draft không phải lỗi vận hành của auto-merge: chúng đơn giản là
+          # chưa/không thuộc tập được phép merge. Báo success + skip thay vì tạo
+          # failure giả; các contract an toàn bên dưới vẫn fail-closed cho daily
+          # PR thực sự đủ điều kiện.
+          if ! [[ "${head_ref}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]; then
+            echo "eligible=false" >> "${GITHUB_OUTPUT}"
+            echo "Skip PR #${PR_NUMBER}: ${head_ref} không phải daily branch."
+            exit 0
+          fi
+          if test "${state}" != "open" || test "${draft}" != "false"; then
+            echo "eligible=false" >> "${GITHUB_OUTPUT}"
+            echo "Skip PR #${PR_NUMBER}: state=${state}, draft=${draft}."
+            exit 0
+          fi
+
           test "${base_ref}" = "main"
           test "${head_repo}" = "${GITHUB_REPOSITORY}"
           test "${author}" = "${GITHUB_REPOSITORY_OWNER}"
-          [[ "${head_ref}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]
           test "${head_sha}" = "${CI_HEAD_SHA}"
 
           owner="${GITHUB_REPOSITORY%%/*}"
@@ -96,10 +110,12 @@ jobs:
           test "${review_decision}" != "CHANGES_REQUESTED"
           test "${unresolved_threads}" = "0"
 
+          echo "eligible=true" >> "${GITHUB_OUTPUT}"
           echo "Validated PR #${PR_NUMBER}: ${head_ref} @ ${head_sha}"
 
       - name: Squash merge exact CI head
         id: squash_merge
+        if: steps.contract.outputs.eligible == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -123,6 +139,7 @@ jobs:
           echo "Squash-merged PR #${PR_NUMBER} thành ${merged_sha} sau exact-head CI success."
 
       - name: Dispatch post-merge validation on main
+        if: steps.contract.outputs.eligible == 'true'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
