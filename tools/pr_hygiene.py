@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject noisy PR history and temporary tracked artifacts."""
+"""Reject noisy PR history, temporary artifacts and stale daily branches."""
 from __future__ import annotations
 
 import argparse
@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+DAILY_BRANCH_RE = re.compile(r"^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$")
 FORBIDDEN_SUBJECTS = {
     "x",
     "tmp",
@@ -82,6 +83,25 @@ def validate_branch(branch: str) -> list[str]:
     return []
 
 
+def validate_daily_base(branch: str, *, base_is_ancestor: bool) -> list[str]:
+    """Daily PRs must contain the current base commit in their own history.
+
+    Maintenance branches may intentionally live across several main commits, but a
+    daily article is deterministic output from the current contract. If current
+    main is not an ancestor of the daily head, the branch was materialized from an
+    older contract and must be updated/regenerated before merge.
+    """
+    normalized = branch.strip()
+    if not DAILY_BRANCH_RE.fullmatch(normalized):
+        return []
+    if base_is_ancestor:
+        return []
+    return [
+        f"daily branch {normalized!r} is stale relative to the current PR base; "
+        "update it from current main and rematerialize artifacts before merge"
+    ]
+
+
 def _git_lines(args: list[str]) -> list[str]:
     result = subprocess.run(
         ["git", *args],
@@ -96,10 +116,33 @@ def _git_lines(args: list[str]) -> list[str]:
     return [line.strip() for line in result.stdout.splitlines() if line.strip()]
 
 
-def run(*, base: str | None = None, head: str | None = None) -> Report:
+def _git_is_ancestor(ancestor: str, descendant: str) -> bool:
+    result = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=ROOT,
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return True
+    if result.returncode == 1:
+        return False
+    detail = result.stderr.strip() or result.stdout.strip() or "unknown git error"
+    raise RuntimeError(
+        f"git merge-base --is-ancestor {ancestor} {descendant} failed: {detail}"
+    )
+
+
+def run(
+    *, base: str | None = None, head: str | None = None, branch: str | None = None
+) -> Report:
     report = Report()
     if bool(base) != bool(head):
         report.errors.append("--base and --head must be provided together")
+        return report
+    if base and head and not branch:
+        report.errors.append("--branch is required with --base/--head")
         return report
 
     try:
@@ -108,9 +151,15 @@ def run(*, base: str | None = None, head: str | None = None) -> Report:
             paths = _git_lines(["diff", "--name-only", f"{base}...{head}"])
             report.errors.extend(validate_subjects(subjects))
             report.errors.extend(validate_paths(paths))
+            report.errors.extend(
+                validate_daily_base(
+                    branch or "",
+                    base_is_ancestor=_git_is_ancestor(base, head),
+                )
+            )
         else:
-            branch = (_git_lines(["branch", "--show-current"]) or [""])[0]
-            report.errors.extend(validate_branch(branch))
+            current_branch = (_git_lines(["branch", "--show-current"]) or [""])[0]
+            report.errors.extend(validate_branch(current_branch))
             report.errors.extend(validate_paths(_git_lines(["ls-files"])))
     except RuntimeError as exc:
         report.errors.append(str(exc))
@@ -121,8 +170,9 @@ def main(argv=None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base")
     parser.add_argument("--head")
+    parser.add_argument("--branch")
     args = parser.parse_args(argv)
-    report = run(base=args.base, head=args.head)
+    report = run(base=args.base, head=args.head, branch=args.branch)
     if report.errors:
         print(f"FAIL: PR hygiene found {len(report.errors)} issue(s)")
         for error in report.errors:
