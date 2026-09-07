@@ -46,3 +46,24 @@ def test_protected_branch_is_rejected_for_local_preflight():
     assert pr_hygiene.validate_branch("main")
     assert pr_hygiene.validate_branch("master")
     assert pr_hygiene.validate_branch("chatgpt/pr94-git-ci-workflow-simplification") == []
+
+
+def test_daily_branch_requires_current_base_as_ancestor():
+    branch = "chatgpt/linux-daily-070-20260908"
+    assert pr_hygiene.validate_daily_base(branch, base_is_ancestor=True) == []
+    errors = pr_hygiene.validate_daily_base(branch, base_is_ancestor=False)
+    assert len(errors) == 1
+    assert "stale relative to the current PR base" in errors[0]
+    assert "rematerialize" in errors[0]
+
+
+def test_maintenance_branch_is_not_subject_to_daily_stale_base_gate():
+    assert pr_hygiene.validate_daily_base(
+        "maintenance/p1-daily-pr-gates-20260907",
+        base_is_ancestor=False,
+    ) == []
+
+
+def test_remote_compare_mode_requires_branch_name():
+    report = pr_hygiene.run(base="a" * 40, head="b" * 40)
+    assert report.errors == ["--branch is required with --base/--head"]
