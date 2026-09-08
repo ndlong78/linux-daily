@@ -38,6 +38,9 @@ DOCUMENTATION_SUFFIX = " (documentation-verified)"
 STYLE_META_RE = re.compile(
     r'<div class="style-meta"[^>]*>.*?</div>', re.IGNORECASE | re.DOTALL
 )
+LEGACY_STYLE_CONTRACT_RE = re.compile(
+    r'<section class="style-contract"[^>]*>.*?</section>', re.IGNORECASE | re.DOTALL
+)
 TESTED_FIELD_RE = re.compile(r'"tested_on"\s*:\s*\[[^\]]*\]')
 DOC_FIELD_RE = re.compile(r'"documentation_verified_on"\s*:\s*\[[^\]]*\]')
 
@@ -137,9 +140,11 @@ def normalize_verification_metadata(text: str, meta: dict, *, active: bool) -> s
         f'<span><strong>Last verified:</strong> {html.escape(last_verified)}</span>'
         "</div>"
     )
-    if not STYLE_META_RE.search(text):
-        raise ValueError("thiếu style-meta nên không thể migrate verification label")
-    return STYLE_META_RE.sub(style_meta, text, count=1)
+    if STYLE_META_RE.search(text):
+        return STYLE_META_RE.sub(style_meta, text, count=1)
+    if LEGACY_STYLE_CONTRACT_RE.search(text):
+        return LEGACY_STYLE_CONTRACT_RE.sub(style_meta, text, count=1)
+    raise ValueError("thiếu style-meta/style-contract nên không thể migrate verification label")
 
 
 def _ensure_document_shell(text: str, meta: dict) -> str:
