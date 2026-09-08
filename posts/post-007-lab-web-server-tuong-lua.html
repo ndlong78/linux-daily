@@ -52,12 +52,7 @@
       "kind": "official"
     }
   ],
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.3-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.3-RELEASE"],
   "last_verified": "2026-08-09",
   "changes_system": true
 }
@@ -83,10 +78,7 @@
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#007 · 07·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Ôn tập · Lab end-to-end</p><h1>Từ máy mới đến web server an toàn, chỉ mở đúng cổng</h1><p class="lede">Sáu bài đầu là sáu mảnh rời. Bài này ghép chúng thành một quy trình thật: nhận một máy mới tinh, gán IP tĩnh, gia cố SSH, dựng nginx, rồi khoá tất cả trừ đúng ba cổng cần thiết. Mảng kỹ thuật mới của lab là tường lửa — và đây cũng là chỗ bốn hệ điều hành rẽ nhánh rõ nhất: UFW, firewalld hay pf.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div></header>
-  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
-    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
-  </section>
+  <div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</span><span><strong>Last verified:</strong> 2026-08-09</span></div>
   <section><h2>Mục tiêu</h2><p>Hoàn thành lab web server có firewall tối thiểu, kiểm tra listener và giữ đường rollback trước khi thay policy mạng.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Dùng máy lab hoặc cửa sổ bảo trì; có console/rollback path trước khi thay firewall.</p></section>
 

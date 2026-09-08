@@ -12,7 +12,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Lab file descriptor exhaustion: process limit, open-file evidence và service recovery">
-<meta property="og:description" content="Mô phỏng file descriptor exhaustion trong một process bị giới hạn, thu thập open-file evidence trên Linux và FreeBSD, rồi xác nhận recovery mà không tăng limit theo phản xạ.">
+<meta property="og:description" content="Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -23,7 +23,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Lab file descriptor exhaustion: process limit, open-file evidence và service recovery">
-<meta name="twitter:description" content="Mô phỏng file descriptor exhaustion trong một process bị giới hạn, thu thập open-file evidence trên Linux và FreeBSD, rồi xác nhận recovery mà không tăng limit theo phản xạ.">
+<meta name="twitter:description" content="Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -49,14 +49,21 @@
   "lab":{"version":1,"profile":"advanced","topology":["observer-shell","fd-pressure-process"],"risks":["resource-pressure"],"verification":["negative","recovery","observability"],"rollback_required":true,"cleanup_required":true,"failure_injection":true}
 }
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#070 · 08·09·2026</span></div></div>
@@ -110,6 +117,27 @@ ps -p "${PID}"</code></pre></div><p><strong>Expected Output:</strong> <code>ps</
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>File descriptor có thể trỏ tới socket, pipe, credential-backed file hoặc path nhạy cảm. Khi lưu evidence, tránh công khai pathname/socket metadata không cần thiết.</li><li>Giữ baseline trước incident: process limit, open descriptor count và growth rate. Một snapshot đơn lẻ cho biết trạng thái; trend mới giúp phát hiện leak.</li><li>Chỉ tăng limit sau khi đã chứng minh workload hợp lệ cần headroom và đã kiểm memory/socket/kernel capacity liên quan.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Đổi limit process lab từ 64 xuống 32 và dự đoán số file mở thành công trước khi chạy.</li><li>Phân loại descriptor trong output <code>procstat -f</code> hoặc <code>/proc/&lt;pid&gt;/fd</code> thành file, pipe và socket trên một process lab khác.</li><li>Viết checklist incident gồm ba câu hỏi: process limit là bao nhiêu, hiện đang dùng bao nhiêu, system-wide headroom còn bao nhiêu.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn official/upstream đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/proc.html">Linux Kernel Documentation — The /proc Filesystem</a></li><li><a href="https://manpages.debian.org/trixie/manpages-dev/getrlimit.2.en.html">Debian Manpages — getrlimit(2)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=procstat&amp;sektion=1">FreeBSD Manual — procstat(1)</a></li><li><a href="https://docs.python.org/3/library/resource.html">Python Documentation — resource</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #070 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Sysadmin #FileDescriptors</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-063-lab-time-drift-ntp-tls-log-scheduled-job.html"><span class="series-kicker">#063</span><span>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html">#056 · Lab disk I/O latency: process, device health và recovery boundary</a></li>
+      <li><a href="post-049-lab-tls-certificate-outage-expiry-chain-hostname.html">#049 · Lab TLS certificate outage: expiry, chain và hostname mismatch</a></li>
+      <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #070 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Sysadmin #FileDescriptors</span></div></footer>
 </div></main></body>
 </html>

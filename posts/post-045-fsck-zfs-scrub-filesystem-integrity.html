@@ -37,12 +37,7 @@
   "title": "fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem",
   "lede": "Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-14",
   "changes_system": true,
   "sources": [
@@ -79,10 +74,7 @@
   <p class="lede">Xác định filesystem trước, chọn checker đúng semantics và đặt recovery boundary trước mọi thao tác có thể sửa dữ liệu.</p>
   <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-14 · đối chiếu e2fsprogs, xfsprogs, Btrfs, OpenZFS và FreeBSD manual; các lệnh sửa metadata nguy hiểm không được đưa vào bài.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-14</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Phân biệt kiểm tra offline bằng checker filesystem với scrub online, xác định đúng target và dừng ở bước chẩn đoán trước khi bước sang repair.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Đã nắm bài #010 về device/mount, #024 về block/inode/ZFS dataset và #038 về health của thiết bị.</li>

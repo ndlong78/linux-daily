@@ -37,12 +37,7 @@
   "title": "MTU và Path MTU Discovery: chẩn đoán kết nối treo một phần",
   "lede": "Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-12",
   "changes_system": false,
   "sources": [
@@ -95,10 +90,7 @@
   <p class="lede">Dùng probe có kiểm soát để xác định khi đường truyền chỉ hỏng với packet lớn và tách lỗi MTU/PMTUD khỏi DNS, route hoặc firewall.</p>
   <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG BÌNH</span><span class="tag">~12 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-12 · đối chiếu RFC, manpage iputils và FreeBSD; các lệnh trong bài chỉ đọc/probe, không đổi cấu hình host.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-12</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Xác định một lỗi kết nối treo với payload lớn có liên quan MTU/PMTUD hay không trước khi thay đổi interface, route hoặc firewall.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Đã nắm các bài #008, #022, #029 và #036.</li>

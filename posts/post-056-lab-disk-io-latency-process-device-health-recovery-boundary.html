@@ -37,12 +37,7 @@
   "title": "Lab disk I/O latency: process, device health và recovery boundary",
   "lede": "Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-25",
   "changes_system": true,
   "sources": [
@@ -83,7 +78,7 @@
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#056 · 25·08·2026</span></div></div>
-<header class="post"><p class="eyebrow">Ôn tập · Disk I/O latency lab</p><h1>Lab disk I/O latency: process, device health và recovery boundary</h1><p class="lede">Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~20 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-25</span></div></header>
+<header class="post"><p class="eyebrow">Ôn tập · Disk I/O latency lab</p><h1>Lab disk I/O latency: process, device health và recovery boundary</h1><p class="lede">Tạo I/O pressure có giới hạn trên file lab, xác định process gây tải, kiểm tra device health và chọn recovery boundary trước khi thay đổi storage.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~20 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-25</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Phân biệt workload gây I/O, device có dấu hiệu suy giảm và filesystem pressure; sau đó chọn recovery boundary dựa trên bằng chứng thay vì sửa storage theo phản xạ.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Host lab dùng riêng, có ít nhất 1 GiB trống trong <code>/var/tmp</code>; không chạy failure injection trên production, VM shared hoặc storage đang phục vụ workload thật.</li><li>Đã đọc #019, #024, #026, #033, #038 và #040 để hiểu CPU/RAM/I/O baseline, filesystem capacity, process ownership và disk health.</li><li>Ubuntu hoặc Xubuntu, Debian và Fedora dùng Linux device model; FreeBSD dùng GEOM và công cụ BSD riêng.</li><li>Cần quyền <code>sudo</code>/root để cài tool và đọc health của device; workload <code>fio</code> chạy bằng user thường trên file lab, không ghi raw device.</li></ul></section>
 <figure><svg viewBox="0 0 760 250" role="img" aria-label="Ba lớp bằng chứng khi triage disk I/O latency: process, device và filesystem"><rect width="760" height="250" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="72" width="190" height="106" rx="8" fill="#fff" stroke="#14201D"/><text x="130" y="104" font-size="13" font-weight="700">PROCESS</text><text x="130" y="130" font-size="10">ai đang đọc/ghi?</text><text x="130" y="151" font-size="10">pidstat / procstat</text><rect x="285" y="72" width="190" height="106" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="104" font-size="13" font-weight="700">DEVICE</text><text x="380" y="130" font-size="10">latency + queue + health</text><text x="380" y="151" font-size="10">iostat / gstat / SMART</text><rect x="535" y="72" width="190" height="106" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="630" y="104" font-size="13" font-weight="700">FILESYSTEM</text><text x="630" y="130" font-size="10">capacity / inode / errors</text><text x="630" y="151" font-size="10">df + logs</text><path d="M225 125H279M475 125H529" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Không gọi mọi “disk chậm” là lỗi đĩa. Cần bằng chứng ở process, device và filesystem trước khi chọn recovery boundary.</figcaption></figure>
@@ -143,9 +138,9 @@ rmdir /var/tmp/linux-daily-056 2&gt;/dev/null || true</code></pre></div><p>⚠�
   <div class="related-more">
     <strong>Cùng chủ đề</strong>
     <ul>
+      <li><a href="post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html">#070 · Lab file descriptor exhaustion: process limit, open-file evidence và service recovery</a></li>
       <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
       <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
-      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
     </ul>
   </div>
 </nav>

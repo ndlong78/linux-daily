@@ -58,12 +58,7 @@
       "kind": "upstream"
     }
   ],
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.3-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.3-RELEASE"],
   "last_verified": "2026-08-09",
   "changes_system": true
 }
@@ -89,10 +84,7 @@
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#004 · 04·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · Backup</p><h1>Một lệnh backup, mã hoá sẵn, chạy khắp bốn hệ điều hành</h1><p class="lede">Sao lưu bằng cp hay rsync thủ công thì dễ quên, dễ lộ dữ liệu, và không ai nhớ nổi bản nào còn dùng được. restic gói gọn tất cả trong một binary Go tĩnh: mã hoá, khử trùng lặp, tăng dần — và chạy y hệt trên Linux lẫn FreeBSD. Khác biệt duy nhất nằm ở chỗ lấy gói.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN → TRUNG CẤP</span><span class="tag">~9 PHÚT</span></div></header>
-  <section class="style-contract" aria-label="Phạm vi kiểm chứng">
-    <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
-    <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
-  </section>
+  <div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</span><span><strong>Last verified:</strong> 2026-08-09</span></div>
   <section><h2>Mục tiêu</h2><p>Thiết lập một backup restic có mã hóa, chạy backup thử và kiểm chứng rằng snapshot có thể được đọc lại.</p></section>
   <section><h2>Yêu cầu tiên quyết</h2><p>Có thư mục dữ liệu thử và vị trí repository restic; giữ password/repository credential ngoài lịch sử shell nếu môi trường yêu cầu.</p></section>
 

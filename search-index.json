@@ -1,6 +1,19 @@
 {
-  "count": 69,
+  "count": 70,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-09-08",
+      "href": "posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html",
+      "issue": 70,
+      "lede": "Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.",
+      "tags": [
+        "File descriptor exhaustion lab"
+      ],
+      "title": "Lab file descriptor exhaustion: process limit, open-file evidence và service recovery"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

@@ -37,12 +37,7 @@
   "title": "TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD",
   "lede": "MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-26",
   "changes_system": false,
   "sources": [
@@ -78,10 +73,7 @@
   <p class="lede">MSS clamping chỉ sửa giá trị MSS trong TCP SYN. Dùng nó như workaround có phạm vi, không thay PMTUD hay sửa lỗi ICMP bị chặn.</p>
   <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~14 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-26 · đối chiếu RFC 9293, Linux kernel documentation, nftables upstream và FreeBSD pf.conf(5); bài chỉ đọc trạng thái và đưa mẫu cấu hình, không tự thay firewall.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-26</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Xác định khi nào TCP MSS clamping là workaround hợp lý, chọn phạm vi đủ hẹp và chứng minh vì sao PMTUD vẫn phải hoạt động.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Đã nắm #020, #029, #036 và #043.</li>

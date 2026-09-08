@@ -37,12 +37,7 @@
   "title": "Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD",
   "lede": "Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-16",
   "changes_system": true,
   "sources": [
@@ -78,10 +73,7 @@
   <p class="lede">Đi từ cổng đang lắng nghe tới socket, PID, user và service owner bằng ss/lsof trên Linux; FreeBSD dùng sockstat/fstat để xác minh cùng chuỗi ownership.</p>
   <div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-16 · đối chiếu Debian iproute2 manpage, upstream lsof và FreeBSD manual pages; walkthrough chỉ đọc socket/process state ngoài bước cài <code>lsof</code> trên Linux.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-16</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Đi từ một listening port tới socket, PID, user và service owner bằng đúng công cụ của Linux và FreeBSD, rồi xác minh ownership bằng nguồn thứ hai trước khi thay đổi dịch vụ.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Đã nắm #008 về socket/network inventory, #033 về process/service ownership và #040 về quan sát process theo thời gian.</li>

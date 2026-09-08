@@ -37,12 +37,7 @@
   "title": "fzf cho chọn file, process và history tương tác",
   "lede": "Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-15",
   "changes_system": true,
   "sources": [
@@ -77,10 +72,7 @@
   <p class="lede">Dùng fzf để chọn file, process và history như một lớp tương tác; luôn kiểm tra selection trước khi chuyển thành action.</p>
   <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-15 · đối chiếu upstream fzf, Debian manpage và Fedora package catalog; walkthrough chỉ cài package và chọn dữ liệu, không tự thực thi selection.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-15</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>fzf</code> để thu hẹp danh sách file, process và command history, rồi tách bước chọn khỏi bước hành động để giảm thao tác nhầm.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Đã nắm bài #039 về <code>fd</code> hoặc biết cách tạo một danh sách dòng bằng <code>find</code>, <code>ps</code> hay shell history.</li>

@@ -88,12 +88,7 @@
     "cleanup_required": true,
     "failure_injection": true
   },
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.3-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.3-RELEASE"],
   "last_verified": "2026-08-09",
   "changes_system": true
 }
@@ -125,10 +120,7 @@
     <p class="lede">Thay firewall qua SSH nguy hiểm không phải vì câu lệnh khó, mà vì một rule đúng ý nhưng sai thứ tự có thể cắt luôn đường quản trị. Lab này dựng nhiều node, arm rollback watchdog trước khi đổi rule, kiểm cả allow lẫn deny, rồi chủ động làm PROBE mất SSH để chứng minh hệ thống tự phục hồi trên Ubuntu/Xubuntu, Debian, Fedora và FreeBSD.</p>
     <div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div>
   </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</span><span><strong>Last verified:</strong> 2026-08-09</span></div>
 <section><h2>Mục tiêu</h2><p>Thay đổi firewall có rollback và negative test: chứng minh traffic cần thiết được phép, traffic không mong muốn bị chặn và đường quản trị vẫn còn.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><p>Có console/out-of-band hoặc phiên cứu hộ, biết IP quản trị và service cần giữ; chuẩn bị host test bên ngoài để kiểm cả allow lẫn deny.</p></section>
 

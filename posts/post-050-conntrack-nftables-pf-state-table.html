@@ -37,12 +37,7 @@
   "title": "State table: conntrack/nftables trên Linux và pf state trên FreeBSD",
   "lede": "Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-19",
   "changes_system": false,
   "sources": [
@@ -78,10 +73,7 @@
   <p class="lede">Đọc state trước khi sửa rule: phân biệt flow đang được theo dõi, timeout và dấu hiệu asymmetric routing trên Linux lẫn FreeBSD.</p>
   <div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-19 · đối chiếu Linux kernel conntrack, nftables upstream và tài liệu PF của FreeBSD.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-19</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Dùng state table như bằng chứng vận hành: xác định flow có được firewall theo dõi hay không, đọc trạng thái TCP/UDP và nhận diện khi đường đi hai chiều không cùng qua một firewall.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
 <li>Đã nắm firewall cơ bản ở #007/#020, policy routing ở #029 và packet capture ở #036.</li>
