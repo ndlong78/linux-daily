@@ -4,14 +4,14 @@ Derived quality snapshot · as of **2026-09-08**.
 
 ## Executive status
 
-- P7 quality: **PASS**
+- P7 quality: **ATTENTION**
 - Published posts: **70**
 - Hard errors: **0**
-- Remediation queue: **0**
+- Remediation queue: **5**
 
 | Signal | Status | Detail |
 |---|---|---|
-| Distro coverage & portability | **PASS** | 70/70 complete · FreeBSD blocks 70/70 · violations 0 |
+| Distro coverage & portability | **ATTENTION** | 65/70 complete · FreeBSD blocks 70/70 · violations 0 |
 | Command & configuration | **PASS** | 562 blocks · 1903 lines · blockers 0 · review 0 |
 | Content freshness | **PASS** | current 70 · review-due 0 · historically-valid 0 |
 | Source quality | **PASS** | backed 70/70 · reviewed 70/70 · sources 238 |
@@ -20,7 +20,7 @@ Derived quality snapshot · as of **2026-09-08**.
 
 ### Distro portability
 
-- Complete four-platform coverage: **70/70**
+- Complete four-platform coverage: **65/70**
 - Explicit FreeBSD blocks: **70/70**
 - Linux-only semantics inside FreeBSD blocks: **0**
 
@@ -46,7 +46,13 @@ Derived quality snapshot · as of **2026-09-08**.
 
 ## Remediation queue
 
-- PASS: không có non-blocking quality debt cần remediation.
+| Severity | Signal | Owner | Issue | Finding | Remediation |
+|---|---|---|---:|---|---|
+| ATTENTION | Distro portability | Technical reviewer | #007 | #007 thiếu explicit coverage: Ubuntu / Xubuntu | `docs/distro-portability.md` |
+| ATTENTION | Distro portability | Technical reviewer | #008 | #008 thiếu explicit coverage: Ubuntu / Xubuntu, Fedora | `docs/distro-portability.md` |
+| ATTENTION | Distro portability | Technical reviewer | #010 | #010 thiếu explicit coverage: Ubuntu / Xubuntu | `docs/distro-portability.md` |
+| ATTENTION | Distro portability | Technical reviewer | #014 | #014 thiếu explicit coverage: Ubuntu / Xubuntu | `docs/distro-portability.md` |
+| ATTENTION | Distro portability | Technical reviewer | #017 | #017 thiếu explicit coverage: Ubuntu / Xubuntu, Debian, Fedora | `docs/distro-portability.md` |
 
 ## Hard errors
 

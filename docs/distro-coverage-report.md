@@ -5,21 +5,25 @@
 ## Snapshot
 
 - Published posts: **70**
-- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **70/70**
+- Complete Ubuntu/Xubuntu + Debian + Fedora + FreeBSD coverage: **65/70**
 - Posts with explicit FreeBSD code blocks: **70/70**
 - Linux-only command/path violations inside FreeBSD blocks: **0**
 - Full coverage enforcement starts at issue: **#020**
 
 | Platform | Posts with explicit coverage |
 |---|---:|
-| Ubuntu / Xubuntu | 70/70 |
-| Debian | 70/70 |
-| Fedora | 70/70 |
+| Ubuntu / Xubuntu | 65/70 |
+| Debian | 69/70 |
+| Fedora | 68/70 |
 | FreeBSD | 70/70 |
 
 ## Historical review queue
 
-- Không có bài nào thiếu explicit distro coverage.
+- #007 thiếu distro coverage: Ubuntu / Xubuntu
+- #008 thiếu distro coverage: Ubuntu / Xubuntu, Fedora
+- #010 thiếu distro coverage: Ubuntu / Xubuntu
+- #014 thiếu distro coverage: Ubuntu / Xubuntu
+- #017 thiếu distro coverage: Ubuntu / Xubuntu, Debian, Fedora
 
 ## Policy boundary
 
