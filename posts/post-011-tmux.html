@@ -53,12 +53,7 @@
       "kind": "upstream"
     }
   ],
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.3-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.3-RELEASE"],
   "last_verified": "2026-08-09",
   "changes_system": true
 }
@@ -89,10 +84,7 @@
 <p class="lede">Đang chạy một bản cập nhật dài qua SSH thì mạng rớt — tiến trình chết giữa chừng, để lại một hệ thống dở dang. <strong>tmux</strong> gỡ đúng nỗi đau đó: phiên làm việc chạy trên máy chủ, client rớt thì phiên vẫn sống, đăng nhập lại là thấy nguyên trạng. Bonus: chia một cửa sổ thành nhiều khung để vừa chạy vừa theo dõi. Cách dùng giống hệt trên bốn hệ điều hành — chỉ khác lệnh cài.</p>
 <div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~8 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</span><span><strong>Last verified:</strong> 2026-08-09</span></div>
 <section><h2>Mục tiêu</h2><p>Dùng tmux để giữ phiên làm việc sống khi SSH bị gián đoạn, biết detach/attach và hiểu giới hạn của tmux so với service manager.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><p>Có shell trên máy lab và quyền cài gói; nếu thao tác qua SSH, mở một phiên riêng để thử detach/attach mà không ảnh hưởng công việc thật.</p></section>
 

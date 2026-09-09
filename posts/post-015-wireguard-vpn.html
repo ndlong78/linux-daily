@@ -57,12 +57,7 @@
       "kind": "official"
     }
   ],
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.3-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.3-RELEASE"],
   "last_verified": "2026-08-09",
   "changes_system": true
 }
@@ -88,10 +83,7 @@
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html">← Linux Daily</a><span class="issue">#015 · 15·07·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · VPN</p><h1>WireGuard: một cặp khoá, một đường hầm mã hoá</h1><p class="lede">Muốn nối hai máy qua Internet như thể chúng ở cùng mạng LAN — an toàn, không phơi dịch vụ ra ngoài — mà không phải vật lộn với IPsec? WireGuard làm điều đó bằng một cặp khoá và vài dòng cấu hình. File wg0.conf giống nhau trên cả bốn hệ; khác biệt chỉ nằm ở cách bật dịch vụ cho chạy khi khởi động và nơi đặt file cấu hình.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div></header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-09 · đối chiếu tài liệu official/upstream</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.3-RELEASE</span><span><strong>Last verified:</strong> 2026-08-09</span></div>
 <section><h2>Mục tiêu</h2><p>Dựng một đường hầm WireGuard tối thiểu, phân biệt cấu hình peer với routing/firewall và kiểm hai chiều trước khi persist.</p></section>
 <section><h2>Yêu cầu tiên quyết</h2><p>Có hai node lab hoặc namespace/VM, IP tunnel không trùng mạng hiện hữu và đường quản trị ngoài tunnel để rollback nếu route sai.</p></section>
 

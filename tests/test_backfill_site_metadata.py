@@ -83,6 +83,22 @@ def test_verification_migration_splits_legacy_documentation_evidence():
     assert "Last verified:</strong> 2026-09-07" in migrated
 
 
+def test_verification_migration_converts_legacy_style_contract():
+    text, meta = _legacy_verification_html()
+    text = text.replace(
+        '<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-07</span></div>',
+        '<section class="style-contract" aria-label="Phạm vi kiểm chứng"><p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p><p><strong>Last verified:</strong> 2026-09-07 · đối chiếu tài liệu official/upstream</p></section>',
+    )
+
+    migrated = backfill.normalize_verification_metadata(text, meta, active=True)
+
+    assert 'class="style-contract"' not in migrated
+    assert 'class="style-meta"' in migrated
+    assert "Runtime tested:</strong> —" in migrated
+    assert "Documentation verified:" in migrated
+    assert "Last verified:</strong> 2026-09-07" in migrated
+
+
 def test_verification_migration_preserves_real_runtime_evidence():
     meta = {
         "issue": 70,

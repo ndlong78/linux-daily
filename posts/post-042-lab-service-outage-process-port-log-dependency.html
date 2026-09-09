@@ -37,12 +37,7 @@
   "title": "Lab service outage: process, port, log và dependency",
   "lede": "Khoanh vùng một Nginx outage từ service state tới process, listener, log và dependency rồi phục hồi có bằng chứng.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-11",
   "changes_system": true,
   "sources": [
@@ -105,10 +100,7 @@
   <p class="lede">Khoanh vùng một Nginx outage từ service state tới process, listener, log và dependency rồi phục hồi có bằng chứng.</p>
   <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~15 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-11 · đối chiếu tài liệu official/upstream; chạy failure injection chỉ trên host lab.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-11</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Xác định Nginx hỏng ở service state, process, listener, log hay dependency trước khi phục hồi và kiểm chứng lại từ đầu đến cuối.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
   <li>Host lab riêng; bài chủ động dừng Nginx trong thời gian ngắn.</li>

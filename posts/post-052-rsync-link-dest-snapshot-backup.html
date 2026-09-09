@@ -37,12 +37,7 @@
   "title": "rsync snapshot-style backup với hard links và verification",
   "lede": "Dùng --link-dest để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-21",
   "changes_system": false,
   "sources": [
@@ -76,10 +71,7 @@
   <p class="lede">Dùng <code>--link-dest</code> để mỗi phiên backup nhìn như một bản đầy đủ, trong khi file không đổi được hard-link về phiên trước và chỉ file thay đổi mới chiếm block mới.</p>
   <div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-21 · đối chiếu rsync upstream manual và FreeBSD rsync(1).</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-21</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Tạo hai phiên backup bằng <code>rsync --link-dest</code>, chứng minh file không đổi dùng chung inode, file thay đổi tách inode, rồi kiểm checksum và restore.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
 <li>Đã nắm filesystem/inode ở bài #024 và backup/restore ở #014/#021.</li>

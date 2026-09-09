@@ -72,3 +72,4 @@
 #067 | 2026-09-05 | Công cụ mới | zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script
 #068 | 2026-09-06 | Monitoring | Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường
 #069 | 2026-09-07 | Automation | Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy
+#070 | 2026-09-08 | Ôn tập | Lab file descriptor exhaustion: process limit, open-file evidence và service recovery

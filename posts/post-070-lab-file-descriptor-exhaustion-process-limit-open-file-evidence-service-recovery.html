@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lab file descriptor exhaustion: process limit, open-file evidence và service recovery — Linux Daily #070</title>
+<meta name="description" content="Mô phỏng file descriptor exhaustion trong một process bị giới hạn, thu thập open-file evidence trên Linux và FreeBSD, rồi xác nhận recovery mà không tăng limit theo phản xạ.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lab file descriptor exhaustion: process limit, open-file evidence và service recovery">
+<meta property="og:description" content="Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Lab file descriptor exhaustion: process limit, open-file evidence và service recovery">
+<meta name="twitter:description" content="Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{
+  "issue":70,
+  "date":"2026-09-08",
+  "axis":"Ôn tập",
+  "eyebrow":"Ôn tập · File descriptor exhaustion lab",
+  "slug":"lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery",
+  "title":"Lab file descriptor exhaustion: process limit, open-file evidence và service recovery",
+  "lede":"Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.",
+  "review_status":"reviewed",
+  "tested_on":[],
+  "documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],
+  "last_verified":"2026-09-08",
+  "changes_system":false,
+  "sources":[
+    {"title":"Linux Kernel Documentation — The /proc Filesystem","url":"https://docs.kernel.org/filesystems/proc.html","kind":"upstream"},
+    {"title":"Debian Manpages — getrlimit(2)","url":"https://manpages.debian.org/trixie/manpages-dev/getrlimit.2.en.html","kind":"official"},
+    {"title":"FreeBSD Manual — procstat(1)","url":"https://man.freebsd.org/cgi/man.cgi?query=procstat&sektion=1","kind":"official"},
+    {"title":"Python Documentation — resource","url":"https://docs.python.org/3/library/resource.html","kind":"upstream"}
+  ],
+  "lab":{"version":1,"profile":"advanced","topology":["observer-shell","fd-pressure-process"],"risks":["resource-pressure"],"verification":["negative","recovery","observability"],"rollback_required":true,"cleanup_required":true,"failure_injection":true}
+}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#070 · 08·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Ôn tập · File descriptor exhaustion lab</p><h1>Lab file descriptor exhaustion: process limit, open-file evidence và service recovery</h1><p class="lede">Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái <code>EMFILE</code> bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-08</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt per-process file descriptor exhaustion với system-wide exhaustion, thu thập bằng chứng trước khi thay đổi limit và xác nhận process phục hồi sau khi fault được gỡ.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Dùng VM hoặc host lab; không chạy failure injection trên production/shared host.</li><li>Có Python 3 và hai terminal cùng user. Lab chỉ mở tối đa khoảng 64 descriptor trong một process con và tự kết thúc sau 60 giây.</li><li>Ubuntu hoặc Xubuntu 26.04 LTS, Debian 13 stable và Fedora 44 dùng nhánh Linux; FreeBSD 15.1-RELEASE dùng <code>procstat</code> và kernel sysctl riêng.</li><li>Đã đọc #033, #040, #047 và #051 về process ownership, process monitoring, socket ownership và resource policy.</li></ul></section>
+<figure><svg viewBox="0 0 760 240" role="img" aria-label="Ba lớp bằng chứng khi file descriptor cạn"><rect width="760" height="240" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="40" y="70" width="185" height="100" rx="8" fill="#fff" stroke="#14201D"/><text x="132" y="105" font-size="12" font-weight="700">PROCESS LIMIT</text><text x="132" y="133" font-size="9">RLIMIT_NOFILE</text><rect x="288" y="70" width="185" height="100" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="105" font-size="12" font-weight="700">OPEN FILES</text><text x="380" y="133" font-size="9">/proc/PID/fd · procstat</text><rect x="536" y="70" width="185" height="100" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="628" y="105" font-size="12" font-weight="700">SYSTEM CEILING</text><text x="628" y="133" font-size="9">kernel-wide counters</text><path d="M225 120H282M473 120H530" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Không tăng limit chỉ vì thấy “too many open files”; trước hết xác định process limit, số descriptor thực dùng và system-wide ceiling.</figcaption></figure>
+<section data-lab-section="scenario"><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một daemon có thể log <code>Too many open files</code> dù toàn hệ thống còn rất xa giới hạn. Trường hợp phổ biến là process chạm <code>RLIMIT_NOFILE</code>, leak descriptor theo thời gian hoặc giữ quá nhiều socket/file hợp lệ. Tăng limit ngay có thể chỉ kéo dài thời gian trước lần lỗi kế tiếp.</p><p>Lab tạo một process riêng với soft/hard limit bằng 64 rồi cố mở <code>/dev/null</code> cho tới khi nhận <code>EMFILE</code>. Ubuntu và Xubuntu dùng cùng cách quan sát Linux; Debian và Fedora cũng dùng <code>/proc</code>. FreeBSD tách riêng bằng <code>procstat</code>.</p></section>
+<section data-lab-section="topology"><h2>Topology lab</h2><ul class="clean"><li><strong>observer-shell:</strong> terminal A dùng để đọc PID, limit và open-file evidence.</li><li><strong>fd-pressure-process:</strong> terminal B hoặc background process chỉ mở file descriptor trong chính process lab.</li></ul></section>
+<section data-lab-section="safety"><h2>Safety boundary</h2><ul class="clean"><li>Không sửa <code>fs.file-max</code>, <code>kern.maxfiles</code>, systemd unit hoặc login class trong lab.</li><li>Không chạy hàng nghìn connection/socket. Fault bị khóa ở 64 descriptor và có timeout 60 giây.</li><li>Không dùng PID của service production làm target. Mọi lệnh quan sát phải dùng PID đọc từ <code>/tmp/linux-daily-070.pid</code>.</li></ul></section>
+<section data-lab-section="failure-injection"><h2>Failure injection</h2><p>Process lab tự hạ cả soft và hard <code>RLIMIT_NOFILE</code> xuống 64. Vì hard limit chỉ bị hạ trong process con, việc đóng process là đủ để rollback; không có thay đổi persistent.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>RLIMIT_NOFILE</code> là giới hạn per-process; vượt giới hạn này làm thao tác mở descriptor mới thất bại với <code>EMFILE</code>.</li><li>Trên Linux, <code>/proc/&lt;pid&gt;/fd</code> liệt kê descriptor của process và <code>/proc/&lt;pid&gt;/limits</code> cho thấy soft/hard limit hiện tại.</li><li>Trên FreeBSD, <code>procstat -f</code> hiển thị file descriptor và <code>procstat -l</code> hiển thị resource limits của process.</li><li>System-wide counters là lớp khác. Một process chạm giới hạn riêng không đồng nghĩa kernel đã cạn file table.</li></ul></section>
+<figure><svg viewBox="0 0 760 250" role="img" aria-label="Quy trình triage file descriptor exhaustion"><rect width="760" height="250" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="30" y="78" width="155" height="84" rx="8" fill="#fff" stroke="#14201D"/><text x="107" y="109" font-size="11" font-weight="700">REPRODUCE</text><text x="107" y="136" font-size="9">bounded EMFILE</text><rect x="210" y="78" width="155" height="84" rx="8" fill="#fff" stroke="#14201D"/><text x="287" y="109" font-size="11" font-weight="700">MEASURE</text><text x="287" y="136" font-size="9">open FD + limit</text><rect x="390" y="78" width="155" height="84" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="467" y="109" font-size="11" font-weight="700">CLASSIFY</text><text x="467" y="136" font-size="9">process vs system</text><rect x="570" y="78" width="155" height="84" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="647" y="109" font-size="11" font-weight="700">RECOVER</text><text x="647" y="136" font-size="9">stop fault → verify</text><path d="M185 120H204M365 120H384M545 120H564" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Evidence đi trước tuning: tái hiện có giới hạn, đo process, phân loại lớp lỗi rồi mới recovery.</figcaption></figure>
+<section data-lab-section="execution"><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Tạo process lab có giới hạn 64 descriptor</h3><p class="code-label same"><span class="dot"></span>Mọi hệ — Python 3 trên Unix</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">cat &gt; /tmp/linux-daily-070-fd.py &lt;&lt;'PY'
+import os
+import resource
+import time
+
+resource.setrlimit(resource.RLIMIT_NOFILE, (64, 64))
+opened = []
+try:
+    while True:
+        opened.append(open("/dev/null", "rb"))
+except OSError as exc:
+    print(f"PID={os.getpid()} opened={len(opened)} errno={exc.errno} message={exc.strerror}", flush=True)
+    time.sleep(60)
+PY
+python3 /tmp/linux-daily-070-fd.py &gt; /tmp/linux-daily-070.log 2&gt;&amp;1 &amp;
+echo $! &gt; /tmp/linux-daily-070.pid
+sleep 1
+cat /tmp/linux-daily-070.log</code></pre></div><p><strong>Expected Output:</strong> một dòng có <code>opened=</code> gần 61 và <code>errno=24</code>/<code>Too many open files</code>. Số descriptor chính xác có thể lệch nhẹ do runtime đã mở stdin/stdout/stderr.</p></li>
+<li><h3>2. Đọc per-process evidence trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">PID=$(cat /tmp/linux-daily-070.pid)
+ls -1 "/proc/${PID}/fd" | wc -l
+grep 'Max open files' "/proc/${PID}/limits"
+cat /proc/sys/fs/file-nr</code></pre></div><p><strong>Expected Output:</strong> số descriptor tiến sát 64; dòng <code>Max open files</code> có soft/hard limit 64. <code>file-nr</code> cho system-wide allocation để tránh nhầm per-process exhaustion với cạn file table toàn host.</p></li>
+<li><h3>3. Đọc evidence tương đương trên FreeBSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">PID=$(cat /tmp/linux-daily-070.pid)
+procstat -f "${PID}"
+procstat -l "${PID}"
+sysctl kern.openfiles kern.maxfiles</code></pre></div><p><strong>Expected Output:</strong> <code>procstat -f</code> liệt kê nhiều descriptor thuộc process lab; <code>procstat -l</code> cho thấy resource limit của process; <code>kern.openfiles</code> còn thấp hơn đáng kể so với <code>kern.maxfiles</code> trong một host lab bình thường.</p></li>
+<li><h3>4. Phân loại lỗi trước khi tuning</h3><p>Nếu process đã gần 64 nhưng system-wide counter còn xa ceiling, kết luận lab đang gặp <strong>per-process exhaustion</strong>. Trong incident thật, bước tiếp theo là tìm descriptor tăng theo thời gian, loại descriptor và ownership; không tăng limit trước khi biết growth có hợp lệ hay là leak.</p></li>
+<li><h3>5. Gỡ fault và kiểm process recovery boundary</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">PID=$(cat /tmp/linux-daily-070.pid)
+kill "${PID}" 2&gt;/dev/null || true
+sleep 1
+ps -p "${PID}"</code></pre></div><p><strong>Expected Output:</strong> <code>ps</code> không còn hiển thị process lab. Với service thật, recovery phải bổ sung service-state check và functional probe riêng; restart chỉ là boundary phục hồi, không phải root-cause fix.</p></li>
+</ol></section>
+<section data-lab-section="verification"><h2><span class="num">04</span> Kiểm chứng</h2><ul class="clean"><li><strong>Negative:</strong> process lab thật sự nhận <code>EMFILE</code> ở limit 64.</li><li><strong>Observability:</strong> open-file count tiến sát process limit, trong khi system-wide counter chưa cạn.</li><li><strong>Recovery:</strong> process fault đã dừng và không còn giữ descriptor.</li></ul><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><p>Evidence phải hỗ trợ kết luận “per-process limit bị chạm” thay vì “toàn hệ thống hết file descriptor”. Không có kernel tunable hoặc service configuration nào bị thay đổi.</p></div></section>
+<section data-lab-section="rollback"><h2>Rollback lab</h2><p>Rollback là dừng process lab. <code>setrlimit()</code> chỉ tác động process con; khi process kết thúc, limit 64 biến mất cùng process và không cần khôi phục kernel setting.</p></section>
+<section data-lab-section="cleanup"><h2>Cleanup lab</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">rm -f /tmp/linux-daily-070-fd.py /tmp/linux-daily-070.log /tmp/linux-daily-070.pid</code></pre></div><p><strong>Expected Output:</strong> ba file tạm không còn tồn tại; không còn process <code>linux-daily-070-fd.py</code> chạy nền.</p></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Nếu process đã tự kết thúc trước khi quan sát, chạy lại bước 1; timeout 60 giây là safety boundary có chủ ý.</li><li>Nếu <code>/proc/&lt;pid&gt;/fd</code> báo permission denied trên Linux, kiểm ownership của process và policy bảo vệ <code>/proc</code>; không dùng root chỉ để né policy khi chưa cần.</li><li>Nếu <code>procstat</code> không đọc được process FreeBSD, kiểm process còn sống và chạy cùng owner.</li><li>Nếu system-wide counter cũng sát ceiling trong incident thật, dừng ở bước phân loại và mở investigation riêng; không dùng lab này để tăng kernel ceiling.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>File descriptor có thể trỏ tới socket, pipe, credential-backed file hoặc path nhạy cảm. Khi lưu evidence, tránh công khai pathname/socket metadata không cần thiết.</li><li>Giữ baseline trước incident: process limit, open descriptor count và growth rate. Một snapshot đơn lẻ cho biết trạng thái; trend mới giúp phát hiện leak.</li><li>Chỉ tăng limit sau khi đã chứng minh workload hợp lệ cần headroom và đã kiểm memory/socket/kernel capacity liên quan.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Đổi limit process lab từ 64 xuống 32 và dự đoán số file mở thành công trước khi chạy.</li><li>Phân loại descriptor trong output <code>procstat -f</code> hoặc <code>/proc/&lt;pid&gt;/fd</code> thành file, pipe và socket trên một process lab khác.</li><li>Viết checklist incident gồm ba câu hỏi: process limit là bao nhiêu, hiện đang dùng bao nhiêu, system-wide headroom còn bao nhiêu.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Nguồn official/upstream đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/proc.html">Linux Kernel Documentation — The /proc Filesystem</a></li><li><a href="https://manpages.debian.org/trixie/manpages-dev/getrlimit.2.en.html">Debian Manpages — getrlimit(2)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=procstat&amp;sektion=1">FreeBSD Manual — procstat(1)</a></li><li><a href="https://docs.python.org/3/library/resource.html">Python Documentation — resource</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Lab end-to-end</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-063-lab-time-drift-ntp-tls-log-scheduled-job.html"><span class="series-kicker">#063</span><span>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html">#056 · Lab disk I/O latency: process, device health và recovery boundary</a></li>
+      <li><a href="post-049-lab-tls-certificate-outage-expiry-chain-hostname.html">#049 · Lab TLS certificate outage: expiry, chain và hostname mismatch</a></li>
+      <li><a href="post-042-lab-service-outage-process-port-log-dependency.html">#042 · Lab service outage: process, port, log và dependency</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #070 · Ôn tập</span><span class="hashtags">#Linux #FreeBSD #Sysadmin #FileDescriptors</span></div></footer>
+</div></main></body>
+</html>

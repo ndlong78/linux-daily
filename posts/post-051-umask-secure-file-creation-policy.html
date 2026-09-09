@@ -37,12 +37,7 @@
   "title": "umask và policy tạo file: secure defaults cho service và user",
   "lede": "Dùng umask như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (documentation-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-20",
   "changes_system": false,
   "sources": [
@@ -77,10 +72,7 @@
   <p class="lede">Dùng <code>umask</code> như policy theo process: biết quyền nào bị loại khỏi file/thư mục mới, khi nào default ACL thắng, và cách kiểm secure defaults cho user/service.</p>
   <div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~11 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-20 · đối chiếu Linux man-pages, systemd.exec và FreeBSD manual.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-20</span></div>
 <section class="objective"><h2>Mục tiêu</h2><p>Đọc và kiểm <code>umask</code> theo đúng process để đặt quyền mặc định an toàn cho file/thư mục mới mà không nhầm với <code>chmod</code> hoặc default ACL.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean">
 <li>Đã nắm permission cơ bản ở bài #009/#023 và ACL ở #037.</li>

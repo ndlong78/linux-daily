@@ -36,12 +36,7 @@
   "title": "Lab TLS certificate outage: expiry, chain và hostname mismatch",
   "lede": "Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.",
   "review_status": "reviewed",
-  "tested_on": [
-    "Ubuntu/Xubuntu 24.04 LTS (OpenSSL 3.0.13, command-verified)",
-    "Debian 13 stable (documentation-verified)",
-    "Fedora 42 (documentation-verified)",
-    "FreeBSD 14.4-RELEASE (documentation-verified)"
-  ],
+  "tested_on":["Ubuntu/Xubuntu 24.04 LTS (OpenSSL 3.0.13, command-verified)"],"documentation_verified_on":["Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified": "2026-08-18",
   "changes_system": true,
   "sources": [
@@ -105,10 +100,7 @@
   <p class="lede">Ba lỗi TLS trông giống hệt nhau trên trình duyệt nhưng có ba nguyên nhân khác nhau. Tách chúng bằng mã lỗi rồi phục hồi có bằng chứng, không hạ validation.</p>
   <div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~20 PHÚT</span></div>
 </header>
-<section class="style-contract" aria-label="Phạm vi kiểm chứng">
-  <p><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</p>
-  <p><strong>Last verified:</strong> 2026-08-18 · lệnh openssl chạy trên OpenSSL 3.0.13; lab tự ký hoàn toàn cục bộ, không đụng CA công cộng.</p>
-</section>
+<div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> Ubuntu/Xubuntu 24.04 LTS (OpenSSL 3.0.13, command-verified)</span><span><strong>Documentation verified:</strong> Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-08-18</span></div>
 
 <section class="objective">
   <h2>Mục tiêu</h2>
@@ -438,7 +430,7 @@ rm -rf ~/tls-lab</code></pre></div>
     <ul>
       <li><a href="post-063-lab-time-drift-ntp-tls-log-scheduled-job.html">#063 · Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</a></li>
       <li><a href="post-035-lab-filesystem-full-recovery.html">#035 · Lab filesystem đầy: quan sát, xử lý và phòng tái diễn</a></li>
-      <li><a href="post-028-dns-outage-incident-lab.html">#028 · Lab DNS outage: khoanh vùng trước, phục hồi sau</a></li>
+      <li><a href="post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html">#070 · Lab file descriptor exhaustion: process limit, open-file evidence và service recovery</a></li>
     </ul>
   </div>
 </nav>

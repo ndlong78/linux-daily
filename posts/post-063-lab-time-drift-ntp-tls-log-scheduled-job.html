@@ -37,7 +37,7 @@
   "title":"Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job",
   "lede":"Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.",
   "review_status":"reviewed",
-  "tested_on":["Ubuntu/Xubuntu 24.04 LTS (documentation-verified)","Debian 13 stable (documentation-verified)","Fedora 42 (documentation-verified)","FreeBSD 14.4-RELEASE (documentation-verified)"],
+  "tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 24.04 LTS","Debian 13 stable","Fedora 42","FreeBSD 14.4-RELEASE"],
   "last_verified":"2026-09-01",
   "changes_system":true,
   "sources":[
@@ -66,7 +66,7 @@
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#063 · 01·09·2026</span></div></div>
-<header class="post"><p class="eyebrow">Ôn tập · Time drift lab</p><h1>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</h1><p class="lede">Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Tested on:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-01</span></div></header>
+<header class="post"><p class="eyebrow">Ôn tập · Time drift lab</p><h1>Lab time drift: NTP sai lệch làm hỏng TLS, log timeline và scheduled job</h1><p class="lede">Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</p><div class="meta"><span class="tag axis">TRỤC · ÔN TẬP</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~18 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 24.04 LTS · Debian 13 stable · Fedora 42 · FreeBSD 14.4-RELEASE</span><span><strong>Last verified:</strong> 2026-09-01</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Chứng minh time drift có thể làm TLS báo sai thời hạn, làm log lệch timeline và làm scheduled job chạy sai kỳ vọng; sau đó xác định và phục hồi nguồn đồng bộ thời gian có bằng chứng.</p></section>
 <section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Chỉ dùng host lab hoặc VM disposable. Không thay đổi wall clock trên production, domain controller, database, cluster hoặc máy đang phục vụ người dùng.</li><li>Đã đọc #005, #012, #034 và #049 về log, scheduler và TLS verification.</li><li>Ubuntu hoặc Xubuntu, Debian và Fedora dùng cơ chế Linux; FreeBSD giữ nhánh riêng với <code>ntpd</code>/<code>ntpq</code>.</li><li>Cần quyền user để quan sát; quyền <code>sudo</code>/root chỉ dùng khi restart dịch vụ đồng bộ trong bước recovery.</li></ul></section>
 <figure><svg viewBox="0 0 760 240" role="img" aria-label="Time drift ảnh hưởng TLS, log và scheduled job"><rect width="760" height="240" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="72" width="180" height="95" rx="8" fill="#fff" stroke="#14201D"/><text x="125" y="105" font-size="13" font-weight="700">TLS</text><text x="125" y="132" font-size="10">notBefore / notAfter</text><rect x="290" y="72" width="180" height="95" rx="8" fill="#F4F8F6" stroke="#0C6E61"/><text x="380" y="105" font-size="13" font-weight="700">LOG</text><text x="380" y="132" font-size="10">timeline sai thứ tự</text><rect x="545" y="72" width="180" height="95" rx="8" fill="#FFF6E8" stroke="#9A6500"/><text x="635" y="105" font-size="13" font-weight="700">SCHEDULER</text><text x="635" y="132" font-size="10">job lệch thời điểm</text><path d="M215 120H284M470 120H539" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Một clock sai có thể tạo ba triệu chứng ở các lớp khác nhau; cần kiểm clock trước khi sửa từng ứng dụng riêng lẻ.</figcaption></figure>
@@ -113,7 +113,7 @@ ntpq -pn</code></pre></div><div class="expected-output"><h3>Expected Output / K�
   </div>
   <div class="series-links">
     <a class="series-link previous" href="post-056-lab-disk-io-latency-process-device-health-recovery-boundary.html"><span class="series-kicker">#056</span><span>Lab disk I/O latency: process, device health và recovery boundary</span></a>
-    <span class="series-link is-empty" aria-hidden="true"></span>
+    <a class="series-link next" href="post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html"><span class="series-kicker">#070</span><span>Lab file descriptor exhaustion: process limit, open-file evidence và service recovery</span></a>
   </div>
   <div class="related-more">
     <strong>Cùng chủ đề</strong>

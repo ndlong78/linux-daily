@@ -37,8 +37,8 @@ FREEBSD_COMMAND_PATTERNS = (
 _PRE_RE = re.compile(r"<pre\b(?P<attrs>[^>]*)>(?P<body>.*?)</pre>", re.IGNORECASE | re.DOTALL)
 _CLASS_RE = re.compile(r"\bclass\s*=\s*([\"'])(?P<value>.*?)\1", re.IGNORECASE | re.DOTALL)
 _TAG_RE = re.compile(r"<[^>]+>")
-_STYLE_CONTRACT_RE = re.compile(
-    r'<section\b[^>]*class=["\'][^"\']*\bstyle-contract\b[^"\']*["\'][^>]*>.*?</section>',
+_VERIFICATION_DISPLAY_RE = re.compile(
+    r'<(?:section|div)\b[^>]*class=["\'][^"\']*\b(?:style-contract|style-meta)\b[^"\']*["\'][^>]*>.*?</(?:section|div)>',
     re.IGNORECASE | re.DOTALL,
 )
 _TESTED_ON_META_RE = re.compile(
@@ -60,7 +60,7 @@ def coverage_source(source: str) -> str:
     those names as article coverage would turn style evidence into false-positive
     portability gains. Keep the historical body behavior otherwise unchanged.
     """
-    source = _STYLE_CONTRACT_RE.sub("", source)
+    source = _VERIFICATION_DISPLAY_RE.sub("", source)
     source = _TESTED_ON_META_RE.sub("", source)
     return _DOCUMENTATION_VERIFIED_META_RE.sub("", source)
 
