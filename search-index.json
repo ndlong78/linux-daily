@@ -1,6 +1,19 @@
 {
-  "count": 70,
+  "count": 71,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-09-09",
+      "href": "posts/post-071-ipv6-router-advertisement-dhcpv6-default-route-address-dns-ownership.html",
+      "issue": 71,
+      "lede": "Đọc route, address, Router Advertisement và DHCPv6 theo đúng ownership để biết thành phần nào thực sự cấp cấu hình IPv6.",
+      "tags": [
+        "IPv6 autoconfiguration ownership"
+      ],
+      "title": "IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",
