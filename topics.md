@@ -73,3 +73,4 @@
 #068 | 2026-09-06 | Monitoring | Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường
 #069 | 2026-09-07 | Automation | Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy
 #070 | 2026-09-08 | Ôn tập | Lab file descriptor exhaustion: process limit, open-file evidence và service recovery
+#071 | 2026-09-09 | Networking | IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership
