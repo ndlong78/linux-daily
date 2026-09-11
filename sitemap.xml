@@ -2,31 +2,35 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://linux.no.id.vn/</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/trang-2.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/trang-3.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/trang-4.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/archive.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-dashboard.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/learning-paths.html</loc>
-    <lastmod>2026-09-09</lastmod>
+    <lastmod>2026-09-10</lastmod>
+  </url>
+  <url>
+    <loc>https://linux.no.id.vn/posts/post-072-sudoers-command-digests-binary-policy.html</loc>
+    <lastmod>2026-09-10</lastmod>
   </url>
   <url>
     <loc>https://linux.no.id.vn/posts/post-071-ipv6-router-advertisement-dhcpv6-default-route-address-dns-ownership.html</loc>

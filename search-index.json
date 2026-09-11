@@ -1,6 +1,19 @@
 {
-  "count": 71,
+  "count": 72,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-09-10",
+      "href": "posts/post-072-sudoers-command-digests-binary-policy.html",
+      "issue": 72,
+      "lede": "Path đúng chưa đủ nếu binary có thể bị thay thế; command digest cho sudoers thêm một điều kiện khớp theo nội dung file.",
+      "tags": [
+        "sudoers command digest"
+      ],
+      "title": "sudoers command digests: khóa policy vào đúng binary thay vì chỉ path"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",
