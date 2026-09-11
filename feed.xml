@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Wed, 09 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Thu, 10 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>sudoers command digests: khóa policy vào đúng binary thay vì chỉ path</title>
+      <link>https://linux.no.id.vn/posts/post-072-sudoers-command-digests-binary-policy.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-072-sudoers-command-digests-binary-policy.html</guid>
+      <pubDate>Thu, 10 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Path đúng chưa đủ nếu binary có thể bị thay thế; command digest cho sudoers thêm một điều kiện khớp theo nội dung file.</description>
+    </item>
     <item>
       <title>IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership</title>
       <link>https://linux.no.id.vn/posts/post-071-ipv6-router-advertisement-dhcpv6-default-route-address-dns-ownership.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-063-lab-time-drift-ntp-tls-log-scheduled-job.html</guid>
       <pubDate>Tue, 01 Sep 2026 00:00:00 +0700</pubDate>
       <description>Mô phỏng time drift an toàn, chứng minh ảnh hưởng tới TLS, thứ tự log và scheduled job, rồi khôi phục đồng bộ thời gian bằng bằng chứng trên Linux và FreeBSD.</description>
-    </item>
-    <item>
-      <title>Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</title>
-      <link>https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-062-ansible-blocks-rescue-always-recovery.html</guid>
-      <pubDate>Mon, 31 Aug 2026 00:00:00 +0700</pubDate>
-      <description>Dùng Ansible block, rescue và always để gom failure boundary, phục hồi có kiểm soát và luôn thu evidence hoặc cleanup sau lỗi trên Linux và FreeBSD.</description>
     </item>
   </channel>
 </rss>
