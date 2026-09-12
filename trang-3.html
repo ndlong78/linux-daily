@@ -49,9 +49,18 @@
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">72 BÀI · TRANG 3/4</div>
+      <div class="count">73 BÀI · TRANG 3/4</div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-033-process-tree-service-ownership.html">
+        <div class="card-top">
+          <span class="c-issue">#033</span>
+          <span class="c-axis">Monitoring · Process ownership</span>
+          <span class="c-date">02·08·2026</span>
+        </div>
+        <h2>Process tree và service ownership: PID này thuộc service nào?</h2>
+        <p>Một PID ngốn CPU chỉ là triệu chứng. Cần biết parent, command line và service manager nào sở hữu process đó, đặc biệt khi worker được spawn theo cây.</p>
+      </a>
       <a class="card" href="posts/post-032-jq-json-operations.html">
         <div class="card-top">
           <span class="c-issue">#032</span>
@@ -222,15 +231,6 @@
         </div>
         <h2>Backup tự động mà bạn dám tin — vì đã thử khôi phục</h2>
         <p>Chu kỳ vừa rồi cho bạn từng mảnh: thêm đĩa, tạo user, viết script vững, lập lịch. Lab này ghép chúng thành một thứ thực sự dùng được — một hệ backup chạy tự động mỗi đêm, dưới đúng user tối thiểu quyền, và quan trọng nhất: được kiểm chứng bằng một lần khôi phục thật. Vì một bản sao lưu chưa từng restore thì chưa phải là backup, chỉ là hy vọng.</p>
-      </a>
-      <a class="card" href="posts/post-013-bash-script-vung.html">
-        <div class="card-top">
-          <span class="c-issue">#013</span>
-          <span class="c-axis">Automation · Scripting</span>
-          <span class="c-date">13·07·2026</span>
-        </div>
-        <h2>Script chạy tốt trên máy bạn, vỡ trên máy chủ — vì sao?</h2>
-        <p>Bạn viết một script, chạy ngon trên laptop Fedora, đẩy lên server Debian thì lỗi tùm lum. Thủ phạm thường không phải logic mà là môi trường: /bin/sh trỏ vào shell khác nhau trên mỗi hệ, và script thiếu xử lý lỗi nên hỏng trong im lặng. Bài này chỉ cách chọn shebang đúng, bật chế độ nghiêm, và viết script vững để &quot;chạy được ở đây&quot; đồng nghĩa &quot;chạy được mọi nơi&quot;.</p>
       </a>
     </main>
     <nav class="pagination" aria-label="Phân trang danh sách bài">

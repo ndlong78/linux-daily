@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link">
-<meta property="og:description" content="Reflink tạo inode riêng nhưng có thể chia sẻ dữ liệu vật lý cho tới khi ghi; hard link thì dùng chung inode, còn full copy cấp dữ liệu độc lập.">
+<meta property="og:description" content="Reflink tạo inode riêng nhưng có thể chia sẻ extent vật lý cho tới khi ghi; đừng nhầm nó với hard link hoặc full copy.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-073-reflink-cow-clone-hard-link.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link">
-<meta name="twitter:description" content="Reflink tạo inode riêng nhưng có thể chia sẻ dữ liệu vật lý cho tới khi ghi; hard link thì dùng chung inode, còn full copy cấp dữ liệu độc lập.">
+<meta name="twitter:description" content="Reflink tạo inode riêng nhưng có thể chia sẻ extent vật lý cho tới khi ghi; đừng nhầm nó với hard link hoặc full copy.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -34,10 +34,16 @@
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#073 · 11·09·2026</span></div></div>
@@ -71,5 +77,26 @@ sha256 -q "$workdir/full-copy.bin"</code></pre></div><div class="expected-output
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Reflink là tối ưu storage, không phải chiến lược backup độc lập. Giữ bản sao ở failure domain khác khi cần phục hồi thật.</li><li>Không benchmark trên volume production khi chưa biết tác động snapshot/quota/COW amplification.</li><li>Với image VM hoặc database file, semantics crash consistency vẫn do ứng dụng quyết định; clone nhanh không tự biến một file đang ghi thành backup nhất quán.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol class="steps"><li>Chạy lab trên một filesystem hỗ trợ reflink và một filesystem không hỗ trợ; ghi lại exit status của <code>cp --reflink=always</code>.</li><li>So sánh inode của hard link, reflink và full copy trước/sau khi sửa một byte.</li><li>Giải thích vì sao tổng <code>du</code> của nhiều reflink không phải lúc nào cũng bằng số physical bytes độc quyền cần mua thêm.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu official/upstream; các URL dưới đây đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://manpages.debian.org/trixie/coreutils/cp.1.en.html">Debian Manpages — cp(1)</a></li><li><a href="https://docs.kernel.org/6.11/filesystems/btrfs.html">Linux Kernel Documentation — BTRFS</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=cp&amp;sektion=1&amp;manpath=FreeBSD+15.1-RELEASE">FreeBSD Manual — cp(1)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #073 · Storage</span><span class="hashtags">#Linux #Storage #Reflink #COW #FreeBSD</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html"><span class="series-kicker">#066</span><span>Sparse files: apparent size, allocated blocks và backup semantics</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-059-trim-discard-fstrim-zfs-autotrim.html">#059 · TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</a></li>
+      <li><a href="post-052-rsync-link-dest-snapshot-backup.html">#052 · rsync snapshot-style backup với hard links và verification</a></li>
+      <li><a href="post-045-fsck-zfs-scrub-filesystem-integrity.html">#045 · fsck và ZFS scrub: kiểm tra tính toàn vẹn theo đúng filesystem</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #073 · Storage</span><span class="hashtags">#Linux #Storage #Reflink #COW #FreeBSD</span></div></footer>
 </div></main></body></html>
