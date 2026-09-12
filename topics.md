@@ -75,3 +75,4 @@
 #070 | 2026-09-08 | Ôn tập | Lab file descriptor exhaustion: process limit, open-file evidence và service recovery
 #071 | 2026-09-09 | Networking | IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership
 #072 | 2026-09-10 | Bảo mật | sudoers command digests: khóa policy vào đúng binary thay vì chỉ path
+#073 | 2026-09-11 | Storage | Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link
