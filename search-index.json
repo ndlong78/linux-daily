@@ -1,6 +1,19 @@
 {
-  "count": 72,
+  "count": 73,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-09-11",
+      "href": "posts/post-073-reflink-cow-clone-hard-link.html",
+      "issue": 73,
+      "lede": "Reflink tạo inode riêng nhưng có thể chia sẻ extent vật lý cho tới khi ghi; đừng nhầm nó với hard link hoặc full copy.",
+      "tags": [
+        "Reflink/COW clone"
+      ],
+      "title": "Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",

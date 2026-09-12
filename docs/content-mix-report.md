@@ -4,21 +4,21 @@
 
 ## Snapshot
 
-- Published posts: **72**
+- Published posts: **73**
 - Complete 7-axis cycles: **10**
-- Current-cycle progress: **2/7**
+- Current-cycle progress: **3/7**
 - Distribution spread: **1**
-- Next expected issue: **#073 — Storage & hệ thống tệp**
+- Next expected issue: **#074 — Công cụ & phần mềm**
 
 | Axis | Posts | Share |
 |---|---:|---:|
-| Networking | 11 | 15.3% |
-| Bảo mật & phân quyền | 11 | 15.3% |
-| Storage & hệ thống tệp | 10 | 13.9% |
-| Công cụ & phần mềm | 10 | 13.9% |
-| Monitoring & hiệu năng | 10 | 13.9% |
-| Automation & scripting | 10 | 13.9% |
-| Lab end-to-end | 10 | 13.9% |
+| Networking | 11 | 15.1% |
+| Bảo mật & phân quyền | 11 | 15.1% |
+| Storage & hệ thống tệp | 11 | 15.1% |
+| Công cụ & phần mềm | 10 | 13.7% |
+| Monitoring & hiệu năng | 10 | 13.7% |
+| Automation & scripting | 10 | 13.7% |
+| Lab end-to-end | 10 | 13.7% |
 
 ## Findings
 
@@ -28,4 +28,4 @@
 
 ## Recommendation
 
-Tiếp tục cadence hiện tại. Bài kế tiếp nên là **#073 — Storage & hệ thống tệp**; không cần chèn bài chỉ để làm phẳng thống kê. Review lại mix khi hoàn tất thêm một chu kỳ 7 bài hoặc khi thay đổi taxonomy/cadence.
+Tiếp tục cadence hiện tại. Bài kế tiếp nên là **#074 — Công cụ & phần mềm**; không cần chèn bài chỉ để làm phẳng thống kê. Review lại mix khi hoàn tất thêm một chu kỳ 7 bài hoặc khi thay đổi taxonomy/cadence.
