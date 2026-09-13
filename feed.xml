@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Fri, 11 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sat, 12 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</title>
+      <link>https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</guid>
+      <pubDate>Sat, 12 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.</description>
+    </item>
     <item>
       <title>Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link</title>
       <link>https://linux.no.id.vn/posts/post-073-reflink-cow-clone-hard-link.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html</guid>
       <pubDate>Thu, 03 Sep 2026 00:00:00 +0700</pubDate>
       <description>Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.</description>
-    </item>
-    <item>
-      <title>Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS</title>
-      <link>https://linux.no.id.vn/posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-064-neighbor-cache-arp-nd-l2-routing-dns.html</guid>
-      <pubDate>Wed, 02 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Đọc neighbor cache theo đúng next hop để biết packet đang kẹt ở L2, route hay tên miền trước khi sửa cấu hình.</description>
     </item>
   </channel>
 </rss>

@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor">
-<meta property="og:description" content="Dùng watchexec cho vòng lặp tương tác khi file đổi; đừng biến file watcher thành supervisor production.">
+<meta property="og:description" content="Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor">
-<meta name="twitter:description" content="Dùng watchexec cho vòng lặp tương tác khi file đổi; đừng biến file watcher thành supervisor production.">
+<meta name="twitter:description" content="Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -32,8 +32,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#074 · 12·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Công cụ mới · watchexec</p><h1>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</h1><p class="lede">Dùng <code>watchexec</code> để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~10 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-12</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>watchexec</code> để chạy lại một command khi file mục tiêu thay đổi, giới hạn phạm vi watch và biết khi nào phải chuyển sang service supervisor.</p></section>
@@ -59,5 +71,26 @@ printf '%s\n' "$workdir"</code></pre></div><p><code>workdir</code> là target la
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Chạy watcher bằng user thường; file save không phải lý do để chạy command với root.</li><li>Không watch directory nhận nội dung từ người dùng nếu command kích hoạt có side effect nhạy cảm.</li><li>Không dùng watcher thay service manager. Production cần policy restart, boot ordering, logging, resource control và credential isolation rõ ràng.</li><li>Khi command sửa dữ liệu, thêm dry-run/verification ở chính command; watcher không cung cấp transaction hay rollback.</li></ul></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Đổi filter từ <code>txt</code> sang một extension khác và chứng minh file ngoài filter không kích hoạt command.</li><li>Chạy một validator ngắn của project lab bằng <code>watchexec</code>, sau đó mô tả vì sao không nên giữ workflow đó làm service production.</li><li>Trên Linux, đọc tài liệu inotify limits của upstream và ghi lại bằng chứng nào cần có trước khi tăng <code>max_user_watches</code>.</li></ol></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream; các URL dưới đây đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://watchexec.github.io/">Watchexec — Official project site</a></li><li><a href="https://watchexec.github.io/downloads/watchexec/">Watchexec — Download releases</a></li><li><a href="https://watchexec.github.io/docs/inotify-limits.html">Watchexec — Linux inotify limits</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #074 · Công cụ mới</span><span class="hashtags">#Linux #FreeBSD #watchexec</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-067-zoxide-history-directory-navigation.html"><span class="series-kicker">#067</span><span>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">#060 · hyperfine: benchmark command có warmup và nhiều lần chạy</a></li>
+      <li><a href="post-053-bat-syntax-highlight-paging-line-range.html">#053 · bat: xem file có syntax highlight, paging và line range</a></li>
+      <li><a href="post-046-fzf-interactive-file-process-history.html">#046 · fzf cho chọn file, process và history tương tác</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #074 · Công cụ mới</span><span class="hashtags">#Linux #FreeBSD #watchexec</span></div></footer>
 </div></main></body></html>

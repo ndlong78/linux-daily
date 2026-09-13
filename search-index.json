@@ -1,6 +1,19 @@
 {
-  "count": 73,
+  "count": 74,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-09-12",
+      "href": "posts/post-074-watchexec-file-change-command.html",
+      "issue": 74,
+      "lede": "Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.",
+      "tags": [
+        "watchexec"
+      ],
+      "title": "watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",
