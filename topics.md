@@ -12,7 +12,7 @@
 #007 | 2026-07-07 | Ôn tập | Lab end-to-end: dựng web server an toàn, mở đúng cổng qua tường lửa (ufw/firewalld/pf) trên Ubuntu/Debian/Fedora/FreeBSD
 #008 | 2026-07-08 | Networking | Chẩn đoán mạng theo tầng: ip/ss (iproute2) trên Linux vs ifconfig/netstat/sockstat trên FreeBSD
 #009 | 2026-07-09 | Bảo mật | Tạo user & trao quyền: nhóm sudo/wheel + sudo trên Linux vs pw + doas trên FreeBSD
-#010 | 2026-07-10 | Storage | Thêm đĩa mới: phân vùng/định dạng/mount vĩnh viễn — parted+mkfs (UUID) trên Linux vs gpart+newfs (nhãn GPT) trên FreeBSD
+#010 | 2026-07-10 | Storage | Thêm đĩa mới: phân vùng/định dạng/mount vĩnh viễn — parted+mkfs (UUID) trên Linux vs gpart+newfs (nhãn GPT)
 #011 | 2026-07-11 | Công cụ mới | tmux: phiên terminal sống sót khi SSH rớt, chia cửa sổ/khung — cách dùng chung, chỉ khác lệnh cài trên Ubuntu/Debian/Fedora/FreeBSD
 #012 | 2026-07-12 | Monitoring | Lập lịch định kỳ: cron (mọi nơi) + systemd timers trên Linux vs cron + periodic(8) trên FreeBSD
 #013 | 2026-07-13 | Automation | Viết bash script vững: /bin/sh (dash/bash/sh) khác nhau, shebang env bash, set -euo pipefail + trap trên Ubuntu/Debian/Fedora/FreeBSD
@@ -76,3 +76,4 @@
 #071 | 2026-09-09 | Networking | IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership
 #072 | 2026-09-10 | Bảo mật | sudoers command digests: khóa policy vào đúng binary thay vì chỉ path
 #073 | 2026-09-11 | Storage | Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link
+#074 | 2026-09-12 | Công cụ mới | watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor
