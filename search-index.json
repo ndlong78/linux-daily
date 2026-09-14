@@ -1,6 +1,19 @@
 {
-  "count": 75,
+  "count": 76,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-09-14",
+      "href": "posts/post-076-ansible-changed-when-failed-when.html",
+      "issue": 76,
+      "lede": "Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.",
+      "tags": [
+        "Task result semantics"
+      ],
+      "title": "Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",

@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 13 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 14 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code</title>
+      <link>https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html</guid>
+      <pubDate>Mon, 14 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.</description>
+    </item>
     <item>
       <title>CPU steal time và virtualization contention: phân biệt host pressure với guest workload</title>
       <link>https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</guid>
       <pubDate>Sat, 05 Sep 2026 00:00:00 +0700</pubDate>
       <description>Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.</description>
-    </item>
-    <item>
-      <title>Sparse files: apparent size, allocated blocks và backup semantics</title>
-      <link>https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</guid>
-      <pubDate>Fri, 04 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.</description>
     </item>
   </channel>
 </rss>

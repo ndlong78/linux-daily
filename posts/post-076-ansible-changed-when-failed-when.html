@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code — Linux Daily #076</title>
+<meta name="description" content="Dùng changed_when và failed_when để mô tả đúng trạng thái task Ansible trên Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code">
+<meta property="og:description" content="Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code">
+<meta name="twitter:description" content="Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":76,"date":"2026-09-14","axis":"Automation","eyebrow":"Automation · Task result semantics","slug":"ansible-changed-when-failed-when","title":"Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code","lede":"Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-14","changes_system":false,"sources":[{"title":"Ansible upstream — Playbook keyword descriptions","url":"https://github.com/ansible/ansible/blob/395139708f94bbea4c6c6ad6fcffe199e291fc62/lib/ansible/keyword_desc.yml","kind":"upstream"},{"title":"Ansible upstream — Task executor conditional evaluation","url":"https://github.com/ansible/ansible/blob/395139708f94bbea4c6c6ad6fcffe199e291fc62/lib/ansible/executor/task_executor.py","kind":"upstream"}]}
+</script><link rel="stylesheet" href="../assets/related.css"></head><body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#076 · 14·09·2026</span></div></div><header class="post"><p class="eyebrow">Automation · Task result semantics</p><h1>Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code</h1><p class="lede">Tách exit code khỏi semantics để Ansible báo <code>changed</code> và <code>failed</code> đúng với ý nghĩa vận hành.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-14</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>changed_when</code> và <code>failed_when</code> để biểu diễn đúng trạng thái thay đổi/thất bại của command hoặc module, tránh false positive và false failure.</p></section><section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Có Ansible trên control node; hiểu inventory và <code>register</code>.</li><li>Ubuntu và Xubuntu dùng cùng semantics Ansible; Debian, Fedora và FreeBSD cũng dùng hai keyword này.</li><li>Lab chạy trên <code>localhost</code>, không thay đổi cấu hình hệ thống.</li></ul></section>
+<figure><svg viewBox="0 0 760 210" role="img" aria-label="Result qua conditional tới task status"><rect width="760" height="210" fill="#F7FAF9"/><g font-family="sans-serif" text-anchor="middle"><rect x="30" y="65" width="190" height="75" rx="8" fill="#fff" stroke="#14201D"/><text x="125" y="96" font-size="12" font-weight="700">RESULT</text><text x="125" y="122" font-size="10">rc · stdout · stderr</text><rect x="285" y="65" width="190" height="75" rx="8" fill="#fff" stroke="#0C6E61"/><text x="380" y="96" font-size="12" font-weight="700">SEMANTICS</text><text x="380" y="122" font-size="9">failed_when · changed_when</text><rect x="540" y="65" width="190" height="75" rx="8" fill="#fff" stroke="#9A6500"/><text x="635" y="96" font-size="12" font-weight="700">STATUS</text><text x="635" y="122" font-size="10">ok · changed · failed</text><path d="M220 103H279M475 103H534" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 1 — Exit code là tín hiệu; conditional định nghĩa semantics vận hành.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>CLI có thể dùng mã khác 0 cho trạng thái hợp lệ; ngược lại <code>rc=0</code> chưa chắc đồng nghĩa điều kiện nghiệp vụ đạt. Vì vậy playbook cần contract rõ giữa result và trạng thái task.</p></section><section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><code>register</code> lưu <code>rc</code>, <code>stdout</code>, <code>stderr</code>.</li><li><code>failed_when</code> định nghĩa failure; <code>changed_when</code> định nghĩa changed và có thể ảnh hưởng handler.</li><li>List conditions là AND; cần OR thì viết <code>or</code> rõ ràng.</li><li>Conditional là raw Jinja expression, không bọc bằng cặp dấu ngoặc nhọn nội suy Jinja.</li></ul></section>
+<figure><svg viewBox="0 0 760 190" role="img" aria-label="Ma trận task result"><rect width="760" height="190" fill="#fff"/><g font-family="sans-serif"><text x="45" y="35" font-size="12" font-weight="700">Tín hiệu</text><text x="300" y="35" font-size="12" font-weight="700">Policy</text><text x="610" y="35" font-size="12" font-weight="700">Kết quả</text><rect x="30" y="50" width="700" height="38" fill="#F7FAF9"/><text x="45" y="74" font-size="10">rc=0, UNCHANGED</text><text x="300" y="74" font-size="10">changed_when=false</text><text x="610" y="74" font-size="10">ok</text><rect x="30" y="96" width="700" height="38" fill="#F7FAF9"/><text x="45" y="120" font-size="10">rc=0, UPDATED</text><text x="300" y="120" font-size="10">changed_when=UPDATED</text><text x="610" y="120" font-size="10">changed</text><rect x="30" y="142" width="700" height="38" fill="#F7FAF9"/><text x="45" y="166" font-size="10">rc=3</text><text x="300" y="166" font-size="10">failed_when: rc not in [0,3]</text><text x="610" y="166" font-size="10">ok nếu documented</text></g></svg><figcaption>Hình 2 — Chỉ chấp nhận exit code đặc biệt khi upstream command định nghĩa rõ.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps"><li><h3>1. Xác nhận Ansible</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook --version</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — không áp systemd/Linux path</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">ansible-playbook --version</code></pre></div></li><li><h3>2. Tạo playbook lab</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">cat &gt; result-semantics.yml &lt;&lt;'EOF'
+---
+- name: Result semantics lab
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Simulate update signal
+      ansible.builtin.command:
+        argv: [/bin/sh, -c, "printf '%s\\n' UPDATED"]
+      register: probe
+      changed_when: "'UPDATED' in probe.stdout"
+      failed_when: probe.rc != 0
+EOF</code></pre></div></li><li><h3>3. Syntax-check và chạy</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook -i localhost, -c local result-semantics.yml --syntax-check
+ansible-playbook -i localhost, -c local result-semantics.yml</code></pre></div></li><li><h3>4. Mô hình exit code hợp lệ khác 0</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-yaml">- name: Treat rc 3 as a documented no-match state
+  ansible.builtin.command:
+    argv: [/bin/sh, -c, "exit 3"]
+  register: probe
+  failed_when: probe.rc not in [0, 3]
+  changed_when: false</code></pre></div><p>Production chỉ chấp nhận mã khác 0 nếu tài liệu command thật định nghĩa mã đó là hợp lệ.</p></li></ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook -i localhost, -c local result-semantics.yml</code></pre></div><p><strong>Expected Output:</strong> task mô phỏng là <code>changed</code>, recap có <code>failed=0</code>. Đổi output thành <code>UNCHANGED</code> thì task phải về <code>ok</code>.</p></section><section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li>Nếu field undefined, dùng <code>ansible.builtin.debug: var=probe</code>.</li><li><code>ignore_errors</code> không thay <code>failed_when</code>.</li><li>Không dùng <code>changed_when: false</code> để che task thật sự thay đổi hệ thống.</li></ul></section><section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Ghi rõ exit-code contract từ upstream. False <code>changed</code> có thể kích hoạt handler không cần thiết. Ubuntu/Xubuntu, Debian và Fedora là Linux; FreeBSD giữ service/package semantics riêng.</p></section><section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Đổi stdout thành <code>UNCHANGED</code> và xác nhận recap về <code>ok</code>.</li><li>Mô phỏng <code>rc=4</code> và xác nhận task fail nếu policy chỉ cho <code>0</code>/<code>3</code>.</li></ol></section><section class="sources"><h2>Nguồn kỹ thuật</h2><ul><li><a href="https://github.com/ansible/ansible/blob/395139708f94bbea4c6c6ad6fcffe199e291fc62/lib/ansible/keyword_desc.yml">Ansible upstream — Playbook keyword descriptions</a></li><li><a href="https://github.com/ansible/ansible/blob/395139708f94bbea4c6c6ad6fcffe199e291fc62/lib/ansible/executor/task_executor.py">Ansible upstream — Task executor conditional evaluation</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-069-ansible-inventory-patterns-group-intersection.html"><span class="series-kicker">#069</span><span>Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-062-ansible-blocks-rescue-always-recovery.html">#062 · Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</a></li>
+      <li><a href="post-055-ansible-tags-limit-scope-control.html">#055 · Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</a></li>
+      <li><a href="post-048-ansible-check-diff-serial-rolling-change.html">#048 · Ansible check mode, diff và serial: rolling change có kiểm soát</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ</a><a href="#page-top">Lên đầu trang ↑</a></footer></div></main></body></html>
