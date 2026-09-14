@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sat, 12 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 13 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>CPU steal time và virtualization contention: phân biệt host pressure với guest workload</title>
+      <link>https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</guid>
+      <pubDate>Sun, 13 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.</description>
+    </item>
     <item>
       <title>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</title>
       <link>https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html</guid>
       <pubDate>Fri, 04 Sep 2026 00:00:00 +0700</pubDate>
       <description>Một file có thể có kích thước logic rất lớn nhưng chỉ chiếm ít block vật lý; luôn đo cả hai trước và sau copy/backup.</description>
-    </item>
-    <item>
-      <title>SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key</title>
-      <link>https://linux.no.id.vn/posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html</guid>
-      <pubDate>Thu, 03 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Một public key không nhất thiết phải có toàn bộ quyền SSH của tài khoản; gắn policy ngay trên từng dòng authorized_keys để giảm blast radius khi credential bị lộ.</description>
     </item>
   </channel>
 </rss>

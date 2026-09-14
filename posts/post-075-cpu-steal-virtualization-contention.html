@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CPU steal time và virtualization contention: phân biệt host pressure với guest workload — Linux Daily #075</title>
+<meta name="description" content="Đọc CPU steal time trên Linux và đối chiếu run queue, guest CPU cùng tín hiệu hypervisor để tách host contention khỏi workload thật; FreeBSD dùng bằng chứng CPU khác, không giả định có steal tương đương.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="CPU steal time và virtualization contention: phân biệt host pressure với guest workload">
+<meta property="og:description" content="Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="CPU steal time và virtualization contention: phân biệt host pressure với guest workload">
+<meta name="twitter:description" content="Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":75,"date":"2026-09-13","axis":"Monitoring","eyebrow":"Monitoring · CPU steal time","slug":"cpu-steal-virtualization-contention","title":"CPU steal time và virtualization contention: phân biệt host pressure với guest workload","lede":"Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-13","changes_system":false,"sources":[{"title":"Linux kernel — /proc filesystem statistics","url":"https://docs.kernel.org/filesystems/proc.html","kind":"upstream"},{"title":"Linux kernel — CPU load accounting","url":"https://docs.kernel.org/admin-guide/cpu-load.html","kind":"upstream"},{"title":"FreeBSD 15.1 — vmstat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8&manpath=FreeBSD+15.1-RELEASE","kind":"official"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#075 · 13·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Monitoring · CPU steal time</p><h1>CPU steal time và virtualization contention: phân biệt host pressure với guest workload</h1><p class="lede">Đọc <code>steal</code> time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.</p><div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-13</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt CPU contention do hypervisor/host với workload CPU thật bên trong guest trước khi tối ưu ứng dụng hoặc tăng vCPU.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Máy ảo hoặc guest cần quan sát; bài chỉ đọc số liệu, không thay đổi hệ thống.</li><li>User thường đủ quyền cho <code>vmstat</code> và đọc <code>/proc/stat</code> trên Linux.</li><li>Ubuntu và Xubuntu dùng cùng cơ chế Linux như Debian/Fedora; FreeBSD được tách riêng vì <code>vmstat</code> không có cột steal tương đương.</li><li>Đã quen với run queue, CPU pressure và time-series cơ bản từ #019, #026, #040 và #054.</li></ul></section>
+<figure><svg viewBox="0 0 760 245" role="img" aria-label="Guest workload cạnh tranh CPU với workload khác trên hypervisor"><rect width="760" height="245" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="44" y="45" width="270" height="150" rx="12" fill="#fff" stroke="#0C6E61"/><text x="68" y="78" font-size="12" font-weight="700">GUEST VM</text><text x="68" y="108" font-size="10">runnable workload</text><text x="68" y="132" font-size="10">user / system CPU</text><text x="68" y="156" font-size="10">steal = time not scheduled</text><rect x="446" y="45" width="270" height="150" rx="12" fill="#fff" stroke="#9A6500"/><text x="470" y="78" font-size="12" font-weight="700">HYPERVISOR / HOST</text><text x="470" y="108" font-size="10">physical CPU capacity</text><text x="470" y="132" font-size="10">other guests / host work</text><text x="470" y="156" font-size="10">scheduling contention</text><path d="M314 120H438" stroke="#0C6E61" stroke-width="3" stroke-dasharray="8 6"/><text x="376" y="105" text-anchor="middle" font-size="10">vCPU scheduling</text></g></svg><figcaption>Hình 1 — Guest có runnable work nhưng hypervisor chưa cấp physical CPU sẽ tích lũy thời gian <code>steal</code> trên Linux.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một VM có thể phản hồi chậm dù process bên trong không dùng hết CPU theo cách bạn mong đợi. Nếu host oversubscribe CPU hoặc nhiều guest cạnh tranh cùng physical CPU, guest có thể sẵn sàng chạy nhưng chưa được hypervisor lập lịch.</p><p>Trên Linux, kernel ghi trường <code>steal</code> trong <code>/proc/stat</code> là thời gian chờ không tự nguyện trong môi trường ảo hóa. Ubuntu/Xubuntu, Debian và Fedora có thể hiển thị tỷ lệ này qua công cụ như <code>vmstat</code>. Giá trị cao là bằng chứng về thời gian CPU bị lấy khỏi guest, nhưng không tự nó chứng minh nguyên nhân chính xác ở host.</p><p>FreeBSD <code>vmstat</code> báo CPU theo user/system/idle và không cung cấp một cột steal tương đương. Vì vậy không được gán ý nghĩa Linux <code>%st</code> cho FreeBSD; cần đối chiếu scheduler evidence trong guest với metric từ hypervisor hoặc nền tảng ảo hóa.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong><code>steal</code> khác <code>user</code>/<code>system</code>.</strong> User/system là CPU guest thực sự dùng; steal là thời gian guest bị lấy mất cơ hội chạy.</li><li><strong>Đọc theo khoảng thời gian.</strong> Counter <code>/proc/stat</code> là tích lũy từ lúc boot; công cụ time-series tính chênh lệch giữa các mẫu mới hữu ích cho incident.</li><li><strong>Run queue tạo ngữ cảnh.</strong> Runnable tasks tăng cùng steal cho thấy guest có nhu cầu CPU nhưng không nhận đủ lịch chạy; runnable thấp thì phải tìm bottleneck khác.</li><li><strong>Không suy diễn một chiều.</strong> Steal thấp không đảm bảo host khỏe trên mọi hypervisor, và steal cao không cho biết guest nào khác hoặc tiến trình host nào gây contention.</li><li><strong>FreeBSD cần bằng chứng khác.</strong> Dùng <code>vmstat</code> để đọc run queue + CPU guest, sau đó kiểm metric host/hypervisor thay vì giả lập một cột steal không tồn tại.</li></ul></section>
+<figure><svg viewBox="0 0 760 255" role="img" aria-label="Cây quyết định phân biệt guest CPU busy với virtualization contention"><rect width="760" height="255" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="270" y="25" width="220" height="56" rx="10" fill="#F7FAF9" stroke="#14201D"/><text x="380" y="58" font-size="11" font-weight="700">VM CHẬM / CPU PRESSURE</text><path d="M380 81V108M380 108H190M380 108H570M190 108V132M570 108V132" stroke="#0C6E61" stroke-width="2"/><rect x="70" y="132" width="240" height="82" rx="10" fill="#F7FAF9" stroke="#0C6E61"/><text x="190" y="162" font-size="11" font-weight="700">steal tăng + runnable tăng</text><text x="190" y="187" font-size="10">đối chiếu host/hypervisor</text><rect x="450" y="132" width="240" height="82" rx="10" fill="#F7FAF9" stroke="#9A6500"/><text x="570" y="162" font-size="11" font-weight="700">user/system tăng, steal thấp</text><text x="570" y="187" font-size="10">đi sâu workload trong guest</text></g></svg><figcaption>Hình 2 — <code>steal</code> chỉ có ý nghĩa khi ghép với nhu cầu chạy và CPU usage của guest.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Lấy mẫu CPU theo thời gian trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">vmstat 1 5</code></pre></div><p>Tập trung vào <code>r</code>, <code>us</code>, <code>sy</code>, <code>id</code>, <code>wa</code> và <code>st</code>. Bỏ mẫu đầu nếu nó phản ánh trung bình từ lúc boot thay vì khoảng một giây vừa qua.</p></li>
+<li><h3>2. Xác nhận nguồn raw của steal trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">awk '$1=="cpu" {print "user="$2, "nice="$3, "system="$4, "idle="$5, "iowait="$6, "irq="$7, "softirq="$8, "steal="$9}' /proc/stat</code></pre></div><p>Giá trị là counter tích lũy theo đơn vị kernel accounting; không coi số raw này là phần trăm tức thời.</p></li>
+<li><h3>3. Phân loại guest busy hay host contention</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">vmstat 2 10</code></pre></div><p>Nếu <code>us+sy</code> cao và <code>st</code> thấp, ưu tiên điều tra workload trong guest. Nếu <code>st</code> tăng đáng kể cùng <code>r</code> cao, giữ giả thuyết contention và chuyển sang bằng chứng host/hypervisor.</p></li>
+<li><h3>4. Trên FreeBSD, đọc scheduler/CPU mà không giả định có steal</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">vmstat -w 1 -c 5</code></pre></div><p>Đọc run queue và các cột <code>us</code>/<code>sy</code>/<code>id</code>. Nếu VM vẫn chậm nhưng guest không thể giải thích bằng CPU nội bộ, lấy metric scheduling/ready/CPU contention từ hypervisor hoặc cloud provider.</p></li>
+<li><h3>5. Ghi bằng chứng cùng timestamp trước khi kết luận</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">date -u '+%Y-%m-%dT%H:%M:%SZ'</code></pre></div><p>Ghép timestamp của guest với dashboard/hypervisor cùng khoảng thời gian. Không so một snapshot guest với metric host ở thời điểm khác.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Chạy sampling ít nhất vài nhịp và kiểm rằng kết luận dựa trên nhiều tín hiệu, không dựa một dòng <code>top</code> hay một mẫu <code>vmstat</code>.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">Linux: header CPU có cột st; đọc st theo các mẫu sau mẫu đầu.
+FreeBSD: vmstat hiển thị us/sy/id, không có cột steal tương đương.
+Kết luận incident: nêu guest CPU, runnable pressure và bằng chứng host/hypervisor cùng timestamp.</code></pre><p>Con số thực tế phụ thuộc workload và nền tảng ảo hóa; mục tiêu là phân loại đúng nguồn pressure.</p></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>st=0</code> nhưng VM vẫn chậm:</strong> kiểm I/O wait, memory pressure, run queue và metric hypervisor; không loại trừ contention chỉ từ một counter.</li><li><strong>Mẫu đầu <code>vmstat</code> khác hẳn:</strong> nhiều triển khai hiển thị số liệu từ lúc boot ở mẫu đầu; dùng các mẫu tiếp theo cho interval analysis.</li><li><strong>CPU guest cao nhưng latency vẫn tăng:</strong> tách user/system CPU khỏi steal; workload saturation và host contention có thể cùng xảy ra.</li><li><strong>FreeBSD:</strong> không map <code>id</code> thấp thành steal. CPU busy trong guest và CPU bị host trì hoãn là hai giả thuyết khác nhau.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Thu thập read-only trước; không tăng vCPU hoặc migrate VM khi chưa có evidence đủ.</li><li>Không công khai tenant/host identifiers, topology hypervisor hoặc dashboard chứa dữ liệu của workload khác.</li><li>Trong cloud, dùng metric chính thức của provider/hypervisor để bổ sung guest evidence; tên metric và semantics có thể khác giữa nền tảng.</li><li>Nếu remediation cần resize/migrate VM, thực hiện theo change window và rollback policy riêng; bài này không thay đổi hệ thống.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Ghi 10 mẫu <code>vmstat</code> trên một Linux VM và giải thích ba trường hợp: <code>us</code> cao, <code>wa</code> cao, <code>st</code> cao.</li><li>So sánh <code>/proc/stat</code> trước/sau 10 giây và giải thích vì sao phải lấy delta để tính tỷ lệ.</li><li>Trên FreeBSD VM, ghi run queue + <code>us/sy/id</code> rồi liệt kê metric hypervisor nào cần lấy thêm để chứng minh contention.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu upstream/official; các URL dưới đây đã được kiểm tra trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/proc.html">Linux kernel — /proc filesystem statistics</a></li><li><a href="https://docs.kernel.org/admin-guide/cpu-load.html">Linux kernel — CPU load accounting</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8&amp;manpath=FreeBSD+15.1-RELEASE">FreeBSD 15.1 — vmstat(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-068-interrupt-softirq-pressure-irq-storm.html"><span class="series-kicker">#068</span><span>Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-061-load-average-run-queue-scheduler-pressure.html">#061 · Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</a></li>
+      <li><a href="post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html">#054 · Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ</a></li>
+      <li><a href="post-047-socket-ownership-ss-lsof-sockstat-fstat.html">#047 · Socket ownership: ss/lsof trên Linux, sockstat/fstat trên FreeBSD</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #075 · Monitoring</span><span class="hashtags">#Linux #FreeBSD #Virtualization #Monitoring</span></div></footer>
+</div></main></body></html>

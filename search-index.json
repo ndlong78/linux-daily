@@ -1,6 +1,19 @@
 {
-  "count": 74,
+  "count": 75,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-09-13",
+      "href": "posts/post-075-cpu-steal-virtualization-contention.html",
+      "issue": 75,
+      "lede": "Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.",
+      "tags": [
+        "CPU steal time"
+      ],
+      "title": "CPU steal time và virtualization contention: phân biệt host pressure với guest workload"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",
