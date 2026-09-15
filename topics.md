@@ -79,3 +79,4 @@
 #074 | 2026-09-12 | Công cụ mới | watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor
 #075 | 2026-09-13 | Monitoring | CPU steal time và virtualization contention: phân biệt host pressure với guest workload
 #076 | 2026-09-14 | Automation | Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code
+#077 | 2026-09-15 | Ôn tập | Lab certificate renewal race: file ownership, service reload và rollback evidence
