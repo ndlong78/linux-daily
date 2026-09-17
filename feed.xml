@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 14 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 15 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab certificate renewal race: file ownership, service reload và rollback evidence</title>
+      <link>https://linux.no.id.vn/posts/post-077-certificate-renewal-race-ownership-reload-rollback.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-077-certificate-renewal-race-ownership-reload-rollback.html</guid>
+      <pubDate>Tue, 15 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Chứng minh certificate trên disk, quyền đọc của service và certificate đang được phục vụ là ba trạng thái khác nhau trước khi reload hoặc rollback.</description>
+    </item>
     <item>
       <title>Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code</title>
       <link>https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-068-interrupt-softirq-pressure-irq-storm.html</guid>
       <pubDate>Sun, 06 Sep 2026 00:00:00 +0700</pubDate>
       <description>Đọc interrupt/softirq theo tốc độ thay đổi và theo CPU để biết CPU đang bận vì application hay vì xử lý sự kiện kernel.</description>
-    </item>
-    <item>
-      <title>zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</title>
-      <link>https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-067-zoxide-history-directory-navigation.html</guid>
-      <pubDate>Sat, 05 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Dùng zoxide cho shell tương tác; trong script vẫn giữ cd và path tường minh để hành vi có thể dự đoán.</description>
     </item>
   </channel>
 </rss>
