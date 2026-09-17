@@ -1,6 +1,19 @@
 {
-  "count": 76,
+  "count": 77,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-09-15",
+      "href": "posts/post-077-certificate-renewal-race-ownership-reload-rollback.html",
+      "issue": 77,
+      "lede": "Chứng minh certificate trên disk, quyền đọc của service và certificate đang được phục vụ là ba trạng thái khác nhau trước khi reload hoặc rollback.",
+      "tags": [
+        "TLS operations lab"
+      ],
+      "title": "Lab certificate renewal race: file ownership, service reload và rollback evidence"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",
