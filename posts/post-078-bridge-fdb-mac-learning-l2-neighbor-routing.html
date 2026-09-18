@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing — Linux Daily #078</title>
-<meta name="description" content="Đọc bridge FDB và MAC learning trên Ubuntu, Xubuntu, Debian, Fedora và FreeBSD để tách lỗi switching L2 khỏi ARP/ND và routing.">
+<meta name="description" content="Đọc forwarding database và đường học MAC trước khi sửa ARP/ND, route hoặc VLAN.">
 <link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="stylesheet" href="../assets/fonts.css">
 <link rel="stylesheet" href="../assets/style.css">
@@ -31,8 +31,20 @@
 </script>
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#078 · 16·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Networking · Layer 2 switching</p><h1>Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing</h1><p class="lede">Đọc forwarding database và đường học MAC trước khi sửa ARP/ND, route hoặc VLAN.</p><div class="meta"><span class="tag axis">TRỤC · NETWORKING</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-16</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Biết MAC nào được bridge học ở port nào, phân biệt FDB với neighbor table và route, rồi thu thập evidence trước khi thay đổi bridge hoặc VLAN.</p></section>
