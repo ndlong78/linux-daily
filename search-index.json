@@ -1,6 +1,19 @@
 {
-  "count": 77,
+  "count": 78,
   "posts": [
+    {
+      "axis": "Networking",
+      "axis_label": "Networking",
+      "axis_slug": "networking",
+      "date": "2026-09-16",
+      "href": "posts/post-078-bridge-fdb-mac-learning-l2-neighbor-routing.html",
+      "issue": 78,
+      "lede": "Đọc forwarding database và đường học MAC trước khi sửa ARP/ND, route hoặc VLAN.",
+      "tags": [
+        "Layer 2 switching"
+      ],
+      "title": "Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing"
+    },
     {
       "axis": "Ôn tập",
       "axis_label": "Lab end-to-end",
