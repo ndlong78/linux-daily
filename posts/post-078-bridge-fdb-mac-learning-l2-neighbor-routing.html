@@ -29,6 +29,7 @@
 <script type="application/json" id="ld-meta">
 {"issue":78,"date":"2026-09-16","axis":"Networking","eyebrow":"Networking · Layer 2 switching","slug":"bridge-fdb-mac-learning-l2-neighbor-routing","title":"Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing","lede":"Đọc forwarding database và đường học MAC trước khi sửa ARP/ND, route hoặc VLAN.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-16","changes_system":false,"sources":[{"title":"Linux Kernel Documentation — Ethernet Bridging","url":"https://docs.kernel.org/networking/bridge.html","kind":"upstream"},{"title":"FreeBSD Manual Pages — ifconfig(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=ifconfig&sektion=8","kind":"official"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
@@ -66,5 +67,26 @@ ndp -an</code></pre></div><p>Nếu neighbor chưa resolve nhưng FDB đã học 
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>FDB là dữ liệu vận hành có thể tiết lộ vị trí logic của endpoint trong topology. Chỉ thu thập phạm vi cần thiết và tránh đăng nguyên bảng MAC của mạng production vào ticket công khai. Không tắt learning, STP hay VLAN filtering chỉ để “thử”; các thay đổi đó có thể làm rộng failure domain.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Trong một lab bridge có hai member port, tạo traffic giữa hai endpoint. Ghi ba bằng chứng theo thứ tự: FDB, neighbor, route. Sau đó giải thích một tình huống mà FDB đúng nhưng neighbor sai, và một tình huống route đúng nhưng FDB chưa học MAC mục tiêu.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ưu tiên tài liệu chính thức/upstream; hai URL dưới đây đã được kiểm tra truy cập ngày 2026-09-18.</p><ul class="clean"><li><a href="https://docs.kernel.org/networking/bridge.html">Linux Kernel Documentation — Ethernet Bridging</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=ifconfig&amp;sektion=8">FreeBSD Manual Pages — ifconfig(8)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #078 · NETWORKING</span><span class="hashtags">#Linux #FreeBSD #Networking #Bridge #FDB</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Networking</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-071-ipv6-router-advertisement-dhcpv6-default-route-address-dns-ownership.html"><span class="series-kicker">#071</span><span>IPv6 Router Advertisement và DHCPv6: tách default route, address và DNS ownership</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-064-neighbor-cache-arp-nd-l2-routing-dns.html">#064 · Neighbor cache ARP/ND: phân biệt lỗi L2 neighbor với routing và DNS</a></li>
+      <li><a href="post-057-tcp-mss-clamping-pmtud-boundary.html">#057 · TCP MSS clamping: khi nào hữu ích và vì sao không thay thế PMTUD</a></li>
+      <li><a href="post-050-conntrack-nftables-pf-state-table.html">#050 · State table: conntrack/nftables trên Linux và pf state trên FreeBSD</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #078 · NETWORKING</span><span class="hashtags">#Linux #FreeBSD #Networking #Bridge #FDB</span></div></footer>
 </div></main></body></html>

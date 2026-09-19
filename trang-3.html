@@ -49,9 +49,18 @@
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">77 BÀI · TRANG 3/4</div>
+      <div class="count">78 BÀI · TRANG 3/4</div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-038-smart-nvme-health-disk-degradation.html">
+        <div class="card-top">
+          <span class="c-issue">#038</span>
+          <span class="c-axis">Storage · Device health</span>
+          <span class="c-date">07·08·2026</span>
+        </div>
+        <h2>SMART và NVMe health: phát hiện disk degradation trước khi hỏng</h2>
+        <p>Filesystem chỉ thấy lỗi khi đã quá muộn trong nhiều trường hợp. SMART/NVMe health giúp đọc trạng thái thiết bị, error counters và cảnh báo sớm mà không chạy thao tác phá dữ liệu.</p>
+      </a>
       <a class="card" href="posts/post-037-acl-default-acl-shared-access.html">
         <div class="card-top">
           <span class="c-issue">#037</span>
@@ -222,15 +231,6 @@
         </div>
         <h2>Server chậm ở đâu? Triage CPU, RAM và disk I/O trong 5 phút</h2>
         <p>Máy chủ &#x27;chậm&#x27; không phải là một chẩn đoán. Trong vài phút đầu, mục tiêu là phân loại đúng nút thắt: CPU đang xếp hàng, RAM đang chịu áp lực, hay thiết bị lưu trữ đang có độ trễ cao. vmstat cho bức tranh hệ thống; iostat đi sâu vào I/O; FreeBSD có cùng tư duy nhưng bộ lệnh và trường số liệu khác Linux.</p>
-      </a>
-      <a class="card" href="posts/post-018-rclone-cloud-sync.html">
-        <div class="card-top">
-          <span class="c-issue">#018</span>
-          <span class="c-axis">Công cụ mới · Cloud sync</span>
-          <span class="c-date">18·07·2026</span>
-        </div>
-        <h2>rclone: một lệnh đồng bộ, mã hoá sẵn, lên hơn 70 kho cloud</h2>
-        <p>Kéo/thả file lên Google Drive hay dán access key thẳng vào script rồi aws s3 cp tay — cả hai đều dễ quên, dễ lộ khoá, và không mã hoá gì trước khi rời máy. rclone là &quot;rsync cho cloud&quot;: một binary Go tĩnh nói chuyện được với S3, Backblaze B2, Google Drive, SFTP… và có sẵn lớp crypt mã hoá tên file lẫn nội dung ngay phía client. Cùng một bộ lệnh, chạy y hệt trên cả bốn hệ điều hành.</p>
       </a>
     </main>
     <nav class="pagination" aria-label="Phân trang danh sách bài">
