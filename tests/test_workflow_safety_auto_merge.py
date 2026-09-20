@@ -40,18 +40,18 @@ def test_auto_merge_skips_ineligible_prs_without_reporting_failure():
     assert text.count("if: steps.contract.outputs.eligible == 'true'") == 2
 
 
-def test_auto_merge_trusts_only_owner_or_materialize_bot():
+def test_auto_merge_trusts_only_repository_owner():
     text = WORKFLOW.read_text(encoding="utf-8")
 
-    assert 'case "${author}" in' in text
-    assert '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")' in text
+    assert 'test "${author}" = "${GITHUB_REPOSITORY_OWNER}"' in text
+    assert "github-actions[bot]" not in text
 
 
-def test_auto_merge_policy_rejects_widened_author_allowlist(tmp_path: Path):
+def test_auto_merge_policy_rejects_bot_author(tmp_path: Path):
     errors = _mutated(
         tmp_path,
-        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")',
-        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]"|"someone-else")',
+        'test "${author}" = "${GITHUB_REPOSITORY_OWNER}"',
+        'test "${author}" = "github-actions[bot]"',
     )
     assert any("safety marker missing" in error for error in errors), errors
 
