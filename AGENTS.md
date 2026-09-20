@@ -27,10 +27,50 @@ Linux Daily phát hành mặc định **1 bài/ngày**.
 ```bash
 python3 tools/cadence.py gate
 python3 tools/cadence.py next
+python3 tools/cadence.py backlog
 ```
 
 - `cadence.py gate` exit `10`: chưa tới nhịp → dừng, không sửa state.
 - exit `0`: tiếp tục issue kế tiếp.
+
+### Bù bài khi đã lỡ nhịp
+
+Một lượt chạy hỏng làm `last_published_date` tụt lại sau lịch. Nếu mỗi lượt chỉ ra đúng
+một bài thì khoảng tụt đó **không bao giờ co lại**: ra một bài đẩy ngày lên một ngày,
+trong khi hôm nay cũng trôi đi một ngày. Vì vậy khi đang tụt, một lượt chạy được phép ra
+nhiều bài.
+
+`cadence.py backlog` là nguồn quyết định, không phải phán đoán của agent:
+
+```bash
+python3 tools/cadence.py backlog
+# tụt sau lịch     : 3 ngày
+# trần mỗi lượt    : 3
+# được ra lượt này : 3
+#   #080 | 2026-09-18
+#   #081 | 2026-09-19
+#   #082 | 2026-09-20
+```
+
+- exit `0` = còn bài được phép ra; exit `10` = đã đúng nhịp, dừng.
+- Ra **đúng** số bài và **đúng** cặp (số hiệu, ngày) mà lệnh in ra. Không tự chọn ngày,
+  không ra thêm bài thứ N+1 vì "còn thời gian".
+- Trần mặc định `CATCHUP_MAX_PER_RUN = 3`. Gián đoạn dài hơn được bù dần qua nhiều lượt,
+  không đổ một lần — vượt trần là vượt khả năng review của cả người lẫn agent.
+- Ngày bài cuối cùng nhiều nhất là hôm nay (giờ VN). `validate_repo` chặn ngày ở tương lai,
+  và allowance luôn ≤ backlog nên ràng buộc đó không bao giờ bị chạm.
+
+**Mỗi bài vẫn là một branch và một PR riêng, chạy tuần tự.** Không gộp nhiều bài vào một
+branch. Lý do là ràng buộc có thật chứ không phải thẩm mỹ:
+
+- `materialize-artifacts.yml` suy branch đích từ `state.json.last_issue + 1` trên `main`,
+  nên bài #N+1 chỉ tìm được branch của nó sau khi #N đã merge vào `main`;
+- mỗi bài có cổng CI riêng, nên #081 đỏ không chặn #080 đã xong;
+- tên branch `chatgpt/linux-daily-<NNN>-<YYYYMMDD>` mang đúng một số hiệu.
+
+Trình tự khi bù: `backlog` → viết #080 → materialize → PR → chờ merge → `backlog` lại →
+#081 → … Đọc lại `backlog` sau mỗi lần merge thay vì dùng danh sách cũ; ngày có thể đã
+sang ngày mới trong lúc chạy.
 
 Branch bài hằng ngày:
 
@@ -442,7 +482,8 @@ Task chạy 07:00 mỗi ngày, cadence 1 bài/ngày.
 Mỗi lần chạy:
 
 1. đọc `AGENTS.md`, `STYLE.md`, state/curriculum hiện hành;
-2. kiểm cadence, duplicate branch/PR và capability **trước khi tạo branch mới**;
+2. kiểm cadence, duplicate branch/PR và capability **trước khi tạo branch mới**; chạy
+   `cadence.py backlog` để biết lượt này được ra bao nhiêu bài và mỗi bài mang ngày nào;
 3. nếu có local writable checkout, dùng local one-pass flow; nếu không có nhưng GitHub connector ghi được, dùng API-only fallback;
 4. nếu branch đúng issue đã tồn tại nhưng head == `main` và chưa có PR, resume như interrupted empty branch;
 5. chuẩn bị bài + source-backed review + STYLE review, gồm phân loại đúng runtime/documentation verification evidence từ #070;
@@ -451,6 +492,9 @@ Mỗi lần chạy:
 8. chuyển PR sang Ready khi structural/diff/review gate sạch, **không chờ CI success**;
 9. không cần chờ CI kết thúc để tự merge thủ công; GitHub post-CI workflow xử lý merge;
 10. nếu CI đã success lúc PR còn Draft, rerun CI trên cùng SHA sau khi Ready;
-11. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau.
+11. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau;
+12. nếu `backlog` còn bài chưa ra và bài vừa rồi đã merge vào `main`, chạy lại `backlog`
+    và lặp từ bước 5 cho bài kế tiếp; dừng khi `backlog` trả exit `10` hoặc khi một bài
+    trong lượt gặp blocker.
 
 Thiếu local checkout **không phải blocker** nếu GitHub connector vẫn có khả năng ghi feature branch/PR. Task không tạo social output mặc định và không thay đổi branch protection/repository settings để ép merge.
