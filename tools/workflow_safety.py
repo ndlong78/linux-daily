@@ -150,6 +150,8 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
         "github.event.workflow_run.event == 'pull_request'",
         "CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}",
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
+        'case "${author}" in',
+        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")',
         'test "${head_sha}" = "${CI_HEAD_SHA}"',
         "reviewDecision",
         "reviewThreads(first:100,after:$cursor)",
