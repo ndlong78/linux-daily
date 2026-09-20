@@ -1,6 +1,19 @@
 {
-  "count": 78,
+  "count": 79,
   "posts": [
+    {
+      "axis": "Bảo mật",
+      "axis_label": "Bảo mật & phân quyền",
+      "axis_slug": "security",
+      "date": "2026-09-17",
+      "href": "posts/post-079-ssh-match-user-address-policy.html",
+      "issue": 79,
+      "lede": "Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.",
+      "tags": [
+        "OpenSSH policy"
+      ],
+      "title": "SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục"
+    },
     {
       "axis": "Networking",
       "axis_label": "Networking",

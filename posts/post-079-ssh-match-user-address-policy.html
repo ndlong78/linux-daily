@@ -14,16 +14,38 @@
 <meta property="og:title" content="SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục">
 <meta property="og:description" content="Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-079-ssh-match-user-address-policy.html">
-<meta property="og:site_name" content="Linux Daily"><meta property="og:locale" content="vi_VN">
-<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png"><meta property="og:image:type" content="image/png"><meta property="og:image:width" content="948"><meta property="og:image:height" content="642"><meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
-<meta name="twitter:card" content="summary_large_image"><meta name="twitter:title" content="SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục"><meta name="twitter:description" content="Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload."><meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png"><meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục">
+<meta name="twitter:description" content="Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
 {"issue":79,"date":"2026-09-17","axis":"Bảo mật","eyebrow":"Bảo mật · OpenSSH policy","slug":"ssh-match-user-address-policy","title":"SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục","lede":"Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-20","changes_system":true,"sources":[{"title":"OpenBSD Manual Pages — sshd_config(5)","url":"https://man.openbsd.org/sshd_config","kind":"upstream"},{"title":"FreeBSD Manual Pages — sshd_config(5)","url":"https://man.freebsd.org/cgi/man.cgi?query=sshd_config&sektion=5","kind":"official"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#079 · 17·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Bảo mật · OpenSSH policy</p><h1>SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục</h1><p class="lede">Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.</p><div class="meta"><span class="tag axis">TRỤC · BẢO MẬT</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-20</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Giới hạn một SSH policy cho đúng user và source network, kiểm cấu hình hiệu lực trước khi reload và giữ đường rollback.</p></section>
@@ -50,5 +72,26 @@ service sshd reload</code></pre></div></section>
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Thay đổi SSH có thể làm mất remote access. Luôn giữ một phiên cứu hộ, kiểm <code>sshd -t</code>, kiểm effective config và thử phiên mới trước khi đóng phiên cũ. Không nới policy toàn cục chỉ để xử lý một user. <code>AllowTcpForwarding no</code> chỉ chặn cơ chế forwarding do SSH cung cấp; nếu user vẫn có shell đầy đủ, họ có thể dùng công cụ khác để chuyển tiếp lưu lượng, nên không coi directive này là ranh giới bảo mật độc lập.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Tạo hai context giả lập bằng <code>sshd -T -C</code>: cùng user nhưng một IP nằm trong <code>&lt;source-cidr&gt;</code> và một IP nằm ngoài. So sánh hai directive mục tiêu và giải thích vì sao kết quả khác nhau.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL official/upstream đã được HTTP-check ngày 2026-09-20.</p><ul class="clean"><li><a href="https://man.openbsd.org/sshd_config">OpenBSD Manual Pages — sshd_config(5)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=sshd_config&amp;sektion=5">FreeBSD Manual Pages — sshd_config(5)</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #079 · BẢO MẬT</span><span class="hashtags">#Linux #FreeBSD #OpenSSH #Security</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Bảo mật &amp; phân quyền</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-072-sudoers-command-digests-binary-policy.html"><span class="series-kicker">#072</span><span>sudoers command digests: khóa policy vào đúng binary thay vì chỉ path</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-065-ssh-authorized-keys-restrictions-source-command-forwarding.html">#065 · SSH authorized_keys restrictions: giới hạn nguồn, command và forwarding theo từng key</a></li>
+      <li><a href="post-058-openssh-certificates-user-ca-validity-revocation.html">#058 · OpenSSH certificates: user CA, validity interval và thu hồi credential</a></li>
+      <li><a href="post-051-umask-secure-file-creation-policy.html">#051 · umask và policy tạo file: secure defaults cho service và user</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #079 · BẢO MẬT</span><span class="hashtags">#Linux #FreeBSD #OpenSSH #Security</span></div></footer>
 </div></main></body></html>

@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Wed, 16 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Thu, 17 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục</title>
+      <link>https://linux.no.id.vn/posts/post-079-ssh-match-user-address-policy.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-079-ssh-match-user-address-policy.html</guid>
+      <pubDate>Thu, 17 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Dùng Match để scope SSH policy theo user và source address, kiểm effective config trước khi reload.</description>
+    </item>
     <item>
       <title>Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing</title>
       <link>https://linux.no.id.vn/posts/post-078-bridge-fdb-mac-learning-l2-neighbor-routing.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html</guid>
       <pubDate>Tue, 08 Sep 2026 00:00:00 +0700</pubDate>
       <description>Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.</description>
-    </item>
-    <item>
-      <title>Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy</title>
-      <link>https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-069-ansible-inventory-patterns-group-intersection.html</guid>
-      <pubDate>Mon, 07 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Dùng pattern để mô tả tập host, rồi bắt buộc kiểm bằng --list-hosts trước khi cho automation thực thi.</description>
     </item>
   </channel>
 </rss>
