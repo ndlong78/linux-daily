@@ -48,9 +48,18 @@
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">79 BÀI · TRANG 1/4</div>
+      <div class="count">80 BÀI · TRANG 1/4</div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-080-filesystem-quotas-user-group-project-capacity.html">
+        <div class="card-top">
+          <span class="c-issue">#080</span>
+          <span class="c-axis">Storage · Filesystem quotas</span>
+          <span class="c-date">18·09·2026</span>
+        </div>
+        <h2>Filesystem quotas: phân biệt user/group/project quota với filesystem capacity</h2>
+        <p>Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.</p>
+      </a>
       <a class="card" href="posts/post-079-ssh-match-user-address-policy.html">
         <div class="card-top">
           <span class="c-issue">#079</span>
@@ -221,15 +230,6 @@
         </div>
         <h2>Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</h2>
         <p>Load average là tín hiệu xu hướng, không phải phần trăm CPU. Ghép nó với run queue và CPU idle để biết scheduler có đang chịu áp lực kéo dài hay không.</p>
-      </a>
-      <a class="card" href="posts/post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">
-        <div class="card-top">
-          <span class="c-issue">#060</span>
-          <span class="c-axis">Công cụ mới · hyperfine</span>
-          <span class="c-date">29·08·2026</span>
-        </div>
-        <h2>hyperfine: benchmark command có warmup và nhiều lần chạy</h2>
-        <p>Đo command bằng nhiều lần chạy, tách warmup khỏi measurement và tránh biến microbenchmark thành kết luận production.</p>
       </a>
     </main>
     <nav class="pagination" aria-label="Phân trang danh sách bài">

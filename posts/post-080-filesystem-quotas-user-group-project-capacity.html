@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Filesystem quotas: phân biệt user/group/project quota với filesystem capacity — Linux Daily #080</title>
+<meta name="description" content="Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-080-filesystem-quotas-user-group-project-capacity.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Filesystem quotas: phân biệt user/group/project quota với filesystem capacity">
+<meta property="og:description" content="Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-080-filesystem-quotas-user-group-project-capacity.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Filesystem quotas: phân biệt user/group/project quota với filesystem capacity">
+<meta name="twitter:description" content="Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":80,"date":"2026-09-18","axis":"Storage","eyebrow":"Storage · Filesystem quotas","slug":"filesystem-quotas-user-group-project-capacity","title":"Filesystem quotas: phân biệt user/group/project quota với filesystem capacity","lede":"Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-20","changes_system":false,"sources":[{"title":"Linux Kernel Documentation — Quota subsystem","url":"https://docs.kernel.org/filesystems/quota.html","kind":"upstream"},{"title":"xfs_quota(8) — Linux manual page","url":"https://man7.org/linux/man-pages/man8/xfs_quota.8.html","kind":"upstream"},{"title":"FreeBSD Handbook — Disk Quotas","url":"https://docs.freebsd.org/en/books/handbook/disks/#quotas","kind":"official"}]}
+</script>
+<link rel="stylesheet" href="../assets/related.css">
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#080 · 18·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Storage · Filesystem quotas</p><h1>Filesystem quotas: phân biệt user/group/project quota với filesystem capacity</h1><p class="lede">Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-20</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Phân biệt quota theo identity/directory tree với dung lượng filesystem tổng, đọc cả block và inode evidence trước khi quyết định tăng quota hoặc mở rộng volume.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Biết mount point cần kiểm tra và user/group liên quan.</li><li>Các lệnh trong bài chỉ đọc trạng thái; không bật/tắt quota và không sửa limit.</li><li>Ubuntu và Xubuntu dùng cùng Linux VFS quota model như Debian/Fedora; XFS project quota là cơ chế filesystem-specific. FreeBSD UFS quota dùng user/group semantics riêng và không dùng <code>xfs_quota</code>.</li></ul></section>
+<figure><svg viewBox="0 0 760 220" role="img" aria-label="Quota và filesystem capacity là hai lớp khác nhau"><rect width="760" height="220" fill="#F7FAF9"/><g font-family="sans-serif" text-anchor="middle"><rect x="35" y="60" width="205" height="105" rx="10" fill="#fff" stroke="#0C6E61"/><text x="137" y="91" font-size="13" font-weight="700">Filesystem capacity</text><text x="137" y="118" font-size="11">blocks + inodes toàn FS</text><text x="137" y="140" font-size="10">df -h · df -i</text><rect x="278" y="45" width="205" height="135" rx="10" fill="#fff" stroke="#9A6500"/><text x="380" y="78" font-size="13" font-weight="700">Quota accounting</text><text x="380" y="105" font-size="11">user · group · project</text><text x="380" y="130" font-size="10">usage · soft · hard · grace</text><rect x="520" y="60" width="205" height="105" rx="10" fill="#fff" stroke="#14201D"/><text x="622" y="91" font-size="13" font-weight="700">Failure symptom</text><text x="622" y="118" font-size="11">EDQUOT ≠ ENOSPC</text><text x="622" y="140" font-size="10">đọc đúng lớp trước khi sửa</text><path d="M240 112H273M488 112H515" stroke="#14201D" stroke-width="2"/></g></svg><figcaption>Hình 1 — Filesystem còn trống vẫn có thể từ chối ghi vì quota; ngược lại quota còn dư không cứu được filesystem đã hết block/inode.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một job ghi file báo “quota exceeded”, trong khi <code>df -h</code> vẫn còn nhiều GB. Hoặc ngược lại, quota của user còn dư nhưng filesystem đã gần 100%. Hai trường hợp cần hai hướng xử lý khác nhau.</p><p>Trên Ubuntu, Xubuntu, Debian và Fedora, quota VFS có thể giới hạn space/inode theo user hoặc group. XFS còn có project quota để theo dõi/giới hạn một directory tree bằng project ID. Trên FreeBSD UFS, quota được cấu hình theo filesystem và chủ yếu theo user/group; không suy lệnh XFS sang FreeBSD.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Filesystem capacity:</strong> tổng block/inode còn lại của mount point, không gắn riêng một user.</li><li><strong>User quota:</strong> accounting/limit theo UID; <strong>group quota:</strong> theo GID.</li><li><strong>Project quota:</strong> trên XFS có thể gắn project ID với directory tree; đây không phải “group quota đổi tên”.</li><li><strong>Soft limit:</strong> có thể vượt tạm trong grace period; <strong>hard limit:</strong> là trần cưỡng chế.</li><li>Quota space và quota inode/file-count là hai tài nguyên khác nhau; phải đọc cả hai khi ứng dụng tạo nhiều file nhỏ.</li></ul></section>
+<figure><svg viewBox="0 0 760 210" role="img" aria-label="Quy trình chẩn đoán quota theo lớp"><rect width="760" height="210" fill="#fff"/><g font-family="sans-serif" text-anchor="middle"><rect x="25" y="65" width="160" height="80" rx="8" fill="#F7FAF9" stroke="#14201D"/><text x="105" y="98" font-size="12">Xác định mount</text><text x="105" y="120" font-size="10">FSTYPE + options</text><rect x="215" y="65" width="160" height="80" rx="8" fill="#F7FAF9" stroke="#0C6E61"/><text x="295" y="98" font-size="12">Đọc capacity</text><text x="295" y="120" font-size="10">blocks + inodes</text><rect x="405" y="65" width="160" height="80" rx="8" fill="#F7FAF9" stroke="#9A6500"/><text x="485" y="98" font-size="12">Đọc quota</text><text x="485" y="120" font-size="10">usage + limits</text><rect x="595" y="65" width="140" height="80" rx="8" fill="#F7FAF9" stroke="#14201D"/><text x="665" y="98" font-size="12">Kết luận</text><text x="665" y="120" font-size="10">đúng resource</text><path d="M185 105H210M375 105H400M565 105H590" stroke="#14201D" stroke-width="2"/></g></svg><figcaption>Hình 2 — Đọc capacity trước, quota sau; chỉ tăng quota khi evidence cho thấy chính quota là điểm chặn.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Xác định filesystem và mount options</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">findmnt -no TARGET,FSTYPE,OPTIONS &lt;mountpoint&gt;</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">mount | grep ' on &lt;mountpoint&gt; '</code></pre></div><p>Xác minh đúng mount point trước khi đọc quota; quota được áp độc lập theo filesystem.</p></li>
+<li><h3>2. Đọc block và inode capacity toàn filesystem</h3><p class="code-label same"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora · FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">df -h &lt;mountpoint&gt;
+df -i &lt;mountpoint&gt;</code></pre></div><p>Nếu block hoặc inode đã cạn, đó là capacity pressure toàn filesystem; không kết luận quota chỉ từ lỗi ghi file.</p></li>
+<li><h3>3. Đọc quota của user hiện tại</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">quota -vs</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD — UFS quota khi đã bật</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">quota -v</code></pre></div><p>Nếu công cụ báo quota chưa bật/không có record, ghi lại đó là evidence; không tự bật quota trong lúc chẩn đoán.</p></li>
+<li><h3>4. Với XFS, tách user/group/project quota</h3><p class="code-label linux"><span class="dot"></span>Linux · chỉ khi FSTYPE là XFS</p><div class="code-wrap"><p class="run-context" data-run-as="sudo"><strong>Run as:</strong> sudo</p><pre><code class="language-bash">sudo xfs_quota -x -c 'state' &lt;mountpoint&gt;
+sudo xfs_quota -x -c 'report -h -u -g -p' &lt;mountpoint&gt;</code></pre></div><p><code>state</code> cho biết accounting/enforcement đang bật cho loại quota nào; <code>report</code> giúp tách user, group và project thay vì gộp chung thành “disk quota”.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Đối chiếu cùng một mount point: capacity từ <code>df</code>, rồi usage/soft/hard/grace từ quota tool. Không dùng phần trăm filesystem để suy quota của một identity, và không dùng quota còn dư để suy filesystem còn chỗ.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><ul class="clean"><li>Xác định được FSTYPE và mount point chính xác.</li><li>Biết block/inode capacity toàn filesystem có đang chạm ngưỡng hay không.</li><li>Biết quota chặn theo user, group hay XFS project; hoặc có bằng chứng quota không bật.</li><li>Phân biệt được “quota exceeded” với “filesystem full” trước khi thay đổi policy hoặc storage.</li></ul></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>quota</code> không có:</strong> kiểm package/tooling của distro; không tải binary ngẫu nhiên để xử lý production.</li><li><strong>XFS nhưng <code>report -p</code> trống:</strong> kiểm <code>state</code> và project mapping trước; project quota không tự xuất hiện chỉ vì directory tồn tại.</li><li><strong><code>df -h</code> còn trống nhưng ghi fail:</strong> đọc <code>df -i</code> và quota inode/file-count.</li><li><strong>FreeBSD:</strong> UFS quota và ZFS quota có cơ chế khác nhau; bài này không áp lệnh XFS/Linux cho FreeBSD.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Quota report có thể lộ tên user/group và mức sử dụng storage. Chỉ thu thập phạm vi cần cho ticket. Không tăng hard limit hoặc tắt enforcement chỉ để “xác nhận” chẩn đoán; trước hết phải chứng minh resource nào đang cạn và blast radius của thay đổi.</p></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn một filesystem lab đã bật quota. Ghi bốn evidence: block capacity, inode capacity, quota user và quota group/project nếu có. Viết kết luận cho hai tình huống: quota đầy nhưng filesystem còn trống, và filesystem hết inode nhưng quota block còn dư.</p></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ba URL official/upstream đã được HTTP-check ngày 2026-09-20.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/quota.html">Linux Kernel Documentation — Quota subsystem</a></li><li><a href="https://man7.org/linux/man-pages/man8/xfs_quota.8.html">xfs_quota(8) — Linux manual page</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/disks/#quotas">FreeBSD Handbook — Disk Quotas</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-073-reflink-cow-clone-hard-link.html"><span class="series-kicker">#073</span><span>Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html">#066 · Sparse files: apparent size, allocated blocks và backup semantics</a></li>
+      <li><a href="post-059-trim-discard-fstrim-zfs-autotrim.html">#059 · TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</a></li>
+      <li><a href="post-052-rsync-link-dest-snapshot-backup.html">#052 · rsync snapshot-style backup với hard links và verification</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #080 · STORAGE</span><span class="hashtags">#Linux #FreeBSD #Storage #Quota #XFS</span></div></footer>
+</div></main></body></html>
