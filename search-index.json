@@ -1,6 +1,19 @@
 {
-  "count": 80,
+  "count": 81,
   "posts": [
+    {
+      "axis": "Công cụ mới",
+      "axis_label": "Công cụ & phần mềm",
+      "axis_slug": "tools",
+      "date": "2026-09-19",
+      "href": "posts/post-081-yq-structured-yaml-json-query.html",
+      "issue": 81,
+      "lede": "Đọc, lọc và chuyển đổi YAML/JSON theo cấu trúc thay vì grep/sed regex, đồng thời xác minh đúng implementation yq trước khi dùng.",
+      "tags": [
+        "yq"
+      ],
+      "title": "yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex"
+    },
     {
       "axis": "Storage",
       "axis_label": "Storage & hệ thống tệp",

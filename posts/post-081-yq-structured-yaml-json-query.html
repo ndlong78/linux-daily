@@ -13,7 +13,7 @@
 <link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
 <meta property="og:type" content="article">
 <meta property="og:title" content="yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex">
-<meta property="og:description" content="Đọc và lọc YAML/JSON theo cấu trúc dữ liệu, đồng thời nhận diện đúng implementation yq trước khi dùng.">
+<meta property="og:description" content="Đọc, lọc và chuyển đổi YAML/JSON theo cấu trúc thay vì grep/sed regex, đồng thời xác minh đúng implementation yq trước khi dùng.">
 <meta property="og:url" content="https://linux.no.id.vn/posts/post-081-yq-structured-yaml-json-query.html">
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
@@ -24,7 +24,7 @@
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex">
-<meta name="twitter:description" content="Đọc và lọc YAML/JSON theo cấu trúc dữ liệu, đồng thời nhận diện đúng implementation yq trước khi dùng.">
+<meta name="twitter:description" content="Đọc, lọc và chuyển đổi YAML/JSON theo cấu trúc thay vì grep/sed regex, đồng thời xác minh đúng implementation yq trước khi dùng.">
 <meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
 <meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <script type="application/json" id="ld-meta">
@@ -34,10 +34,16 @@
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
 <nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
   <a class="global-nav-brand" href="../index.html">Linux Daily</a>
-  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
 </nav>
 <!-- back-to-top:start -->
-<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
 <script src="../assets/back-to-top.js" defer></script>
 <!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#081 · 19·09·2026</span></div></div>
@@ -94,9 +100,21 @@ node-a
 
 <!-- related-nav:start -->
 <nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
-  <div class="related-head"><span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span></div>
-  <div class="series-links"><a class="series-link previous" href="post-074-watchexec-file-change-command.html"><span class="series-kicker">#074</span><span>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</span></a><span class="series-link is-empty" aria-hidden="true"></span></div>
-  <div class="related-more"><strong>Cùng chủ đề</strong><ul><li><a href="post-067-zoxide-history-directory-navigation.html">#067 · zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</a></li><li><a href="post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">#060 · hyperfine: benchmark command có warmup và nhiều lần chạy</a></li><li><a href="post-053-bat-syntax-highlight-paging-line-range.html">#053 · bat: xem file có syntax highlight, paging và line range</a></li></ul></div>
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-074-watchexec-file-change-command.html"><span class="series-kicker">#074</span><span>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-067-zoxide-history-directory-navigation.html">#067 · zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</a></li>
+      <li><a href="post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">#060 · hyperfine: benchmark command có warmup và nhiều lần chạy</a></li>
+      <li><a href="post-053-bat-syntax-highlight-paging-line-range.html">#053 · bat: xem file có syntax highlight, paging và line range</a></li>
+    </ul>
+  </div>
 </nav>
 <!-- related-nav:end -->
 
