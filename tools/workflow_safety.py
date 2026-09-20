@@ -150,8 +150,7 @@ def _validate_auto_merge(rel: str, text: str, events: str, permissions: str) -> 
         "github.event.workflow_run.event == 'pull_request'",
         "CI_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}",
         "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
-        'case "${author}" in',
-        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")',
+        'test "${author}" = "${GITHUB_REPOSITORY_OWNER}"',
         'test "${head_sha}" = "${CI_HEAD_SHA}"',
         "reviewDecision",
         "reviewThreads(first:100,after:$cursor)",
@@ -213,13 +212,11 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
 
     if not re.search(r"^\s{2}contents:\s*write\s*$", permissions, re.MULTILINE):
         errors.append(f"{rel}: materialize requires contents: write")
-    # `pull-requests: write` là ngoại lệ có chủ đích: materialize mở PR bài hằng
-    # ngày ngay sau khi nó dựng xong artifact. Đặt ở đây thay vì một workflow
-    # riêng vì workflow này đã đọc định nghĩa từ `main` và đã biết branch đích —
-    # phương án khác phải cấp quyền PR cho workflow đọc định nghĩa từ branch.
-    # `actions: write` vẫn bị cấm: materialize không được kích hoạt workflow nào.
+    # Materialize chỉ được ghi artifact lên feature branch. Nó không mở PR và
+    # không kích hoạt workflow khác; PR do agent mở bằng owner connector sau khi
+    # materialize xanh để tránh pull_request:opened từ GITHUB_TOKEN bị action_required.
     if re.search(
-        r"^\s{2}(actions|issues|packages|deployments):\s*write\s*$",
+        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
         permissions,
         re.MULTILINE,
     ):
@@ -242,14 +239,6 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         'persist-credentials: false',
         'test "$(git rev-parse HEAD)" = "${TARGET_SHA}"',
         'test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq \'.object.sha\')" = "${TARGET_SHA}"',
-        # Mở PR: không tạo bản thứ hai cho cùng branch (AGENTS.md §2)…
-        'state=open&per_page=1',
-        # …mở Ready ngay, vì auto-merge kiểm draft=false lúc CI hoàn tất…
-        '-F "draft=false"',
-        # …và xác nhận PR vừa mở thật sự kích được CI. Thiếu bước này thì
-        # `pull_request:opened` bị chặn sẽ thành hỏng im lặng: PR nằm im, không
-        # CI, auto-merge không bao giờ kích, không ai được báo.
-        'event=pull_request&head_sha=${head_sha}',
         'gh auth setup-git',
         "--changed-from-git",
         "tools/publish.py prepare",
@@ -274,6 +263,13 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
             errors.append(f"{rel}: generator/dependency step must not receive credentials")
     if re.search(r"persist-credentials:\s*true", text):
         errors.append(f"{rel}: materialize must not persist checkout credentials")
+    if re.search(r'gh\s+api.*--method\s+POST.*pulls', text, re.DOTALL) or re.search(
+        r"^\s{2}pull-requests:\s*write\s*$", permissions, re.MULTILINE
+    ):
+        errors.append(
+            f"{rel}: materialize must not open pull requests; "
+            "agent opens PR after materialize success"
+        )
 
     # `branch` phải là input TUỲ CHỌN. Connector của agent không expose verb
     # workflow_dispatch, chỉ expose rerun; mà rerun phát lại đúng inputs cũ. Nếu branch
