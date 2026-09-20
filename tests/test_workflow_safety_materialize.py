@@ -146,19 +146,47 @@ def test_confirm_gate_is_a_failing_step_not_a_skipped_job():
     assert 'test "${CONFIRM}" = "materialize-artifacts"' in text
 
 
+def _without_comments(text: str) -> str:
+    """Bỏ comment YAML trước khi quét quyền.
+
+    Quét raw text bắt được cả `permissions:` mức job — điều mà chỉ parse block
+    top-level sẽ bỏ lọt — nên giữ cách quét đó. Nhưng nó cũng bắt cả một dòng
+    comment NÓI VỀ quyền, ví dụ "file này không có `contents: write`". Lọc comment
+    giữ nguyên độ rộng của phép kiểm mà bỏ được kiểu dương tính giả đó.
+    """
+    return "\n".join(line.split("#", 1)[0] for line in text.splitlines())
+
+
 def test_materialize_is_the_only_new_write_capable_workflow():
-    """Nới quyền ghi phải giới hạn đúng ba workflow đã biết."""
+    """Nới quyền ghi NỘI DUNG phải giới hạn đúng ba workflow đã biết.
+
+    `materialize-dispatch.yml` không nằm trong danh sách này và cũng không được
+    có `contents: write`: nó chỉ có `actions: write` để gọi workflow_dispatch.
+    Ranh giới cần giữ là workflow nào ghi được vào repository, nên nó vẫn phải
+    qua phép kiểm này như mọi workflow read-only khác.
+    """
     assert workflow_safety.MATERIALIZE_WORKFLOW == "materialize-artifacts.yml"
     write_capable = {
         workflow_safety.RELEASE_WORKFLOW,
         workflow_safety.AUTO_MERGE_WORKFLOW,
         workflow_safety.MATERIALIZE_WORKFLOW,
     }
+    checked = 0
     for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
         if path.name in write_capable:
             continue
-        text = path.read_text(encoding="utf-8")
+        text = _without_comments(path.read_text(encoding="utf-8"))
         assert "contents: write" not in text, f"{path.name} không được có contents: write"
+        checked += 1
+    assert checked, "không quét được workflow nào — glob hỏng"
+
+
+def test_comment_filter_still_catches_a_real_job_level_grant(tmp_path):
+    """Phép lọc comment không được làm hỏng chính thứ nó phục vụ."""
+    assert "contents: write" not in _without_comments("  # nói về contents: write\n")
+    assert "contents: write" in _without_comments(
+        "jobs:\n  x:\n    permissions:\n      contents: write\n"
+    )
 
 
 @pytest.mark.parametrize(("old", "new"), [
