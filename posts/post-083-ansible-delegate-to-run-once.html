@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="vi"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ansible delegate_to và run_once: tách orchestration task khỏi target host — Linux Daily #083</title>
+<meta name="description" content="Dùng delegate_to và run_once để tách tác vụ điều phối khỏi managed host, hiểu đúng serial batch và tránh chạy orchestration lặp ngoài ý muốn trên Ubuntu, Debian, Fedora và FreeBSD.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-083-ansible-delegate-to-run-once.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Ansible delegate_to và run_once: tách orchestration task khỏi target host">
+<meta property="og:description" content="Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát run_once theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-083-ansible-delegate-to-run-once.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ansible delegate_to và run_once: tách orchestration task khỏi target host">
+<meta name="twitter:description" content="Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát run_once theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":83,"date":"2026-09-21","axis":"Automation","eyebrow":"Automation · Delegation scope","slug":"ansible-delegate-to-run-once","title":"Ansible delegate_to và run_once: tách orchestration task khỏi target host","lede":"Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát run_once theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-21","changes_system":false,"sources":[{"title":"Ansible Community Documentation — Controlling where tasks run: delegation and local actions","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_delegation.html","kind":"upstream"},{"title":"Ansible Community Documentation — Controlling playbook execution: strategies and more","url":"https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_strategies.html","kind":"upstream"}]}
+</script></head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#083 · 21·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Automation · Delegation scope</p><h1>Ansible delegate_to và run_once: tách orchestration task khỏi target host</h1><p class="lede">Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát <code>run_once</code> theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.</p><div class="meta"><span class="tag axis">TRỤC · AUTOMATION</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~14 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-21</span></div></header>
+
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng <code>delegate_to</code> để chạy một task trên host điều phối thay vì managed host hiện tại, dùng <code>run_once</code> đúng semantics, và hiểu vì sao <code>serial</code> có thể làm task “một lần” chạy lại ở mỗi batch.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Có Ansible trên control node và inventory chứa host lab; bài không thay đổi package/service.</li><li>Đã quen inventory, <code>serial</code>, task result và scope control từ #006, #041, #048, #055, #062.</li><li><code>delegate_to</code> và <code>run_once</code> là playbook semantics ở controller; target có thể là Ubuntu/Xubuntu, Debian, Fedora hoặc FreeBSD.</li><li>Không dùng <code>systemd_service</code> cho FreeBSD; nếu mở rộng lab sang service management, FreeBSD phải dùng service semantics riêng thay vì ép systemd.</li></ul></section>
+
+<figure><svg viewBox="0 0 760 240" role="img" aria-label="Task target được delegate sang host điều phối"><rect width="760" height="240" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="40" y="62" width="220" height="118" rx="10" fill="#fff" stroke="#14201D"/><text x="64" y="93" font-size="12" font-weight="700">INVENTORY HOST</text><text x="64" y="121" font-size="10">inventory_hostname = web01</text><text x="64" y="146" font-size="10">vars/context vẫn theo web01</text><rect x="500" y="62" width="220" height="118" rx="10" fill="#fff" stroke="#0C6E61"/><text x="524" y="93" font-size="12" font-weight="700">DELEGATED HOST</text><text x="524" y="121" font-size="10">delegate_to: localhost</text><text x="524" y="146" font-size="10">module chạy tại controller</text><path d="M270 120H490" stroke="#0C6E61" stroke-width="3"/><text x="380" y="106" text-anchor="middle" font-size="10">task execution</text></g></svg><figcaption>Hình 1 — Delegation đổi nơi module chạy, nhưng task vẫn được đánh giá trong context của inventory host hiện tại trừ những semantics được tài liệu nêu riêng.</figcaption></figure>
+
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Trong rolling deployment, có những task không nên chạy trên chính target: rút node khỏi load balancer, cập nhật CMDB, gọi API điều phối hoặc ghi một manifest trên control node. Nếu để task đó chạy theo mặc định trên mọi managed host, bạn có thể tạo N request trùng nhau hoặc yêu cầu tool/credential không cần thiết trên target.</p><p><code>delegate_to</code> chuyển execution sang host khác. <code>run_once</code> giảm số lần task chạy, nhưng theo Ansible documentation nó chạy trên host đầu tiên của <em>current batch</em>; khi đi cùng <code>serial</code>, task có thể chạy một lần cho mỗi batch chứ không phải một lần cho toàn play.</p></section>
+
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Delegation đổi execution host.</strong> Module chạy trên host ở <code>delegate_to</code>; vì thế binary, network access và credential cần cho module phải tồn tại ở host đó.</li><li><strong>Inventory context không tự biến mất.</strong> Task delegated vẫn gắn với inventory host đang được xử lý; cẩn thận khi template biến.</li><li><strong><code>run_once</code> = một lần trong current batch.</strong> Với <code>serial</code>, mỗi batch có thể thực thi lại task <code>run_once</code>.</li><li><strong>Muốn đúng một lần cho toàn play:</strong> dùng điều kiện rõ như <code>inventory_hostname == ansible_play_hosts_all[0]</code> khi phù hợp với thiết kế, thay vì mặc định rằng <code>run_once</code> vượt qua mọi batch.</li><li><strong>Không phải action nào cũng delegatable.</strong> Các action không dùng connection như một số include/debug-style action không có ý nghĩa delegation; kiểm thuộc tính module/action trước khi áp.</li></ul></section>
+
+<section><h2>Ma trận distro</h2><table><thead><tr><th>Hệ</th><th>Controller-side delegation</th><th>Điểm khác cần giữ</th></tr></thead><tbody>
+<tr><td>Ubuntu / Xubuntu</td><td><code>delegate_to</code>, <code>run_once</code> giống Ansible chung</td><td>Target Linux dùng APT/systemd nếu task target cần package/service.</td></tr>
+<tr><td>Debian</td><td>Giống Ubuntu/Xubuntu</td><td>APT + systemd; ưu tiên package từ kho stable theo baseline của môi trường.</td></tr>
+<tr><td>Fedora</td><td>Giống các target khác</td><td>DNF + systemd; khi task target ghi file/service cần tính tới SELinux.</td></tr>
+<tr><td>FreeBSD</td><td><code>delegate_to</code>/<code>run_once</code> vẫn là Ansible semantics</td><td><strong>KHÁC:</strong> target dùng pkg/ports + rc.d; không có systemd, đường dẫn/tool có thể khác Linux.</td></tr>
+</tbody></table><p>Điểm quan trọng: một task đã delegate sang <code>localhost</code> không còn chạy package manager hay init system của target. Đừng viết branch distro cho task nếu task thực tế chạy hoàn toàn trên controller.</p></section>
+
+<figure><svg viewBox="0 0 760 255" role="img" aria-label="run_once với serial có thể chạy lại theo mỗi batch"><rect width="760" height="255" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="45" y="58" width="190" height="125" rx="10" fill="#F7FAF9" stroke="#0C6E61"/><text x="140" y="89" font-size="11" font-weight="700">BATCH 1</text><text x="140" y="116" font-size="10">host01 · host02</text><text x="140" y="146" font-size="10">run_once → 1 lần</text><rect x="285" y="58" width="190" height="125" rx="10" fill="#F7FAF9" stroke="#0C6E61"/><text x="380" y="89" font-size="11" font-weight="700">BATCH 2</text><text x="380" y="116" font-size="10">host03 · host04</text><text x="380" y="146" font-size="10">run_once → lại 1 lần</text><rect x="525" y="58" width="190" height="125" rx="10" fill="#F7FAF9" stroke="#9A6500"/><text x="620" y="89" font-size="11" font-weight="700">GLOBAL ONCE?</text><text x="620" y="116" font-size="10">không mặc định</text><text x="620" y="146" font-size="10">cần condition rõ</text></g></svg><figcaption>Hình 2 — Với <code>serial</code>, <code>run_once</code> được đánh giá theo từng batch.</figcaption></figure>
+
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Xác nhận Ansible trên control node</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora control node</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook --version</code></pre></div><p class="code-label bsd"><span class="dot"></span>FreeBSD control node — cùng lệnh, không liên quan systemd</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">ansible-playbook --version</code></pre></div></li>
+
+<li><h3>2. Tạo inventory lab bốn distro</h3><p class="code-label same"><span class="dot"></span>Cú pháp inventory giống nhau</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">cat &gt; inventory.ini &lt;&lt;'EOF'
+[lab]
+ubuntu-lab ansible_host=192.0.2.11
+debian-lab ansible_host=192.0.2.12
+fedora-lab ansible_host=192.0.2.13
+freebsd-lab ansible_host=192.0.2.14
+EOF</code></pre></div><p>Dải <code>192.0.2.0/24</code> là địa chỉ tài liệu; thay bằng lab thật của bạn trước khi chạy kết nối.</p></li>
+
+<li><h3>3. Tạo playbook chỉ đọc để thấy delegation + batch</h3><p class="code-label same"><span class="dot"></span>Không thay đổi target</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-yaml">---
+- name: Delegation scope lab
+  hosts: lab
+  gather_facts: false
+  serial: 2
+
+  tasks:
+    - name: Probe target kernel
+      ansible.builtin.command: uname -s
+      register: kernel_probe
+      changed_when: false
+
+    - name: One delegated probe per current batch
+      ansible.builtin.command: hostname
+      delegate_to: localhost
+      run_once: true
+      register: controller_host
+      changed_when: false
+
+    - name: Show target name
+      ansible.builtin.debug:
+        var: inventory_hostname
+
+    - name: Show target kernel
+      ansible.builtin.debug:
+        var: kernel_probe.stdout
+
+    - name: Show delegated controller hostname
+      ansible.builtin.debug:
+        var: controller_host.stdout</code></pre></div><p><code>debug</code> ở task cuối không cần delegation; nó chỉ hiển thị dữ liệu đã đăng ký.</p></li>
+
+<li><h3>4. Syntax-check trước khi chạy</h3><p class="code-label same"><span class="dot"></span>Mọi target</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">ansible-playbook -i inventory.ini delegate-run-once.yml --syntax-check
+ansible-playbook -i inventory.ini delegate-run-once.yml --list-hosts</code></pre></div></li>
+
+<li><h3>5. Nếu thực sự cần đúng một lần cho toàn play</h3><p class="code-label same"><span class="dot"></span>Thay contract, không dựa vào serial batch</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-yaml">- name: Global orchestration step
+  ansible.builtin.command: hostname
+  delegate_to: localhost
+  changed_when: false
+  when: inventory_hostname == ansible_play_hosts_all[0]</code></pre></div><p>Điều kiện này thể hiện rõ “chỉ inventory host đầu tiên của toàn play kích task”. Nếu play có dynamic membership hoặc strategy đặc biệt, review execution model trước khi dùng.</p></li>
+</ol></section>
+
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Với <code>serial: 2</code> và bốn host reachable, task delegated có <code>run_once</code> phải xuất hiện một lần ở batch đầu và một lần nữa ở batch sau. Nếu đổi sang điều kiện <code>ansible_play_hosts_all[0]</code>, orchestration step phải chỉ kích một lần cho toàn play.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">Batch 1: 2 target hosts → delegated task chạy 1 lần
+Batch 2: 2 target hosts → delegated task chạy 1 lần
+Global-once condition → chỉ host đầu tiên kích task</code></pre></div></section>
+
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Tưởng <code>run_once</code> là một lần tuyệt đối:</strong> sai khi có <code>serial</code>; nó chạy một lần trong từng batch.</li><li><strong>Credential đặt nhầm target:</strong> delegated API task cần credential/network access ở delegated host, không phải mọi managed host.</li><li><strong>Template nhầm biến:</strong> execution host đổi nhưng inventory context vẫn cần đọc cẩn thận; log rõ <code>inventory_hostname</code> và delegated endpoint.</li><li><strong>Delegate action không hỗ trợ connection:</strong> kiểm docs/attributes thay vì gắn <code>delegate_to</code> cho mọi task.</li><li><strong>FreeBSD:</strong> nếu task không delegate mà chạm service/package, giữ rc.d/pkg semantics riêng; không copy task <code>systemd_service</code> từ Linux.</li></ul></section>
+
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Delegation thường gom credential điều phối về một host; giới hạn secret ở controller/delegated host thay vì phân phối tới toàn fleet.</li><li>Task gọi load balancer/CMDB/API phải idempotent hoặc có idempotency key nếu API hỗ trợ; <code>run_once</code> không thay thế transaction safety.</li><li>Không log token/API response nhạy cảm; dùng <code>no_log: true</code> cho task chứa secret sau khi đã debug xong bằng dữ liệu giả.</li><li>Với rolling change, kết hợp <code>serial</code>, delegation và health-check; không dùng <code>run_once</code> để che một task đáng ra phải chạy trên từng host.</li></ul></section>
+
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Đổi <code>serial: 2</code> thành <code>serial: 1</code> và dự đoán số lần task <code>run_once</code> chạy.</li><li>Thay task delegated bằng một command read-only khác trên controller và ghi rõ module requirement nằm ở đâu.</li><li>Viết lại task “global once” dùng condition với <code>ansible_play_hosts_all[0]</code>, rồi giải thích khác biệt với <code>run_once</code>.</li></ol></section>
+
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Hai URL upstream dưới đây đã được HTTP-check trước khi mở PR.</p><ul class="clean"><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_delegation.html">Ansible Community Documentation — Controlling where tasks run: delegation and local actions</a></li><li><a href="https://docs.ansible.com/projects/ansible/latest/playbook_guide/playbooks_strategies.html">Ansible Community Documentation — Controlling playbook execution: strategies and more</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Automation &amp; scripting</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-076-ansible-changed-when-failed-when.html"><span class="series-kicker">#076</span><span>Ansible changed_when và failed_when: định nghĩa kết quả theo semantics thay vì chỉ exit code</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-069-ansible-inventory-patterns-group-intersection.html">#069 · Ansible inventory patterns và group intersection: chọn host có thể kiểm chứng trước khi chạy</a></li>
+      <li><a href="post-062-ansible-blocks-rescue-always-recovery.html">#062 · Ansible blocks, rescue và always: recovery có kiểm soát khi task lỗi</a></li>
+      <li><a href="post-055-ansible-tags-limit-scope-control.html">#055 · Ansible tags và --limit: giới hạn phạm vi chạy khi vận hành</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #083 · Automation</span><span class="hashtags">#Linux #FreeBSD #Ansible #Automation #Delegation</span></div></footer>
+</div></main></body></html>
