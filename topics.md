@@ -82,3 +82,4 @@
 #077 | 2026-09-15 | Ôn tập | Lab certificate renewal race: file ownership, service reload và rollback evidence
 #078 | 2026-09-16 | Networking | Bridge FDB và MAC learning: tách lỗi switching L2 khỏi ARP/ND và routing
 #079 | 2026-09-17 | Bảo mật | SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục
+#080 | 2026-09-18 | Storage | Filesystem quotas: phân biệt user/group/project quota với filesystem capacity
