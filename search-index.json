@@ -1,6 +1,19 @@
 {
-  "count": 81,
+  "count": 82,
   "posts": [
+    {
+      "axis": "Monitoring",
+      "axis_label": "Monitoring & hiệu năng",
+      "axis_slug": "monitoring",
+      "date": "2026-09-20",
+      "href": "posts/post-082-context-switch-rate-scheduler-churn.html",
+      "issue": 82,
+      "lede": "Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.",
+      "tags": [
+        "Context switch rate"
+      ],
+      "title": "Context switch rate: tách scheduler churn khỏi CPU utilization bình thường"
+    },
     {
       "axis": "Công cụ mới",
       "axis_label": "Công cụ & phần mềm",

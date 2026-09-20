@@ -84,3 +84,4 @@
 #079 | 2026-09-17 | Bảo mật | SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục
 #080 | 2026-09-18 | Storage | Filesystem quotas: phân biệt user/group/project quota với filesystem capacity
 #081 | 2026-09-19 | Công cụ mới | yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex
+#082 | 2026-09-20 | Monitoring | Context switch rate: tách scheduler churn khỏi CPU utilization bình thường

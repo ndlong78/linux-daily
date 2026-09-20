@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context switch rate: tách scheduler churn khỏi CPU utilization bình thường — Linux Daily #082</title>
+<meta name="description" content="Đọc context-switch rate cùng run queue và CPU usage trên Linux và FreeBSD để nhận diện scheduler churn trước khi tối ưu process hoặc thread.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-082-context-switch-rate-scheduler-churn.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Context switch rate: tách scheduler churn khỏi CPU utilization bình thường">
+<meta property="og:description" content="Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-082-context-switch-rate-scheduler-churn.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Context switch rate: tách scheduler churn khỏi CPU utilization bình thường">
+<meta name="twitter:description" content="Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":82,"date":"2026-09-20","axis":"Monitoring","eyebrow":"Monitoring · Context switch rate","slug":"context-switch-rate-scheduler-churn","title":"Context switch rate: tách scheduler churn khỏi CPU utilization bình thường","lede":"Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-20","changes_system":false,"sources":[{"title":"procps-ng — vmstat(8)","url":"https://man7.org/linux/man-pages/man8/vmstat.8.html","kind":"upstream"},{"title":"sysstat — pidstat(1)","url":"https://man7.org/linux/man-pages/man1/pidstat.1.html","kind":"upstream"},{"title":"FreeBSD 15.1 — vmstat(8)","url":"https://man.freebsd.org/cgi/man.cgi?query=vmstat&sektion=8&manpath=FreeBSD+15.1-RELEASE","kind":"official"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#082 · 20·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Monitoring · Context switch rate</p><h1>Context switch rate: tách scheduler churn khỏi CPU utilization bình thường</h1><p class="lede">Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.</p><div class="meta"><span class="tag axis">TRỤC · MONITORING</span><span class="tag">ĐỘ KHÓ · TRUNG CẤP</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-20</span></div></header>
+
+<section class="objective"><h2>Mục tiêu</h2><p>Đọc context-switch rate theo thời gian, đối chiếu run queue và CPU user/system/idle, rồi xác định khi nào cần drill down theo process/thread thay vì coi mọi mức <code>cs</code> cao là lỗi.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>User thường đủ quyền cho các lệnh read-only trong bài.</li><li>Đã quen với <code>vmstat</code>, run queue và process time-series từ #019, #026, #040 và #061.</li><li>Trên Linux, <code>pidstat</code> thuộc bộ sysstat; nếu máy chưa có, vẫn có thể hoàn thành phần system-level bằng <code>vmstat</code> và không cài package giữa incident chỉ để lấy thêm một metric.</li><li>FreeBSD dùng <code>vmstat</code> riêng của BSD; không gán option/output của procps-ng Linux cho FreeBSD.</li></ul></section>
+
+<figure><svg viewBox="0 0 760 245" role="img" aria-label="Context switch rate và CPU utilization là hai tín hiệu độc lập cần đối chiếu"><rect width="760" height="245" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="42" y="52" width="290" height="140" rx="12" fill="#fff" stroke="#0C6E61"/><text x="66" y="84" font-size="12" font-weight="700">CONTEXT SWITCH RATE</text><text x="66" y="114" font-size="10">task A → task B → task C</text><text x="66" y="139" font-size="10">wake / block / preempt</text><text x="66" y="164" font-size="10">cs = switches per interval</text><rect x="428" y="52" width="290" height="140" rx="12" fill="#fff" stroke="#9A6500"/><text x="452" y="84" font-size="12" font-weight="700">CPU UTILIZATION</text><text x="452" y="114" font-size="10">user / system / idle</text><text x="452" y="139" font-size="10">run queue tạo ngữ cảnh</text><text x="452" y="164" font-size="10">không suy ra trực tiếp từ cs</text><path d="M332 122H420" stroke="#14201D" stroke-width="2" stroke-dasharray="7 5"/></g></svg><figcaption>Hình 1 — Context-switch rate và CPU utilization phải được đọc cùng nhau; một con số <code>cs</code> cao không tự nó chứng minh scheduler đang là bottleneck.</figcaption></figure>
+
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Một server có thể tạo rất nhiều context switch khi hàng trăm worker liên tục ngủ/chờ I/O rồi thức dậy, trong khi CPU tổng vẫn còn rảnh. Ngược lại, một workload tính toán dài có thể dùng CPU rất cao nhưng không tạo context switch bất thường. Vì vậy “context switch cao” chỉ là tín hiệu để mở rộng điều tra, không phải kết luận.</p><p>Trên Linux, <code>vmstat</code> báo <code>cs</code> là số context switch mỗi giây; <code>pidstat -w</code> giúp tách voluntary và involuntary switch theo task. Trên FreeBSD, <code>vmstat</code> cũng có trường <code>cs</code> cho CPU context switches nhưng cách trình bày và option khác Linux.</p></section>
+
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Context switch:</strong> CPU chuyển execution context từ thread/task này sang thread/task khác; bản thân việc switch là bình thường.</li><li><strong>Voluntary switch:</strong> trên Linux <code>pidstat</code>, task tự nhường CPU vì đang chờ resource chưa sẵn sàng, ví dụ I/O hoặc synchronization.</li><li><strong>Involuntary switch:</strong> task bị scheduler lấy CPU, ví dụ hết time slice hoặc có task ưu tiên phù hợp hơn cần chạy.</li><li><strong>Run queue:</strong> nếu runnable work tăng cùng <code>cs</code> và system CPU tăng, giả thuyết scheduler churn/contention đáng điều tra hơn.</li><li><strong>Không có threshold tuyệt đối:</strong> đánh giá theo baseline của chính workload, số CPU, concurrency và thay đổi theo thời gian; không dùng một ngưỡng <code>cs/s</code> chung cho mọi host.</li></ul></section>
+
+<figure><svg viewBox="0 0 760 270" role="img" aria-label="Luồng chẩn đoán context switch từ hệ thống tới process"><rect width="760" height="270" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="270" y="24" width="220" height="58" rx="10" fill="#F7FAF9" stroke="#14201D"/><text x="380" y="58" font-size="11" font-weight="700">SAMPLE THEO THỜI GIAN</text><path d="M380 82V112M380 112H190M380 112H570M190 112V136M570 112V136" stroke="#0C6E61" stroke-width="2"/><rect x="58" y="136" width="264" height="90" rx="10" fill="#F7FAF9" stroke="#0C6E61"/><text x="190" y="166" font-size="11" font-weight="700">cs tăng + r/sy tăng</text><text x="190" y="190" font-size="10">drill down task/thread</text><text x="190" y="208" font-size="10">voluntary vs involuntary</text><rect x="438" y="136" width="264" height="90" rx="10" fill="#F7FAF9" stroke="#9A6500"/><text x="570" y="166" font-size="11" font-weight="700">cs tăng nhưng CPU/r thấp</text><text x="570" y="190" font-size="10">kiểm wake/sleep, I/O, timer</text><text x="570" y="208" font-size="10">so baseline trước khi tối ưu</text></g></svg><figcaption>Hình 2 — Triage bắt đầu ở system-level; chỉ drill down khi nhiều tín hiệu cùng ủng hộ giả thuyết scheduler churn.</figcaption></figure>
+
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Lấy mẫu system-level trên Linux</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora — giống hệt nhau</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">vmstat 1 6</code></pre></div><p>Tập trung vào <code>r</code>, <code>cs</code>, <code>us</code>, <code>sy</code> và <code>id</code>. Với mẫu đầu, thận trọng vì công cụ có thể phản ánh thống kê từ lúc boot; ưu tiên các dòng interval tiếp theo để so tốc độ hiện tại.</p></li>
+
+<li><h3>2. Đối chiếu context-switch rate với runnable pressure</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">vmstat 2 10</code></pre></div><p>Nếu <code>cs</code> tăng cùng <code>r</code> và <code>sy</code>, giữ giả thuyết scheduler/kernel overhead để drill down. Nếu <code>cs</code> tăng nhưng <code>r</code> thấp và CPU còn idle, ưu tiên kiểm workload nhiều wake/sleep, timer hoặc I/O thay vì kết luận CPU thiếu.</p></li>
+
+<li><h3>3. Trên Linux, tìm task có switching nổi bật</h3><p class="code-label linux"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora — cần <code>pidstat</code> từ sysstat</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v pidstat
+pidstat -w -p ALL 1 5</code></pre></div><p><code>cswch/s</code> là voluntary context switches/giây; <code>nvcswch/s</code> là involuntary context switches/giây. Một task có voluntary switch cao thường đang block/chờ resource; involuntary switch cao cần được đối chiếu CPU contention, priority và runnable load.</p></li>
+
+<li><h3>4. Trên FreeBSD, lấy cùng lớp evidence bằng vmstat BSD</h3><p class="code-label bsd"><span class="dot"></span>FreeBSD — KHÁC Linux</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">vmstat -w 1 -c 6</code></pre></div><p>FreeBSD <code>vmstat</code> hiển thị <code>cs</code> trong nhóm CPU context switches và CPU <code>us/sy/id</code>. Theo manual, dòng đầu là thống kê từ lúc reboot; các dòng sau mới là interval từ lần hiển thị trước.</p></li>
+
+<li><h3>5. Ghi timestamp và giữ cùng cửa sổ quan sát</h3><p class="code-label same"><span class="dot"></span>Ubuntu/Xubuntu · Debian · Fedora · FreeBSD</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">date -u '+%Y-%m-%dT%H:%M:%SZ'</code></pre></div><p>Khi so với latency, I/O, request rate hoặc monitoring dashboard, dùng cùng khoảng thời gian. Không ghép một spike <code>cs</code> lúc này với CPU snapshot ở thời điểm khác.</p></li>
+</ol></section>
+
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Chụp nhiều interval và viết kết luận dựa trên tổ hợp tín hiệu thay vì một metric riêng lẻ.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">Linux vmstat: đọc r + cs + us/sy/id theo nhiều interval.
+Linux pidstat -w: xác định task nổi bật ở cswch/s hoặc nvcswch/s.
+FreeBSD vmstat: bỏ dòng since-boot, đọc các interval cs + us/sy/id.
+Kết luận: nêu baseline, cửa sổ thời gian và tín hiệu nào cùng tăng.</code></pre><p>Không có một giá trị <code>cs/s</code> “chuẩn” áp cho mọi host. Điều cần kiểm chứng là sự thay đổi so với baseline và mối tương quan với workload/CPU/run queue.</p></div></section>
+
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong><code>cs</code> cao nhưng máy không chậm:</strong> có thể đó là đặc tính bình thường của workload event-driven hoặc nhiều worker; lưu baseline trước khi tối ưu.</li><li><strong><code>pidstat</code> không có:</strong> đừng cài package mù trong incident. Ghi system-level evidence bằng <code>vmstat</code>, rồi bổ sung sysstat qua quy trình package chuẩn nếu thật sự cần.</li><li><strong><code>cswch/s</code> cao:</strong> không đồng nghĩa scheduler ép task rời CPU; đây là voluntary switching, thường gợi ý task đang block/chờ.</li><li><strong><code>nvcswch/s</code> cao:</strong> cần đối chiếu run queue, CPU pressure và priority trước khi thay scheduler/tuning.</li><li><strong>FreeBSD:</strong> không dùng <code>pidstat</code> Linux hoặc option procps-ng cho BSD; bài này giữ drill-down FreeBSD ở system-level để không gán semantics Linux sang hệ khác.</li></ul></section>
+
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Các lệnh trong bài là read-only; ưu tiên thu evidence trước mọi thay đổi affinity, priority, scheduler policy hoặc thread count.</li><li>Process list có thể lộ tên service, tenant hoặc command metadata; chỉ đưa phần cần thiết vào ticket/chat và che thông tin nhạy cảm.</li><li>Không hạ concurrency production chỉ vì một spike ngắn; trước hết phải chứng minh spike lặp lại và liên hệ với latency/throughput.</li><li>Nếu cần thay process priority, CPU affinity hoặc application worker count, tách thành change riêng có rollback và đo trước/sau.</li></ul></section>
+
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Trên Linux lab, lấy 10 mẫu <code>vmstat</code> khi idle và 10 mẫu khi chạy workload hợp lệ. So sánh <code>r</code>, <code>cs</code>, <code>us</code>, <code>sy</code>, <code>id</code>.</li><li>Dùng <code>pidstat -w</code> chọn một task có voluntary switch nổi bật và giải thích vì sao không nên gọi đó là preemption chỉ từ metric này.</li><li>Trên FreeBSD, lấy <code>vmstat -w 1 -c 6</code>, bỏ mẫu đầu và ghi baseline <code>cs</code> của 5 interval còn lại.</li></ol></section>
+
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Các URL upstream/official dưới đây đã được HTTP-check trước khi mở PR.</p><ul class="clean"><li><a href="https://man7.org/linux/man-pages/man8/vmstat.8.html">procps-ng — vmstat(8)</a></li><li><a href="https://man7.org/linux/man-pages/man1/pidstat.1.html">sysstat — pidstat(1)</a></li><li><a href="https://man.freebsd.org/cgi/man.cgi?query=vmstat&amp;sektion=8&amp;manpath=FreeBSD+15.1-RELEASE">FreeBSD 15.1 — vmstat(8)</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Monitoring &amp; hiệu năng</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-075-cpu-steal-virtualization-contention.html"><span class="series-kicker">#075</span><span>CPU steal time và virtualization contention: phân biệt host pressure với guest workload</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-068-interrupt-softirq-pressure-irq-storm.html">#068 · Interrupt và softirq pressure: tách IRQ storm khỏi CPU workload bình thường</a></li>
+      <li><a href="post-061-load-average-run-queue-scheduler-pressure.html">#061 · Load average và run queue: đọc scheduler pressure trên Linux và FreeBSD</a></li>
+      <li><a href="post-054-linux-psi-freebsd-vmstat-systat-resource-pressure.html">#054 · Linux PSI và FreeBSD vmstat/systat: đọc resource pressure đa hệ</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #082 · Monitoring</span><span class="hashtags">#Linux #FreeBSD #Monitoring #Scheduler #ContextSwitch</span></div></footer>
+</div></main></body></html>

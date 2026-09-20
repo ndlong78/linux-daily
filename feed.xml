@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sat, 19 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Sun, 20 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Context switch rate: tách scheduler churn khỏi CPU utilization bình thường</title>
+      <link>https://linux.no.id.vn/posts/post-082-context-switch-rate-scheduler-churn.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-082-context-switch-rate-scheduler-churn.html</guid>
+      <pubDate>Sun, 20 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc context-switch rate cùng run queue và CPU usage để nhận diện scheduler churn, rồi drill down voluntary/involuntary switch theo task thay vì tối ưu mù.</description>
+    </item>
     <item>
       <title>yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex</title>
       <link>https://linux.no.id.vn/posts/post-081-yq-structured-yaml-json-query.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-073-reflink-cow-clone-hard-link.html</guid>
       <pubDate>Fri, 11 Sep 2026 00:00:00 +0700</pubDate>
       <description>Reflink tạo inode riêng nhưng có thể chia sẻ extent vật lý cho tới khi ghi; đừng nhầm nó với hard link hoặc full copy.</description>
-    </item>
-    <item>
-      <title>sudoers command digests: khóa policy vào đúng binary thay vì chỉ path</title>
-      <link>https://linux.no.id.vn/posts/post-072-sudoers-command-digests-binary-policy.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-072-sudoers-command-digests-binary-policy.html</guid>
-      <pubDate>Thu, 10 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Path đúng chưa đủ nếu binary có thể bị thay thế; command digest cho sudoers thêm một điều kiện khớp theo nội dung file.</description>
     </item>
   </channel>
 </rss>
