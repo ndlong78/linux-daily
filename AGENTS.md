@@ -510,7 +510,7 @@ Repo dùng **Squash and merge** cho workflow thường ngày.
 - maintenance/non-daily, PR đã đóng hoặc daily PR còn Draft là **ineligible** và kết thúc sạch, không tạo failure giả;
 - không checkout PR code;
 - chỉ merge PR open, non-Draft, base `main`, head cùng repo;
-- PR author phải là repository owner;
+- PR author phải là repository owner **hoặc** `github-actions[bot]` khi PR được `Materialize Artifacts` mở bằng `GITHUB_TOKEN`; mọi actor khác bị từ chối;
 - branch phải đúng `chatgpt/linux-daily-<NNN>-<YYYYMMDD>`;
 - current PR head SHA phải bằng `workflow_run.head_sha`;
 - `CHANGES_REQUESTED` hoặc unresolved review thread chặn merge;
