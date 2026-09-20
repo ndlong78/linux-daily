@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Thu, 17 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Fri, 18 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Filesystem quotas: phân biệt user/group/project quota với filesystem capacity</title>
+      <link>https://linux.no.id.vn/posts/post-080-filesystem-quotas-user-group-project-capacity.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-080-filesystem-quotas-user-group-project-capacity.html</guid>
+      <pubDate>Fri, 18 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.</description>
+    </item>
     <item>
       <title>SSH Match blocks: thu hẹp policy theo user và source address mà không làm lệch cấu hình toàn cục</title>
       <link>https://linux.no.id.vn/posts/post-079-ssh-match-user-address-policy.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-071-ipv6-router-advertisement-dhcpv6-default-route-address-dns-ownership.html</guid>
       <pubDate>Wed, 09 Sep 2026 00:00:00 +0700</pubDate>
       <description>Đọc route, address, Router Advertisement và DHCPv6 theo đúng ownership để biết thành phần nào thực sự cấp cấu hình IPv6.</description>
-    </item>
-    <item>
-      <title>Lab file descriptor exhaustion: process limit, open-file evidence và service recovery</title>
-      <link>https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-070-lab-file-descriptor-exhaustion-process-limit-open-file-evidence-service-recovery.html</guid>
-      <pubDate>Tue, 08 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Giới hạn một process lab ở 64 file descriptor, chứng minh trạng thái EMFILE bằng open-file evidence rồi khôi phục sạch mà không tăng limit theo phản xạ.</description>
     </item>
   </channel>
 </rss>

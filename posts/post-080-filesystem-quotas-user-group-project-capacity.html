@@ -17,7 +17,9 @@
 <meta property="og:site_name" content="Linux Daily">
 <meta property="og:locale" content="vi_VN">
 <meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
-<meta property="og:image:type" content="image/png"><meta property="og:image:width" content="948"><meta property="og:image:height" content="642">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
 <meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Filesystem quotas: phân biệt user/group/project quota với filesystem capacity">
@@ -27,10 +29,23 @@
 <script type="application/json" id="ld-meta">
 {"issue":80,"date":"2026-09-18","axis":"Storage","eyebrow":"Storage · Filesystem quotas","slug":"filesystem-quotas-user-group-project-capacity","title":"Filesystem quotas: phân biệt user/group/project quota với filesystem capacity","lede":"Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-20","changes_system":false,"sources":[{"title":"Linux Kernel Documentation — Quota subsystem","url":"https://docs.kernel.org/filesystems/quota.html","kind":"upstream"},{"title":"xfs_quota(8) — Linux manual page","url":"https://man7.org/linux/man-pages/man8/xfs_quota.8.html","kind":"upstream"},{"title":"FreeBSD Handbook — Disk Quotas","url":"https://docs.freebsd.org/en/books/handbook/disks/#quotas","kind":"official"}]}
 </script>
+<link rel="stylesheet" href="../assets/related.css">
 </head>
 <body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
-<nav class="global-nav" id="page-top" aria-label="Điều hướng chính"><a class="global-nav-brand" href="../index.html">Linux Daily</a><div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div></nav>
-<!-- back-to-top:start --><a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a><script src="../assets/back-to-top.js" defer></script><!-- back-to-top:end -->
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links">
+    <a href="../learning-paths.html">Lộ trình học</a>
+    <a href="../learning-dashboard.html">Tổng quan</a>
+    <a href="../archive.html">Tìm kiếm</a>
+  </div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang">
+  <span aria-hidden="true">↑</span>
+</a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
 <div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#080 · 18·09·2026</span></div></div>
 <header class="post"><p class="eyebrow">Storage · Filesystem quotas</p><h1>Filesystem quotas: phân biệt user/group/project quota với filesystem capacity</h1><p class="lede">Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.</p><div class="meta"><span class="tag axis">TRỤC · STORAGE</span><span class="tag">ĐỘ KHÓ · NÂNG CAO</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-20</span></div></header>
 <section class="objective"><h2>Mục tiêu</h2><p>Phân biệt quota theo identity/directory tree với dung lượng filesystem tổng, đọc cả block và inode evidence trước khi quyết định tăng quota hoặc mở rộng volume.</p></section>
@@ -52,5 +67,26 @@ sudo xfs_quota -x -c 'report -h -u -g -p' &lt;mountpoint&gt;</code></pre></div><
 <section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><p>Quota report có thể lộ tên user/group và mức sử dụng storage. Chỉ thu thập phạm vi cần cho ticket. Không tăng hard limit hoặc tắt enforcement chỉ để “xác nhận” chẩn đoán; trước hết phải chứng minh resource nào đang cạn và blast radius của thay đổi.</p></section>
 <section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><p>Chọn một filesystem lab đã bật quota. Ghi bốn evidence: block capacity, inode capacity, quota user và quota group/project nếu có. Viết kết luận cho hai tình huống: quota đầy nhưng filesystem còn trống, và filesystem hết inode nhưng quota block còn dư.</p></section>
 <section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Ba URL official/upstream đã được HTTP-check ngày 2026-09-20.</p><ul class="clean"><li><a href="https://docs.kernel.org/filesystems/quota.html">Linux Kernel Documentation — Quota subsystem</a></li><li><a href="https://man7.org/linux/man-pages/man8/xfs_quota.8.html">xfs_quota(8) — Linux manual page</a></li><li><a href="https://docs.freebsd.org/en/books/handbook/disks/#quotas">FreeBSD Handbook — Disk Quotas</a></li></ul></section>
-<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #080 · STORAGE</span><span class="hashtags">#Linux #FreeBSD #Storage #Quota #XFS</span></div></footer>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head">
+    <span class="related-eyebrow">SERIES · Storage &amp; hệ thống tệp</span>
+  </div>
+  <div class="series-links">
+    <a class="series-link previous" href="post-073-reflink-cow-clone-hard-link.html"><span class="series-kicker">#073</span><span>Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link</span></a>
+    <span class="series-link is-empty" aria-hidden="true"></span>
+  </div>
+  <div class="related-more">
+    <strong>Cùng chủ đề</strong>
+    <ul>
+      <li><a href="post-066-sparse-files-apparent-size-allocated-blocks-backup-semantics.html">#066 · Sparse files: apparent size, allocated blocks và backup semantics</a></li>
+      <li><a href="post-059-trim-discard-fstrim-zfs-autotrim.html">#059 · TRIM/discard: fstrim trên Linux và ZFS autotrim trên FreeBSD</a></li>
+      <li><a href="post-052-rsync-link-dest-snapshot-backup.html">#052 · rsync snapshot-style backup với hard links và verification</a></li>
+    </ul>
+  </div>
+</nav>
+<!-- related-nav:end -->
+
+  <footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #080 · STORAGE</span><span class="hashtags">#Linux #FreeBSD #Storage #Quota #XFS</span></div></footer>
 </div></main></body></html>
