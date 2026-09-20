@@ -14,6 +14,7 @@ RELEASE_WORKFLOW = "release.yml"
 CI_WORKFLOW = "ci.yml"
 AUTO_MERGE_WORKFLOW = "linux-daily-auto-merge.yml"
 MATERIALIZE_WORKFLOW = "materialize-artifacts.yml"
+MATERIALIZE_DISPATCH_WORKFLOW = "materialize-dispatch.yml"
 WRITE_PERMISSION_RE = re.compile(
     r"^\s{2}(contents|actions|pull-requests|issues|packages|deployments):\s*write\s*$",
     re.MULTILINE,
@@ -210,8 +211,13 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
 
     if not re.search(r"^\s{2}contents:\s*write\s*$", permissions, re.MULTILINE):
         errors.append(f"{rel}: materialize requires contents: write")
+    # `pull-requests: write` là ngoại lệ có chủ đích: materialize mở PR bài hằng
+    # ngày ngay sau khi nó dựng xong artifact. Đặt ở đây thay vì một workflow
+    # riêng vì workflow này đã đọc định nghĩa từ `main` và đã biết branch đích —
+    # phương án khác phải cấp quyền PR cho workflow đọc định nghĩa từ branch.
+    # `actions: write` vẫn bị cấm: materialize không được kích hoạt workflow nào.
     if re.search(
-        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+        r"^\s{2}(actions|issues|packages|deployments):\s*write\s*$",
         permissions,
         re.MULTILINE,
     ):
@@ -234,6 +240,14 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         'persist-credentials: false',
         'test "$(git rev-parse HEAD)" = "${TARGET_SHA}"',
         'test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq \'.object.sha\')" = "${TARGET_SHA}"',
+        # Mở PR: không tạo bản thứ hai cho cùng branch (AGENTS.md §2)…
+        'state=open&per_page=1',
+        # …mở Ready ngay, vì auto-merge kiểm draft=false lúc CI hoàn tất…
+        '-F "draft=false"',
+        # …và xác nhận PR vừa mở thật sự kích được CI. Thiếu bước này thì
+        # `pull_request:opened` bị chặn sẽ thành hỏng im lặng: PR nằm im, không
+        # CI, auto-merge không bao giờ kích, không ai được báo.
+        'event=pull_request&head_sha=${head_sha}',
         'gh auth setup-git',
         "--changed-from-git",
         "tools/publish.py prepare",
@@ -286,6 +300,63 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
     return errors
 
 
+def _validate_materialize_dispatch(rel: str, text: str, events: str, permissions: str) -> list[str]:
+    """Workflow duy nhất tự chạy theo `push` và chạm tới `actions: write`.
+
+    Nó thay con người bấm nút Materialize Artifacts. Toàn bộ giá trị của nó nằm ở
+    chỗ nó KHÔNG làm gì khác: không quyền ghi nội dung, không checkout, không chạy
+    một dòng code nào của branch vừa push. Nếu nó bắt đầu làm những việc đó thì
+    materialize-artifacts.yml mất tính chất "định nghĩa luôn đọc từ main" mà cả
+    thiết kế này dựa vào.
+    """
+    errors: list[str] = []
+
+    if "push:" not in events:
+        errors.append(f"{rel}: materialize dispatch must trigger on push")
+    for forbidden_event in ("pull_request:", "pull_request_target:", "schedule:", "workflow_run:"):
+        if forbidden_event in events:
+            errors.append(f"{rel}: materialize dispatch must not trigger on {forbidden_event[:-1]}")
+    if '- "chatgpt/linux-daily-*"' not in text:
+        errors.append(f"{rel}: materialize dispatch must filter push to daily article branches")
+
+    if not re.search(r"^\s{2}contents:\s*read\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: materialize dispatch must declare contents: read")
+    if not re.search(r"^\s{2}actions:\s*write\s*$", permissions, re.MULTILINE):
+        errors.append(f"{rel}: materialize dispatch requires actions: write to call workflow_dispatch")
+    if re.search(
+        r"^\s{2}(contents|pull-requests|issues|packages|deployments):\s*write\s*$",
+        permissions,
+        re.MULTILINE,
+    ):
+        errors.append(f"{rel}: materialize dispatch may not request extra write permissions")
+
+    if "actions/checkout" in text:
+        errors.append(
+            f"{rel}: materialize dispatch must not check out the pushed branch "
+            "(it must never execute branch-controlled code)"
+        )
+
+    required_markers = (
+        # Vòng lặp: push của materialize dùng GITHUB_TOKEN nên nền tảng đã chặn,
+        # nhưng guard tường minh giữ cho tính chất đó không phụ thuộc vào nền tảng.
+        "if: github.actor != 'github-actions[bot]'",
+        # Bộ lọc `branches:` là glob và cho lọt tên sai khuôn; regex mới là cổng thật.
+        "^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$",
+        # Điểm mấu chốt: định nghĩa materialize luôn đọc từ default branch.
+        'ref: "main"',
+        'confirm: "materialize-artifacts"',
+        # Endpoint dispatch trả 204 kể cả khi không có gì chạy — phải xác nhận
+        # run đã được tạo, nếu không đây là hỏng im lặng.
+        "event=workflow_dispatch&per_page=1",
+        'test "${latest}" -gt "${before}"',
+    )
+    for marker in required_markers:
+        if marker not in text:
+            errors.append(f"{rel}: materialize dispatch thiếu guard bắt buộc: {marker}")
+
+    return errors
+
+
 def validate_file(path: Path) -> list[str]:
     text = path.read_text(encoding="utf-8")
     rel = _display_path(path)
@@ -295,6 +366,7 @@ def validate_file(path: Path) -> list[str]:
     is_release = path.name == RELEASE_WORKFLOW
     is_auto_merge = path.name == AUTO_MERGE_WORKFLOW
     is_materialize = path.name == MATERIALIZE_WORKFLOW
+    is_materialize_dispatch = path.name == MATERIALIZE_DISPATCH_WORKFLOW
     may_write = is_release or is_auto_merge or is_materialize
 
     if "pull_request_target:" in text:
@@ -302,7 +374,13 @@ def validate_file(path: Path) -> list[str]:
     if not permissions:
         errors.append(f"{rel}: top-level permissions block is required")
 
-    writes = WRITE_PERMISSION_RE.findall(permissions)
+    # materialize-dispatch chỉ được `actions: write` để gọi workflow_dispatch; nó
+    # vẫn phải khai `contents: read` và vẫn bị cấm mọi quyền ghi khác, nên bỏ
+    # `actions` ra khỏi phép đếm này không nới phạm vi của nó.
+    writes = [
+        scope for scope in WRITE_PERMISSION_RE.findall(permissions)
+        if not (is_materialize_dispatch and scope == "actions")
+    ]
     if not may_write and writes:
         errors.append(
             f"{rel}: write permissions are forbidden outside {RELEASE_WORKFLOW}, "
@@ -322,6 +400,16 @@ def validate_file(path: Path) -> list[str]:
         # không bao giờ thoả. _validate_auto_merge() bắt buộc quyền này và vẫn
         # chặn mọi quyền ghi khác, nên nới ở đây không mở rộng phạm vi.
         if banned == "actions" and is_auto_merge:
+            continue
+        # materialize-dispatch tồn tại chỉ để gọi workflow_dispatch, nên
+        # `actions: write` là toàn bộ khả năng của nó. Không có contents: write,
+        # không checkout, không chạy code của branch —
+        # _validate_materialize_dispatch() cưỡng chế từng điểm.
+        if banned == "actions" and is_materialize_dispatch:
+            continue
+        # Xem _validate_materialize(): materialize mở PR bài hằng ngày sau khi
+        # dựng xong artifact. Nó vẫn bị cấm actions/issues/packages/deployments.
+        if banned == "pull-requests" and is_materialize:
             continue
         if re.search(rf"^\s{{2}}{re.escape(banned)}:\s*write\s*$", permissions, re.MULTILINE):
             errors.append(f"{rel}: {banned}: write is not allowed")
@@ -346,6 +434,9 @@ def validate_file(path: Path) -> list[str]:
 
     if is_materialize:
         errors.extend(_validate_materialize(rel, text, events, permissions))
+
+    if is_materialize_dispatch:
+        errors.extend(_validate_materialize_dispatch(rel, text, events, permissions))
 
     errors.extend(_validate_dependency_install(rel, text))
 

@@ -80,8 +80,12 @@ def test_real_materialize_workflow_passes_policy():
             id="bo-buoc-verify",
         ),
         pytest.param(
+            # `pull-requests: write` giờ là ngoại lệ có chủ đích (materialize mở
+            # PR bài hằng ngày sau khi dựng xong). Mọi scope ghi KHÁC vẫn bị cấm,
+            # và `actions: write` là cái nguy hiểm nhất trong số đó: có nó thì
+            # materialize tự kích hoạt được workflow khác.
             "permissions:\n  contents: write\n",
-            "permissions:\n  contents: write\n  pull-requests: write\n",
+            "permissions:\n  contents: write\n  actions: write\n",
             "may not request extra write permissions",
             id="xin-them-quyen-ghi",
         ),
@@ -146,19 +150,47 @@ def test_confirm_gate_is_a_failing_step_not_a_skipped_job():
     assert 'test "${CONFIRM}" = "materialize-artifacts"' in text
 
 
+def _without_comments(text: str) -> str:
+    """Bỏ comment YAML trước khi quét quyền.
+
+    Quét raw text bắt được cả `permissions:` mức job — điều mà chỉ parse block
+    top-level sẽ bỏ lọt — nên giữ cách quét đó. Nhưng nó cũng bắt cả một dòng
+    comment NÓI VỀ quyền, ví dụ "file này không có `contents: write`". Lọc comment
+    giữ nguyên độ rộng của phép kiểm mà bỏ được kiểu dương tính giả đó.
+    """
+    return "\n".join(line.split("#", 1)[0] for line in text.splitlines())
+
+
 def test_materialize_is_the_only_new_write_capable_workflow():
-    """Nới quyền ghi phải giới hạn đúng ba workflow đã biết."""
+    """Nới quyền ghi NỘI DUNG phải giới hạn đúng ba workflow đã biết.
+
+    `materialize-dispatch.yml` không nằm trong danh sách này và cũng không được
+    có `contents: write`: nó chỉ có `actions: write` để gọi workflow_dispatch.
+    Ranh giới cần giữ là workflow nào ghi được vào repository, nên nó vẫn phải
+    qua phép kiểm này như mọi workflow read-only khác.
+    """
     assert workflow_safety.MATERIALIZE_WORKFLOW == "materialize-artifacts.yml"
     write_capable = {
         workflow_safety.RELEASE_WORKFLOW,
         workflow_safety.AUTO_MERGE_WORKFLOW,
         workflow_safety.MATERIALIZE_WORKFLOW,
     }
+    checked = 0
     for path in sorted((ROOT / ".github" / "workflows").glob("*.yml")):
         if path.name in write_capable:
             continue
-        text = path.read_text(encoding="utf-8")
+        text = _without_comments(path.read_text(encoding="utf-8"))
         assert "contents: write" not in text, f"{path.name} không được có contents: write"
+        checked += 1
+    assert checked, "không quét được workflow nào — glob hỏng"
+
+
+def test_comment_filter_still_catches_a_real_job_level_grant(tmp_path):
+    """Phép lọc comment không được làm hỏng chính thứ nó phục vụ."""
+    assert "contents: write" not in _without_comments("  # nói về contents: write\n")
+    assert "contents: write" in _without_comments(
+        "jobs:\n  x:\n    permissions:\n      contents: write\n"
+    )
 
 
 @pytest.mark.parametrize(("old", "new"), [
@@ -184,3 +216,51 @@ def test_source_guard_must_precede_dependency_installation(tmp_path):
     path = tmp_path / WORKFLOW.name
     path.write_text(text)
     assert any('before dependency' in error for error in workflow_safety.validate_file(path))
+
+
+# --- mở PR bài hằng ngày ---
+
+@pytest.mark.parametrize("scope", ["actions", "issues", "packages", "deployments"])
+def test_only_pull_requests_write_is_the_new_exception(tmp_path: Path, scope: str):
+    """`pull-requests: write` được nới; mọi scope ghi khác vẫn phải bị chặn."""
+    errors = _mutated(
+        tmp_path,
+        "permissions:\n  contents: write\n",
+        f"permissions:\n  contents: write\n  {scope}: write\n",
+    )
+    assert any("may not request extra write permissions" in err for err in errors), errors
+
+
+def test_materialize_keeps_pull_requests_write():
+    """Bước mở PR cần đúng quyền này; mất nó thì workflow đỏ lúc chạy chứ không lúc lint."""
+    text = WORKFLOW.read_text(encoding="utf-8")
+    permissions = workflow_safety._permissions_block(text)
+    assert re.search(r"^\s{2}pull-requests:\s*write\s*$", permissions, re.MULTILINE)
+
+
+@pytest.mark.parametrize(
+    ("old", "new", "expected"),
+    [
+        pytest.param(
+            "state=open&per_page=1",
+            "state=all&per_page=1",
+            "safety marker missing",
+            id="bo-kiem-PR-da-ton-tai",
+        ),
+        pytest.param(
+            '-F "draft=false"',
+            '-F "draft=true"',
+            "safety marker missing",
+            id="mo-PR-o-trang-thai-draft",
+        ),
+        pytest.param(
+            "event=pull_request&head_sha=${head_sha}",
+            "per_page=1",
+            "safety marker missing",
+            id="bo-xac-nhan-CI-da-chay",
+        ),
+    ],
+)
+def test_pr_opening_safeguards_are_required(tmp_path: Path, old: str, new: str, expected: str):
+    errors = _mutated(tmp_path, old, new)
+    assert any(expected in err for err in errors), errors

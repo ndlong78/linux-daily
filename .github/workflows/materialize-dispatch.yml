@@ -1,0 +1,112 @@
+name: Materialize Dispatch
+
+# Bấm nút `Materialize Artifacts` thay cho con người, khi branch bài được push.
+#
+# Vì sao là workflow riêng chứ không thêm `on: push` thẳng vào
+# materialize-artifacts.yml: với `workflow_dispatch` + `ref: main`, định nghĩa
+# workflow LUÔN được lấy từ default branch. Thêm `push` vào chính nó thì định
+# nghĩa được lấy từ branch vừa push — tức branch tự quyết định luật chạy của
+# chính nó, và mọi guard bên trong (materialize_guard, regex branch, cổng xác
+# nhận) đều nằm trong tay thứ đang cần được kiểm. Tách đôi giữ nguyên tính chất
+# đó: file này chỉ gọi dispatch, còn mọi quyền ghi và mọi kiểm định vẫn thuộc
+# materialize-artifacts.yml đọc từ main.
+#
+# Đổi lại, file này không có `contents: write`, không checkout code của branch,
+# không chạy bất cứ thứ gì từ branch. Nó chỉ đọc tên ref và gọi một endpoint.
+
+on:
+  push:
+    branches:
+      # Lọc thô; regex nghiêm ở bước dưới mới là cổng thật.
+      - "chatgpt/linux-daily-*"
+
+permissions:
+  contents: read
+  # Chỉ để gọi workflow_dispatch. Không có quyền ghi nào khác — tools/workflow_safety.py
+  # cưỡng chế điều đó.
+  actions: write
+
+jobs:
+  dispatch:
+    # Materialize đẩy artifact bằng GITHUB_TOKEN, và sự kiện sinh bởi GITHUB_TOKEN
+    # không tạo workflow run mới (đã đo trên 4/4 commit auto-merge — xem
+    # linux-daily-auto-merge.yml). Vòng lặp vì thế không xảy ra ngay từ nền tảng.
+    # Guard này là lớp thứ hai: không treo một tính chất an toàn vào một hành vi
+    # ngầm của nền tảng mà ta không kiểm soát phiên bản.
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    concurrency:
+      # Theo branch: hai bài khác nhau không chặn nhau, nhưng hai push liên tiếp
+      # vào cùng một bài thì không dispatch chồng. Không cancel-in-progress: huỷ
+      # giữa chừng sẽ để lại một dispatch đã gửi mà không ai xác nhận.
+      group: materialize-dispatch-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Dispatch Materialize Artifacts from main
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Bộ lọc `branches:` ở trên là glob, không phải regex: nó cho lọt
+          # `chatgpt/linux-daily-foo`. Kiểm lại đúng khuôn tên branch bài ở đây.
+          # Fail to thay vì skip im lặng — branch sai khuôn là lỗi của lượt chạy
+          # sinh ra nó, và materialize cũng sẽ từ chối đúng chuỗi này.
+          if ! [[ "${BRANCH}" =~ ^chatgpt/linux-daily-[0-9]{3}-[0-9]{8}$ ]]; then
+            echo "Branch '${BRANCH}' không đúng khuôn chatgpt/linux-daily-<NNN>-<YYYYMMDD>." >&2
+            exit 1
+          fi
+
+          workflow="materialize-artifacts.yml"
+          runs_api="repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs"
+
+          # Ghi lại run mới nhất TRƯỚC khi dispatch. Endpoint dispatch trả 204 kể
+          # cả khi không có gì chạy, nên "đã gửi" không đồng nghĩa "đã chạy"; mốc
+          # này là cách duy nhất phân biệt run của ta với run có sẵn.
+          #
+          # Giới hạn đã biết: mọi run materialize đều có head_branch=main và cùng
+          # head_sha, nên không khớp được theo SHA như auto-merge làm. Nếu có một
+          # dispatch materialize khác chen vào trong 150s, bước này có thể nhận
+          # nhầm run của họ là của ta. Hậu quả nhẹ: materialize có concurrency
+          # nối tiếp nên dispatch của ta vẫn chạy; và thứ thật sự cần bắt — dispatch
+          # KHÔNG tạo được run nào — vẫn bị bắt đúng.
+          before="$(gh api "${runs_api}?event=workflow_dispatch&per_page=1" \
+            --jq '.workflow_runs[0].id // 0')"
+          echo "run workflow_dispatch mới nhất trước khi gọi: ${before}"
+
+          # ref=main: định nghĩa workflow lấy từ default branch, không phải từ
+          # branch vừa push. Đây là toàn bộ lý do file này tồn tại.
+          jq -n --arg branch "${BRANCH}" \
+            '{ref: "main", inputs: {confirm: "materialize-artifacts", branch: $branch}}' \
+            | gh api --method POST "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/dispatches" --input -
+
+          # workflow_dispatch là ngoại lệ gọi được bằng GITHUB_TOKEN, nhưng không
+          # tin vào giả định đó: xác nhận run đã được TẠO. Thiếu bước này thì một
+          # thay đổi phía GitHub sẽ biến thành hỏng im lặng — branch không bao giờ
+          # được materialize, CI đỏ ở bước sau, và không ai biết nguyên nhân.
+          #
+          # Chỉ khẳng định run đã được tạo, KHÔNG chờ nó xanh: chờ xanh biến kết
+          # quả materialize thành lỗi của job này, trong khi run đỏ đã tự hiện ra
+          # ở đúng chỗ của nó.
+          created=""
+          for _ in $(seq 1 30); do
+            sleep 5
+            latest="$(gh api "${runs_api}?event=workflow_dispatch&per_page=1" \
+              --jq '.workflow_runs[0].id // 0')"
+            if test "${latest}" -gt "${before}"; then
+              created="${latest}"
+              break
+            fi
+          done
+
+          if test -z "${created}"; then
+            echo "Dispatch ${workflow} không tạo run nào sau 150s." >&2
+            echo "GITHUB_TOKEN không kích được workflow_dispatch; branch '${BRANCH}' chưa được materialize." >&2
+            exit 1
+          fi
+
+          echo "Đã tạo run materialize: ${created}"
+          echo "Materialize run: https://github.com/${GITHUB_REPOSITORY}/actions/runs/${created}" >> "${GITHUB_STEP_SUMMARY}"
