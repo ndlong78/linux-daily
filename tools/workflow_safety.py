@@ -211,8 +211,13 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
 
     if not re.search(r"^\s{2}contents:\s*write\s*$", permissions, re.MULTILINE):
         errors.append(f"{rel}: materialize requires contents: write")
+    # `pull-requests: write` là ngoại lệ có chủ đích: materialize mở PR bài hằng
+    # ngày ngay sau khi nó dựng xong artifact. Đặt ở đây thay vì một workflow
+    # riêng vì workflow này đã đọc định nghĩa từ `main` và đã biết branch đích —
+    # phương án khác phải cấp quyền PR cho workflow đọc định nghĩa từ branch.
+    # `actions: write` vẫn bị cấm: materialize không được kích hoạt workflow nào.
     if re.search(
-        r"^\s{2}(actions|pull-requests|issues|packages|deployments):\s*write\s*$",
+        r"^\s{2}(actions|issues|packages|deployments):\s*write\s*$",
         permissions,
         re.MULTILINE,
     ):
@@ -235,6 +240,14 @@ def _validate_materialize(rel: str, text: str, events: str, permissions: str) ->
         'persist-credentials: false',
         'test "$(git rev-parse HEAD)" = "${TARGET_SHA}"',
         'test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq \'.object.sha\')" = "${TARGET_SHA}"',
+        # Mở PR: không tạo bản thứ hai cho cùng branch (AGENTS.md §2)…
+        'state=open&per_page=1',
+        # …mở Ready ngay, vì auto-merge kiểm draft=false lúc CI hoàn tất…
+        '-F "draft=false"',
+        # …và xác nhận PR vừa mở thật sự kích được CI. Thiếu bước này thì
+        # `pull_request:opened` bị chặn sẽ thành hỏng im lặng: PR nằm im, không
+        # CI, auto-merge không bao giờ kích, không ai được báo.
+        'event=pull_request&head_sha=${head_sha}',
         'gh auth setup-git',
         "--changed-from-git",
         "tools/publish.py prepare",
@@ -393,6 +406,10 @@ def validate_file(path: Path) -> list[str]:
         # không checkout, không chạy code của branch —
         # _validate_materialize_dispatch() cưỡng chế từng điểm.
         if banned == "actions" and is_materialize_dispatch:
+            continue
+        # Xem _validate_materialize(): materialize mở PR bài hằng ngày sau khi
+        # dựng xong artifact. Nó vẫn bị cấm actions/issues/packages/deployments.
+        if banned == "pull-requests" and is_materialize:
             continue
         if re.search(rf"^\s{{2}}{re.escape(banned)}:\s*write\s*$", permissions, re.MULTILINE):
             errors.append(f"{rel}: {banned}: write is not allowed")

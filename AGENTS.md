@@ -346,16 +346,32 @@ Ràng buộc của đường này, do `tools/materialize_guard.py` và `tools/wo
 - workflow abort nếu generator chạm vào source of truth (`topics.md`, `state.json`, `site.json`, `AGENTS.md`, …) hoặc `tools/`, `tests/`, `.github/`, `templates/`, `assets/`, `labs/`;
 - workflow chỉ chạy qua `workflow_dispatch`, không bao giờ tự chạy theo `pull_request`/`push`.
 
-Vì vậy khi không có local writable checkout, thứ tự bắt buộc là **ghi source → chờ materialize xong → mới mở PR**:
+Vì vậy khi không có local writable checkout, thứ tự là **ghi source → chờ → kiểm kết quả**:
 
 1. ghi source core lên feature branch (push này tự kích hoạt materialize);
 2. **chờ run kết thúc** — theo dõi `Materialize Dispatch` rồi tới `Materialize Artifacts`;
    branch head đổi sang commit `Dựng lại artifact site cho <branch>` là dấu hiệu đã xong;
-3. run xanh → mở PR rồi chuyển **Ready ngay** khi diff/state/duplicate/review sạch, không chờ CI;
-4. run đỏ → **không mở PR**; đọc log của run và báo capability blocker kèm nguyên nhân.
+3. run xanh → **PR đã được mở sẵn, non-Draft**, bởi chính bước cuối của materialize;
+   agent chỉ kiểm state/diff/duplicate/review rồi để CI và auto-merge chạy;
+4. run đỏ → đọc log của run và báo capability blocker kèm nguyên nhân. Nếu run đỏ ở
+   **bước mở PR** thì artifact đã đúng và PR có thể đã tồn tại — đọc log trước khi làm gì.
 
-Bước 2 vẫn bắt buộc dù materialize đã tự chạy. Tự động hoá bỏ được thao tác *kích hoạt*, không
-bỏ được việc *chờ*: mở PR trước khi artifact dựng xong thì CI đỏ đúng như trước.
+Agent không còn mở PR nữa. Bước "Mở PR bài hằng ngày" nằm cuối `materialize-artifacts.yml`:
+nó chạy từ định nghĩa của `main`, biết chính xác branch nó vừa dựng, mở PR **non-Draft ngay**,
+và **xác nhận PR đó thật sự kích được CI** — không có run CI nào trên đúng head SHA thì job đỏ.
+
+Vì sao phải xác nhận: sự kiện do `GITHUB_TOKEN` sinh ra phần lớn không tạo workflow run. Ngoại
+lệ đã đo được trong repo này là *push* vào nhánh PR — CI run `35450153504` trên `e91e766`,
+`event: pull_request`, tạo 5 giây sau commit của bot. Nhưng đó là `synchronize`, không phải
+`opened`; chưa có phép đo nào cho `opened`. Nếu `opened` bị chặn thì không CI → không
+`workflow_run` → auto-merge không bao giờ kích, và PR nằm im không ai báo. Bước xác nhận biến
+kiểu hỏng im lặng đó thành một run đỏ nhìn thấy được.
+
+Bước 2 vẫn bắt buộc. Tự động hoá bỏ được thao tác *kích hoạt* và *mở PR*, không bỏ được việc
+*chờ*: agent vẫn phải biết kết quả trước khi coi lượt chạy là xong.
+
+Idempotent: materialize chạy lại mỗi lần source được sửa, nhưng bước mở PR kiểm PR đang mở cho
+branch trước và không tạo bản thứ hai — đúng ràng buộc §2.
 
 Ở bước 3, Ready phải xảy ra **trước khi CI hoàn tất**. `linux-daily-auto-merge.yml` chạy theo
 `workflow_run` của `CI` và kiểm `draft=false` tại đúng thời điểm đó; nếu PR còn Draft lúc CI
@@ -445,8 +461,8 @@ Khi rollout thay đổi ranh giới tin cậy của materialize:
 3. tạo/resume branch chuẩn; branch rỗng tồn tại từ lần chạy trước phải được resume thay vì duplicate;
 4. ghi source core (`posts/`, `topics.md`, `state.json`, metadata JSON) bằng GitHub API; không đoán nội dung artifact render;
 5. push đó tự kích hoạt `Materialize Dispatch` → `Materialize Artifacts`; **chờ run kết thúc**;
-   run đỏ thì dừng và báo blocker, không mở PR;
-6. run xanh thì mở PR; kiểm state/diff/duplicate/review rồi chuyển Ready **ngay, không chờ CI success** (auto-merge kiểm `draft=false` lúc CI hoàn tất);
+   run đỏ thì dừng và báo blocker;
+6. run xanh thì PR đã được materialize mở sẵn non-Draft; kiểm state/diff/duplicate/review;
 7. dùng CI read-only làm remote preflight cho phần source; CI không thay được bước materialize artifact;
 8. nếu CI đỏ vì source, self-fix trên cùng branch rồi dispatch lại; không commit đoán artifact;
 9. khi exact-head CI xanh, post-CI workflow tự kiểm contract và squash-merge.
@@ -533,8 +549,9 @@ Mỗi lần chạy:
 5. chuẩn bị bài + source-backed review + STYLE review, gồm phân loại đúng runtime/documentation verification evidence từ #070;
 6. local path: materialize artifacts + preflight; API-only path: push source core lên feature
    branch rồi chờ `Materialize Artifacts` (tự kích hoạt) xong, dùng CI làm remote preflight;
-7. commit/push/open PR theo quyền đã được người dùng ủy quyền;
-8. chuyển PR sang Ready khi structural/diff/review gate sạch, **không chờ CI success**;
+7. local path: commit/push/open PR theo quyền đã được ủy quyền. API-only path: chỉ push
+   source core — `Materialize Artifacts` mở PR non-Draft ở bước cuối của nó;
+8. PR bài hằng ngày phải non-Draft khi structural/diff/review gate sạch, **không chờ CI success**;
 9. không cần chờ CI kết thúc để tự merge thủ công; GitHub post-CI workflow xử lý merge;
 10. nếu CI đã success lúc PR còn Draft, rerun CI trên cùng SHA sau khi Ready;
 11. nếu CI/merge thất bại, báo đúng blocker và resume ở lần sau;

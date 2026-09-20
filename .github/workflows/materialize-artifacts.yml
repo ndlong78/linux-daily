@@ -27,6 +27,12 @@ on:
 
 permissions:
   contents: write
+  # Chỉ để mở PR bài hằng ngày ngay sau khi artifact đã dựng xong — xem bước
+  # "Mở PR bài hằng ngày" ở cuối. Đặt ở đây chứ không ở một workflow riêng vì
+  # workflow này đã chạy từ định nghĩa của `main` và đã biết chính xác branch nó
+  # vừa dựng; mọi phương án khác hoặc phải nối `workflow_run` (hành vi chưa đo
+  # trong repo này), hoặc phải cấp quyền PR cho workflow đọc định nghĩa từ branch.
+  pull-requests: write
 
 jobs:
   # Cổng xác nhận nằm ở bước đầu tiên, KHÔNG phải `if:` mức job. Một job bị skip
@@ -156,3 +162,89 @@ jobs:
           test "$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq '.object.sha')" = "${TARGET_SHA}"
           gh auth setup-git
           git push origin "HEAD:${BRANCH}"
+
+      # Chạy kể cả khi bước trên `exit 0` vì artifact đã đồng bộ: branch có thể
+      # đã dựng đúng từ lượt trước mà vẫn chưa có PR.
+      - name: Mở PR bài hằng ngày
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          head_sha="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${BRANCH}" --jq '.object.sha')"
+          [[ "${head_sha}" =~ ^[0-9a-f]{40}$ ]]
+
+          # Idempotent: materialize chạy lại mỗi lần source được sửa, nhưng PR
+          # chỉ được mở một lần. AGENTS.md §2 cấm tạo bản thứ hai cho cùng branch.
+          owner="${GITHUB_REPOSITORY%%/*}"
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/pulls?head=${owner}:${BRANCH}&state=open&per_page=1" \
+            --jq '.[0].number // ""')"
+          if test -n "${existing}"; then
+            echo "PR #${existing} đã mở cho ${BRANCH}; không tạo thêm."
+            exit 0
+          fi
+
+          ahead="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${BRANCH}" --jq '.ahead_by')"
+          if test "${ahead}" -lt 1; then
+            echo "${BRANCH} không có commit nào so với main; không mở PR." >&2
+            exit 1
+          fi
+
+          # Tiêu đề lấy từ topics.md — định dạng đã được validate_repo gác, và
+          # materialize_guard cấm generator chạm vào file này nên nó vẫn đúng
+          # bằng nội dung tại TARGET_SHA. Trường tiêu đề có thể chứa dấu `|`
+          # (regex của cadence.py cho phép), nên cắt từ field 4 trở đi.
+          line="$(grep -E '^#[0-9]+[[:space:]]*\|' topics.md | tail -1)"
+          issue="$(cut -d'|' -f1 <<<"${line}" | tr -cd '0-9')"
+          subject="$(cut -d'|' -f4- <<<"${line}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          test -n "${issue}"
+          test -n "${subject}"
+
+          # Non-Draft ngay: linux-daily-auto-merge.yml kiểm `draft=false` tại đúng
+          # thời điểm CI hoàn tất, và không có run CI mới nào tự phát sinh sau khi
+          # chuyển Ready. Mở Draft ở đây là tự đặt bẫy ordering cho chính mình.
+          body="$(printf '%s\n' \
+            "Artifact dẫn xuất đã được dựng bởi \`Materialize Artifacts\` (run ${GITHUB_RUN_ID}) trên \`${head_sha}\`." \
+            "" \
+            "PR này do workflow mở tự động sau khi materialize xanh, theo \`AGENTS.md\` §8." \
+            "CI read-only kiểm lại trên đúng head SHA; \`Linux Daily Auto Merge\` squash-merge khi exact-head CI xanh.")"
+
+          pr_number="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/pulls" \
+            -f "title=Linux Daily #${issue}: ${subject}" \
+            -f "head=${BRANCH}" \
+            -f "base=main" \
+            -F "draft=false" \
+            -f "body=${body}" \
+            --jq '.number')"
+          echo "Đã mở PR #${pr_number} cho ${BRANCH}."
+          echo "PR: https://github.com/${GITHUB_REPOSITORY}/pull/${pr_number}" >> "${GITHUB_STEP_SUMMARY}"
+
+          # Xác nhận PR vừa mở THẬT SỰ kích được CI.
+          #
+          # Sự kiện do GITHUB_TOKEN sinh ra phần lớn không tạo workflow run; ngoại
+          # lệ đã đo được trong repo này là push vào nhánh PR (CI run 709 trên
+          # e91e766, `event: pull_request`, 5s sau commit của bot). Nhưng đó là
+          # `synchronize`, không phải `opened` — chưa có phép đo nào cho `opened`.
+          #
+          # Nếu `opened` bị chặn thì toàn bộ chuỗi đứng im: không CI → không
+          # workflow_run → auto-merge không bao giờ kích, và PR nằm đó không ai
+          # báo. Fail to ở đây biến điều đó thành một run đỏ nhìn thấy được.
+          ci_run=""
+          for _ in $(seq 1 24); do
+            sleep 5
+            ci_run="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/ci.yml/runs?branch=${BRANCH}&event=pull_request&head_sha=${head_sha}&per_page=1" \
+              --jq '.workflow_runs[0].id // ""')"
+            if test -n "${ci_run}"; then
+              break
+            fi
+          done
+
+          if test -z "${ci_run}"; then
+            echo "PR #${pr_number} đã mở nhưng không có run CI nào (event=pull_request) trên ${head_sha} sau 120s." >&2
+            echo "GITHUB_TOKEN không kích được pull_request:opened; PR này cần một push hoặc rerun CI thủ công trước khi auto-merge chạy được." >&2
+            exit 1
+          fi
+
+          echo "CI đã chạy cho PR #${pr_number}: run ${ci_run}."
