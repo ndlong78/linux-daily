@@ -140,3 +140,133 @@ def test_record_respects_overrides(tmp_path, monkeypatch):
     saved = json.loads(sp.read_text(encoding="utf-8"))
     assert saved["last_issue"] == 5
     assert saved["last_published_date"] == "2026-02-02"
+
+
+# --- bù bài khi lỡ nhịp ---
+
+import validate_repo  # noqa: E402  (đặt cuối để nhóm test bù nhịp tự chứa)
+
+
+def _behind(days: int, issue: int = 79) -> dict:
+    """state.json mô tả bài mới nhất tụt `days` ngày sau 2026-09-20 (giờ VN)."""
+    last = dt.date(2026, 9, 20) - dt.timedelta(days=days)
+    return {
+        "last_issue": issue,
+        "last_published_date": last.isoformat(),
+        "last_generated_at": f"{last.isoformat()}T00:00:00+00:00",
+    }
+
+
+# 2026-09-20T05:00:00Z == 12:00 giờ VN cùng ngày — giữa ngày ở cả hai múi giờ.
+NOON_VN = dt.datetime(2026, 9, 20, 5, 0, tzinfo=dt.timezone.utc)
+
+
+def test_vn_timezone_matches_validate_repo():
+    """Backlog và cổng 'ngày ở tương lai' phải dùng chung một mốc ngày.
+
+    So trên mốc cố định chứ không so hai đồng hồ thực: hai lệnh gọi `now()` liên
+    tiếp vắt qua nửa đêm giờ VN sẽ làm test đỏ mà không có lỗi thật nào.
+    """
+    assert cadence.VN_TZ == validate_repo.VN_TZ
+    for instant in (NOON_VN, dt.datetime(2026, 9, 19, 17, 30, tzinfo=dt.timezone.utc)):
+        assert cadence.today_vn(instant) == instant.astimezone(validate_repo.VN_TZ).date()
+
+
+def test_today_vn_uses_vietnam_day_boundary():
+    """00:30 giờ VN đã sang ngày mới, trong khi UTC vẫn là hôm trước."""
+    just_after_midnight_vn = dt.datetime(2026, 9, 19, 17, 30, tzinfo=dt.timezone.utc)
+    assert just_after_midnight_vn.date() == dt.date(2026, 9, 19)
+    assert cadence.today_vn(just_after_midnight_vn) == dt.date(2026, 9, 20)
+
+
+def test_publication_backlog_counts_calendar_lag(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(3))
+    assert cadence.publication_backlog(cadence.load_state(), NOON_VN) == 3
+
+
+def test_publication_backlog_zero_when_caught_up(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(0))
+    assert cadence.publication_backlog(cadence.load_state(), NOON_VN) == 0
+
+
+def test_publication_backlog_falls_back_to_topics(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=["#001 | 2026-09-18 | Networking | a"])
+    assert cadence.publication_backlog(None, NOON_VN) == 2
+
+
+def test_publication_backlog_none_without_any_date(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=[])
+    assert cadence.publication_backlog(None, NOON_VN) is None
+
+
+def test_catchup_allowance_is_one_at_normal_cadence(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(1))
+    assert cadence.catchup_allowance(cadence.load_state(), now=NOON_VN) == 1
+
+
+def test_catchup_allowance_grows_with_backlog(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(3))
+    assert cadence.catchup_allowance(cadence.load_state(), now=NOON_VN) == 3
+
+
+def test_catchup_allowance_capped_by_max_per_run(tmp_path, monkeypatch):
+    """Gián đoạn 30 ngày không được đổ 30 bài vào một PR."""
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(30))
+    state = cadence.load_state()
+    assert cadence.publication_backlog(state, NOON_VN) == 30
+    assert cadence.catchup_allowance(state, now=NOON_VN) == cadence.CATCHUP_MAX_PER_RUN
+    assert cadence.catchup_allowance(state, now=NOON_VN, max_per_run=5) == 5
+
+
+def test_catchup_allowance_zero_when_not_due(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(0))
+    assert cadence.catchup_allowance(cadence.load_state(), now=NOON_VN) == 0
+
+
+def test_catchup_allowance_bootstraps_to_single_post(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=[])
+    assert cadence.catchup_allowance(None, now=NOON_VN) == 1
+
+
+def test_planned_publications_never_reach_the_future(tmp_path, monkeypatch):
+    """Bất biến quan trọng nhất: validate_repo chặn mọi ngày > today_vn()."""
+    for lag in range(1, 12):
+        _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(lag))
+        planned = cadence.planned_publications(cadence.load_state(), now=NOON_VN)
+        assert planned, f"lag={lag} phải ra ít nhất một bài"
+        for _, date_s in planned:
+            assert dt.date.fromisoformat(date_s) <= cadence.today_vn(NOON_VN)
+
+
+def test_planned_publications_are_sequential(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(3, issue=79))
+    assert cadence.planned_publications(cadence.load_state(), now=NOON_VN) == [
+        (80, "2026-09-18"),
+        (81, "2026-09-19"),
+        (82, "2026-09-20"),
+    ]
+
+
+def test_planned_publications_empty_when_caught_up(tmp_path, monkeypatch):
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(0))
+    assert cadence.planned_publications(cadence.load_state(), now=NOON_VN) == []
+
+
+def test_backlog_command_exit_codes(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cadence, "_now", lambda: NOON_VN)
+
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(3))
+    assert cadence.main(["backlog"]) == 0
+    out = capsys.readouterr().out
+    assert "#080 | 2026-09-18" in out
+    assert "#082 | 2026-09-20" in out
+
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(0))
+    assert cadence.main(["backlog"]) == cadence.GATE_NOT_DUE
+
+
+def test_gate_reports_catchup_plan(tmp_path, monkeypatch, capsys):
+    monkeypatch.setattr(cadence, "_now", lambda: NOON_VN)
+    _point(tmp_path, monkeypatch, topics_lines=SAMPLE, state=_behind(3))
+    assert cadence.main(["gate"]) == 0
+    assert "bù 3 bài" in capsys.readouterr().out
