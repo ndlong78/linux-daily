@@ -1,6 +1,19 @@
 {
-  "count": 79,
+  "count": 80,
   "posts": [
+    {
+      "axis": "Storage",
+      "axis_label": "Storage & hệ thống tệp",
+      "axis_slug": "storage",
+      "date": "2026-09-18",
+      "href": "posts/post-080-filesystem-quotas-user-group-project-capacity.html",
+      "issue": 80,
+      "lede": "Đọc quota theo user, group và project rồi đối chiếu block/inode capacity để tránh nhầm quota exceeded với disk-full.",
+      "tags": [
+        "Filesystem quotas"
+      ],
+      "title": "Filesystem quotas: phân biệt user/group/project quota với filesystem capacity"
+    },
     {
       "axis": "Bảo mật",
       "axis_label": "Bảo mật & phân quyền",
