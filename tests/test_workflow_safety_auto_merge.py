@@ -40,6 +40,22 @@ def test_auto_merge_skips_ineligible_prs_without_reporting_failure():
     assert text.count("if: steps.contract.outputs.eligible == 'true'") == 2
 
 
+def test_auto_merge_trusts_only_owner_or_materialize_bot():
+    text = WORKFLOW.read_text(encoding="utf-8")
+
+    assert 'case "${author}" in' in text
+    assert '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")' in text
+
+
+def test_auto_merge_policy_rejects_widened_author_allowlist(tmp_path: Path):
+    errors = _mutated(
+        tmp_path,
+        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]")',
+        '"${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]"|"someone-else")',
+    )
+    assert any("safety marker missing" in error for error in errors), errors
+
+
 def test_auto_merge_uses_merge_response_sha_and_serializes_main():
     text = WORKFLOW.read_text(encoding="utf-8")
 

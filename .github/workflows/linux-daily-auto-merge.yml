@@ -69,7 +69,16 @@ jobs:
 
           test "${base_ref}" = "main"
           test "${head_repo}" = "${GITHUB_REPOSITORY}"
-          test "${author}" = "${GITHUB_REPOSITORY_OWNER}"
+          # PR bài hằng ngày có hai nguồn tạo hợp lệ: owner tạo thủ công, hoặc
+          # Materialize Artifacts mở bằng GITHUB_TOKEN nên author là github-actions[bot].
+          # Không mở rộng beyond allowlist này; các guard same-repo/branch/exact-SHA/review vẫn giữ nguyên.
+          case "${author}" in
+            "${GITHUB_REPOSITORY_OWNER}"|"github-actions[bot]") ;;
+            *)
+              echo "PR author ${author} không nằm trong allowlist auto-merge." >&2
+              exit 1
+              ;;
+          esac
           test "${head_sha}" = "${CI_HEAD_SHA}"
 
           owner="${GITHUB_REPOSITORY%%/*}"
