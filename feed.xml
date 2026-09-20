@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Sun, 20 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Mon, 21 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Ansible delegate_to và run_once: tách orchestration task khỏi target host</title>
+      <link>https://linux.no.id.vn/posts/post-083-ansible-delegate-to-run-once.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-083-ansible-delegate-to-run-once.html</guid>
+      <pubDate>Mon, 21 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát run_once theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.</description>
+    </item>
     <item>
       <title>Context switch rate: tách scheduler churn khỏi CPU utilization bình thường</title>
       <link>https://linux.no.id.vn/posts/post-082-context-switch-rate-scheduler-churn.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</guid>
       <pubDate>Sat, 12 Sep 2026 00:00:00 +0700</pubDate>
       <description>Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.</description>
-    </item>
-    <item>
-      <title>Reflink và copy-on-write clone: copy nhanh nhưng không phải hard link</title>
-      <link>https://linux.no.id.vn/posts/post-073-reflink-cow-clone-hard-link.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-073-reflink-cow-clone-hard-link.html</guid>
-      <pubDate>Fri, 11 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Reflink tạo inode riêng nhưng có thể chia sẻ extent vật lý cho tới khi ghi; đừng nhầm nó với hard link hoặc full copy.</description>
     </item>
   </channel>
 </rss>

@@ -1,6 +1,19 @@
 {
-  "count": 82,
+  "count": 83,
   "posts": [
+    {
+      "axis": "Automation",
+      "axis_label": "Automation & scripting",
+      "axis_slug": "automation",
+      "date": "2026-09-21",
+      "href": "posts/post-083-ansible-delegate-to-run-once.html",
+      "issue": 83,
+      "lede": "Tách nơi task thực sự chạy khỏi host đang được xử lý, kiểm soát run_once theo batch và tránh biến thao tác điều phối thành N lần thực thi ngoài ý muốn.",
+      "tags": [
+        "Delegation scope"
+      ],
+      "title": "Ansible delegate_to và run_once: tách orchestration task khỏi target host"
+    },
     {
       "axis": "Monitoring",
       "axis_label": "Monitoring & hiệu năng",
