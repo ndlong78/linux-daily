@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex — Linux Daily #081</title>
+<meta name="description" content="Dùng Mike Farah yq v4 để đọc, lọc và chuyển đổi YAML/JSON có cấu trúc; xác minh đúng implementation trước khi chạy để tránh nhầm với yq Python/jq wrapper.">
+<link rel="preload" href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="../assets/fonts.css">
+<link rel="stylesheet" href="../assets/style.css">
+<link rel="stylesheet" href="../assets/related.css">
+<link rel="canonical" href="https://linux.no.id.vn/posts/post-081-yq-structured-yaml-json-query.html">
+<link rel="alternate" type="application/rss+xml" title="Linux Daily RSS" href="https://linux.no.id.vn/feed.xml">
+<meta property="og:type" content="article">
+<meta property="og:title" content="yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex">
+<meta property="og:description" content="Đọc và lọc YAML/JSON theo cấu trúc dữ liệu, đồng thời nhận diện đúng implementation yq trước khi dùng.">
+<meta property="og:url" content="https://linux.no.id.vn/posts/post-081-yq-structured-yaml-json-query.html">
+<meta property="og:site_name" content="Linux Daily">
+<meta property="og:locale" content="vi_VN">
+<meta property="og:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="948">
+<meta property="og:image:height" content="642">
+<meta property="og:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex">
+<meta name="twitter:description" content="Đọc và lọc YAML/JSON theo cấu trúc dữ liệu, đồng thời nhận diện đúng implementation yq trước khi dùng.">
+<meta name="twitter:image" content="https://linux.no.id.vn/posts/social/post-021-code.png">
+<meta name="twitter:image:alt" content="Linux Daily — ảnh preview chung trong giai đoạn social output tạm dừng">
+<script type="application/json" id="ld-meta">
+{"issue":81,"date":"2026-09-19","axis":"Công cụ mới","eyebrow":"Công cụ mới · yq","slug":"yq-structured-yaml-json-query","title":"yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex","lede":"Đọc, lọc và chuyển đổi YAML/JSON theo cấu trúc thay vì grep/sed regex, đồng thời xác minh đúng implementation yq trước khi dùng.","review_status":"reviewed","tested_on":[],"documentation_verified_on":["Ubuntu/Xubuntu 26.04 LTS","Debian 13 stable","Fedora 44","FreeBSD 15.1-RELEASE"],"last_verified":"2026-09-19","changes_system":false,"sources":[{"title":"yq — Official documentation","url":"https://mikefarah.gitbook.io/yq/","kind":"upstream"},{"title":"Fedora Packages — yq","url":"https://packages.fedoraproject.org/pkgs/yq/yq/","kind":"official"},{"title":"Debian 13 — yq package","url":"https://packages.debian.org/trixie/yq","kind":"official"},{"title":"FreeBSD Ports — textproc/go-yq","url":"https://cgit.freebsd.org/ports/tree/textproc/go-yq/Makefile","kind":"official"}]}
+</script>
+</head>
+<body class="post"><a class="skip-link" href="#main-content">Đi tới nội dung chính</a><main id="main-content"><div class="wrap">
+<nav class="global-nav" id="page-top" aria-label="Điều hướng chính">
+  <a class="global-nav-brand" href="../index.html">Linux Daily</a>
+  <div class="global-nav-links"><a href="../learning-paths.html">Lộ trình học</a><a href="../learning-dashboard.html">Tổng quan</a><a href="../archive.html">Tìm kiếm</a></div>
+</nav>
+<!-- back-to-top:start -->
+<a class="back-to-top" href="#page-top" aria-label="Lên đầu trang" title="Lên đầu trang"><span aria-hidden="true">↑</span></a>
+<script src="../assets/back-to-top.js" defer></script>
+<!-- back-to-top:end -->
+<div class="masthead"><div class="brand"><a class="brand-home" href="../index.html" aria-label="Về trang chủ Linux Daily">←</a><span class="issue">#081 · 19·09·2026</span></div></div>
+<header class="post"><p class="eyebrow">Công cụ mới · yq</p><h1>yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex</h1><p class="lede">Đọc, lọc và chuyển đổi YAML/JSON theo cấu trúc thay vì <code>grep</code>/<code>sed</code> regex, đồng thời xác minh đúng implementation <code>yq</code> trước khi dùng.</p><div class="meta"><span class="tag axis">TRỤC · CÔNG CỤ MỚI</span><span class="tag">ĐỘ KHÓ · CƠ BẢN</span><span class="tag">~12 PHÚT</span></div><div class="style-meta" aria-label="Môi trường kiểm chứng"><span><strong>Runtime tested:</strong> —</span><span><strong>Documentation verified:</strong> Ubuntu/Xubuntu 26.04 LTS · Debian 13 stable · Fedora 44 · FreeBSD 15.1-RELEASE</span><span><strong>Last verified:</strong> 2026-09-19</span></div></header>
+<section class="objective"><h2>Mục tiêu</h2><p>Dùng Mike Farah <code>yq</code> v4 để đọc field, lọc list và đổi định dạng YAML/JSON mà không parse cấu trúc bằng regex.</p></section>
+<section class="prerequisites"><h2>Yêu cầu tiên quyết</h2><ul class="clean"><li>Có binary Mike Farah <code>yq</code> v4 trong <code>PATH</code>; bài này không cài package hoặc thay đổi cấu hình hệ thống.</li><li>Dùng user thường và file lab tạm, không thao tác trực tiếp trên config production.</li><li>Đặc biệt kiểm implementation: Debian 13 package <code>yq</code> mặc định là Python wrapper quanh <code>jq</code>, không phải Mike Farah yq v4; FreeBSD dùng package/port <code>go-yq</code> cho implementation Mike Farah.</li></ul></section>
+<figure><svg viewBox="0 0 760 230" role="img" aria-label="So sánh parse YAML bằng regex với truy vấn cấu trúc bằng yq"><rect width="760" height="230" fill="#F7FAF9"/><g font-family="Be Vietnam Pro, sans-serif"><rect x="45" y="58" width="285" height="120" rx="10" fill="#fff" stroke="#9A6500"/><text x="70" y="90" font-size="12" font-weight="700">REGEX / TEXT PIPELINE</text><text x="70" y="120" font-size="10">grep → sed → cut</text><text x="70" y="145" font-size="10">dễ vỡ khi indent/list đổi</text><rect x="430" y="58" width="285" height="120" rx="10" fill="#fff" stroke="#0C6E61"/><text x="455" y="90" font-size="12" font-weight="700">YQ / DATA STRUCTURE</text><text x="455" y="120" font-size="10">path → select → output</text><text x="455" y="145" font-size="10">đọc theo node và kiểu dữ liệu</text><path d="M345 118H415" stroke="#14201D" stroke-width="2"/></g></svg><figcaption>Hình 1 — Với YAML/JSON, truy vấn node theo cấu trúc ổn định hơn việc ghép regex theo dòng.</figcaption></figure>
+<section><h2><span class="num">01</span> Bối cảnh thực tế</h2><p>Config YAML thường chứa object lồng nhau, list và boolean. Dùng <code>grep</code>/<code>awk</code>/<code>sed</code> có thể cho kết quả đúng với một file mẫu nhưng sai ngay khi indent, thứ tự key hoặc số phần tử thay đổi.</p><p><code>yq</code> giải quyết bài toán ở tầng dữ liệu: truy cập key theo path, lọc phần tử theo điều kiện và xuất YAML/JSON có cấu trúc. Trước khi dùng, phải xác minh đúng implementation vì tên package <code>yq</code> không đồng nhất giữa distro.</p></section>
+<section><h2><span class="num">02</span> Kiến thức cốt lõi</h2><ul class="clean"><li><strong>Path expression:</strong> <code>.service.name</code> đọc key theo cây dữ liệu, không phụ thuộc dòng nằm ở đâu.</li><li><strong>Array iteration:</strong> <code>.servers[]</code> duyệt từng phần tử của list.</li><li><strong>Filter:</strong> <code>select(...)</code> chọn object theo điều kiện thay vì lọc chuỗi output.</li><li><strong>Output format:</strong> <code>-o=json</code> đổi representation mà không đổi ý nghĩa dữ liệu.</li><li><strong>In-place edit:</strong> <code>-i</code> ghi trực tiếp file; với production phải backup/diff và review trước khi ghi.</li></ul></section>
+<figure><svg viewBox="0 0 760 240" role="img" aria-label="Luồng truy vấn yq từ YAML đến selection và output"><rect width="760" height="240" fill="#fff"/><g font-family="Be Vietnam Pro, sans-serif" text-anchor="middle"><rect x="35" y="78" width="170" height="84" rx="9" fill="#F7FAF9" stroke="#14201D"/><text x="120" y="112" font-size="12">YAML / JSON</text><text x="120" y="137" font-size="10">input tree</text><rect x="295" y="78" width="170" height="84" rx="9" fill="#F7FAF9" stroke="#0C6E61"/><text x="380" y="112" font-size="12">YQ EXPRESSION</text><text x="380" y="137" font-size="10">path + select</text><rect x="555" y="78" width="170" height="84" rx="9" fill="#F7FAF9" stroke="#9A6500"/><text x="640" y="112" font-size="12">OUTPUT</text><text x="640" y="137" font-size="10">scalar / YAML / JSON</text><path d="M205 120H288M465 120H548" stroke="#0C6E61" stroke-width="3"/></g></svg><figcaption>Hình 2 — Tách rõ input, expression và output giúp kiểm chứng từng bước thay vì nối pipeline text dài.</figcaption></figure>
+<section><h2><span class="num">03</span> Các bước thực hiện</h2><ol class="steps">
+<li><h3>1. Xác minh đúng implementation trước khi dùng</h3>
+<p class="code-label ubuntu"><span class="dot"></span>Ubuntu/Xubuntu — kiểm binary và metadata package trước khi giả định</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v yq
+yq --version
+apt-cache show yq 2>/dev/null | sed -n '1,12p'</code></pre></div>
+<p class="code-label debian"><span class="dot"></span>Debian 13 stable — <strong>KHÁC implementation mặc định</strong></p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v yq
+yq --version
+apt-cache show yq 2>/dev/null | sed -n '1,12p'
+apt-cache policy yq-go 2>/dev/null</code></pre></div><p>Debian stable mô tả package <code>yq</code> là YAML processor dùng <code>jq</code> ở phía sau. Không dùng cú pháp bài này cho binary đó nếu <code>yq --version</code> không phải Mike Farah v4.</p>
+<p class="code-label fedora"><span class="dot"></span>Fedora 44</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-bash">command -v yq
+yq --version
+dnf info yq | sed -n '1,20p'</code></pre></div>
+<p class="code-label bsd"><span class="dot"></span>FreeBSD — package Mike Farah là <code>go-yq</code></p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre class="bsd"><code class="language-sh">command -v yq
+yq --version
+pkg info go-yq 2>/dev/null || pkg search -x 'go-yq'</code></pre></div></li>
+<li><h3>2. Tạo file YAML lab</h3><p class="code-label same"><span class="dot"></span>Mọi hệ — cú pháp giống hệt nhau</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">workdir="$(mktemp -d)"
+cat > "$workdir/app.yaml" &lt;&lt;'YAML'
+service:
+  name: api
+  port: 8080
+servers:
+  - name: node-a
+    enabled: true
+  - name: node-b
+    enabled: false
+YAML
+printf '%s\n' "$workdir/app.yaml"</code></pre></div></li>
+<li><h3>3. Đọc scalar theo path</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">yq '.service.name' "$workdir/app.yaml"
+yq '.service.port' "$workdir/app.yaml"</code></pre></div><p>Kết quả phải là <code>api</code> và <code>8080</code>; không cần biết chúng nằm ở dòng bao nhiêu.</p></li>
+<li><h3>4. Lọc phần tử trong array theo boolean</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">yq '.servers[] | select(.enabled == true) | .name' "$workdir/app.yaml"</code></pre></div><p>Expression lọc theo kiểu boolean, không grep chuỗi <code>enabled: true</code>.</p></li>
+<li><h3>5. Chuyển subtree sang JSON để nối với tool khác</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">yq -o=json '.servers' "$workdir/app.yaml"</code></pre></div><p>Dùng output JSON khi tool downstream cần format có cấu trúc thay vì parse text hiển thị.</p></li>
+<li><h3>6. Thử in-place edit trên bản copy lab</h3><p class="code-label same"><span class="dot"></span>Mọi hệ</p><div class="code-wrap"><p class="run-context" data-run-as="user"><strong>Run as:</strong> user</p><pre><code class="language-sh">cp "$workdir/app.yaml" "$workdir/app.edit.yaml"
+yq -i '.service.port = 9090' "$workdir/app.edit.yaml"
+diff -u "$workdir/app.yaml" "$workdir/app.edit.yaml" || true</code></pre></div><p>Chỉ dùng <code>-i</code> sau khi đã xác nhận target và có đường review/rollback phù hợp.</p></li>
+</ol></section>
+<section><h2><span class="num">04</span> Kiểm chứng</h2><p>Chạy lại ba truy vấn chính trên file lab và đối chiếu scalar, phần tử được lọc và port đã đổi trên bản copy.</p><div class="expected-output"><h3>Expected Output / Kết quả mong đợi</h3><pre><code class="language-text">api
+8080
+node-a
+9090</code></pre><p>Thứ tự trên tương ứng với đọc name, đọc port gốc, lọc server enabled và đọc port của file đã chỉnh.</p></div></section>
+<section><h2><span class="num">05</span> Lưu ý &amp; Khắc phục lỗi</h2><ul class="clean"><li><strong>Cú pháp ví dụ không chạy:</strong> kiểm <code>yq --version</code> trước. Tên lệnh giống nhau không đảm bảo cùng implementation.</li><li><strong>Debian 13:</strong> package <code>yq</code> trong stable là Python/jq wrapper; không coi nó là Mike Farah v4 chỉ vì binary cũng tên <code>yq</code>.</li><li><strong>FreeBSD:</strong> implementation Mike Farah nằm ở port/package <code>textproc/go-yq</code>; port <code>textproc/yq</code> là implementation khác và xung đột tên binary.</li><li><strong>Output có quote/format khác mong đợi:</strong> chọn output format rõ ràng và kiểm kiểu dữ liệu thay vì thêm regex hậu xử lý.</li></ul></section>
+<section><h2><span class="num">06</span> Bảo mật &amp; vận hành</h2><ul class="clean"><li>Không in toàn bộ file config có secret chỉ để lấy một field; truy vấn đúng path cần thiết.</li><li>Không đưa secret trực tiếp vào command line nếu shell history/process list có thể lộ giá trị.</li><li>Với production, ưu tiên đọc trước, tạo bản copy hoặc diff trước khi dùng <code>-i</code>.</li><li>Không dùng regex để “vá” YAML sau khi <code>yq</code> đã xuất dữ liệu có cấu trúc; giữ pipeline machine-readable càng lâu càng tốt.</li></ul></section>
+<section class="exercise"><h2><span class="num">07</span> Bài tập tự luyện</h2><ol><li>Thêm <code>node-c</code> với <code>enabled: true</code> và viết expression trả về đúng hai node đang bật.</li><li>Xuất riêng object <code>service</code> sang JSON rồi kiểm <code>port</code> bằng một JSON-aware tool.</li><li>Ghi lại output <code>yq --version</code> trên một máy Debian/Fedora/FreeBSD và xác định implementation trước khi dùng cùng một expression.</li></ol></section>
+<section class="sources" aria-labelledby="technical-sources"><h2 id="technical-sources">Nguồn kỹ thuật</h2><p>Các URL official/upstream dưới đây đã được HTTP-check trước khi mở PR.</p><ul class="clean"><li><a href="https://mikefarah.gitbook.io/yq/">yq — Official documentation</a></li><li><a href="https://packages.fedoraproject.org/pkgs/yq/yq/">Fedora Packages — yq</a></li><li><a href="https://packages.debian.org/trixie/yq">Debian 13 — yq package</a></li><li><a href="https://cgit.freebsd.org/ports/tree/textproc/go-yq/Makefile">FreeBSD Ports — textproc/go-yq</a></li></ul></section>
+
+<!-- related-nav:start -->
+<nav class="related-nav" aria-label="Điều hướng bài cùng chủ đề">
+  <div class="related-head"><span class="related-eyebrow">SERIES · Công cụ &amp; phần mềm</span></div>
+  <div class="series-links"><a class="series-link previous" href="post-074-watchexec-file-change-command.html"><span class="series-kicker">#074</span><span>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</span></a><span class="series-link is-empty" aria-hidden="true"></span></div>
+  <div class="related-more"><strong>Cùng chủ đề</strong><ul><li><a href="post-067-zoxide-history-directory-navigation.html">#067 · zoxide: điều hướng thư mục theo lịch sử mà không thay thế cd trong script</a></li><li><a href="post-060-hyperfine-warmup-multiple-runs-command-benchmark.html">#060 · hyperfine: benchmark command có warmup và nhiều lần chạy</a></li><li><a href="post-053-bat-syntax-highlight-paging-line-range.html">#053 · bat: xem file có syntax highlight, paging và line range</a></li></ul></div>
+</nav>
+<!-- related-nav:end -->
+
+<footer><a class="foot-home" href="../index.html">← Về trang chủ Linux Daily</a><div class="foot-row"><span>Linux Daily #081 · Công cụ mới</span><span class="hashtags">#Linux #FreeBSD #yq #YAML #JSON</span></div></footer>
+</div></main></body></html>
