@@ -22,7 +22,7 @@ def test_every_check_runs_even_after_one_fails(monkeypatch):
     """Không được dừng sớm: danh sách phải đủ, không phải lỗi đầu tiên."""
     called: list[str] = []
 
-    def fake_validator(script: str):
+    def fake_validator(script: str, *args: str):
         called.append(script)
         return 1, f"LỖI: {script} hỏng"
 
@@ -31,9 +31,27 @@ def test_every_check_runs_even_after_one_fails(monkeypatch):
     monkeypatch.setattr(source_preflight, "_run_validator", fake_validator)
 
     results = source_preflight.collect()
-    assert [script for _, script in source_preflight.SUBPROCESS_CHECKS] == called
+    assert [entry[1] for entry in source_preflight.SUBPROCESS_CHECKS] == called
     assert len(results) == 2 + len(source_preflight.SUBPROCESS_CHECKS)
     assert all(errs for _, errs in results), results
+
+
+def test_subprocess_checks_pass_their_arguments_through(monkeypatch):
+    """Cổng khai kèm tham số (vd. --check) phải được gọi ĐÚNG với tham số đó.
+
+    Gọi thiếu `--check` sẽ biến một validator thành lệnh sinh file, phá tính
+    read-only của preflight — kiểu hỏng không lộ ra qua exit code.
+    """
+    seen: list[tuple[str, ...]] = []
+    monkeypatch.setattr(
+        source_preflight, "_run_validator",
+        lambda script, *args: (seen.append((script, *args)), (0, ""))[1],
+    )
+    source_preflight.collect()
+
+    declared = {tuple(entry[1:]) for entry in source_preflight.SUBPROCESS_CHECKS}
+    assert declared == set(seen)
+    assert ("coverage_intelligence.py", "--check") in seen
 
 
 def test_exit_code_and_json_shape(monkeypatch, capsys):

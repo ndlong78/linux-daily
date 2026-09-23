@@ -40,13 +40,33 @@ LD_META_RE = re.compile(
     r'<script type="application/json" id="ld-meta">\s*(\{.*?\})\s*</script>', re.S
 )
 
-# Validator chỉ đọc source. Cố ý KHÔNG gọi validate_fonts.py hay validate_site.py:
-# chúng kiểm artifact đã dựng, nên chạy trước materialize sẽ báo động giả.
+# Validator chỉ đọc source, chạy đúng trước materialize mà không báo động giả.
+#
+# Tiêu chí để một cổng được vào đây, đã đo trên cây dựng lại đúng trạng thái #084
+# ở lượt materialize đỏ đầu tiên (artifact còn cũ, source thiếu ba thứ):
+#   1. exit 0 khi artifact CHƯA dựng  → không báo động giả vì artifact cũ;
+#   2. không ghi file nào             → preflight phải read-only.
+#
+# Cố ý KHÔNG gọi, vì chúng kiểm artifact đã dựng và sẽ đỏ oan trước materialize:
+#   backfill_site_metadata --check, build --check, content_mix --check,
+#   distro_coverage --check, quality_dashboard --check, learning_dashboard --check,
+#   repo_health, validate_site, validate_fonts.
+# Cũng không gọi topic_progression và daily_operations_dashboard: trên cùng phép đo
+# chúng chỉ vọng lại đúng lỗi learning_metadata đã báo, nên thêm vào chỉ làm dài
+# danh sách mà không thêm thông tin.
 SUBPROCESS_CHECKS = (
     ("STYLE.md", "validate_style.py"),
     ("Lab contract", "lab_contract.py"),
     ("Source-backed review", "validate_sources.py"),
     ("Learning metadata", "learning_metadata.py"),
+    ("Command quality", "command_quality.py"),
+    ("Taxonomy", "taxonomy.py"),
+    ("Curriculum plan", "curriculum_planner.py"),
+    ("Publication readiness", "publication_readiness.py"),
+    ("Coverage intelligence", "coverage_intelligence.py", "--check"),
+    ("Content freshness", "content_freshness.py"),
+    ("Content lifecycle", "content_lifecycle.py"),
+    ("Interoperability lab", "interoperability_lab.py"),
 )
 
 
@@ -158,9 +178,9 @@ def check_source_of_truth() -> list[str]:
 ERROR_LINE_RE = re.compile(r"^\s*(?:LỖI|ERROR|✗|-\s)", re.IGNORECASE)
 
 
-def _run_validator(script: str) -> tuple[int, str]:
+def _run_validator(script: str, *args: str) -> tuple[int, str]:
     proc = subprocess.run(
-        [sys.executable, os.path.join("tools", script)],
+        [sys.executable, os.path.join("tools", script), *args],
         cwd=ROOT,
         capture_output=True,
         text=True,
@@ -188,8 +208,8 @@ def collect() -> list[tuple[str, list[str]]]:
         ("ld-meta", check_ld_meta()),
         ("Source of truth", check_source_of_truth()),
     ]
-    for label, script in SUBPROCESS_CHECKS:
-        code, output = _run_validator(script)
+    for label, script, *args in SUBPROCESS_CHECKS:
+        code, output = _run_validator(script, *args)
         results.append((label, [] if code == 0 else _error_lines(output, script, code)))
     return results
 
