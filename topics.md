@@ -86,3 +86,4 @@
 #081 | 2026-09-19 | Công cụ mới | yq: truy vấn YAML và JSON có cấu trúc mà không dùng regex
 #082 | 2026-09-20 | Monitoring | Context switch rate: tách scheduler churn khỏi CPU utilization bình thường
 #083 | 2026-09-21 | Automation | Ansible delegate_to và run_once: tách orchestration task khỏi target host
+#084 | 2026-09-22 | Ôn tập | Lab package repository outage: tách transport, metadata và signature trước khi đổi mirror

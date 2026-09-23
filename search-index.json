@@ -1,6 +1,19 @@
 {
-  "count": 83,
+  "count": 84,
   "posts": [
+    {
+      "axis": "Ôn tập",
+      "axis_label": "Lab end-to-end",
+      "axis_slug": "labs",
+      "date": "2026-09-22",
+      "href": "posts/post-084-package-repository-outage.html",
+      "issue": 84,
+      "lede": "Khoanh vùng lỗi repository theo transport, metadata và signature; không biến sự cố thành lý do tắt verification.",
+      "tags": [
+        "Repository troubleshooting"
+      ],
+      "title": "Lab package repository outage: tách transport, metadata và signature trước khi đổi mirror"
+    },
     {
       "axis": "Automation",
       "axis_label": "Automation & scripting",

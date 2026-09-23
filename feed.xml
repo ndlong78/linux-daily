@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Mon, 21 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Tue, 22 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Lab package repository outage: tách transport, metadata và signature trước khi đổi mirror</title>
+      <link>https://linux.no.id.vn/posts/post-084-package-repository-outage.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-084-package-repository-outage.html</guid>
+      <pubDate>Tue, 22 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Khoanh vùng lỗi repository theo transport, metadata và signature; không biến sự cố thành lý do tắt verification.</description>
+    </item>
     <item>
       <title>Ansible delegate_to và run_once: tách orchestration task khỏi target host</title>
       <link>https://linux.no.id.vn/posts/post-083-ansible-delegate-to-run-once.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</guid>
       <pubDate>Sun, 13 Sep 2026 00:00:00 +0700</pubDate>
       <description>Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.</description>
-    </item>
-    <item>
-      <title>watchexec: chạy lại command khi file thay đổi mà không thay thế service supervisor</title>
-      <link>https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-074-watchexec-file-change-command.html</guid>
-      <pubDate>Sat, 12 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Dùng watchexec để rút ngắn vòng lặp chỉnh file → chạy command, nhưng giữ ranh giới rõ với supervisor production.</description>
     </item>
   </channel>
 </rss>
