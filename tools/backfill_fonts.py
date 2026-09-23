@@ -20,13 +20,31 @@ LOCAL_BLOCK = (
     'as="font" type="font/woff2" crossorigin>\n'
     '<link rel="stylesheet" href="../assets/fonts.css">\n'
 )
+# Bắt MỌI link font cục bộ đang có, bất kể thứ tự thuộc tính hay xuống dòng,
+# để transform() gỡ sạch trước khi chèn lại đúng một khối. Khớp theo `href` là
+# đủ hẹp: chỉ hai tài nguyên font cục bộ mới có đường dẫn này.
+LOCAL_FONT_TAG = re.compile(
+    r'<link\b[^>]*href="\.\./assets/fonts(?:\.css|/be-vietnam-pro-800\.woff2)"[^>]*>\s*',
+    re.IGNORECASE,
+)
 STYLE_LINK = '<link rel="stylesheet" href="../assets/style.css">'
 
 
 def transform(text: str) -> str:
-    """Return post HTML using only local web-font resources."""
+    """Return post HTML using only local web-font resources.
+
+    Phải idempotent với MỌI hình dạng đầu vào, không chỉ khối byte-exact.
+    Bản cũ chỉ xoá đúng chuỗi `LOCAL_BLOCK` rồi chèn lại một khối mới; một bài
+    đã có `fonts.css` nhưng chưa có preload — hình dạng hợp lệ mà validator
+    không cấm — thì chẳng có gì bị xoá, và bài nhận thêm link thứ hai. Chính
+    `validate_fonts` sau đó chặn artifact do generator vừa tạo ra. Lỗi này đã
+    chặn bài #084 trọn một lượt materialize.
+
+    Cách chắc chắn: gỡ HẾT preload/fonts.css đang có (ở đâu, thứ tự nào, có
+    xuống dòng hay không), rồi chèn đúng một khối trước STYLE_LINK.
+    """
     text = GOOGLE_FONT_TAG.sub("", text)
-    text = text.replace(LOCAL_BLOCK, "")
+    text = LOCAL_FONT_TAG.sub("", text)
     if STYLE_LINK not in text:
         raise ValueError("post thiếu shared stylesheet link")
     return text.replace(STYLE_LINK, LOCAL_BLOCK + STYLE_LINK, 1)
