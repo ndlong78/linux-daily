@@ -288,6 +288,31 @@ Ba gate canh phần này, không được nới:
 | `build.py --check` | trang phân trang stale hoặc thừa |
 | `performance_budget.py` | **từng** trang danh sách phải dưới 256 KiB |
 
+#### Source preflight — mọi lỗi nguồn trong một lượt
+
+`publish.py prepare` vừa sinh vừa kiểm và **dừng ở bước hỏng đầu tiên**. Với agent
+API-only, mỗi thiếu sót vì thế tốn trọn một vòng push → dispatch → materialize → đọc log.
+Bài #084 đã mất bốn lượt liên tiếp, mỗi lượt lộ đúng một thiếu sót mới: layout `ld-meta`,
+learning coverage, dòng `topics.md`, rồi lab contract. Không lượt nào sai — cái sai là
+chúng phải xếp hàng.
+
+`tools/source_preflight.py` chạy **mọi** phép kiểm chỉ cần source và **luôn chạy hết**,
+kể cả sau khi đã có lỗi:
+
+```bash
+python3 tools/source_preflight.py
+```
+
+- Đọc-không-ghi; không thay `publish.py check`, cổng đó vẫn kiểm artifact byte-exact.
+- Là bước đầu của `Materialize Artifacts`, ngay sau guard và trước `prepare`.
+- Phủ: `ld-meta` đọc được và khớp số hiệu tên file; `topics.md` ↔ `posts/` ↔ `state.json`;
+  STYLE.md; lab contract; source-backed review; learning metadata.
+- Cố ý **không** gọi `validate_fonts.py`/`validate_site.py`: chúng kiểm artifact đã dựng,
+  chạy trước materialize sẽ báo động giả.
+
+Khi nó đỏ, danh sách in ra là **đầy đủ**. Sửa hết rồi hãy push lại; đừng sửa từng dòng một
+rồi chờ lượt sau.
+
 #### Materialize artifact khi không có Python runtime
 
 Quality gate so khớp artifact **byte-exact** (`tools/build.py` so `current != expected`), nên nội dung artifact không thể suy đoán mà phải do generator sinh ra. Một bài mới luôn kéo theo cả cụm artifact render lại — `index.html` **và các trang phân trang `trang-N.html`**, `archive.html`, `feed.xml`, `sitemap.xml`, `search-index.json`, `learning-paths.html`, `learning-dashboard.html`, các report trong `docs/`, và related-navigation của những bài lân cận.

@@ -119,6 +119,14 @@ jobs:
       - name: Guard branch trước khi ghi
         run: python3 -I "${RUNNER_TEMP}/materialize_guard.py" --branch "${BRANCH}" --repo-root "${GITHUB_WORKSPACE}"
 
+      # Chạy TRƯỚC prepare. `publish.py prepare` vừa sinh vừa kiểm và dừng ở bước
+      # hỏng đầu tiên, nên với agent API-only mỗi thiếu sót tốn trọn một vòng
+      # push → dispatch → materialize → đọc log. Bài #084 mất bốn lượt như vậy,
+      # mỗi lượt lộ đúng một thiếu sót. Bước này đọc-không-ghi và chạy hết mọi
+      # phép kiểm source, nên một lượt đỏ cho ra danh sách đầy đủ việc phải làm.
+      - name: Source preflight — báo mọi lỗi source-of-truth cùng lúc
+        run: python tools/source_preflight.py
+
       - name: Materialize deterministic artifacts
         run: python tools/publish.py prepare
 

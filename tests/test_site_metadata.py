@@ -162,3 +162,45 @@ def test_post_template_requires_discovery_and_social_metadata_placeholders():
 def test_committed_homepage_matches_generator():
     rendered, _ = build_index.render_index()
     assert (ROOT / "index.html").read_text(encoding="utf-8") == rendered
+
+
+def test_strip_discovery_keeps_ld_meta_in_a_minified_head():
+    """Đúng lỗi đã chặn #084 ở lượt materialize đầu tiên.
+
+    Khi cả <head> nằm trên một dòng, dòng chứa rel="canonical" cũng chứa khối
+    <script id="ld-meta">. Xoá theo dòng sẽ cuốn mất marker và báo 'thiếu
+    ld-meta marker' cho một file vẫn có marker.
+    """
+    import backfill_site_metadata as b
+
+    marker = '<script type="application/json" id="ld-meta">'
+    minified = (
+        '<head><link rel="canonical" href="https://x/y.html">'
+        '<meta property="og:title" content="t">'
+        '<meta name="twitter:card" content="summary_large_image">'
+        f'{marker}{{"issue":84}}</script></head>'
+    )
+    stripped = b._strip_discovery_lines(minified)
+    assert marker in stripped
+    assert 'rel="canonical"' not in stripped
+    assert 'property="og:' not in stripped
+    assert 'name="twitter:' not in stripped
+
+
+def test_strip_discovery_still_removes_one_tag_per_line():
+    """Khuôn cũ (mỗi thẻ một dòng) phải giữ nguyên hành vi."""
+    import backfill_site_metadata as b
+
+    multiline = (
+        '<head>\n'
+        '<link rel="canonical" href="https://x/y.html">\n'
+        '<link rel="alternate" type="application/rss+xml" title="f" href="https://x/f.xml">\n'
+        '<meta property="og:title" content="t">\n'
+        '<title>giữ lại</title>\n'
+        '</head>\n'
+    )
+    stripped = b._strip_discovery_lines(multiline)
+    assert "<title>giữ lại</title>" in stripped
+    assert 'rel="canonical"' not in stripped
+    assert 'application/rss+xml' not in stripped
+    assert 'property="og:' not in stripped

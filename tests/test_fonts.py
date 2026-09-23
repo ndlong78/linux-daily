@@ -31,3 +31,38 @@ def test_templates_do_not_reference_google_fonts():
         text = path.read_text(encoding="utf-8")
         assert "fonts.googleapis.com" not in text
         assert "fonts.gstatic.com" not in text
+
+
+def test_transform_is_idempotent_for_a_post_without_preload():
+    """Bài chỉ có fonts.css (chưa có preload) không được nhận link thứ hai.
+
+    Hình dạng này đã làm hỏng #084: transform() cũ chỉ xoá được khối byte-exact
+    preload+fonts.css, nên fonts.css đứng một mình sống sót và bài nhận thêm một
+    khối nữa — rồi validate_fonts chặn chính artifact mà generator vừa tạo.
+    """
+    import backfill_fonts
+
+    source = (
+        '<head><link rel="stylesheet" href="../assets/fonts.css">'
+        '<link rel="stylesheet" href="../assets/style.css"></head>'
+    )
+    once = backfill_fonts.transform(source)
+    assert once.count('href="../assets/fonts.css"') == 1
+    assert once.count('be-vietnam-pro-800.woff2') == 1
+    assert backfill_fonts.transform(once) == once
+
+
+def test_transform_survives_a_minified_head():
+    """<head> nén một dòng vẫn phải ra đúng một khối font."""
+    import backfill_fonts
+
+    source = (
+        '<head><title>x</title><link rel="preload" '
+        'href="../assets/fonts/be-vietnam-pro-800.woff2" as="font" type="font/woff2" '
+        'crossorigin><link rel="stylesheet" href="../assets/fonts.css">'
+        '<link rel="stylesheet" href="../assets/style.css"></head>'
+    )
+    out = backfill_fonts.transform(source)
+    assert out.count('href="../assets/fonts.css"') == 1
+    assert out.count('be-vietnam-pro-800.woff2') == 1
+    assert backfill_fonts.transform(out) == out
