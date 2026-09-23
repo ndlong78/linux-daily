@@ -174,19 +174,29 @@ def _ensure_document_shell(text: str, meta: dict) -> str:
     return shell + "\n" + text
 
 
+DISCOVERY_TAG = re.compile(
+    r'<(?:link|meta)\b[^>]*'
+    r'(?:rel="canonical"|type="application/rss\+xml"'
+    r'|property="og:[^"]*"|name="twitter:[^"]*")'
+    r'[^>]*>[ \t]*\n?',
+    re.IGNORECASE,
+)
+
+
 def _strip_discovery_lines(text: str) -> str:
-    kept: list[str] = []
-    for line in text.splitlines():
-        if 'rel="canonical"' in line:
-            continue
-        if 'type="application/rss+xml"' in line:
-            continue
-        if 'property="og:' in line:
-            continue
-        if 'name="twitter:' in line:
-            continue
-        kept.append(line)
-    return "\n".join(kept) + ("\n" if text.endswith("\n") else "")
+    """Gỡ các thẻ discovery để render_post chèn lại bản chuẩn.
+
+    Xoá theo THẺ, không theo dòng. Bản cũ bỏ nguyên dòng chứa `rel="canonical"`;
+    với bài mỗi thẻ một dòng thì đúng, nhưng với `<head>` nén một dòng thì nó
+    cuốn theo mọi thứ khác trên dòng đó — kể cả khối `<script id="ld-meta">`.
+    Hậu quả thực tế: bài #084 báo `thiếu ld-meta marker` trong khi marker vẫn
+    nằm nguyên trong file, và thông báo lỗi chỉ đúng chỗ nó nhìn, không đúng
+    chỗ hỏng.
+    """
+    stripped = DISCOVERY_TAG.sub("", text)
+    if text.endswith("\n") and not stripped.endswith("\n"):
+        stripped += "\n"
+    return stripped
 
 
 def render_post(path: str) -> str:
