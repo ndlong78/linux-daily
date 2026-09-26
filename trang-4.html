@@ -49,9 +49,18 @@
     <header class="site">
       <h1 class="site">Học quản trị Linux &amp; Unix, mỗi bài một chủ đề</h1>
       <p class="site-lede">Ubuntu · Xubuntu · Debian · Fedora · FreeBSD. Mỗi bài kèm sơ đồ, lệnh copy-paste và cạm bẫy thực tế — luôn tách rõ FreeBSD.</p>
-      <div class="count">84 BÀI · TRANG 4/5</div>
+      <div class="count">85 BÀI · TRANG 4/5</div>
     </header>
     <main id="main-content" class="list">
+      <a class="card" href="posts/post-025-ripgrep-log-config-search.html">
+        <div class="card-top">
+          <span class="c-issue">#025</span>
+          <span class="c-axis">Công cụ mới · ripgrep</span>
+          <span class="c-date">25·07·2026</span>
+        </div>
+        <h2>ripgrep: tìm log và cấu hình nhanh mà không quét nhầm</h2>
+        <p>`rg` giúp tìm pattern trong cây file rất nhanh, nhưng mặc định còn áp quy tắc ignore và bỏ qua một số file ẩn/binary. Biết rõ mặc định giúp bạn không kết luận “không có” quá sớm.</p>
+      </a>
       <a class="card" href="posts/post-024-filesystem-inode-zfs-capacity.html">
         <div class="card-top">
           <span class="c-issue">#024</span>
@@ -222,15 +231,6 @@
         </div>
         <h2>Ansible: một playbook, bốn hệ điều hành</h2>
         <p>Làm tay từng máy thì lần thứ ba là quên bước, lần thứ mười là sai. Ansible mô tả trạng thái mong muốn một lần rồi áp lên cả đàn máy — qua SSH, không cần cài agent. Cùng một playbook chạy được trên Ubuntu, Debian, Fedora lẫn FreeBSD; khác biệt gói gọn trong tên module gói và trình quản lý dịch vụ.</p>
-      </a>
-      <a class="card" href="posts/post-005-doc-log-journald-syslog.html">
-        <div class="card-top">
-          <span class="c-issue">#005</span>
-          <span class="c-axis">Monitoring · Hiệu năng</span>
-          <span class="c-date">05·07·2026</span>
-        </div>
-        <h2>Đọc log hệ thống: một journal nhị phân, một đống file text</h2>
-        <p>Khi có sự cố, log là nơi bạn nhìn đầu tiên — nhưng câu hỏi &quot;log ở đâu, đọc bằng gì&quot; lại có hai câu trả lời trái ngược. Ubuntu, Debian và Fedora gói mọi thứ vào journald và truy vấn qua journalctl. FreeBSD giữ nguyên syslog truyền thống: log là các file text trong /var/log, đọc bằng grep và tail.</p>
       </a>
     </main>
     <nav class="pagination" aria-label="Phân trang danh sách bài">
