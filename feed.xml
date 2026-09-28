@@ -5,8 +5,15 @@
     <link>https://linux.no.id.vn/</link>
     <description>Series bài học Linux/Unix system administration bằng tiếng Việt cho Ubuntu, Xubuntu, Debian, Fedora và FreeBSD.</description>
     <language>vi</language>
-    <lastBuildDate>Tue, 22 Sep 2026 00:00:00 +0700</lastBuildDate>
+    <lastBuildDate>Wed, 23 Sep 2026 00:00:00 +0700</lastBuildDate>
     <atom:link href="https://linux.no.id.vn/feed.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>IPv6 source address selection: tách lỗi chọn source khỏi route và DNS</title>
+      <link>https://linux.no.id.vn/posts/post-085-ipv6-source-address-selection-route-dns.html</link>
+      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-085-ipv6-source-address-selection-route-dns.html</guid>
+      <pubDate>Wed, 23 Sep 2026 00:00:00 +0700</pubDate>
+      <description>Đọc source IPv6 mà kernel chọn cho một đích, đối chiếu scope và route trước khi sửa DNS hoặc policy.</description>
+    </item>
     <item>
       <title>Lab package repository outage: tách transport, metadata và signature trước khi đổi mirror</title>
       <link>https://linux.no.id.vn/posts/post-084-package-repository-outage.html</link>
@@ -69,13 +76,6 @@
       <guid isPermaLink="true">https://linux.no.id.vn/posts/post-076-ansible-changed-when-failed-when.html</guid>
       <pubDate>Mon, 14 Sep 2026 00:00:00 +0700</pubDate>
       <description>Tách exit code khỏi semantics để Ansible báo changed và failed đúng với ý nghĩa vận hành.</description>
-    </item>
-    <item>
-      <title>CPU steal time và virtualization contention: phân biệt host pressure với guest workload</title>
-      <link>https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</link>
-      <guid isPermaLink="true">https://linux.no.id.vn/posts/post-075-cpu-steal-virtualization-contention.html</guid>
-      <pubDate>Sun, 13 Sep 2026 00:00:00 +0700</pubDate>
-      <description>Đọc steal time cùng scheduler evidence để tách guest bận thật khỏi CPU bị hypervisor lấy mất thời gian chạy.</description>
     </item>
   </channel>
 </rss>

@@ -87,3 +87,4 @@
 #082 | 2026-09-20 | Monitoring | Context switch rate: tách scheduler churn khỏi CPU utilization bình thường
 #083 | 2026-09-21 | Automation | Ansible delegate_to và run_once: tách orchestration task khỏi target host
 #084 | 2026-09-22 | Ôn tập | Lab package repository outage: tách transport, metadata và signature trước khi đổi mirror
+#085 | 2026-09-23 | Networking | IPv6 source address selection: tách lỗi chọn source khỏi route và DNS
